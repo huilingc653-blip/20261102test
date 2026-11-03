@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.nisPersonnelDetail.workNo')</td>
+            <td>
+                <input type="text" id="likes_workNo" name="likes_workNo"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.nisPersonnelDetail.workNo')"/>
+            </td>
+            <td class="textRight">#springMessage('table.nisPersonnelDetail.userName')</td>
+            <td>
+                <input type="text" id="likes_userName" name="likes_userName"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.nisPersonnelDetail.userName')"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.nisPersonnelDetail.corpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="ins_corpId"
+                         data-tree-type="check"
+                         data-resource="netbank:nispersonneldetail:query"
+                         data-scope="all"></div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisPersonnelDetail.bankAcc')</td>
+            <td>
+                <input type="text" id="likes_bankAcc" name="likes_bankAcc"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.nisPersonnelDetail.bankAcc')"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.nisPersonnelDetail.workNo')</th>
+        <th>#springMessage('table.nisPersonnelDetail.userName')</th>
+        <th>#springMessage('table.nisPersonnelDetail.sex')</th>
+        <th>#springMessage('table.nisPersonnelDetail.idcard')</th>
+        <th>#springMessage('table.nisPersonnelDetail.mobile')</th>
+        <th>#springMessage('table.nisPersonnelDetail.corpId')</th>
+        <th>#springMessage('table.nisPersonnelDetail.deptName')</th>
+        <th>#springMessage('table.nisPersonnelDetail.bankName')</th>
+        <th>#springMessage('table.nisPersonnelDetail.accName')</th>
+        <th>#springMessage('table.nisPersonnelDetail.bankAcc')</th>
+        <th>#springMessage('table.nisPersonnelDetail.prov')</th>
+        <th>#springMessage('table.nisPersonnelDetail.city')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['form', 'datatable', 'bank', 'corp'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.bank.init({
+            elem:'.bank',
+        });
+        bt.corp.init();
+        //生成列表
+        var table = bt.datatable.init({
+            elem: "#appTable",
+			order: [[1,'asc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/netbank/nispersonneldetail/datatable"
+            },
+            selectCss: false,
+            fixedColumns: {
+                leftColumns: 3,//代表冻结左边两列
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="personnelDetail-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "workNo"},
+                {data: "userName"},
+                {
+                    data: "sex",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("sex", full.sex);
+                    }
+                },
+                {data: "idcard"},
+                {data: "mobile"},
+                {data: "corpName"},
+                {data: "deptName"},
+                {data: "bankName"},
+                {data: "accName"},
+                {data: "bankAcc"},
+                {data: "provName"},
+                {data: "cityName"}
+            ]
+        });
+
+        table.on('click', '.personnelDetail-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-personnelDetail']['callback'];
+//            var func = top.btSelectCallBack['bt-biz-personnelDetail']['callback'];
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

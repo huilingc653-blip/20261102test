@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+    <input type="hidden" id="curId" name="curId" value="$!{curId}">
+    <input type="hidden" id="corpId" name="corpId" value="$!{corpId}">
+    <input type="hidden" id="bankCode" name="bankCode" value="$!{bankCode}">
+    <input type="hidden" id="bailBankControlType" name="bailBankControlType" value="$!{bailBankControlType}">
+	<table class="layui-table">
+            <tbody>
+                <tr>
+                    <td class="textRight">#springMessage('table.fcBond.bondAcc')</td>##保证金账户
+                    <td>
+						<input type="text" name="likes_bankAcc" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.bondAcc')">
+                    </td>
+                    <td class="textRight">#springMessage('table.fcBond.accountname')</td>##账户名称
+                    <td>
+                        <input type="text" name="likes_accName"  autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.accountname')">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="textRight">#springMessage('table.fcBond.depositdate')</td>
+                    <td>
+                        <div class="layui-inline">
+                            <input type="text"  class="layui-input bt-input-inline bt-biz-dateType" name="ged_startDate" data-endid="start" >
+                            <span class="date-mid">~</span>
+                            <input type="text"  class="layui-input bt-input-inline bt-biz-dateType" id="start" name="led_startDate" value="$date.format('yyyy-MM-dd',$!{startDate})">
+                        </div>
+                    </td>
+
+                    <td class="textRight">#springMessage('table.abVoucherinfo.endDate')</td>
+                    <td>
+                        <div class="layui-inline">
+                            <input type="text"  class="layui-input bt-input-inline bt-biz-dateType" data-endid="end" name="ged_endDate"  value="$date.format('yyyy-MM-dd',$!{startDate})">
+                            <span class="date-mid">~</span>
+                            <input type="text"  class="layui-input bt-input-inline bt-biz-dateType" name="led_endDate" id="end" value="$!date.format('yyyy-MM-dd',$!{endDate})">
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="text-align: center;" colspan="4">
+                        <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+			</tbody>
+        </table>
+    </div>
+</form>
+<table id="externalAccTable" class="layui-table">
+    <thead>
+    <tr>
+		<th>#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.fcBond.depositaccount')</th> ##存入账户
+        <th>#springMessage('table.fcBond.accountname')</th> ##账户名称
+        <th>#springMessage('table.fcBond.corpName')</th> ##单位名称
+        <th>#springMessage('table.fcBond.accBalance')</th> ##账户余额
+		<th>#springMessage('table.fcBond.bankName')</th> ##存入银行
+        <th>#springMessage('table.fcBond.curCode')</th>##币别
+        <th>#springMessage('fcbond.type')</th>##保证金类型
+        <th>#springMessage('table.fcBond.occupyMoney')</th>##占用金额
+        <th>#springMessage('table.fcBond.availableMoney')</th>##可用金额
+        <th>#springMessage('table.fcBond.bondRate')</th>##保证金利率
+	    <th style="hidden">#springMessage('table.fcBond.depositdate')</th>##存入日期
+	    <th style="hidden"></th>##保证金id
+        <th style="hidden"></th>##联行号
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery','rateType','dateType'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+		var corpId=$("#corpId").val();
+		var bankCode=$("#bankCode").val();
+		var curId=$("#curId").val();
+		var bailBankControlType=$("#bailBankControlType").val();
+        var rateType = bt.rateType.getFun();
+        bt.dateType.init();
+        table = bt.datatable.init({
+            elem: "#externalAccTable",
+            selectCss: false,
+			order: [[8,'asc']],
+            ajax: {
+                url: basePath + "/bond/fcbondpreserve/getSelectBondAccByTerms?corpId="+corpId+"&bankCode="+bankCode+"&curId="+curId+"&bailBankControlType="+bailBankControlType
+            },
+            searchForm: {
+                formElem: "#searchForm",
+            	formFilter: "search"
+            },
+            columns: [
+			 {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                    return '<a href="javascript:void(0);" class="bondAccInfo-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+					}
+             },
+		    {data: "bankAcc", bSortable: false},
+            {data: "accName", bSortable: false},
+            {data: "corpName", bSortable: false},
+		    {data: "accBalance",bSortable:false,className:'textRight',
+			 render: function ( data, type, full, meta ) {
+             return bt.money.format(full.accBalance);}
+			 },
+            {data: "bankName", bSortable: false},
+            {data: "curName", bSortable: false},
+            {data: "bondTypeName", bSortable: false},
+            {data: "applyMoney",bSortable:false,className:'textRight',
+			 render: function ( data, type, full, meta ) {
+             return bt.money.format(full.applyMoney);}
+			 },
+			{data: "availMoney",bSortable:false,className:'textRight',
+			 render: function ( data, type, full, meta ) {
+             return bt.money.format(full.availMoney);}
+             },
+             {data:"bondRate", bSortable: false,
+                 render: function ( data, type, full, meta ) {
+                     return rateType.format(full.bondRate);}
+             },
+			 {data:"bondDate",visible:false,bSortable: false},
+			 {data:"bondId",visible:false,bSortable: false},
+             {data:"bankCode",visible:false,bSortable: false}
+            ]
+        });
+
+        //生成列表
+        table.on('click', '.bondAccInfo-select', function (event) {
+            var parentsIndex = $('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-bondAccInfo']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-bondAccInfo']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+     // bt.bondAccInfo.init();
+    });
+</script>
+</body>
+</html>

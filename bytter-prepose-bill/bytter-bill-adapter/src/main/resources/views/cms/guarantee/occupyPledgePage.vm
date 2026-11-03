@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            font-size:14px;
+            padding-bottom: 60px;
+        }
+        .layui-form-label{
+            width: 180px;
+        }
+        .layui-input-block{
+            margin-left: 220px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" action="" id="inputForm">
+	<input type="hidden" name="pledgeManyTimes" id="pledgeManyTimes" value="$!{config.value}">
+	<input type="hidden" name="corpId" id="corpId" value="$!{vo.corpId}">
+	<input type="hidden" name="curId"  id="curId" value="$!{vo.curId}">
+	<input type="hidden" name="startDate" data-name="startDate"
+		class="layui-input bt-biz-dateType" id="startDate" data-type="date" value="$!date.format('yyyy-MM-dd',$!{vo.startDate})">
+	<input type="hidden" name="endDate"　data-name="endDate"
+		class="layui-input bt-biz-dateType" id="endDate" data-type="date" value="$!date.format('yyyy-MM-dd',$!{vo.endDate})">
+	<input type="hidden" name="pledgeAttr" id="pledgeAttr" value="$!{vo.pledgeAttr}">
+	<input type="hidden"  name="pledgeIds" id="pledgeIds">
+	<input type="hidden" name="pDids" id="pDids" value="$!{vo.pDids}">##抵押物id组合
+	<input type="hidden" id="relateFlag" value="$!{relateFlag}">
+	<table  id="infoTable" class="layui-table layui-form" style="width:100%;" data-test="test">
+    <thead>
+    <tr>
+        <th>#springMessage('table.guaPledge.pledgeAttr')</th>#*抵质押性质*#
+        <th>#springMessage('table.guaPledge.pledgeNo')</th>#*抵质押物编号*#
+		<th>#springMessage('table.guaPledge.pledgeType')</th>#*抵质押物类型*#
+		<th>#springMessage('table.guaPledge.pledgeName')</th>#*抵质押物名称*#
+		<th>#springMessage('table.guaPledge.startDate')</th>#*抵质押开始日期*#
+		<th>#springMessage('table.guaPledge.endDate')</th>#*抵质押结束日期*#
+		<th>#springMessage('table.guaPledge.pledgeMoney')</th>#*评估值*#
+		<th>#springMessage('table.guaPledge.availMoney')</th>#*可用价值*#
+		<th><font color="red">*</font>#springMessage('table.guaContractInfo.occupyMoney')</th>#*此次占用金额*#
+		<th>#springMessage('common.table.thead.operation')</th>#*操作*#
+		</th>
+    </tr>
+    </thead>
+	<tbody id="pledgeInfo">
+		#foreach($item in $list)
+		<tr id="$!{item.id}">
+			<td style="text-align:center">$dictTag.get("guarantee.pledge.TypeAttr",$!{item.pledgeAttr})</td>
+			<td style="text-align:center">$!{item.pledgeNo}</td>
+			<td style="text-align:center">$!{item.typeName}</td>
+			<td style="text-align:center">$!{item.pledgeName}</td>
+			<td style="text-align:center">$!date.format('yyyy-MM-dd',$!{item.startDate})</td>
+			<td style="text-align:center">$!date.format('yyyy-MM-dd',$!{item.endDate})</td>
+			<td style="text-align:right">$!number.formatNumeric($!{item.pledgeMoney})</td>
+			<td style="text-align:right">$!number.formatNumeric($!{item.availMoney})</td>
+			#if($!item.pledgeAttr=="1")##质押
+			<td align="center">
+                <div class="layui-input-inline">
+                    <input type="text" data-name="money$!{item.id}" class="layui-input bt-biz-moneyType money ignore-required-icon" data-decimal="2" data-minus="false" value="$!{item.guaMoney}" lay-verify="required|number2">
+				</div>
+				#set($availMoney=$!{item.availMoney}+$!{item.guaMoney})
+                <input type="hidden" name="availMoneys" class="availMoney" value="$!{availMoney}">
+			</td>
+			#end
+			#if($!item.pledgeAttr=="0")##抵押
+				<td style="text-align:right">
+						$!number.formatNumeric($!{item.pledgeMoney})
+						<input type="hidden" name="money$!{item.id}" class="bt-biz-moneyType money" value="$!{item.pledgeMoney}">
+				</td>
+			#end
+			<td style="text-align:center"><button type="button" class="layui-btn del" style="height: auto;">#springMessage('common.button.delete')</button></td>
+		</tr>
+		#end
+     </tbody>
+       <footer>
+			 <tr>
+           <td colspan="10" style="text-align: center;">
+				<button class="layui-btn bt-biz-guaPledgeInfo"  data-biz-name="guaPledgeInfo" type="button"
+						data-callback="guaPledgeInfoCallback" data-beforeClick="bt.guaPledgeInfoBeforeClick">#springMessage('common.button.add')
+				</button>
+				<button type="button"  lay-submit=""  class="layui-btn" lay-filter="sure">#springMessage('common.button.sure')</button>
+				<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+	   </footer>
+    </table>
+</form>
+</body>
+#parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/cms/guarantee/occupyPledge.add.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+    	#rateInfo input {
+    		text-align:right;
+    	}
+    	#rateInfo .bt-biz-rateType {
+    		width:128px;
+    	}
+    </style>
+</head>
+<body>
+	<form class="layui-form" method="post" id="inputForm">
+        <input type="hidden" id="ids" name="ids">
+		<input type="hidden" id="id" name="id" value="$!{vo.id}">
+		<!--是否已经变更-->
+		<input type="hidden" id="isChange" name="isChange" value="$!{vo.isChange}">
+        <input type="hidden" id="pDids" name="pDids" value="$!{vo.pDids}">
+		<input type="hidden" id="pZids" name="pZids" value="$!{vo.pZids}">
+		##<input type="hidden" id="debtorPerson" name="debtorPerson" value="$!{vo.debtorPerson}">
+		<input type="hidden" id="guaId" name="guaId" value="$!{vo.id}">
+		<input type="hidden" id="isChange" name="isChange" value="$!{vo.isChange}">
+		<input type="hidden" id="moneys0" name="moneys0" value="$!{vo.money0}">
+		<input type="hidden" id="moneys1" name="moneys1" value="$!{vo.money1}">
+		<input type="hidden" id="moneys2" name="moneys2" value="$!{vo.money2}">
+		<!--担保方式-->
+		<input type="hidden" id="guaWays" name="guaWays" value="$!{guaWays}">
+		<input type="hidden" id="curCode" name="curCode">
+        <input type="hidden" id="corpId" name="conCorpId" value="$!{vo.corpId}"/> ##对接合同管理选择合同时传递的单位
+
+		<table class="layui-table" id="guaTable">
+		<tbody>
+        	<tr>
+        		##融资主体
+				<td class="textRight" width="14%">#springMessage('table.guaContract.corpId')</td>
+				<td width="36%">
+					<div class="layui-input-inline">
+						<div class="bt-biz-corp" 
+							data-biz-type="corp"
+							data-type="selectTree"
+							data-name="corpId"
+							data-biz-name="corpId"
+							data-scope="all"
+							data-required="true"
+							data-defaultvalue="$!{vo.corpId}"
+							data-resource="gua:contract:info:apply"
+							data-callback="bt.corpCallback"
+							data-callbackData="bt.corpCallbackDate">
+						</div>
+					</div>
+				</td>
+        		##担保编号
+				<td class="textRight" width="14%">#springMessage('table.guaContract.guaNo')</td>
+					<td width="36%">
+        			<div class="layui-inline">
+        				<input class="layui-input" id="guaNo" name="guaNo"  type="text" lay-verify="required|strlength" value="$!{vo.guaNo}" data-maxlength="50"/>
+        			</div>
+				</td>
+			</tr>
+			<tr>
+        		##币别
+                <td class="textRight" width="14%">#springMessage('table.guaContract.curId')</td>
+                <td width="36%">
+                     <div class="layui-inline">
+            			<div class="bt-biz-selectType" data-name="curId" data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id" data-textfield="curName"  data-defaultvalue="$!{vo.curId}" data-required="true" data-biz-name="curId" data-callback="bt.curCallBack"></div>
+	            	</div>
+                 </td>
+				 ##担保日期
+				<td class="textRight" width="14%">#springMessage('table.guaContract.date')</td>
+				 <td width="36%">
+                   <div class="layui-inline">
+						<input type="text" name="startDate" data-name="startDate"  data-biz-name="startDate" data-callback="bt.dateChange"
+								class="layui-input bt-biz-dateType" data-endid="endDate" data-type="date" lay-verify="required" value="$!{vo.startDate}">
+				   </div>
+				   <span class="date-mid">#springMessage('table.guaContract.range')</span>
+					<div class="layui-inline">
+						<input type="text" name="endDate"　data-name="endDate"  data-biz-name="endDate" data-callback="bt.dateChange"
+								class="layui-input bt-biz-dateType" id="endDate" data-type="date" lay-verify="required" value="$!{vo.endDate}">
+                	</div>
+               </td>
+			</tr>
+           <tr>
+				##债务人
+				<td class="textRight" width="14%">#springMessage('table.guaContract.debtorPersonName')</td>
+				<td width="36%">
+                	<div class="layui-inline">
+        				<input class="layui-input" id="debtorPerson" name="debtorPerson"  type="text" lay-verify="required|strlength"  value="$!{vo.debtorPerson}" data-maxlength="100"/>
+        			</div>
+				</td>
+				##债权人
+				<td class="textRight" width="14%">#springMessage('table.guaContract.creditorPerson')</td>
+				<td width="36%">
+                	<div class="layui-inline">
+        				<input class="layui-input" id="creditorPerson" name="creditorPerson"  type="text" lay-verify="required|strlength" value="$!{vo.creditorPerson}" data-maxlength="100"/>
+        			</div>
+			</td>
+		   </tr>
+            <tr>
+				## 是否集团内担保单位
+                <td  class="textRight" width="14%">#springMessage('table.guaContract.innerGua')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{vo.innerGua}" data-name="innerGua"
+                         data-biz-name="innerGua" data-callback="bt.changeType" data-required="true"></div>
+                </td>
+				##担保单位
+                <td class="textRight" width="14%">#springMessage('table.guaContract.guaPerson')</td>
+                <td width="36%">
+                    <div class="layui-inline" id="guaPersonInfo">
+						#if($!{vo.innerGua}=='1')
+                            <div class="bt-biz-corp"
+                                 data-biz-type="corp"
+                                 data-type="selectTree"
+                                 data-tree-type="check"
+                                 data-name="guaPerson"
+                                 data-required="true"
+                                 data-scope="all"
+                                 data-defaultvalue="$!{vo.guaPerson}"
+                                 data-resource="">
+                            </div>
+						#else
+                            <input class="layui-input" id="guaPerson" name="guaPerson"  type="text" lay-verify="required|strlength" value="$!{vo.guaPerson}" data-maxlength="200"/>
+						#end
+                    </div>
+                </td>
+            </tr>
+		 	<tr>
+				##合同编号
+                <td class="textRight" width="14%">#springMessage('table.guaContract.contractCode')</td>
+                <td width="36%">
+                    <div class="layui-inline">
+                        <input class="layui-input" id="contractCode" name="contractCode"  type="text" lay-verify="required|strlength"  value="$!{vo.contractCode}" data-maxlength="50"/>
+                    </div>
+					##对接的合同信息
+					#parse("views/dual/manager/conInfo.vm")
+                </td>
+				##担保方式
+				<td class="textRight" width="14%"><span class="pl"><span class="required-icon">*</span>#springMessage('table.guaContract.guaType')</td>
+				<td width="36%">
+					<div class="layui-inline">
+						<div class="selectDemo bt-biz-mulselectType" data-id="guaWay" data-biz-name="guaWay" data-method="get" data-callback="bt.changeGuaWay"
+							 data-url="${basePath}/cms/guarantee/guaContractInfo/json" data-valuefield="id" data-textfield="name" data-defaultvalue="$!{guaWays}"
+							 data-name="guaWay" ></div>
+					</div>
+				</td>
+					#foreach($headSera in $headList)
+					<th>#if(${headSera.required}==true)<span style="color:red;">*</span> #end #springMessage(${headSera.name})</th>
+					#end
+				#foreach($guaWayMsg in $vo.guaDtls)
+					#set($vcount = $velocityCount)
+				   <input type="hidden" id="money$!{guaWayMsg.guaWayCode}"  value="$!{guaWayMsg.money}">
+				   <input type="hidden" id="pledgeIds$!{guaWayMsg.guaWayCode}"  value="$!{guaWayMsg.pledgeIds}">
+				   <input type="hidden" id="pDids$!{guaWayMsg.guaWayCode}"  value="$!{guaWayMsg.pDids}">
+				   <input type="hidden" id="index$!{velocityCount}"  value="$!{guaWayMsg.wayCodes}">
+				#end
+				<input type="hidden" id="WayCount" value="$!{vcount}">
+		   </tr>
+        	<tr>
+				##担保范围
+                <td class="textRight" width="14%">#springMessage('table.guaContract.warr')</td>
+                <td width="36%">
+                    <input  type="warr"  id="" name="warr" class="layui-input" value="$!{vo.warr}" lay-verify="strlength" data-maxlength="200">
+                </td>
+				##担保额度
+                <td class="textRight" width="14%"><span class="pl"><span class="required-icon">*</span>#springMessage('table.guaContract.guaMoney')</td>
+				<td id="guaMoney"></td>
+			</tr>
+			<tr>
+				##备注
+                <td class="textRight" width="14%">#springMessage("table.guaContract.rmk")</td>
+                <td width="36%">
+					<input  type="text"  id="rmk" name="rmk" class="layui-input" value="$!{vo.rmk}" lay-verify="strlength" data-maxlength="200">
+				</td>
+                <td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td class="textRight">#springMessage('cms.loan.attachment')</td>
+				<td style="text-align: center;" colspan="3">
+					<!-- 附件上传 -->
+					<input id="annexName" name="uploadId" type="hidden" value="$!{vo.attachmentId}">
+			        <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;" colspan="4">
+					<button class="layui-btn" lay-submit="" id="submit" value="11">#springMessage('common.button.submit')</button>
+					<button class="layui-btn" lay-submit="" id="temp" value="0">#springMessage('common.button.temp')</button>
+					<button type="reset" class="layui-btn layui-btn-primary" data-callback="clearData">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/guarantee/guaContractInfo.edit.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tr>
+            ##网点
+            <td width="10%" class="textRight">#springMessage("table.fbsBudget.net")</td>
+            <td width="40%">
+
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="net"
+                         data-type="selectTree"
+                         data-biz-name="netId"
+                         data-name="netId"
+                         data-underNetCorp="true"
+                         data-group="corpGroup"
+                         data-change="corpId"
+                         data-resource="finacial:subjectAccBalance:query"
+                         data-scope="net"
+                         data-defaultvalue="$!{search.netId}"></div>
+                </div>
+            </td>
+
+            ##单位
+            <td width="10%" class="textRight">#springMessage("table.fbsBudget.corpId")</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-biz-name="corpId"
+                         data-name="corpId"
+                         data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"
+                         data-group="corpGroup"
+                         data-resource="finacial:subjectAccBalance:query"
+                         data-scope="all"
+                         data-defaultvalue="$!{search.corpId}"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##账号
+            <td class="textRight">#springMessage("table.fcLessPayBill.account")</td>
+            <td>
+                <div class=layui-input-inline>
+                    ##<input id="blnctrAcc" class="layui-input" type="type" name="blnctrAcc" data-biz-name="selectTable" value="$!{search.blnctrAcc}">
+                    <input class="layui-input" type="text" id="account" name="blnctrAcc" value="$!{search.blnctrAcc}"/>
+                </div>
+            </td>
+
+            ##科目名称
+            <td class="textRight">#springMessage("table.fbsBudgetYear.itemName")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/paramconfig/fcbusinessruledefine/jsonSubject"
+                         data-valuefield="id" data-textfield="subjectName"
+                         data-biz-name="subjectId" data-name="subjectId" data-search="true"
+                         data-defaultvalue="$!{search.subjectId}"></div>
+                </div>
+            </td>
+        </tr>
+
+
+        <tr>
+            ##统计维度
+            <td class="textRight">#springMessage("balance.query.Statistical.dimension")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="balanceQuery.sumType" data-required="true" data-name="sumType"
+                     data-biz-name="sumType"
+                    #if($!{search.sumType})
+                     data-defaultvalue="$!{search.sumType}"
+                    #else
+                     data-defaultvalue="1"
+                    #end
+
+                     data-filterData="3"></div>##data-callback="changeByType"
+            </td>
+
+            ##币别
+            <td class="textRight">#springMessage("table.fbsBudgetDetail.curId")</td>
+            <td>
+                <div class=bt-biz-selectType data-name="curId" data-textField="curName" data-valueField="id"
+                     data-url="${basePath}/basic/business/btcurrency/json" data-biz-name="curId"
+                     data-defaultvalue="$!{search.curId}"></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="textRight">#springMessage('table.fcAccuBalance.date')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" data-biz-name="gedCloseDate" name="gedCloseDate" lay-verify="required"
+                           class="layui-input bt-biz-dateType" data-endid="startDate" data-type="date"
+                           value="$!date.format('yyyy-MM-dd',$!search.gedCloseDate)">
+                </div>
+                <div class="layui-inline">~</div>
+                <div class="layui-inline">
+                    <input type="text" data-biz-name="ledCloseDate" name="ledCloseDate" lay-verify="required"
+                           class="layui-input bt-biz-dateType" id="startDate" data-type="date"
+                           value="$!date.format('yyyy-MM-dd',$!search.ledCloseDate)">
+                </div>
+            </td>
+
+        </tr>
+
+        <!--提交按钮 -->
+        <tr>
+            <td style="text-align: center;" colSpan="6">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button id="reset" type="button" class="layui-btn layui-btn-primary"
+                        >#springMessage('common.button.reset')</button>
+                <button class="layui-btn" lay-submit lay-filter="excel">#springMessage('common.button.exports')</button>
+                <button id="printBt" class="layui-btn" type="button">#springMessage('common.button.print')</button>
+                ##				<button class="layui-btn bt-biz-printType" type="button" data-printareaid="print">#springMessage('common.button.print')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<input type="hidden" value="$!{netName}" id="netName" name="netName"/>
+<div id="print" class="print-list">
+    <table id="appTable" class="layui-table"  style="width:100%;">
+        <thead>
+            #if (${sumType} !='5' && ${sumType} !='6')
+            <tr>
+                <th>
+                    #if (${sumType}=='1' )
+						#springMessage("table.nisPersonnelDetail.corpId")##单位名称
+					#else
+                        #springMessage("table.fbsBudgetYear.itemCode")##科目
+                    #end
+                </th>
+                ##1：按单位+科目，2：按科目+单位，4：按科目+账号，5：按科目统计，6：按科目明细统计
+                <th>
+                    #if (${sumType}=='1')
+						#springMessage("table.fbsBudgetYear.itemCode")##科目
+					#elseif(${sumType}=='2')
+                        #springMessage("table.nisPersonnelDetail.corpId")##单位名称
+                    #elseif(${sumType}=='4')
+                        #springMessage("table.fcPredrawDtlTemp.account")##账号
+                    #end
+                </th>
+                #if (${sumType}=='4')
+                <th>#springMessage("table.btBankAccApp.accName")##账号名称</th>
+                #end
+                <th>#springMessage("table.fcExcrateAdjust.cur")</th>##币别
+                <th>#springMessage("table.fcAccBalance.balanceWay")</th>##方向
+                <th>#springMessage("table.accountSummary.beginning_balance")</th>##期初余额
+                <th>#springMessage("table.fcAccbookDtl.debitMoney")</th>##借方发生额
+                <th>#springMessage("table.fcAccbookDtlHis.creditMoney")</th>##贷方发生额
+                <th>#springMessage("table.accbook.endMoney")</th>##期末余额
+            </tr>
+            #end
+
+            #if(${sumType} =='5' || ${sumType} =='6')
+            <tr>
+                <th>#springMessage("table.fbsBudgetYear.itemCode")</th>##科目
+                <th>#springMessage("table.fcExcrateAdjust.cur")</th>##币别
+                <th>#springMessage("table.fcAccBalance.balanceWay")</th>##方向
+                <th>#springMessage("table.accountSummary.beginning_balance")</th>##期初余额
+                <th>#springMessage("table.fcAccbookDtl.debitMoney")</th>##借方发生额
+                <th>#springMessage("table.fcAccbookDtlHis.creditMoney")</th>##贷方发生额
+                <th>#springMessage("table.accbook.endMoney")</th>##期末余额
+            </tr>
+            #end
+        </thead>
+        <tbody>
+            #if ("2" != ${sumType} && "4" != ${sumType} && "5" != ${sumType} && "6" != ${sumType})
+                #foreach($netBean in $balBeans)
+                    #foreach($netBeans in $netBean.subBalBeans)
+                        #foreach($corpBeans in $netBeans.subBalBeans)
+                            #foreach($subjectBeans in $corpBeans.subBalBeans)
+                                #foreach($balBeans in $subjectBeans.subBalBeans)
+                                <tr>
+                                    #if ("1" == ${sumType})
+                                        <td align='center'>$!{balBeans.corpName}</td>
+                                        <td align='center'>$!{balBeans.subjectName}</td>
+                                    #end
+                                    <td align='center'>$!{balBeans.curName}</td>
+                                    <td align='center'>$!{balBeans.balanceName}</td>
+                                    <td align='right'>$number.formatNumeric($!{balBeans.yesterBalance})</td>
+                                    <td align='right'>$number.formatNumeric($!{balBeans.debitMoney})</td>
+                                    <td align='right'>$number.formatNumeric($!{balBeans.creditMoney})</td>
+                                    <td align='right'>$number.formatNumeric($!{balBeans.balance})</td>
+                                </tr>
+                                #end
+
+                                #if(${sumType}!='1')
+                                <tr>
+                                    <td align="right" colSpan="3"
+                                        style='color: green;'>$!{subjectBeans.subjectName}</td>
+                                    <td align='right' style='color: green;'>#springMessage("table.datatable.subtotal")
+                                        ：
+                                    </td>##科目小計
+                                    <td align='right'>$number.formatNumeric($!{subjectBeans.yesterBalance})</td>
+                                    <td align='right'>$number.formatNumeric($!{subjectBeans.debitMoney})</td>
+                                    <td align='right'>$number.formatNumeric($!{subjectBeans.creditMoney})</td>
+                                    <td align='right'>$number.formatNumeric($!{subjectBeans.balance})</td>
+                                </tr>
+                                #end
+                            #end
+                        <tr>
+                            <td align="right" colSpan="3" style='color: red;'>$!{corpBeans.corpName}</td>
+                            <td align='right' style='color: red;'>#springMessage("table.adjustDetail.moneySum")：
+                            </td>##單位合計
+                            <td align='right'>$!number.formatNumeric($!{corpBeans.yesterBalance})</td>
+                            <td align='right'>$!number.formatNumeric($!{corpBeans.debitMoney})</td>
+                            <td align='right'>$!number.formatNumeric($!{corpBeans.creditMoney})</td>
+                            <td align='right'>$!number.formatNumeric($!{corpBeans.balance})</td>
+                        </tr>
+                        #end
+                    ##<tr>
+                    ##    <td align="right" colSpan="3" style='color: blue;'>$!{netBeans.netName}</td>
+                    ##    <td align='right' style='color: blue;'>#springMessage("table.adjustDetail.moneySum")：</td>##合計
+                    ##    <td align='right'>$!number.formatNumeric($!{netBeans.yesterBalance})</td>
+                    ##    <td align='right'>$!number.formatNumeric($!{netBeans.debitMoney})</td>
+                    ##    <td align='right'>$!number.formatNumeric($!{netBeans.creditMoney})</td>
+                    ##    <td align='right'>$!number.formatNumeric($!{netBeans.balance})</td>
+                    ##</tr>
+                    #end
+                <tr>
+                    <td align="right" colSpan="3" style='color: blue;'>$!{netBean.corpName}</td>
+                    <td align='right' style='color: blue;'>#springMessage("table.onlineledger.total")：</td>##網點总计
+                    <td align='right'>$!number.formatNumeric($!{netBean.yesterBalance})</td>
+                    <td align='right'>$!number.formatNumeric($!{netBean.debitMoney})</td>
+                    <td align='right'>$!number.formatNumeric($!{netBean.creditMoney})</td>
+                    <td align='right'>$!number.formatNumeric($!{netBean.balance})</td>
+                </tr>
+                #end
+            #end
+
+
+            #if ("2" == ${sumType} || "4" == ${sumType})
+                #foreach($subBeans in $balBeans)
+                    #foreach($balBeans in $subBeans.subBalBeans)
+                    <tr>
+                        <td align='center'>$!{balBeans.subjectName}</td>
+                        #if( "4" == ${sumType})
+                            <td align='center'>$!{balBeans.blnctrAcc}</td>
+                            <td align='center'>$!{balBeans.accName}</td>
+                        #else
+                            <td align='center'>$!{balBeans.corpName}</td>
+                        #end
+                        <td align='center'>$!{balBeans.curName}</td>
+                        <td align='center'>$!{balBeans.balanceName}</td>
+                        <td align='right'>$number.formatNumeric($!{balBeans.yesterBalance})</td>
+                        <td align='right'>$number.formatNumeric($!{balBeans.debitMoney})</td>
+                        <td align='right'>$number.formatNumeric($!{balBeans.creditMoney})</td>
+                        <td align='right'>$number.formatNumeric($!{balBeans.balance})</td>
+
+                    </tr>
+                    #end
+                <tr>
+                    #if ("2" == ${sumType})
+                        <td align="right" colSpan="3" style='color: green;'>$!{subBeans.subjectName}</td>
+                    #else
+                        <td align="right" colSpan="4" style='color: green;'>$!{subBeans.subjectName}</td>
+                    #end
+                    <td align='right' style='color: green;'>#springMessage("table.datatable.subtotal")：</td>##科目小計
+                    <td align='right'>$number.formatNumeric($!{subBeans.yesterBalance})</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.debitMoney})</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.creditMoney})</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.balance})</td>
+                </tr>
+                #end
+            #end
+
+            #if ("5" == ${sumType} || "6" == ${sumType})
+                #foreach($subBeans in $balBeans)
+                <tr>
+                    <td align='left'>$!{subBeans.subjectCode}-$!{subBeans.subjectName}</td>
+                    <td align='center'>$!{subBeans.curName}</td>
+                    <td align='center'>$!{subBeans.balanceName}</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.yesterBalance})</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.debitMoney})</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.creditMoney})</td>
+                    <td align='right'>$number.formatNumeric($!{subBeans.balance})</td>
+                </tr>
+                #end
+            #end
+
+        </tbody>
+    </table>
+</div>
+
+
+
+    #parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/modules/finacial/report/subjectAccbalanceQuery.list.js?_btv=${resourceVersion}"></script>
+</html>

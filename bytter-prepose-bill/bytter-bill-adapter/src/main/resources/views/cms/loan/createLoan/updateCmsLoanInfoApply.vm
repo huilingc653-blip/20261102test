@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="id" name="id" type="hidden" value="$!{cmsLoanInfoPage.id}">
+    <input type="hidden" id="loanDate" value="$!date.format('yyyy-MM-dd',$!cmsLoanInfoPage.loanDate)"/>
+    <input type="hidden" id="repayDate" value="$!date.format('yyyy-MM-dd',$!cmsLoanInfoPage.repayDate)"/>
+    <input type="hidden" id="isHangCredit" value="$!{cmsLoanInfoPage.isHangCredit}">
+    <table class="layui-table">
+        <colgroup>
+            <col width="15%">
+            <col width="35%">
+            <col width="15%">
+            <col width="35%">
+        </colgroup>
+        <thead>
+        <tr>
+            <td colspan="4" align="center"><strong>#springMessage('cms.loan.loanInfo')</strong></td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <label>#springMessage('table.cmsLoanInfo.createDate')</label>&nbsp;&nbsp;
+                <div class="layui-input-inline">
+                    $!date.format('yyyy-MM-dd',$!cmsLoanInfoPage.createDate)
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##申请单位
+        <td class="textRight">#springMessage('table.cmsLoanInfo.corp')</td>
+        <td>
+            <div class="layui-input-inline">
+                <div class="bt-biz-corp"
+                     data-biz-type="corp"
+                     data-type="selectTree"
+                     data-name="corpId"
+                     data-biz-name="corpId"
+                     data-scope="all"
+                     data-resource="cms:loan:cmsloaninfoApply:query"
+                     data-defaultvalue="$!{cmsLoanInfoPage.corpId}"
+                     placeholder="#springMessage('table.cmsLoanInfo.corpId')"
+                     data-callback="changeCorp"
+                     data-required="true"></div>
+            </div>
+            <input type="hidden" id="corpName" name="corpName" value="$!{cmsLoanInfoPage.corpName}">
+        </td>
+
+        #if($isCharging)
+            ##借款单位
+            <td class="textRight">#springMessage('table.cmsLoanInfo.borrowCorpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="borrowCorpId"
+                         data-biz-name="borrowCorpId"
+                         data-defaultvalue="$!{cmsLoanInfoPage.borrowCorpId}"
+                         data-scope="all"
+                         data-required="true"></div>
+                </div>
+            </td>
+        #else
+            <td class="textRight" colspan="2"></td>
+        #end
+        </tr>
+        <tr>
+            #if($!{relateRat} == "1")##贷款管理是否设置挂接授信
+                <td class="textRight">#springMessage('cms.relate.cpRat')</td>
+                <td >
+                    <div class="layui-inline" >
+                        <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{cmsLoanInfoPage.isHangCredit}"
+                             data-name="isHangCredit" data-biz-name="isHangCredit" data-callback="setCpRatModel">
+                        </div>
+                    </div>
+                </td>
+            #end
+        </tr>
+        <tr>
+            ##所属资金中心
+            <td class="textRight">#springMessage('table.cmsLoanInfo.net')</td>
+            <td>
+                <!--number-->
+                <input type="text" id="netName" name="netName" lay-verify="required"
+                       autocomplete="off" class="layui-input" value="$!{netName}" placeholder="#springMessage('table.cmsLoanInfo.netCode')" readonly>
+                <input type="hidden" id="netCode" name="netCode" value="$!{cmsLoanInfoPage.netCode}">
+            </td>
+            #if(!$isCharging)
+                ##贷款类型
+                <td class="textRight">#springMessage('table.cmsLoanInfo.loanGenre')</td>
+                <td >
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-selectType" data-biz-name="t22" data-url="${basePath}/cms/loan/cmsloaninfo/LoanTypeJson" data-valuefield="code" data-textfield="name" data-name="loanGenre" data-search="true" data-defaultvalue="$!{cmsLoanInfoPage.loanGenre}" data-required="true"></div>
+                    </div>
+                </td>
+            #else
+                <td class="textRight" colspan="2"></td>
+            #end
+
+        </tr>
+        <tr>
+            ##贷款金额(小写)
+            <td class="textRight">#springMessage('table.cmsLoanInfo.loanMoneyLower')</td>
+            <td >
+                <input type="text" id="loanMoney" name="loanMoney" lay-verify="required" data-toUp="loanMoneyUpper" data-biz-name="loanMoney"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" data-minus="false" value="$!{cmsLoanInfoPage.loanMoney}" placeholder="#springMessage('table.cmsLoanInfo.loanMoney')">
+            </td>
+            ##贷款金额(大写)
+            <td class="textRight">#springMessage('table.cmsLoanInfo.loanMoneyUpper')</td>
+            <td >
+                <div id="loanMoneyUpper" name="loanMoneyUpper" style="margin-left:-8px;margin-top:5px;"></div>
+            </td>
+        </tr>
+        <tr>
+            ##贷款日期
+            <td class="textRight">#springMessage('table.cmsLoanInfo.loanDate')</td>
+            <td >
+                <input type="text" id="loanDateShow" name="loanDate" class="layui-input bt-biz-dateType" data-type="date" data-endId="repayDate" value="$!date.format('yyyy-MM-dd',$!cmsLoanInfoPage.loanDate)" data-biz-name="loanDate" lay-verify="required" data-callback="setTerm">
+            </td>
+            ##还款日期
+            <td class="textRight">#springMessage('table.cmsLoanDeferred.matureDate')</td>
+            <td >
+                <input type="text" id="repayDateShow" name="repayDate" class="layui-input bt-biz-dateType" data-type="date" id="repayDate" data-biz-name="repayDate" value="$!date.format('yyyy-MM-dd',$!cmsLoanInfoPage.repayDate)" lay-verify="required" data-callback="setTerm">
+            </td>
+        </tr>
+        #if($!{relateRat} == "1")##根据贷款是否设置挂接授信显示
+            #parse("views/common/ratCpRationInfoCommon.vm")
+        #end
+        #if($isCharging)
+            <tr>
+                ##发放方式
+                <td class="textRight">#springMessage('table.cmsLoanInfo.loanSendOutType')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.loan.loanSendOutType" data-defaultvalue="$!{cmsLoanInfoPage.loanSendOutType}" data-name="loanSendOutType" data-biz-name="loanSendOutType"></div>
+                </td>
+                ##支付方式
+                <td class="textRight">#springMessage('table.cmsLoanInfo.payType')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.loan.payType" data-defaultvalue="$!{cmsLoanInfoPage.payType}" data-name="payType" data-biz-name="payType"></div>
+                </td>
+
+            </tr>
+        #else
+            <tr>
+                ##还款方式
+                <td class="textRight">#springMessage('table.cmsLoanInfo.repayType')</td>
+                <td >
+                    <div class="layui-inline">
+                        <div class="bt-biz-selectType" data-name="repayType" data-biz-name="repayType"
+                             data-url="$basePath/cms/repay/repaytype/queryNoNRepayTypeList"
+                             data-callback="repayTypeCallBack" data-defaultvalue="$!{cmsLoanInfoPage.repayType}"
+                             data-valuefield="id" data-textfield="repayName"
+                             data-required="true"></div>
+                    </div>
+                    <div class="layui-inline">
+                        <!-- 还款计划 -->
+                        <button class="layui-btn" type="button" id="makePlanBtn"
+                                onclick="repayLan();">#springMessage(
+                                    'cms.button.repayPlan')</button>
+                        <input type="hidden" id="planId" name="planId" value="$!{planId}">
+                        <input type="hidden" id="planStatus" name="planStatus" value="0">
+                    </div>
+                </td>
+                ##贷款种类
+                <td class="textRight">#springMessage('table.cmsLoanInfo.loanClass')</td>
+                <td >
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.LoanClass" data-defaultvalue="$!{cmsLoanInfoPage.loanClass}" data-name="loanClass" data-biz-name="loanClass" data-required="true" data-disabled="true"></div>
+                </td>
+            </tr>
+        #end
+        <tr>
+            ##贷款期限
+            <td class="textRight">#springMessage('table.cmsLoanInfo.loanTerm')</td>
+            <td >
+                <div class="layui-inline">
+                    <input type="text" id="loanTerm" name="loanTerm" lay-verify="required" readonly="readonly"
+                           decimal="0" autocomplete="off" class="layui-input" value="$!{cmsLoanInfoPage.loanTerm}" placeholder="#springMessage('table.cmsLoanInfo.loanTerm')">
+                </div>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.loan.ternUnit" data-defaultvalue="$!{cmsLoanInfoPage.ternUnit}" data-name="ternUnit" data-biz-name="ternUnit" data-callback="setTerm"></div>
+                </div>
+            </td>
+            ##用途
+            <td class="textRight">#springMessage('table.cmsLoanInfo.purpose')</td>
+            <td >
+                <div class=layui-inline id="purposeShow">
+                    <div class=bt-biz-selectType data-name="purpose" data-textField="purpose" data-valueField="purpose"  data-callback="purposeChange"
+                         data-biz-name="purpose" data-url="${basePath}/cms/loan/cmsloaninfo/getPurpose?corpId=$!{cmsLoanInfoPage.corpId}" data-extraData="true"
+                         data-inputvalue="inputvalue" data-search="true" data-defaultvalue="$!{cmsLoanInfoPage.purpose}" data-required="true"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.isAutoPay')</td>
+            <td >
+                <div class="layui-inline">##是否自动还款
+                    <div class="bt-biz-dict" id="radio" data-type="radio" data-group="sf_yn" data-defaultvalue="0"
+                         data-name="isAutoRepay" data-biz-name="isAutoRepay" >
+                    </div>
+                </div>
+            </td>
+            ##放款币种
+            <td class="textRight">#springMessage('table.cmsLoanInfo.curCode')</td>
+            <td >
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-biz-name="curCode"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id" data-textfield="curName" data-name="curCode" id="curCode"
+                         data-search="true" data-defaultvalue="$!{cmsLoanInfoPage.curCode}" data-required="true"
+##                         data-initcallback="changeCur"
+                         data-callback="changeCur"></div>
+                </div>
+                <input type="hidden" id="curName" name="curName" >
+            </td>
+        </tr>
+
+        #if($isCharging)
+            <tr>
+                ##固定费率
+                <td class="textRight">#springMessage('table.cmsLoanInfo.clbFixedRate')</td>
+                <td >
+                    <div class="layui-input-inline">
+                        <input type="text" id="clbFixedRate" name="clbFixedRate" lay-verify="required"
+                               autocomplete="off" class="layui-input" placeholder="#springMessage('table.cmsLoanInfo.clbFixedRate')" value="$!{cmsLoanInfoPage.clbFixedRate}" readonly>
+                    </div>
+                    <div class="layui-input-inline">
+                        <button type="button" class="layui-btn" data-callback="">#springMessage('table.cmsLoanInfo.selectRate')</button>
+                    </div>
+                </td>
+                ##协定费率
+                <td class="textRight">#springMessage('table.cmsLoanInfo.clbAgreementRate')</td>
+                <td >
+                    <input type="text" id="clbAgreementRate" name="clbAgreementRate" lay-verify="required"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.cmsLoanInfo.clbAgreementRate')" value="$!{cmsLoanInfoPage.clbAgreementRate}">
+                </td>
+            </tr>
+        #end
+        #if($!{isGuarantee}=="1")##贷款参数设置挂接担保
+            #parse("views/common/guaContractChoose.vm")
+        #end
+        <tr>
+            ##备注
+            <td class="textRight">#springMessage('table.cmsLoanInfo.rmk')</td>
+            <td colspan="3">
+						<textarea id="rmk" name="rmk" style="min-height:70px" maxlength="50"
+                                  class="layui-textarea" placeholder="#springMessage('table.cmsLoanInfo.rmk')">$!{cmsLoanInfoPage.rmk}</textarea>
+            </td>
+        </tr>
+
+        </tbody>
+    </table>
+
+    <table class="layui-table">
+        <colgroup>
+            <col width="15%">
+            <col width="35%">
+            <col width="15%">
+            <col width="35%">
+        </colgroup>
+        <thead>
+        <tr>
+            <td colspan="4" align="center"><strong>#springMessage('cms.loaninfo.arguement.info')</strong></td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('cms.loaninfo.isover.repair')</td>
+            <td >
+                <div class="layui-inline">##是否跳过补录功能
+                    <div class="bt-biz-dict" id="radio" data-type="radio" data-group="sf_yn" data-defaultvalue="0"
+                      data-value="$!{cmsLoanInfoPage.isOverRepair}"   data-name="isOverRepair" data-biz-name="isOverRepair" onclick="changeOverRepair()" >
+                    </div>
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr style="display: #if($!{cmsLoanInfoPage.isOverRepair} == 0) none #end;" class="isOver">
+            ##贷款合同编号
+            <td class="textRight">#springMessage('table.cmsLoanInfo.contractCode')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="contractCode" name="contractCode"
+                           value="$!{cmsLoanInfoPage.contractCode}" #if($!{cmsLoanInfoPage.isOverRepair} == 0 )disabled#end
+                           lay-verify="#if( $!{cmsLoanInfoPage.isOverRepair} == 1) required #end"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.cmsLoanInfo.contractCode')">
+                </div>
+                ##挂接的合同信息
+                #parse("views/dual/manager/conInfo.vm")
+            </td>
+            ##计息方式
+            <td class="textRight">#springMessage('table.cmsLoanInfo.interestWay')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-disabled="#if($!{cmsLoanInfoPage.isOverRepair} == 0 )true#end"
+                     data-group="Admin.PredrawSign" #if($cmsLoanInfoPage.interestWay)
+                     data-defaultvalue="$!{cmsLoanInfoPage.interestWay}" #else data-defaultvalue="1" #end data-name="interestWay"
+                     data-biz-name="interestWay"></div>
+            </td>
+        </tr>
+            #if(!$isCharging)
+            <tr style="display: #if($!{cmsLoanInfoPage.isOverRepair} == 0) none #end;" class="isOver">
+                ##浮动方式
+                <td class="textRight">#springMessage('table.cmsLoanInfo.floatWay')</td>
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-dict" data-type="select" data-group="Cms.FloatWay"
+                             data-defaultvalue="1" data-value="$!{cmsLoanInfoPage.floatWay}"data-name="floatWay"
+                             data-disabled="#if($!{cmsLoanInfoPage.isOverRepair} == 0 )true#end" data-biz-name="floatWay"
+                             data-initcallback="setChangeFloatWay" data-callback="setChangeFloatWay" ></div>
+                        <div class="layui-inline" id="ChangeFloatWay"></div>
+                    </div>
+                </td>
+                ##利率调整生效日期
+                <td class="textRight">#springMessage('table.cmsLoanInfo.rateEntriesEffectDate')</td>
+                <td>
+                    <input type="text" name="rateEntriesEffectDate" class="layui-input bt-biz-dateType" id="rateEntriesEffectDate"
+                           value="$!{cmsLoanInfoPage.rateEntriesEffectDate}"
+                           data-callback="rateEntriesEffectDate" data-type="date" value="" data-biz-name="rateEntriesEffectDate" readonly="true">
+                </td>
+            </tr>
+            <tr style="display: #if($!{cmsLoanInfoPage.isOverRepair} == 0) none #end;" class="isOver">
+                ##浮动利率
+                <td class="textRight">#springMessage('cms.loan.floatRate')</td>
+                <td>
+                    <div class="layui-inline" style="padding-bottom: 5px;padding-top: 5px;">
+                        <div class="bt-biz-selectType"
+                             data-biz-name="referenceRateType"
+                             data-url=""
+                             data-valuefield="id"
+                             data-textfield="baseTypeName"
+                             data-name="referenceRateType"
+                             data-callback="loanRepayCycle"
+                             data-initcallback="loanRepayCycle"
+                             data-search="true"
+                             data-defaultvalue="first"
+                             data-disabled="#if( $!{cmsLoanInfoPage.isOverRepair} == 0) disabled #end"
+                             data-value="$!{cmsLoanInfoPage.referenceRateType}"
+                        ></div>
+                    </div><br>
+                    <div class="layui-inline" style="padding-bottom: 5px;padding-top: 5px;">
+                        <div class="bt-biz-selectType"
+                             data-biz-name="repayCycle"
+                             data-url=""
+                             data-valuefield="creditPeriodId"
+                             data-textfield="creditPeriodName"
+                             data-name="repayCycle"
+                             data-callback="loadrepayCycle"
+                             data-initcallback="loadrepayCycle"
+                             data-search="true"
+                             data-defaultvalue="first"
+                             data-value="$!{cmsLoanInfoPage.repayCycle}"
+                             data-disabled="#if( $!{cmsLoanInfoPage.isOverRepair} == 0)&&$!{cmsLoanInfoPage.floatWay} !== '01') disabled #end"
+                        ></div>
+                    </div><br>
+                    <div class="layui-inline" style="padding-bottom: 5px;padding-top: 5px;">
+                        <div class="bt-biz-dict" data-name="pointsProportionSelect" data-type="select" data-biz-name="pointsProportionSelect" data-group="Cms.PointsProportion" data-value="$!{cmsLoanInfoPage.pointsProportionSelect}" data-defaultvalue="02" data-disabled="true"></div>
+                    </div>
+                    <div class="layui-inline input-bp " style="padding-bottom: 5px;padding-top: 5px;">
+                        <div class="pl rateWrap" style="width:212px">
+                            <input class="layui-input bt-biz-moneyType" id="pointsProportionText" name="pointsProportionText"
+                                   data-biz-name="pointsProportionText" data-value="$!{cmsLoanInfoPage.pointsProportionText}"
+                                   data-decimal="2" data-max="100" data-min="-100" data-disabled="disabled"
+                                   data-callback="getLoanRate" data-minus="true">
+                            <span name="percentsymbol" class="inputMark" id="inputMark"></span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="pointsText" value="$!{cmsLoanInfoPage.pointsProportionText}">
+                </td>
+                ##贷款利率
+                <td class="textRight">#springMessage('table.cmsLoanInfo.loanRate')</td>
+                <td>
+                    <div class="layui-inline">
+                        <input type="text" data-name="loanRate" data-biz-name="loanRate" class="layui-input bt-biz-rateType"
+                               lay-verify="#if( $!{cmsLoanInfoPage.isOverRepair} == 1) required #end"
+                               value="$!{cmsLoanInfoPage.loanRate}" data-supermin="0" id="loanRate"
+                               placeholder="#springMessage('table.cmsLoanInfo.loanRate')" >
+                    </div>
+                    <div class="layui-inline">
+                        <input type="button" class="layui-btn" id="getRate" value="#springMessage('cms.provide.getRate')" style="float:left ;">
+                    </div>
+                </td>
+            </tr>
+            <tr style="display: #if($!{cmsLoanInfoPage.isOverRepair} == 0) none #end;" class="isOver">
+                ##展期利率
+                <td class="textRight">#springMessage('table.cmsLoanInfo.deferredRate')</td>
+                <td>
+                    <input type="text" data-name="deferredRate" class="layui-input bt-biz-rateType" value="$!{cmsLoanInfoPage.deferredRate}" placeholder="#springMessage('table.cmsLoanInfo.deferredRate')">
+                </td>
+                ##逾期利率
+                <td class="textRight">#springMessage('table.cmsLoanInfo.overdueRate')</td>
+                <td>
+                    <input type="text" data-name="overdueRate" class="layui-input bt-biz-rateType" data-biz-name="overdueRate"
+                           lay-verify="#if( $!{cmsLoanInfoPage.isOverRepair} == 1) required #end"
+                           value="$!{cmsLoanInfoPage.overdueRate}" placeholder="#springMessage('table.cmsLoanInfo.overdueRate')">
+                </td>
+            </tr>
+            <tr style="display: #if($!{cmsLoanInfoPage.isOverRepair} == 0) none #end;" class="isOver">
+                <td class="textRight">#springMessage('cms.loaninfo.ivover.distribute')</td>
+                <td >
+                    <div class="layui-inline">##是否跳过发放功能
+                        <div class="bt-biz-dict" id="radio" data-type="radio" data-group="sf_yn" data-defaultvalue="0" data-value="$!{cmsLoanInfoPage.isOverDistribute}"
+                             data-name="isOverDistribute" data-biz-name="isOverDistribute" >
+                        </div>
+                    </div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                ##附件
+                <input id="annexName" name="annexName" type="hidden" value="$!{cmsLoanInfoPage.attachmentId}">
+                <td class="textRight">#springMessage('cms.loan.attachment')</td>
+                <td colspan="3"><div id="uploader" style="width:100%" class="layui-input-inline"></div></td>
+            </tr>
+            #end
+
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" value="1" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="" value="0" lay-filter="submit">#springMessage('common.button.temp')</button>
+                <button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/modules/cms/loan/cmsLoanInfoApply.edit.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/rat/cpration/ratCpUrationSet.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/guarantee/guaContractSelect.js?_btv=${resourceVersion}"></script>
+
+
+</html>

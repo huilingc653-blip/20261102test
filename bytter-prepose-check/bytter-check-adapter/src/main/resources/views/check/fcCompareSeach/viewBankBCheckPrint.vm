@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        table.dataTable tbody tr td {
+            height: 26px !important;
+            border-bottom: 1px solid #d2d2d2 !important;
+            border-left: 1px solid #d2d2d2 !important;
+        }
+
+        table.dataTable thead tr th {
+            border-bottom: 1px solid #d2d2d2 !important;
+            border-left: 1px solid #d2d2d2 !important;
+        }
+    </style>
+</head>
+<body>
+<div width="100%">
+    <table class="layui-table" cellpadding="0" cellspacing="0" border="1" width="100%">
+        <thead>
+        <tr>
+            ##对账单详细信息
+            <th width="10%" style="text-align:center;" colspan="3"><strong>#springMessage(
+                'table.bank.checking.info')</strong></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            ##账号
+            <td width="10%" align="left">#springMessage('table.fcPredrawDtlTemp.account')：$!{balAdj.bankAcc}</td>
+            ##账户名称
+            <td width="10%" align="left">#springMessage('table.btBankAccApp.accName')：$!{balAdj.accName}</td>
+            ##开户行
+            <td width="10%" align="left">#springMessage('table.accountDTO.bankName')：$!{balAdj.bankName}</td>
+        </tr>
+        <tr>
+            ##企业账面余额
+            <td width="10%" align="left">#springMessage('table.fcBankBalanceAdjust.blnInitBalance')
+                ：<strong>$number.formatNumeric($!{balAdj.blnInitBalance})</strong></td>
+            ##银行账面余额
+            <td width="10%" align="left">#springMessage('table.fcBankBalanceAdjust.bankInitBalance')
+                ：<strong>$number.formatNumeric($!{balAdj.bankInitBalance})</strong></td>
+            ##对账开始结束日期
+            <td width="10%" align="left">#springMessage('table.checking.startDate')：$!date.format(
+                'yyyy-MM-dd',$!balAdj.beginDate)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #springMessage(
+                'table.checking.endDate')：$!date.format('yyyy-MM-dd',$!balAdj.endDate)</td>
+        </tr>
+        </tbody>
+    </table>
+    <table class="layui-table" width="100%">
+        <tr>
+            ##上期企业已记，银行未达账（提取企业日记账）
+            <td colspan="2">#springMessage('table.fcCompare.bankmsg')</td>
+            ##上期银行已记，企业未达账（提取银行日记账）
+            <td colspan="2">#springMessage('table.fcCompare.qymsg')</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="vertical-align:top">
+                <div style='width:100%'>
+                    <table id="cntrTb" class="layui-table" style="width:100%;">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.fcAccuBalance.date')</th>##日期
+                            <th>#springMessage('table.fcCompare.provide')</th>##借/贷
+                            <th>#springMessage('table.fcUnionAccbook.sendMoney')</th>##金额
+                            <th>#springMessage('table.fcBankBill.summaryContent')</th>##摘要
+                            <th>#springMessage('table.fcAccbookHis.voucherNo') </th>##凭证号
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+            <td colspan="2" style="vertical-align:top">
+                <div style='width:100%'>
+                    <table id="bankTb" class="layui-table" style="width:100%;">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.fcAccuBalance.date')</th>##日期
+                            <th>#springMessage('table.fcCompare.provide')</th>##借/贷
+                            <th>#springMessage('table.fcUnionAccbook.sendMoney')</th>##金额
+                            <th>#springMessage('table.fcBankBill.summaryContent')</th>##摘要
+                            <th>#springMessage('table.fcAccbookHis.voucherNo') </th>##凭证号
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                ##借方合计
+                #springMessage('table.fcUnionAccbook.debit.total')：<span id="cntrDebMoney">0.00</span>
+            </td>
+            <td>
+                ##贷方合计
+                #springMessage('table.fcUnionAccbook.lender.total')：<span id="cntrCreMoney">0.00</span>
+            </td>
+            <td>
+                ##借方合计
+                #springMessage('table.fcUnionAccbook.debit.total')： <span id="bankDebMoney">0.00</span>
+            </td>
+            <td>
+                ##贷方合计
+                #springMessage('table.fcUnionAccbook.lender.total')： <span id="bankCreMoney">0.00</span>
+            </td>
+        </tr>
+        <tr>
+            ##调节后余额
+            <td width="50%" colspan="2" align="center">#springMessage('table.fcUnionAccbook.adjust.balance')：<span
+                    id="adjustCntrMoney"><strong>$number.formatNumeric($!{balAdj.blnAdjBalance})</strong></span></td>
+            ##调节后余额
+            <td width="50%" colspan="2" align="center">#springMessage('table.fcUnionAccbook.adjust.balance')：<span
+                    id="adjustBankMoney"><strong>$number.formatNumeric($!{balAdj.bankAdjBal})</strong></span></td>
+        </tr>
+    </table>
+</div>
+<form class="layui-form layui-form-pane" id="searchForm">
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            ##颜色标识对账记录
+            <h6 class="layui-colla-title">#springMessage('table.fcUnionAccbook.color.checking')</h6>
+            <div class="layui-colla-content">
+                <table class="layui-table" align="center">
+                    <tr>
+                        <td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #FF8080;">&#xe617;</i>
+                        </td>
+                        <td width="100px" align="center">#springMessage(
+                            "table.fcUnionAccbook.outstanding.entry")</td>##未达账记录
+                        <td width="280px" align="center">
+                            <input id="ajustId" type="hidden" name="ajustId" value="$!{balAdj.id}">
+                            <input type="radio" name="stayRadios" checked="checked"
+                                   title="#springMessage('common.sc_yn.yes')" value="1" lay-filter="stayRadios">
+                            <input type="radio" name="stayRadios" title="#springMessage('common.sc_yn.no')" value="0"
+                                   lay-filter="stayRadios"/>
+                        </td>
+                        <td><span style="color: red">#springMessage("table.fcUnionAccbook.To_check_for.msg")</span>
+                        </td>##当勾对完成，并标记未达账，余额调节表显示平衡。
+                    </tr>
+                    <tr>
+                        <td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #B0DC81;">&#xe617;</i>
+                        </td>
+                        <td width="100px" align="center">#springMessage(
+                            "table.fcUnionAccbook.To_check_for.yes")</td>##已经勾对记录
+                        <td width="280px" align="center">
+                            <input type="radio" name="handRadios" checked="checked"
+                                   title="#springMessage('common.sc_yn.yes')" value="1" lay-filter="handRadios">
+                            <input type="radio" name="handRadios" title="#springMessage('common.sc_yn.no')" value="0"
+                                   lay-filter="handRadios"/>
+                        </td>
+                        <td><span style="color:red">#springMessage("table.fcUnionAccbook.To_check_for.yes.msg")</span>
+                        </td>##显示已经勾对数据，点击勾对，还原勾对数据，变成未勾对数据。
+                    </tr>
+                    <tr>
+                        <td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #4FBAE6;">&#xe617;</i>
+                        </td>
+                        <td width="100px" align="center">#springMessage(
+                            "table.fcUnionAccbook.checking.yes")</td>##已经对账记录
+                        <td width="280px" align="center">
+                            <input type="radio" name="checkRadios" checked="checked"
+                                   title="#springMessage('common.sc_yn.yes')" value="1" lay-filter="checkRadios">
+                            <input type="radio" name="checkRadios" title="#springMessage('common.sc_yn.no')" value="0"
+                                   lay-filter="checkRadios"/>
+                        </td>
+                        <td>&nbsp;</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+<table class="layui-table no-print">
+    <tbody>
+    <tr>
+        <td width="10%" align="center" colspan="3">
+            ##打印
+            <button type="button" class="layui-btn layui-btn-mini" onclick="print()">#springMessage(
+                'common.button.print')</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script>
+    var stayRadios = $('input:radio[name="stayRadios"]:checked').val();
+    var handRadios = $('input:radio[name="handRadios"]:checked').val();
+    var checkRadios = $('input:radio[name="checkRadios"]:checked').val();
+    bt.use(['form', 'jquery', 'element', 'date', 'bttable', 'moneyType'], function () {
+        $ = bt.jquery, form = bt.form(), element = layui.element(), moneyFun = bt.moneyType.getFun();
+
+            $loadCntrCheckDatas = function (stay, hand, check) {
+            var table1 = bt.bttable.init({
+                elem: "#cntrTb",
+                url: basePath + "/finacial/check/fcbankbalanceadjust/queryCntrOverDatas",
+                urldata: {
+                    "ajustId": $("#ajustId").val(), "stayRadios": stayRadios, "handRadios":
+                    handRadios, "checkRadios": checkRadios
+                },
+                columns: [
+                    {
+                        data: "tallyDate",
+                        render: function (data) {
+                            return isNull(data.tallyDate) ? "" : bt.date.format(data.tallyDate, 'yyyy-mm-dd');
+                        }
+                    },
+                    {
+                        data: "redblueSign",
+                        render: function (data) {
+                            if (data.debitMoney == 0) {
+                                return bt.dict('FcCompareAcc.loanSend', 0);
+                            } else {
+                                return bt.dict('FcCompareAcc.loanSend', 1);
+                            }
+                        }
+                    },
+                    {
+                        data: "debitMoney",
+                        render: function (data) {
+                            if (data.debitMoney == 0) {
+                                return moneyFun.format(data.creditMoney);
+                            } else {
+                                return moneyFun.format(data.debitMoney);
+                            }
+                        }
+                    },
+                    {
+                        data: "summaryContent", render: function (data) {
+                            var html = "";
+                            if (null != data.summaryContent) {
+                                html += '<div style="word-break: break-all!important;white-space:normal;!important;">' + data.summaryContent + '</div>';
+                            }
+                            return html;
+                        }
+                    },
+                    {
+                        data: "voucherNo", className: 'center', render: function (data) {
+                            return isNull(data.voucherNo) ? "" : data.voucherNo;
+                        }
+                    }
+                ],
+
+
+                tableInitCallback: function (data) {
+                    var creditMoney = 0;//贷
+                    var debitMoney = 0;//借
+                    $("#cntrTb tr").each(function (index, eml) {//初始化表格背景色,及借贷金额
+                        if (index > 0) {
+                            if (data[index - 1].debitMoney == 0) {//贷
+                                creditMoney += parseFloat(data[index - 1].creditMoney);
+                            } else {
+                                debitMoney += parseFloat(data[index - 1].debitMoney);
+                            }
+                            if (data[index - 1].compareSign == "1") {//已对账
+                                eml.style.backgroundColor = "#4FBAE6";
+                            } else if (data[index - 1].compareSign == "2") {//手工勾兑
+                                eml.style.backgroundColor = "#B0DC81";
+                            } else if (data[index - 1].compareSign == "4") {//本期未达
+                                eml.style.backgroundColor = "#FF8080";
+                            } else {//未对账
+                                eml.style.backgroundColor = "#FFFF80";
+                            }
+                        }
+                    });
+                    $("#cntrDebMoney").html("<strong>" + moneyFun.format(debitMoney) + "</strong>");
+                    $("#cntrCreMoney").html("<strong>" + moneyFun.format(creditMoney)) + "</strong>";
+
+                },
+
+            });
+        }
+
+            $loadBankCheckDatas = function (stay, hand, check) {
+            bt.bttable.init({
+                elem: "#bankTb",
+                url: basePath + "/finacial/check/fcbankbalanceadjust/queryBankOverDatas",
+                urldata: {
+                    "ajustId": $("#ajustId").val(), "stayRadios": stayRadios, "handRadios":
+                    handRadios, "checkRadios": checkRadios
+                },
+                columns: [
+                    {
+                        data: "tallyDate",
+                        render: function (data) {
+                            return isNull(data.tallyDate) ? "" : bt.date.format(data.tallyDate, 'yyyy-mm-dd');
+                        }
+                    },
+                    {
+                        data: "redblueSign",
+                        render: function (data) {
+                            if (data.debitMoney == 0) {
+                                return bt.dict('FcCompareAcc.loanSend', 0);
+                            } else {
+                                return bt.dict('FcCompareAcc.loanSend', 1);
+                            }
+                        }
+                    },
+                    {
+                        data: "debitMoney",
+                        render: function (data) {
+                            if (data.debitMoney == 0) {
+                                return moneyFun.format(data.creditMoney);
+                            } else {
+                                return moneyFun.format(data.debitMoney);
+                            }
+                        }
+                    },
+                    {
+                        data: "summaryContent", render: function (data) {
+                            var html = "";
+                            if (null != data.summaryContent) {
+                                html += '<div style="word-break: break-all!important;white-space:normal;!important;">' + data.summaryContent + '</div>';
+                            }
+                            return html;
+                        }
+                    },
+                    {
+                        data: "voucherNo", className: 'center', render: function (data) {
+                            return isNull(data.voucherNo) ? "" : data.voucherNo;
+                        }
+                    }
+
+                ],
+                tableInitCallback: function (data) {//初始化表格背景色
+                    var creditMoney = 0;//贷
+                    var debitMoney = 0;//借
+                    $("#bankTb tr").each(function (index, eml) {
+                        if (index > 0) {
+                            if (data[index - 1].debitMoney == 0) {//贷
+                                creditMoney += parseFloat(data[index - 1].creditMoney);
+                            } else {
+                                debitMoney += parseFloat(data[index - 1].debitMoney);
+                            }
+                            if (data[index - 1].compareSign == "1") {//已对账
+                                eml.style.backgroundColor = "#4FBAE6";
+                            } else if (data[index - 1].compareSign == "2") {//手工勾兑
+                                eml.style.backgroundColor = "#B0DC81";
+                            } else if (data[index - 1].compareSign == "4") {//本期未达
+                                eml.style.backgroundColor = "#FF8080";
+                            } else {//未对账
+                                eml.style.backgroundColor = "#FFFF80";
+                            }
+                        }
+                    });
+                    $("#bankDebMoney").html("<strong>" + moneyFun.format(debitMoney) + "</strong>");
+                    $("#bankCreMoney").html("<strong>" + moneyFun.format(creditMoney) + "</strong>");
+                },
+
+            });
+        }
+            $loadCntrCheckDatas();
+            $loadBankCheckDatas();
+        //未达账记录
+        form.on('radio(stayRadios)', function (data) {
+            stayRadios = data.value;
+                $loadCntrCheckDatas(stayRadios, handRadios, checkRadios);
+                $loadBankCheckDatas(stayRadios, handRadios, checkRadios);
+        });
+        //已经勾对记录
+        form.on('radio(handRadios)', function (data) {
+            handRadios = data.value;
+                $loadCntrCheckDatas(stayRadios, handRadios, checkRadios);
+                $loadBankCheckDatas(stayRadios, handRadios, checkRadios);
+        });
+        //已经对账记录
+        form.on('radio(checkRadios)', function (data) {
+            checkRadios = data.value;
+                $loadCntrCheckDatas(stayRadios, handRadios, checkRadios);
+                $loadBankCheckDatas(stayRadios, handRadios, checkRadios);
+        });
+
+        /**
+         * 判断是否为空 true：空 false:不为空
+         * @param data
+         */
+        function isNull(data) {
+            return (data == "" || data == undefined || data == null) ? true : false;
+        }
+
+
+    });
+
+    function print() {
+        var LODOP = getLodop();
+        $(".no-print").hide();
+        $(".layui-collapse").hide();
+        LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT", "Width:90%");
+        LODOP.ADD_PRINT_HTM(0, 0, "100%", "100%", document.documentElement.innerHTML);
+        $(".no-print").show();
+        $(".layui-collapse").show();
+        LODOP.PREVIEW();
+    }
+</script>

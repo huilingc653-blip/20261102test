@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="statisticsMonth" name="statisticsMonth" value=""/>
+    <table class="layui-table" id="seachTable">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage("table.btBankAcc.corpId")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-name="corpId" data-biz-type="corp" data-type="selectTree" data-biz-name="corpId"
+                         data-tree-type="check"
+                         data-checkkboxtype='{"Y":"s","N":"s"}'
+                         data-resource="bill:accebill:balcompare:query"
+                         data-afterInit="bt.initValue"
+                    ></div>
+                </div>
+            </td>
+            ##票据类型
+            <td width="8%" class="textRight">#springMessage('bill.accebill.billType')</td>
+            <td width="25%">
+                <div class="bt-biz-dict" data-group="AB_BILL_TYPE" id="billType" data-biz-name="billType" data-name="billType" data-type="select" ></div>
+            </td>
+            ##统计月份
+            <td class="textRight">#springMessage("common.statistical.time")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input class="layui-input bt-input-inline bt-biz-dateType"
+                           data-biz-name="monthDate"
+                           type="text"
+                           data-type="month"
+                           data-today="true"
+                           name="monthDate"
+                           data-callback="checkDate"
+                           lay-verify="required">
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##流通介质
+            <td class="textRight">#springMessage('table.abVoucherinfo.billFlag')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" id="billFlag" data-biz-name="billFlag" data-group="AB_BILL_FLAG" data-name="billFlag"></div>
+            </td>
+            ##对比周期
+            <td class="textRight">#springMessage("statisticsReport.IntegratedQuery.comparedCycle")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-dict" data-type="mulselect"  data-name="comparedCycle" data-biz-name="comparedCycle" data-group="AB.COMPARED.CYCLE" data-value="" ></div>
+                    </div>
+                </div>
+            </td>
+            ##金额单位
+            <td class="textRight">#springMessage("common.moneyType")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="select" data-biz-name="moneyUnit" data-name="moneyUnit" data-group="cms.MoneyType" data-defaultvalue="1"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8" style="text-align: center;">
+                #if($shiro.hasPermission("bill:accebill:balcompare:query"))
+                    <div class="layui-inline">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary" onclick="">
+                            #springMessage('common.button.reset')
+                        </button>
+                    </div>
+                #end
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th rowspan="2">#springMessage('table.sysCorp.corpName')</th>##单位
+        <th rowspan="2">#springMessage('statisticsReport.IntegratedQuery.balance')</th>##余额
+        <th colspan="3">#springMessage('statisticsReport.IntegratedQuery.befMonthEnd')</th>
+        <th colspan="3">#springMessage('statisticsReport.IntegratedQuery.befQuarterEnd')</th>
+        <th colspan="3">#springMessage('statisticsReport.IntegratedQuery.befThreeMonth')</th>
+        <th colspan="3">#springMessage('statisticsReport.IntegratedQuery.befYear')</th>
+        <th colspan="3">#springMessage('statisticsReport.IntegratedQuery.yearEarly')</th>
+    </tr>
+
+    <tr>
+        <th>#springMessage("statisticsReport.IntegratedQuery.balance")</th>##余额
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+        <th>#springMessage("statisticsReport.IntegratedQuery.proportion")</th>##比例
+
+        <th>#springMessage("statisticsReport.IntegratedQuery.balance")</th>##余额
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+        <th>#springMessage("statisticsReport.IntegratedQuery.proportion")</th>##比例
+
+        <th>#springMessage("statisticsReport.IntegratedQuery.balance")</th>##余额
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+        <th>#springMessage("statisticsReport.IntegratedQuery.proportion")</th>##比例
+
+        <th>#springMessage("statisticsReport.IntegratedQuery.balance")</th>##余额
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+        <th>#springMessage("statisticsReport.IntegratedQuery.proportion")</th>##比例
+
+        <th>#springMessage("statisticsReport.IntegratedQuery.balance")</th>##余额
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+        <th>#springMessage("statisticsReport.IntegratedQuery.proportion")</th>##比例
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    var corp;
+    var selectType;
+    var moneyFun;
+    var dicts;
+    var billTable;
+    var monthDate;
+    var mulselect;
+    bt.use(['form', 'datatable', 'dateType', 'selectType',  'dicts', 'corp','mulselect','moneyType','date'], function () {
+        $ = bt.jquery, form = bt.form();
+        mulselect=bt.mulselect.init();
+        dicts = bt.dicts.init();
+        monthDate=bt.dateType.init();
+        selectType = bt.selectType.init();
+        corp = bt.corp.init();
+        var moneyType = bt.moneyType.init();
+        moneyFun = moneyType.getFun();
+        //初始化统计月份
+        initMonth();
+
+        //初始化列表
+        billTable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:false,
+            order: [],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                callback:function (data) {
+                    columnShow();
+                }
+            },
+            ajax: {
+                'url': basePath+"/bill/accebill/balCompare/datatable"
+
+            },
+            buttons: [],
+            exportFile:{
+                customPrint:{
+                    breakword:[{title:bt.lang('table.sysCorp.corpName'),width:100,name:'corpName'}],
+                    header:function(){
+                        var html = '<tr>' +
+                                '<th rowspan="2">'+bt.lang('table.sysCorp.corpName')+'</th>'+
+                                '<th rowspan="2">'+bt.lang('statisticsReport.IntegratedQuery.balance')+'</th>'+
+                                '<th colspan="3"  style="text-align: center;">'+bt.lang('statisticsReport.IntegratedQuery.befMonthEnd')+'</th>' +
+                                '<th colspan="3"  style="text-align: center;">'+bt.lang('statisticsReport.IntegratedQuery.befQuarterEnd')+'</th>' +
+                                '<th colspan="3"  style="text-align: center;">'+bt.lang('statisticsReport.IntegratedQuery.befThreeMonth')+'</th>' +
+                                '<th colspan="3"  style="text-align: center;">'+bt.lang('statisticsReport.IntegratedQuery.befYear')+'</th>' +
+                                '<th colspan="3"  style="text-align: center;">'+bt.lang('statisticsReport.IntegratedQuery.yearEarly')+'</th>' +
+                                '</tr>';
+                        html += '<tr>' +
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.balance")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.differenceBal")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.proportion")+'</th>'+
+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.balance")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.differenceBal")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.proportion")+'</th>'+
+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.balance")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.differenceBal")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.proportion")+'</th>'+
+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.balance")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.differenceBal")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.proportion")+'</th>'+
+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.balance")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.differenceBal")+'</th>'+
+                                '<th>'+bt.lang("statisticsReport.IntegratedQuery.proportion")+'</th>'+
+                                '</tr>';
+                        return html
+                    }
+                }
+            },
+            columns: [
+                {data: "corpName", bSortable: false,className:"center"},
+                {data: "bal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return '<a href="#"  onclick="openInfo(\'' + full.corpId + '\')">' + moneyFun.format(full.bal,{separator: ","}) + '</a>';
+                    }
+                },{data: "befMonthBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befMonthBal, {separator: ","});
+                    }
+                },
+                {data: "befMonthDifBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befMonthDifBal, {separator: ","});
+                    }
+                },
+                {data: "befMonthProportion", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befMonthProportion, {separator: ",", decimal: 2}) + "%";
+                    }
+                },
+                {data: "befQuarterBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befQuarterBal, {separator: ","});
+                    }
+                },
+                {data: "befQuarterDifBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befQuarterDifBal, {separator: ","});
+                    }
+                },
+                {data: "befQuarterProportion", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befQuarterProportion, {separator: ",", decimal: 2}) + "%";
+                    }
+                },
+                {data: "befThreeMonthBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befThreeMonthBal, {separator: ","});
+                    }
+                },
+                {data: "befThreeMDifBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befThreeMDifBal, {separator: ","});
+                    }
+                },
+                {data: "befThreeMProportion", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befThreeMProportion, {separator: ",", decimal: 2}) + "%";
+                    }
+                },
+                {data: "befYearBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befYearBal, {separator: ","});
+                    }
+                },
+                {data: "befYearDifBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befYearDifBal, {separator: ","});
+                    }
+                },
+                {data: "befYearProportion", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.befYearProportion, {separator: ",", decimal: 2}) + "%";
+                    }
+                },
+                {data: "yearEarlyBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.yearEarlyBal, {separator: ","});
+                    }
+                },
+                {data: "yearEarlyDifBal", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.yearEarlyDifBal, {separator: ","});
+                    }
+                },
+                {data: "yearEarlyProportion", bSortable: false,className:"textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.yearEarlyProportion, {separator: ",", decimal: 2}) + "%";
+                    }
+                }
+            ],
+            summary:{
+                pageSum:true,//小计
+                allSum:false,
+                selectSum:false,
+                sumList:[
+                    {
+                        colNum:'2',
+                        dataName:'bal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'3',
+                        dataName:'befMonthBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'4',
+                        dataName:'befMonthDifBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'5',
+                        dataName:'befMonthProportion',
+                        expression:function(obj){ //自定义汇总内容 obj为各汇总列数据
+                            if(obj['bal']==0 || obj['bal']==0.00 || obj['befMonthDifBal']==0.00 || obj['befMonthDifBal']==0){
+                                return "0.00%";
+                            }
+                            return  ((moneyFun.toNumber(obj['befMonthDifBal'])/moneyFun.toNumber(obj['bal']))*100).toFixed(2)+"%";
+                        }
+                    },{
+                        colNum:'6',
+                        dataName:'befQuarterBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'7',
+                        dataName:'befQuarterDifBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'8',
+                        dataName:'befQuarterProportion',
+                        expression:function(obj){ //自定义汇总内容 obj为各汇总列数据
+                            if(obj['bal']==0 || obj['bal']==0.00){
+                                return "0.00%";
+                            }
+                            return  ((moneyFun.toNumber(obj['befQuarterDifBal'])/moneyFun.toNumber(obj['bal']))*100).toFixed(2)+"%";
+                        }
+                    },{
+                        colNum:'9',
+                        dataName:'befThreeMonthBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'10',
+                        dataName:'befThreeMDifBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'11',
+                        dataName:'befThreeMProportion',
+                        expression:function(obj){ //自定义汇总内容 obj为各汇总列数据
+                            if(obj['bal']==0 || obj['bal']==0.00){
+                                return "0.00%";
+                            }
+                            return  ((moneyFun.toNumber(obj['befThreeMDifBal'])/moneyFun.toNumber(obj['bal']))*100).toFixed(2)+"%";
+                        }
+                    },{
+                        colNum:'12',
+                        dataName:'befYearBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'13',
+                        dataName:'befYearDifBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'14',
+                        dataName:'befYearProportion',
+                        expression:function(obj){ //自定义汇总内容 obj为各汇总列数据
+                            if(obj['bal']==0 || obj['bal']==0.00){
+                                return "0.00%";
+                            }
+                            return  ((moneyFun.toNumber(obj['befYearDifBal'])/moneyFun.toNumber(obj['bal']))*100).toFixed(2)+"%";
+                        }
+                    },{
+                        colNum:'15',
+                        dataName:'yearEarlyBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'16',
+                        dataName:'yearEarlyDifBal',
+                        money:true//货币类型，需要千分格式化
+                    },{
+                        colNum:'17',
+                        dataName:'yearEarlyProportion',
+                        expression:function(obj){ //自定义汇总内容 obj为各汇总列数据
+                            if(obj['bal']==0 || obj['bal']==0.00){
+                                return "0.00%";
+                            }
+                            return  ((moneyFun.toNumber(obj['yearEarlyDifBal'])/moneyFun.toNumber(obj['bal']))*100).toFixed(2)+"%";
+                        }
+                    }
+                ]
+            }
+        });
+
+    });
+
+    //选择对比周期时动态显示列表
+    function columnShow(){
+        var  one=0,two=0,three=0,four=0,five=0;
+        var selectCyclew=mulselect.get("comparedCycle").val();
+        if (selectCyclew && selectCyclew[0].value) {
+            for (var i = 0; i < selectCyclew.length; i++) {
+                if(selectCyclew[i].value=='1'){one=selectCyclew[i].value}
+                if(selectCyclew[i].value=='2'){two=selectCyclew[i].value}
+                if(selectCyclew[i].value=='3'){three=selectCyclew[i].value}
+                if(selectCyclew[i].value=='4'){four=selectCyclew[i].value}
+                if(selectCyclew[i].value=='5'){five=selectCyclew[i].value}
+            }
+        }else{
+            one=1;two=1;three=1;four=1;five=1;
+        }
+        showOrHidden(one,two,three,four,five);
+    }
+
+
+    function setColumnShow(index,flag) {
+        var column = billTable.column(index);
+        column.visible(flag);
+    }
+
+
+    function showOrHidden(one,two,three,four,five) {
+        //上月末
+       if(one>0){
+           setColumnShow(2,true);//显示列
+           setColumnShow(3,true);//显示列
+           setColumnShow(4,true);//显示列
+       }else{
+           setColumnShow(2,false);//隐藏列
+           setColumnShow(3,false);//隐藏列
+           setColumnShow(4,false);//隐藏列
+       }
+       //上季度末
+        if(two>0){
+            setColumnShow(5,true);//显示列
+            setColumnShow(6,true);//显示列
+            setColumnShow(7,true);//显示列
+        }else{
+            setColumnShow(5,false);//隐藏列
+            setColumnShow(6,false);//隐藏列
+            setColumnShow(7,false);//隐藏列
+        }
+        //三个月前
+        if(three>0){
+            setColumnShow(8,true);//显示列
+            setColumnShow(9,true);//显示列
+            setColumnShow(10,true);//显示列
+        }else{
+            setColumnShow(8,false);//隐藏列
+            setColumnShow(9,false);//隐藏列
+            setColumnShow(10,false);//隐藏列
+        }
+        //上年同期
+        if(four>0){
+            setColumnShow(11,true);//显示列
+            setColumnShow(12,true);//显示列
+            setColumnShow(13,true);//显示列
+        }else{
+            setColumnShow(11,false);//隐藏列
+            setColumnShow(12,false);//隐藏列
+            setColumnShow(13,false);//隐藏列
+        }
+        //年初
+        if(five>0){
+            setColumnShow(14,true);//显示列
+            setColumnShow(15,true);//显示列
+            setColumnShow(16,true);//显示列
+        }else{
+            setColumnShow(14,false);//隐藏列
+            setColumnShow(15,false);//隐藏列
+            setColumnShow(16,false);//隐藏列
+        }
+    }
+
+    /**
+     * 跳转明细页面
+     * @param corpId
+     */
+    function openInfo(corpId) {
+        var billFlag = dicts.get("billFlag").val();
+        var billType = dicts.get("billType").val();
+        var openUrl = basePath + "/bill/accebill/balCompare/open?corpId=" + corpId;
+        openUrl += "&billFlag=" + billFlag + "&statisticsMonth=" + $("#statisticsMonth").val()+ "&billType=" +billType;
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '630px'],
+            maxmin: true,
+            content: openUrl
+        });
+    }
+
+    //初始化统计月份
+    function initMonth() {
+        var date = new Date();
+        var year = date.getFullYear()
+        var month = date.getMonth()+1;
+        var newDay = date.getDate();
+        var newDay2 = layui.laydate.getEndDate(month,year);
+        if (month >= 1 && month <= 9) {
+            month = "0" + month;
+        }
+        var update = year +"-"+ month + "-" + newDay;
+        var update2 = year +"-"+ month + "-" + newDay2;
+        monthDate.get("monthDate").attr("data-max",update2);
+        monthDate.get("monthDate").val(year +"-"+ month);
+        $("#statisticsMonth").val(update);
+    }
+
+    //改变月份时日期的修改
+    function checkDate(){
+        var setDate = new Date(monthDate.get("monthDate").val());
+        var setYear = setDate.getFullYear();
+        var setMonth = setDate.getMonth()+1;
+        var date = new Date();
+        var year = date.getFullYear()
+        var month = date.getMonth()+1;
+        var toDay = date.getDate();
+        var toDate;
+        //当前月份，设值为当天
+        if(setYear == year && setMonth == month){
+            toDate = year +"-"+ month + "-" + toDay;
+        }else{
+            //选择月份，设值最后一天
+            var endDay = layui.laydate.getEndDate(setDate.getMonth()+1,setDate.getFullYear());
+            toDate = setYear +"-"+ setMonth + "-" + endDay;
+        }
+        $("#statisticsMonth").val(toDate);
+    }
+
+
+</script>
+</html>

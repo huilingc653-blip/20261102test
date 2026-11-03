@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+    	#rateInfo input {
+    		text-align:right;
+    	}
+    	#rateInfo .bt-biz-rateType {
+    		width:128px;
+    	}
+    
+    </style>
+</head>
+<body>
+
+	<form class="layui-form" method="post" id="inputForm">
+		<input type="hidden" id="id" name="id" value="$!{LgInfoVo.id}"/>
+		<input type="hidden" id="bankCode" name="openCorp" value="$!{LgInfoVo.openCorp}"/>
+		<input type="hidden" id="openWay" value="$!{LgInfoVo.openWay}"/>
+		<input type="hidden" id="bondIdPre" name="bondIdPre" value="$!{bondId}">
+        <input type="hidden" id="startOpenRat" value="$!{startOpenRat}">##参数设置是否启用敞口
+        <input type="hidden" id="isHangBail" value="$!{isHangBail}">##保函基础参数设置是否挂接保证金
+        <input type="hidden" id="ratContains" value="$!{ratContains}">##保函基础参数设置是否挂接授信
+        <input type="hidden" id="curExrate" value="$!{curExrate}">##保函币别汇率
+        <input type="hidden" id="standCurId" value="$!{standCur.id}">##本位币币种
+        <input type="hidden" id="corpId" value="$!{LgInfoVo.corpId}">
+	##保证金id
+        <input type="hidden" id="bondId" name="bondId" value="$!{bondId}" />
+	##保证证金的账户余额
+        <input type="hidden" id="bondMoneySum" />
+	##保证金账户的可用余额
+        <input type="hidden" id="accAvailMoney" name="accAvailMoney"/>
+        <input type="hidden" id="bondCorpId" />
+        <input type="hidden" id="bondBankId" />
+        <input type="hidden" id="bondAccCurId" />
+		<input type="hidden" id="ratItemCode" value="$!{ratItemCode}">
+        <input type="hidden" id="isGuaVm" value="true">
+        <input type="hidden" id="ratApplyMoney">##授信正式占用金额
+		<table class="layui-table">
+		<tbody>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<label><b>#springMessage('table.guaGuarantee.application')</b></label>
+				</td>
+			</tr>
+        	<tr>
+        		##保函编号
+				<td class="textRight" width="14%">#springMessage('table.guaGuarantee.No')</td>
+				<td width="36%">
+                    <input type="text" name="guaranteeNo"  autocomplete="off" class="layui-input"
+						placeholder="#springMessage('table.guaGuarantee.No')" lay-verify="required|strlength" data-maxlength="32"
+						value="$!{LgInfoVo.guaranteeNo}">				
+                </td>
+        		##保函类型
+				<td class="textRight"><font color="red">*</font>#springMessage('table.guaGuarantee.type')</td>
+				<td>
+					<div class="bt-biz-dict" data-type="select" data-group="guarantee.Lg.TypeAttr" data-defaultvalue="$!{LgInfoVo.guaranteeType}" data-name="guaranteeType" data-biz-name="guaranteeType" data-required="true"></div>
+				</td>
+			</tr>
+           <tr>
+		  ##保函申请人
+           <td class="textRight">#springMessage('table.guaGuarantee.applyPeople')</td>
+			<td>
+				<div class="layui-input-inline">
+						<div class="bt-biz-corp" 
+							data-biz-type="corp"
+							data-type="selectTree"
+							data-name="corpId"
+							data-biz-name="corpId"
+							data-scope="all"
+							data-required="true"
+							data-resource="gua:guarantee:info:apply"
+							data-callback="bt.corpCallback"
+							data-defaultvalue="$!{LgInfoVo.corpId}">
+						</div>
+				 </div>
+			</td>
+			##开立人类型
+			 <td class="textRight"><font color="red">*</font>#springMessage('table.guaGuarantee.openPeopleType')</td>
+              <td>
+					<div class="bt-biz-dict" data-type="select" data-group="guarantee.Lg.openPeopleType" data-defaultvalue="$!{LgInfoVo.openCorpType}" data-name="openCorpType" data-biz-name="openCorpType" data-required="true"></div>
+				</div>
+				<span>
+				##开立方式
+			   #springMessage('table.guaGuarantee.openWay')
+			   <div class="bt-biz-dict" data-type="select" data-group="guarantee.Lg.openWay" data-defaultvalue="$!{LgInfoVo.openWay}" data-name="openWay" data-biz-name="openWay" data-required="true" data-callback="openWayCallback"></div>
+			   ##开立类型
+			   #springMessage('table.guaGuarantee.openType')
+			   <div class="bt-biz-dict" data-type="select" data-group="guarantee.Lg.openType" data-defaultvalue="$!{LgInfoVo.openType}" data-name="openType" data-biz-name="openType" data-required="true"></div>
+				</span>
+			  </td>
+		   </tr>
+		   
+        	<tr>
+        		##保函开立人
+				<td class="textRight"><font color="red">*</font>#springMessage('table.guaGuarantee.openPeople')</td>
+				<td >
+					<div id="xzl">        
+        			 	<div class="layui-inline">
+        					<input value="$!{bankName}" class="layui-input" id="openCorp" readonly="readonly" type="text"/>
+        						<div class="bt-div-search" >
+                            		<button class="bt-biz-bankInfo" type="button"  data-callback="bankinfoCallback"  title="#springMessage('common.button.select')" data-beforeClick="bt.bankInfoBeforeClick" >
+                               			 <i class="layui-icon">&#xe615;</i>
+                           			 </button>
+                   				</div>
+        				</div>
+        			</div>
+				</td>
+				##保函受益人
+				<td class="textRight" width="14%">#springMessage('table.guaGuarantee.beneficiary')</td>
+				<td width="36%">
+                    <input type="text" name="incomeCorp" value="$!{LgInfoVo.incomeCorp}" autocomplete="off"
+						   class="layui-input" placeholder="#springMessage('table.guaGuarantee.beneficiary')"
+						   lay-verify="required|strlength" data-maxlength="100"
+					>
+                </td>
+			</tr>
+			<tr>
+				##币别
+                <td class="textRight">#springMessage('table.guaGuarantee.curId')</td>
+                <td>
+					 <div class="bt-biz-selectType" data-name="curId" data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id" data-textfield="curName"  data-defaultvalue="$!{LgInfoVo.curId}" data-required="true" data-biz-name="curId"
+                          data-callback="bt.changeCurId" data-initcallback="setBondCurList"></div>
+				</td>
+        		##保函金额
+				<td class="textRight">#springMessage('table.guaGuarantee.money')</td>
+				<td >
+                	<input type="text" id="guaranteeMoney" name="guaranteeMoney" value="$!{LgInfoVo.guaranteeMoney}" data-decimal="2" class="layui-input bt-biz-moneyType" data-biz-name="lgMoney" lay-verify="required" data-callback="cirCalMoney">
+				</td>
+				
+			</tr>
+			<tr>
+        		##保函性质
+				<td class="textRight"><font color="red">*</font>#springMessage('table.guaGuarantee.lgNature')</td>
+				<td >
+				 <div class="bt-biz-dict" data-type="select" data-group="guarantee.Lg.nature"  data-callback="setEndDateProperty"
+					data-defaultvalue="$!{LgInfoVo.guaranteeAttr}" data-name="guaranteeAttr" data-biz-name="guaranteeAttr" data-required="true"></div>
+				</td>
+				##保证事项
+                <td class="textRight">#springMessage('table.guaGuarantee.lgMatter')</td>
+                <td>
+				   <input type="text" id="guaItem" name="guaItem" data-decimal="2" value="$!{LgInfoVo.guaItem}" class="layui-input" data-biz-name="guaItem">
+				</td>
+			</tr>
+			<tr>
+        		##保函开始时间
+				<td class="textRight">#springMessage('table.guaGuarantee.startDate')</td>
+				<td >
+                	<input type="text" name="startDate" data-name="startDate" data-biz-name="startDate"  value="$!{LgInfoVo.startDate}" 
+					data-callback="bt.changStartDate"	id="startDate"  class="layui-input bt-biz-dateType" data-endid="endDate" data-type="date" lay-verify="required">
+				</td>	
+				##保函截止时间
+				#if($!{LgInfoVo.guaranteeAttr} == "0")##敞口保函
+                <td class="textRight">#springMessage('table.guaGuarantee.endDate')</td>
+                <td>
+					<input type="text" name="endDate"　data-name="endDate"  value="$!{LgInfoVo.endDate}"
+								class="layui-input bt-biz-dateType" id="endDate" data-type="date" >
+				</td>
+				#else##闭口保函
+				<td class="textRight">#springMessage('table.guaGuarantee.endDate')</td>
+                <td>
+					<input type="text" name="endDate"　data-name="endDate"  value="$!{LgInfoVo.endDate}"
+								class="layui-input bt-biz-dateType" id="endDate" data-type="date" lay-verify="required">
+				</td> 
+				#end
+			</tr>
+			<tr>
+        		##保函预计结束日期
+				#if($!{LgInfoVo.guaranteeAttr} == "0")##敞口保函
+				<td class="textRight">#springMessage('table.guaGuarantee.expectEndDate')</td>
+				<td >
+                	<input type="text" name="expectEndDate"　data-name="expectEndDate"  value="$!{LgInfoVo.expectEndDate}"
+								class="layui-input bt-biz-dateType" id="expectEndDate" data-type="date" lay-verify="required">
+				</td>
+				#else##闭口保函
+					<td class="textRight">#springMessage('table.guaGuarantee.expectEndDate')</td>
+				<td >
+                	<input type="text" name="expectEndDate"　data-name="expectEndDate"  value="$!{LgInfoVo.expectEndDate}"
+								class="layui-input bt-biz-dateType" id="expectEndDate" data-type="date" >
+				</td>
+				#end
+				##转开行
+				#if($!{LgInfoVo.openWay} == "1")
+				<td class="isShow textRight" >#springMessage('table.guaGuarantee.turnBank')</td>
+                <td class="isShow">
+				    <input type="text" id="turnBank" name="turnBank"  value="$!{LgInfoVo.turnBank}" lay-verify="required" class="layui-input" placeholder="#springMessage('table.guaGuarantee.turnBank')" >
+				</td>
+				#else
+				<td class="isShow textRight" style="display:none;">#springMessage('table.guaGuarantee.turnBank')</td>
+                <td class="isShow" style="display:none;">
+				    <input type="text" id="turnBank" name="turnBank"  class="layui-input" placeholder="#springMessage('table.guaGuarantee.turnBank')">
+				</td>	
+				#end
+			</tr>
+            <tr>
+			##被担保单位
+                <td class="textRight">#springMessage('table.guaGuarantee.guaranteedCorp')</td>
+                <td >
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-tree-type="check"
+                             data-type="selectTree"
+                             data-name="guaranteeedCorp"
+                             data-biz-name="guaranteeedCorp"
+                             data-scope="all"
+                             data-defaultvalue="$!{LgInfoVo.guaranteeedCorp}"
+                        >
+                        </div>
+                    </div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+				#if($!{isHangBail}=="1")##参数设置挂接保证金
+##					#parse("views/dual/manager/bondInfo.vm")##保证金公共页面
+                <tr>
+				##是否挂保证金
+                    <td  class="textRight">#springMessage('table.fcBond.includeBond')</td>
+                    <td >
+                        <div class="bt-biz-dict" data-type="radio" data-group="sf_yn"
+							#if($!{isHookBond})
+                             data-defaultvalue="$!{isHookBond}"
+							#else
+                             data-defaultvalue="1"
+							#end
+                             data-biz-name="isHookBond"
+                             data-name="isHookBond" data-callback="changeFcBond"></div></td>
+					##保证金额度单
+                        <td width="15%" class="textRight bondInfo" style="display: none">#springMessage('table.fcBond.quotas')</td>
+                        <td width="40%" class="bondInfo" style="display: none">
+                            <div class="layui-inline">
+                                <input id="bondAcc" name="bondAcc" type="text" readonly="true"  class="layui-input" value="$!{bondBankAcc}" lay-verify="required">
+                            </div>
+                            <div class="layui-inline">
+                                <button class="layui-btn bt-biz-bondAccInfo"  data-biz-name="bondAcc" type="button"
+                                        data-callback="bondAccinfoCallback" data-beforeClick="checkCorp">#springMessage('common.button.select')</button>
+                            </div>
+                        </td>
+                </tr>
+                <tr>
+				##    保证金币种
+                    <td class="textRight">#springMessage('table.urationapply.bondCurId')</td>
+                    <td>
+                        <div class="layui-inline">
+                            <div class="bt-biz-selectType" data-required="true"
+                                 data-url="${basePath}/letter/guarantee/guaGuaranteeInfo/getBondCurList?billCurId=$!{LgInfoVo.curId}&corpId=$!{LgInfoVo.corpId}"
+								 data-name="bondCurId" data-valuefield="id" data-textfield="curName" data-callback="changeBondCur" data-defaultvalue="$!{bondCurId}" data-biz-name="bondCurId"></div>
+                        </div>
+                    </td>
+				##保证金比例
+                    <td width="15%" class="textRight">#springMessage('table.fcBond.bondPercent')</td>
+                    <td width="40%">
+                        <div class="layui-input-inline">
+                            <input type="text" data-name="bondPercent" data-decimal="2"
+								#if($!{bailmoneyRate})
+                                   value="$!{bailmoneyRate}"
+								#end
+                                   lay-verify="required" data-min="0"
+                                   class="layui-input bt-biz-rateType" data-biz-name="bondPercent" data-callback="setBailMoney">
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+				##保证金金额
+                    <td widht="20%" class="textRight">#springMessage('table.fcBond.bondmoney')</td>
+                    <td width="25%">
+                        <div class="layui-input-inline">
+                            <input type="text" id="bondMoney"  name="bondMoney"
+								#if($!{bailmoney})
+                                   value="$!{bailmoney}"
+								#end
+                                   data-decimal="2" class="layui-input bt-biz-moneyType" lay-verify="required"
+                                   data-biz-name="bondMoney" data-callback="setBailMoneyRate" placeholder="#springMessage('table.cmsProvideLoanInfo.bailmoney')">
+                        </div>
+                    </td>
+				##保证金合同号
+                    <td width="20%" class="textRight">#springMessage('table.fcBond.contractNum')</td>
+                    <td width="25%">
+                        <div class="layui-input-inline">
+                            <input type="text" id="bondContract" name="bondContract" value="$!{bailmoneyContract}"
+                                   autocomplete="off" class="layui-input" >
+                        </div>
+                    </td>
+                </tr>
+				##保证金利率
+                <tr>
+                    <td width="15%" class="textRight">#springMessage('table.fcBond.bondRate')</td>
+                    <td>
+                        <div class="layui-inline">
+                            <input type="text" id="bondRate" data-name="bondRate"  data-biz-name="bondRate" class="layui-input bt-biz-rateType"  value="$!{bondRate}" >
+                        </div>
+                    </td>
+                </tr>
+				#end
+			#if($!{ratContains} == "1")
+			##挂接授信开始
+            <tr>
+                <td class="textRight">#springMessage('gua.related.rat')</td>##是否挂接授信
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-dict" id="radio" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{LgInfoVo.ratmodel}"
+                             data-name="ratmodel" data-biz-name="ratmodel" data-callback="setRatModel"></div>
+                    </div>
+                </td>
+				#if($!{startOpenRat} == "1")##参数设置启用敞口
+                    <td class="textRight">#springMessage('gua.start.Openrat')</td>##是否启用敞口授信
+                    <td>
+                        <div class="layui-inline">
+                            <div class="bt-biz-dict" id="radio" data-type="radio" data-group="sf_yn"
+                                 data-defaultvalue="$!{urationDTO.isOpenRat}"
+                                 data-name="isOpenRat" data-biz-name="isOpenRat" data-callback="setRatModel"></div>
+                        </div>
+                    </td>
+				#end
+            </tr>
+				#parse("views/dual/manager/ratInfo.vm")##挂接授信公共页面
+				#if($!{urationDTO.itemFlag} == "1")
+					<span id="compItem">
+						    <input type="hidden" name="ratCode" id="ratCode" value="$!{urationDTO.ratCode}">
+					        <input type="hidden" name="itemFlag" id="itemFlag" value="$!{urationDTO.itemFlag}">
+					        <input type="hidden" name="itemMoney" id="itemMoney" value="$!{urationDTO.money}">
+						#foreach($applyDtl in $!{urationDTO.applyDtls})
+							#set($vcount = $velocityCount - 1)
+                            <input type="hidden" name="applyDtls[$!{vcount}].itemCode" id="itemCode$!{vcount}"
+                                   value="$!{applyDtl.itemCode}">
+                    <input type="hidden" name="applyDtls[$!{vcount}].itemMoney" itemCode="$!{applyDtl.itemCode}"
+                           id="itemMoney$!{vcount}" value="$!{applyDtl.useMaxMoney}">
+						#end
+					</span>
+				#end
+				#if($!{urationDTO.itemFlag} == "0")
+                <span id="singleItem">
+							 <input type="hidden" name="ratCode" id="ratCode" value="$!{urationDTO.ratCode}">
+					        <input type="hidden" name="itemFlag" id="itemFlag" value="$!{urationDTO.itemFlag}">
+					        <input type="hidden" name="itemMoney" id="itemMoney" value="$!{urationDTO.money}">
+				</span>
+				#end
+			#end
+			##挂接授信结束
+			
+			<tr>
+				<td class="textRight">#springMessage('cms.loan.attachment')</td>
+				<td style="text-align: center;" colspan="3">
+					<!-- 附件上传 -->
+					<input id="annexName" name="uploadId" type="hidden" value="$!{LgInfoVo.attachmentId}">
+			        <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;" colspan="4">
+					<button class="layui-btn" lay-submit="" id="submit" value="11">#springMessage('common.button.submit')</button>
+					<button class="layui-btn" lay-submit="" id="temp" value="0">#springMessage('common.button.temp')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/guarantee/guaGuaranteeInfo.add.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratUrationSet.js?_btv=${resourceVersion}"></script>
+</html>

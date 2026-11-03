@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tr>
+			<td class="textRight">#springMessage('table.fcBusinessRuleDefine.sysRaceCode')</td>
+			<td>
+                <div class="layui-inline">
+                    <input type="text" name="likes_sysRaceCode"
+                            autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBusinessRuleDefine.sysRaceCode')">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.fcBusinessRuleDefine.sysRaceName')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" name="likes_sysRaceName"
+                            autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBusinessRuleDefine.sysRaceName')">
+                </div>
+            </td>
+         </tr>
+         <tr>
+           	<td colspan="4" align="center">
+	            <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+	            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+       			<button type="button" class="layui-btn" onclick="importRule()">#springMessage('common.button.submit')</button>
+       		</td>
+        </tr>
+    </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBusinessRuleDefine.sysRaceName')</th>
+        <th>#springMessage('table.fcBusinessRuleDefine.subjCode')</th>
+        <th>#springMessage('table.fcBusinessRuleDefine.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+bt.use(['form','datatable'], function(){
+    $ = bt.jquery,form = bt.form();
+    //生成列表
+    bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        searchForm: {
+        	formElem: "#searchForm",
+        	formFilter: 'search'
+        },
+        checkbox:true,order: [1,'desc'],
+        ajax: {
+            'url': basePath+"/paramconfig/fcbusinessruledefinepool/initDatatable"
+        },
+        buttons: [
+        ]
+        ,columns: [
+            {data:"sysRaceCode",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+                    return "(" + full.sysRaceCode + ")" + full.sysRaceName;
+                }
+            },
+            {data:"subjCode",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+            		if(null == full.subjCode || "" == full.subjCode || undefined == full.subjCode){
+            			return "";
+            		}
+                    return "(" + full.subjCode + ")" + full.subName;
+                }
+            },
+            {data:"validSign",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+                    return bt.dict("sf_yn",full.validSign);
+                }	
+            },
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>'
+                return html;
+            }}
+        ]
+    });
+});
+
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/paramconfig/fcbusinessruledefinepool/viewInit/" + data.id
+    });
+}
+
+function importRule(){
+	var data = bt.datatable.getSelectData();
+	if(data && data.length < 1){
+		layer.alert(bt.lang("common.button.selectnum"));
+		return false;
+	}
+	
+	
+}
+
+</script>

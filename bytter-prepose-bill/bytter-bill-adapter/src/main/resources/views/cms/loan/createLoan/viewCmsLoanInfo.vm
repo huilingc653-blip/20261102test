@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form layui-form-pane">
+	<input id="infoBillCode" name="infoBillCode" type="hidden" value="$!{cmsLoanInfoPage.billCode}">
+	#parse("views/cms/loan/createLoan/viewCmsLoanInfoSub.vm")
+		#parse("views/cms/loan/createLoan/viewCmsLoanInfoApply.vm")
+    #parse("views/cms/loan/createLoan/viewCmsUseRatInfo.vm")
+	       <!-- 日志 -->
+	<div id="tagMsg"></div>
+	<table class="layui-table">
+			<tr>
+        			<td colspan="4" align="center">
+##        				<button class="layui-btn"  onClick="doClose()">#springMessage('common.button.close')</button>
+						#if($!{cmsLoanInfoPage.bizStatus} eq '15'||$!{cmsLoanInfoPage.bizStatus} eq '17'||$!{cmsLoanInfoPage.bizStatus} eq '26')##待审批和审批打回时可查看审批流程
+                            <button type="button" class="layui-btn" onclick="bt.trackFlowByBusinessId('$!{cmsLoanInfoPage.id}')">#springMessage('common.button.trackFlow')</button>
+						#end
+        			</td>
+        		</tr>
+        </table>
+
+	</form>
+
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/cms/guarantee/guaContractSelect.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+bt.use(['form','btUpload','moneyType'], function() {
+	$ = bt.jquery,form = bt.form();
+	bt.moneyType.init();
+	var gid = $("#annexName").val();
+    var up = bt.btUpload.init({
+        elem: "#uploader",
+        hasUpload: false,
+        hasDelete: false,
+        isExpand: true,
+        gid: gid
+    });
+
+
+	//关闭窗口
+    doClose = function(){
+    	if(bt.navtab){
+			bt.navtab.closeCurrent();
+		}
+    };
+
+	/**
+	 * 生成日志列表
+	 * @return
+	 */
+	$genMsgHtml = function () {
+		var billCode = $("#infoBillCode").val();
+		// var billCode = $("#sendBillCode").val();
+		// if(infoBillCode){
+		// 	billCode +=","+infoBillCode;
+		// }
+		var url = basePath + "/cms/basedata/cmsprocessmsg/list/" + billCode;
+		$.ajax({
+			url: url,
+			method: 'GET',
+			async: false,
+			success: function (json) {
+				$("#tagMsg").html("");
+				$("#tagMsg").html(json);
+				form.render();
+			}
+		});
+    }
+	$genMsgHtml();
+});
+
+
+//授信占用参数设置
+	function beforeCpRation(){
+	var corpId = $("#corpId").val();
+	var curCode = $("#curCode").val();//币别
+	var loanDate =  $("#loanDate").val();//贷款日期
+	var itemCode = $("#cpRatItemCode").val();//授信品种
+	var beginDate = new Date(loanDate.substring(0,10));
+	var ratCode = $("#cpRatCode").val();//授信编号
+	//var isRmbRat = $("#isRmbRat").val();//是否折合本位币
+	var params = {
+			corpId : corpId,
+			curCode : curCode,
+			ratItemCode : itemCode,
+			beginDate : beginDate,
+            ratCode:ratCode
+			//isRmbRat : isRmbRat
+	}
+	return params;
+}
+
+function setOtherParam(param){
+    var corpId = $("#corpId").val();//网点id
+    var startDate = $("#loanDate").val();//开始日期
+    var endDate = $("#repayDate").val() ;//结束日期
+    var curId = $("#curCode").val();//币别
+    param["corpId"] = bt.empty(corpId) ? "" : corpId;
+    param["startDate"] = bt.empty(startDate) ? "" : startDate;
+    param["endDate"] = bt.empty(endDate) ? "": endDate;
+    param["curId"] = bt.empty(curId) ? "" : curId;
+}
+</script>
+<script src="${basePath}/static/modules/cms/rat/cpration/ratCpUrationSet.js?_btv=${resourceVersion}"></script>

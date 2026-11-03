@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input id="loginName" name="loginName" type="hidden" value="$shiro.getPrincipal().loginName">
+    <input type="hidden" id="row" value="$!{row}" >
+    <input type="hidden" name="eqi_busType" value="$!{busType}" >
+    <input type="hidden" name="eqi_status" value="95" >
+
+
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位名称
+            <td class="textRight">#springMessage("table.choBankFinance.corpId")</td>
+            <td>
+                $!{corp.name}
+                <input type="hidden" name="eqs_corpId" value="$!{corp.id}">
+            </td>
+            #if($!{busType}=='11')
+                ##定期账号
+                <td class="textRight">#springMessage('table.choBankFinance.timeAcc')</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <input type="text" name="likes_payerAcc"
+                               autocomplete="off" class="layui-input bank" placeholder="#springMessage('table.choBankFinance.timeAcc')">
+                    </div>
+                </td>
+            #else
+                ##通知账号
+                <td class="textRight">#springMessage('table.choBankFinance.noticeAcc')</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <input type="text" name="likes_payerAcc"
+                               autocomplete="off" class="layui-input bank" placeholder="#springMessage('table.choBankFinance.noticeAcc')">
+                    </div>
+                </td>
+            #end
+        </tr>
+        <tr>
+            ##状态
+            <td class="textRight">#springMessage('table.choBankFinance.status')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-selecttext="false" data-displayData="95"
+                     data-group="choBankFinance.status" data-name="eqi_status2"></div>
+            </td>
+            ##币别
+            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-selecttext="false" data-displayData="$!{dto.curId}"
+                     data-name="curId" data-valueField="id" data-textField="curName" data-defaultvalue="$!{dto.curId}"
+                     data-required="true"  data-biz-name="curId"></div>
+            </td>
+        </tr>
+        <tr>
+            ##金额
+            <td class="textRight">#springMessage('table.nisBillhead.payMoney')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" data-name="geg_payMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" data-moneyendid="t20" placeholder="#springMessage('table.nisBillhead.payMoney')" data-moneyendid="t2">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" data-name="leg_payMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" id="t20" placeholder="#springMessage('table.nisBillhead.payMoney')" id="t2" value="$!{dto.amt}">
+                </div>
+            </td>
+            ##活期账号
+            <td class="textRight">#springMessage('table.choBankFinance.currentAcc')</td>
+            <td>
+                <input type="text" name="likes_payeeAcc" value="$!{dto.bankAcc}" readonly=""
+                       autocomplete="off" class="layui-input bank" placeholder="#springMessage('table.choBankFinance.currentAcc')">
+            </td>
+        </tr>
+        <tr>
+            ##日期
+            <td class="textRight">#springMessage('table.choBankFinance.wishPayday')</td>
+            <td>
+                <input type="text" name="ged_createDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_createDate" >
+                <span class="date-mid">~</span>
+                <input type="text" name="led_createDate" value="$!{endDate}" class="layui-input bt-input-inline bt-biz-dateType" id="led_createDate">
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width: 100%;">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.choBankFinance.billNo')</th>
+        #if($!{busType}=='11')
+            <th>#springMessage('table.choBankFinance.timeAcc')</th>
+        #else
+            <th>#springMessage('table.choBankFinance.noticeAcc')</th>
+        #end
+        <th>#springMessage('table.choBankFinance.corpId')</th>
+        <th>#springMessage('table.choBankFinance.curId')</th>
+        <th>#springMessage('table.choBankFinance.currentAcc')</th>
+        <th>#springMessage('table.choBankFinance.wishPayday')</th>
+        <th>#springMessage('table.choBankFinance.payMoney')</th>
+        <th>#springMessage('table.choBankFinance.interestRate')</th>
+        <th>#springMessage('table.eAcceptBill.purpose')</th>
+
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form', 'rateType','datatable', 'select', 'selectType','selectTable', 'dateType', 'corp', 'money', 'moneyType', 'dicts', 'bank','mulSelectBankFinancePage','choProductRedeem'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.dateType.init();
+        bt.moneyType.init();
+        var rateType = bt.rateType.getFun();
+        bt.bank.init({
+            elem: '.bank',
+        });
+        bt.selectType.init();
+        //生成列表
+        table = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: false,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/chowmatistic/chobankfinance/datatableForSelect"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="country-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "billNo", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        if(full.status == -1){
+                            var row = datatable.row(meta.row).node();
+                            $(row).addClass("row_bg");
+                        }
+                        return data;
+                    }
+                },
+                {data: "payerAcc", bSortable: true,className: 'center',},
+                {data: "corpName", bSortable: true,className: 'center',},
+                {data: "curName", bSortable: true,className: 'center',},
+                {data: "payeeAcc", bSortable: true,className: 'center',},
+                {data: "createDate", bSortable: true, className: 'center'},
+                {
+                    data: "payMoney", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.payMoney);
+                    }
+                },
+                {data: "interestRate", bSortable: true,className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        return rateType.format(full.interestRate);
+                    }
+                },
+                {data: "purpose", bSortable: true,className: 'center'},
+            ]
+        });
+
+        //初始化单位
+        bt.corp.init();
+
+        /**
+         * 撤回
+         * @param el
+         */
+        withdraw = function (el) {
+            var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+            if (data) {
+                $.post(basePath + "/increment/bpm/task/batchRevoke", {ids: data.id}, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            }
+        }
+
+        bt.dicts.init();
+
+        /**选择的数据进行数据传输  begin*/
+        table.on('click', '.country-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            // var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-mulSelectBankFinancePage']['callback'];
+            // if (func) {
+            //     var data = table.row($(this).data('row')).data();
+            //     func(data);di
+            // }
+            top.frames[currentParentIframe].window.busTypeCallback(table.row($(this).data('row')).data(),$("#row").val());
+        });
+        /**数据传输  end*/
+    });
+</script>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body style="padding: 0 10px">
+	<form class="layui-form" method="post" id="inputForm">
+		<input type="hidden" name="inputCurIds" id="inputCurIds" value="$!{fexExposureMainPage.curId}">
+		<input type="hidden" name="id" id="id" value="$!{fexExposureMainPage.id}">
+		<input id="status" name="status" type="hidden" value="$!{fexExposureMainPage.status}">
+		<table class="layui-table layui-table-border">
+			<tbody >
+			<tr>
+				##单位
+				<td class="textRight" width="20%">#springMessage('table.nisBillhead.corpId')</td>
+				<td width="25%">$!{fexExposureMainPage.corpName}</td>
+				##模板名称
+				<td class="textRight" width="25%">#springMessage('table.fexExposureTemplate.templateName')</td>
+				<td width="30%">$!{fexExposureMainPage.templateName}</td>
+			</tr>
+			<tr>
+				##总填报周期
+				<td class="textRight" width="20%">#springMessage('table.fexExposureTemplate.totalFillPeriod')</td>
+				<td width="25%">$!{fexExposureMainPage.totalFillPeriod}$dictTag.get("fexExposureTemplate.timeType",$!{fexExposureMainPage.totalFillUnit})</td>
+				##前面按周期填报，后续是否按年度填报 0-否 1-是
+				<td class="textRight" width="25%">#springMessage('table.fexExposureTemplate.isYearFill')</td>
+				<td width="30%">$dictTag.get("sf_yn",$!{fexExposureMainPage.isYearFill})</td>
+			</tr>
+			<tr>
+				##滚动总周期
+				<td class="textRight">#springMessage('table.fexExposureTemplate.scrollFillPeriod')</td>
+				<td>$!{fexExposureMainPage.scrollFillPeriod}$dictTag.get("fexExposureTemplate.timeType",$!{fexExposureMainPage.scrollFillUnit})</td>
+				##前面按周期填报，后续是否按总额填报 0-否 1-是
+				<td class="textRight">#springMessage('table.fexExposureTemplate.isTotalFill')</td>
+				<td>$dictTag.get("sf_yn",$!{fexExposureMainPage.isTotalFill})</td>
+			</tr>
+			<tr>
+				##滚动分解子周期
+				<td class="textRight">#springMessage('table.fexExposureTemplate.scrollResolvePeriod')</td>
+				<td>$!{fexExposureMainPage.scrollResolvePeriod}$dictTag.get("fexExposureTemplate.timeType",$!{fexExposureMainPage.scrollResolveUnit})</td>
+				##币种
+				<td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+				<td>
+					<div class="layui-input-inline">
+						<div class="bt-biz-mulselectType" data-url="${basePath}/foreign/fexCorpExposureTemplate/getCorpExposureCur?corpId=$!{fexExposureMainPage.corpId}&templateId=$!{fexExposureMainPage.templateId}" data-method="get" data-name ="curId" data-biz-name ="curId"
+							 data-valueField="id" data-textField="englishCode" data-inputvalue="inputvalue" data-search="true"
+							 data-callback="bt.curIdCallback" data-defaultvalue="$!{fexExposureMainPage.curId}"></div>
+					</div>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+		<!-- 敞口上报 -->
+		<div id="tagExposure"></div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+	bt.use(['form', 'layedit', 'btdate', 'moneyType', 'toLigerTree', 'btUpload', 'btImport', 'selectType', 'mulselect'], function () {
+		var $ = bt.jquery, form = bt.form();
+		//币别回调函数
+		bt.curIdCallback = function (data) {
+			var id = $("#id").val();
+			var cur = bt.mulselect.get("curId").val();
+			var curId = "";
+			for(var i=0;i<cur.length;i++){
+				if(cur[i] && cur[i].id) {
+					curId = curId + cur[i].id + ',';
+				}
+			}
+			if (curId == "") {
+				curId = $("#inputCurIds").val();
+			}
+			$genExposureHtml(id, curId);
+		};
+		bt.mulselect.init();
+		bt.selectType.init();
+		/**
+		 * 生成敞口上报信息
+		 * @return
+		 */
+		$genExposureHtml = function (id, curId) {
+			var url = basePath + "/foreign/fexExposure/viewUpdate/" + id + "/" + curId + "?timestamp=" + new Date().getTime();
+			$.ajax({
+				url: url,
+				method: 'GET',
+				async: false,
+				success: function (json) {
+					$("#tagExposure").html("");
+					$("#tagExposure").html(json);
+					form.render();
+					form.renderIcon();
+				}
+			});
+		}
+		$genExposureHtml($("#id").val(), $("#inputCurIds").val());
+
+		//监听提交
+		form.on('submit(submit)', function (data) {
+			bt.loading.show();
+			$("#status").val($(this).attr("value"));
+			$.post(basePath + "/foreign/fexExposure/modify", $('#inputForm').serialize(), function (result) {
+				bt.loading.hide();
+				parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+				if (result.success) {
+					if (bt.navtab) {
+						bt.navtab.closeCurrent();
+					} else {
+						parent.layer ? parent.layer.closeAll() : layer.closeAll();
+					}
+				}
+			}, 'JSON');
+			return false;
+		});
+	});
+</script>
+</html>

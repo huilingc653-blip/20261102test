@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tr>
+			<td class="textRight">#springMessage('table.fcSetMonth.netId')</td>
+			<td>
+                <div class="layui-inline">
+                	<div class="bt-biz-corp" data-defaultvalue="$!{FcSetMonthVO.netId}" data-name="netId" data-biz-type="net" data-type="select" ></div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.fbsBudgetPeriod.year')</td>
+            <td>
+                <div class="layui-inline">
+						<select name="overMonth" >
+							##<option value="$!{FcSetMonthVO.overMonth}">$!{FcSetMonthVO.overMonth}</option>
+							#foreach($year in ${yearItems})
+								<option #if($!{FcSetMonthVO.overMonth} == $year) selected="selected" #end value="$year">$year</option>
+                   			#end
+						</select>   
+                </div>
+             </td>
+        </tr>
+        <tr>
+            <td colspan="4" align="center">
+            	<button class="layui-btn" lay-filter="search" >#springMessage('common.button.search')</button>
+        	</td>
+	    </tr>
+    </table>
+    </form>
+	<form action="save" class="layui-form" method="post" >
+		<table id="appTable" class="layui-table layui-form" style="width:100%;">
+		    <thead>
+		    <tr>
+		        <th>#springMessage('table.fcSetMonth.netId')</th>
+		        <th>#springMessage('table.fcSetMonth.overMonth')</th>
+		        <th>#springMessage('table.fcSetMonth.dateStart')</th>
+		        <th>#springMessage('table.fcSetMonth.dateEnd')</th>
+		        <th>#springMessage('table.fcSetMonth.status')</th>
+		    </tr>
+		    </thead>
+		    <tbody>
+		    #foreach($fsm in $listFcSetMonth)
+		    	#set ($index = $velocityCount - 1)
+		    	<tr>
+		    		<td>
+		    			$!{fsm.corpName}
+		    			<input type="hidden" name="fsmList_netId_$index" value="$!{fsm.netId}">
+		    			<input type="hidden" name="fsmList_id_$index" value="$!{fsm.id}">
+		    		</td>
+		    		<td>
+		    			$!{fsm.overMonth}
+		    			<input type="hidden" name="fsmList_overMonth_$index" value="$!{fsm.overMonth}">
+		    		</td>
+		    		<td>
+		    			<div type="date" field="fsmList_dateStart_$index" defaultVal="$!date.format('yyyy-MM-dd',$!fsm.dateStart)"></div>
+		    		</td>
+		    		<td>
+		    			<div type="date" field="fsmList_dateEnd_$index" defaultVal="$!date.format('yyyy-MM-dd',$!fsm.dateEnd)"></div>
+		    		</td>
+		    		<td>
+		    			#if($!{fsm.status} == '0')
+		    				#springMessage('table.fcsetmonth.status.false')
+		    			#else
+		    				#springMessage('table.fcsetmonth.status.true')
+		    			#end
+		    		</td>
+		    	</tr>
+		    #end
+		    </tbody>
+		</table>
+		<center><div class="layui-inline">
+			<button class="layui-btn" lay-submit="" lay-filter="submit" align="center">#springMessage('common.button.submit')</button>
+        </div></center>
+	</form>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script type="text/javascript">
+bt.use(['jquery','form','btdate','corp'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    //时间
+    $.each($("div[type='date']"),function(i,item){
+		bt.btdate.init({
+			elem: "[field='"+$(item).attr("field")+"']",
+			name: $(item).attr("field"),
+			format: "YYYY-MM-DD",
+			istime: true,
+			defaultVal: $(item).attr("defaultVal"),
+			choose : function(datas){
+				var fieldt = $(item).attr("field");
+				var fieldArr = fieldt.split("_");
+				var datename = fieldArr[1];//
+				var indexCur = fieldArr[2];
+				var index;
+				var tempdate;
+				if("dateEnd" == datename){
+					index = indexCur - (-1);
+					if(index < 12) {
+						tempdate = $("#fsmList_dateStart_" + index).val();
+						//下一个startDate需从下一日开始
+						$("#fsmList_dateStart_" + index).val(addDate(datas, 1));
+					}
+					if(indexCur == 11){
+						if($("#fsmList_dateEnd_11").val() > setYearEnd()){
+							layer.msg(bt.lang("table.fcSetMonth.choosevalidDate"));
+							$("#fsmList_dateEnd_11").val(setYearEnd()); 
+						}
+					}
+					//判断上一个开始和结束日期大小
+					if($("#fsmList_dateStart_" + index).val()>$("#fsmList_dateEnd_" + index).val() || 
+								$("#fsmList_dateStart_" + indexCur).val()>$("#fsmList_dateEnd_" + indexCur).val()){
+						layer.msg(bt.lang("table.fcSetMonth.choosevalidDate"));
+						if(indexCur == 11){
+							$("#fsmList_dateEnd_11").val(setYearEnd()); 
+						}else{
+							$("#fsmList_dateStart_" + index).val(tempdate);
+							$("#fsmList_dateEnd_" + indexCur).val(addDate(tempdate, -1));
+						}
+					}
+				} else if("dateStart" == datename){
+					index = indexCur - 1;
+					if(index >= 0) {
+						tempdate = $("#fsmList_dateEnd_" + index).val();
+						//上一个endDate需从上一日开始
+						$("#fsmList_dateEnd_" + index).val(addDate(datas, -1));
+					}
+					
+					if(indexCur == 0){
+						if($("#fsmList_dateStart_0").val()<setYearFirst()){
+							layer.msg(bt.lang("table.fcSetMonth.choosevalidDate"));
+							$("#fsmList_dateStart_0").val(setYearFirst()); 
+						}
+					}
+					//判断下一个开始和结束日期大小
+					if($("#fsmList_dateEnd_" + index).val()<$("#fsmList_dateStart_" + index).val() ||
+								$("#fsmList_dateStart_" + indexCur).val()>$("#fsmList_dateEnd_" + indexCur).val()){
+						layer.msg(bt.lang("table.fcSetMonth.choosevalidDate"));
+						if(indexCur == 0){
+							$("#fsmList_dateStart_0").val(setYearFirst()); 
+						}else{
+							$("#fsmList_dateEnd_" + index).val(tempdate);
+							$("#fsmList_dateStart_" + indexCur).val(addDate(tempdate, 1)); 
+						}
+					}
+				}
+			}
+		});
+	});
+    //日期增加指定天数
+    function addDate(date,days){ 
+    	if(date!=""){
+	    	var regEx = new RegExp("\\-","gi"); 
+	    	date=date.replace(regEx,"/"); 
+    	}
+    	var d=new Date(date); 
+    	d.setDate(d.getDate()+days); 
+    	var month=d.getMonth()+1; 
+    	var day = d.getDate(); 
+    	if(month<10){ 
+    		month = "0"+month; 
+    	} 
+    	if(day<10){ 
+    		day = "0"+day; 
+    	} 
+    	var val = d.getFullYear()+"-"+month+"-"+day; 
+    	return val; 
+    }
+    //获取年初日期
+    function setYearFirst(){
+    	var year = $("select[name='overMonth']>option:selected").val();
+    	var val = year+"-01-01"; 
+    	return val; 
+    }
+  //获取年初日期
+    function setYearEnd(){
+    	var year = $("select[name='overMonth']>option:selected").val();
+    	var val = year+"-12-31"; 
+    	return val; 
+    }
+    form.on('submit(submit)', function(data){
+    	bt.loading.show();//显示加载中
+        var action = "/paramconfig/fcsetmonth/save";
+       //获取所有数据封装成fsm集合
+        var obj = new Object();
+        for(var i = 0 ; i< 12 ; i++){
+        	var idd = data.field["fsmList_id_"+i];
+        	obj["fsm["+i+"].id"] = idd;
+        	var netId = data.field["fsmList_netId_"+i];
+        	obj["fsm["+i+"].netId"] = netId;
+        	var overMonth = data.field["fsmList_overMonth_"+i];
+        	obj["fsm["+i+"].overMonth"] = overMonth;
+        	var dateStart = data.field["fsmList_dateStart_"+i];
+        	obj["fsm["+i+"].dateStart"] = dateStart;
+        	var dateEnd = data.field["fsmList_dateEnd_"+i];
+        	obj["fsm["+i+"].dateEnd"] = dateEnd;
+        }
+    	$.post(basePath + action,obj,function(result){
+            if(result.success){
+              //  parent.layer?parent.layer.closeAll():layer.closeAll();
+            	location.reload();
+            }
+            bt.loading.hide(); //关闭加载中
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+        return false;
+    });
+});
+</script>

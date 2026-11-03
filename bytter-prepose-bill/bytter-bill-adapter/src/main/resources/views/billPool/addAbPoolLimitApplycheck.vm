@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form input150-container" method="post">
+    <input id="ids" name="ids" type="hidden" value="$!{ids}">
+    <input id="checkType" name="checkType" type="hidden" value="">
+<div class="layui-form-item">
+<table class="layui-table">
+<tbody>
+<tr>
+	##所选笔数
+    <td class="textRight" width="25%">#springMessage('billPool.appleCheck.sum')</td>
+    <td   width="25%">
+        $!{abCount}
+    </td>
+    ##合计金额
+    <td class="textRight" width="20%">#springMessage('billPool.appleCheck.sumMoney')</td>
+    <td  width="30%">
+       $number.formatNumeric($!{abBillMoney})
+    </td>
+</tr>
+        <tr>
+            <td class="text-right">#springMessage("contract.type.rmk")</td>
+            <td colspan="3">
+                <textarea class="layui-textarea" name="checkMsg" data-maxlength="500" lay-verify="strlength"></textarea></td>
+            </td>
+        </tr>
+        </tbody>
+        </table>
+        </div>
+
+        <div class="layui-form-submit-adaptive">
+            <div style="text-align: center;">
+                <button class="layui-btn" lay-submit="" type="button" lay-filter="retreat">#springMessage('common.button.pass')</button>
+                 <button class="layui-btn" lay-submit="" type="button" lay-filter="enter">#springMessage('billPool.appleCheck.back')</button>
+                <button class="layui-btn layui-btn-primary" type="button" name="revert">#springMessage('common.button.revert')</button>
+            </div>
+        </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form','jquery'], function(){
+        var $ = bt.jquery,
+        form = bt.form();
+        //通过申请信息
+        form.on('submit(retreat)', function(data){
+            bt.loading.show();
+            data.field.checkType="1"
+            submitForm(data);
+        });
+        //不通过申请信息
+        form.on('submit(enter)', function(data){
+            bt.loading.show();
+            data.field.checkType="0"
+            submitForm(data);
+        });
+        //返回
+        $("[name='revert']").click(function(){
+            parent.layer.closeAll();
+        });
+    });
+
+    function submitForm(data){
+        $.post(basePath + '/billPool/applyCheck/saveLimitApplyCheck', data.field, function (result) {
+            bt.loading.hide();
+            if(result.success){
+                parent.layer.alert(bt.lang(result.msg), {icon: result.success?1:2});
+                parent.layer.closeAll();
+            }else{
+                parent.layer.alert(bt.lang(result.msg), {icon: result.success?1:2});
+            }
+            return false;
+        },'JSON');
+    }
+</script>
+</html>

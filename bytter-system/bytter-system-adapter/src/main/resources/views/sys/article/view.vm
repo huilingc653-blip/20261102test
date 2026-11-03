@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        /* 为展示内容的容器添加自动换行样式 */
+        #showArticleContextElement {
+            word-wrap: break-word;      /* 允许长单词或URL地址换行到下一行 */
+            word-break: break-all;      /* 允许在单词内换行 */
+            white-space: pre-wrap;      /* 保留空白符序列，但是正常地进行换行 */
+            overflow-wrap: break-word;  /* 现代浏览器的换行属性 */
+            max-width: 100%;            /* 确保容器宽度不超过父容器 */
+            padding: 15px;              /* 添加一些内边距，让内容不贴边 */
+            line-height: 1.6;           /* 设置合适的行高 */
+        }
+    </style>
+</head>
+<body>
+<div style="text-align: center">
+    <h1 style="margin-bottom: 10px;">${article.title}</h1>
+    <div style="color:#999999">
+        ## 发送人
+        <span style="margin-right: 20px;">#springMessage("sys.userMessage.sender"):$!{article.createByUserName}</span>
+        ## 发送时间
+        <span>#springMessage("sys.article.publishDate"):$!date.format(
+            "yyyy-MM-dd HH:mm:ss",$!{article.updateDate})</span>
+    </div>
+</div>
+<div>
+    <hr>
+</div>
+
+    ## ${article.context}
+    <div id="showArticleContextElement"></div>
+    #if($attachments.size()>0)
+    <hr>
+    <div>#springMessage("netbank.common.attachment")</div>
+    <div>
+        #foreach($attachment in $attachments)
+            ##    #set($fileSize = $!{attachment.fileSize} / 1024.00 )
+            <div><a href="${basePath}/download/attachment?id=${attachment.id}">$!{attachment.name}
+                ($!{number.formatDouble($attachment.fileSize)}KB)</a></div>
+        #end
+    </div>
+    #end
+<div class="layui-form-item layui-form-submit">
+    <div class="layui-input-block" style="margin: 0;">
+        <button type="button" class="layui-btn layui-btn-primary close-button">#springMessage(
+            'common.button.close')</button>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/plugins/js-xss/xss.min.js?_btv=${resourceVersion}"></script>
+<script type="application/javascript">
+
+    bt.use(['jquery'], function () {
+        $('.close-button').click(function () {
+            parent.layer.closeAll();
+        });
+        #if($article.context)
+            var articleWhiteList = Object.assign({}, filterXSS.whiteList);
+            ['p', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'table', 'td', 'th'].forEach(function (tag) {
+                articleWhiteList[tag] = articleWhiteList[tag].concat('style');
+            });
+            $('#showArticleContextElement').html(filterXSS('$!esc.javascript($article.context)', {whiteList: articleWhiteList}));
+        #end
+    });
+</script>
+</body>
+</html>

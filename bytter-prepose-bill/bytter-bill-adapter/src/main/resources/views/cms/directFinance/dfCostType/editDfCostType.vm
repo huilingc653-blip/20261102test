@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        /
+        /
+        这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" method="post" id="myform">
+
+    #*#if($!{dfCostTypeVO.id})
+        <input  id="id" name="id" value="$!{dfCostTypeVO.id}">
+    #end*#
+    #if($!{dfCostTypeVO.isInit})
+            <input type="hidden" id="isInit" name="isInit" value="$!{dfCostTypeVO.isInit}">
+        #else
+            <input type="hidden" id="isInit" name="isInit" value="0">
+    #end
+    <table id="appTable" class="layui-table layui-form">
+        <tr>
+        ##费用编码
+            <td class="textRight" style="width: 50%">#springMessage('df.costCode')</td>
+            <td style="width: 50%">
+                <div class="layui-input-inline">
+                    <input type="text" id="costCode" name="costCode" lay-verify="required" class="layui-input" value="$!{dfCostTypeVO.costCode}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##费用名称
+            <td class="textRight">#springMessage('df.costName')</td>
+            <td>
+                <input type="text" name="costName" lay-verify="required" class="layui-input" value="$!{dfCostTypeVO.costName}">
+            </td>
+        </tr>
+        <tr>
+        ##是否有效
+            <td class="textRight">#springMessage('table.erpDataType.validSign')</td>
+            <td>
+                #if($!{dfCostTypeVO.isInit} == '1')
+                    $dictTag.get("sf_yn",1)
+                    <input type="hidden" id="isValid" name="isValid" value="1">
+                #else
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="isValid"
+                        #if($!{dfCostTypeVO.isValid})
+                         data-value="$!{dfCostTypeVO.isValid}"
+                        #else
+                         data-value="1"
+                        #end
+                         data-biz-name="status"></div>
+                #end
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"style="text-align: center">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    var dicts,form;
+    bt.use(["jquery","dicts"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        dicts = bt.dicts.init();
+
+//监听提交
+        form.on("submit(submit)", function(data){
+            console.log(data)
+            if (!validate($("#id").val(),$("#costCode").val())) {
+                layer.alert(bt.lang("df.costCode.alreadyExists"),{icon: 2});
+                return false;
+            }
+            var action = "/cms/dfCostType/save";
+            bt.loading.show();
+            $.post(basePath + action,data.field,function(data){
+                parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                if (data.success) {
+                    if (!bt.navtab) {
+                        bt.navtab.refreshParentTable();
+                    } else {
+                        bt.navtab.closeCurrent();
+                    }
+                } else {
+                    bt.loading.hide();
+                }
+            },'JSON');
+            return false;
+        });
+
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+
+    function validate(id,costCode) {
+        var result = false;
+        $.ajax({
+            url: basePath + "/cms/dfCostType/validate",
+            data: {
+                id:id,
+                costCode: costCode
+            },
+            type: "post",
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                result = data.success;
+            }
+        });
+        return result;
+    }
+</script>
+</body>
+</html>

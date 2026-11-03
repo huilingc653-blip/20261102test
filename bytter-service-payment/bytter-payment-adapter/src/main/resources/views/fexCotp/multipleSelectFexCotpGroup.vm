@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tr>
+##            所属组
+            <td width="10%" class="textRight">#springMessage('table.tbCreditPeriod.designation')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_cotpName" class="layui-input" >
+                </div>
+            </td>
+        ##    层级
+            <td width="10%" class="textRight">#springMessage('fex.cotp.hierarchy')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-name="eqs_cotpLevel" data-biz-name="eqs_cotpLevel" data-group="fex.cotp.level"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center">
+                <button class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+                <button type="reset" class="layui-btn layui-btn-primary layui-btn-small">#springMessage("common.button.reset")</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form">
+    <thead>
+    <tr>
+##        组名
+        <th>#springMessage('table.tbCreditPeriod.designation')</th>
+        <th>#springMessage('fex.cotp.hierarchy')</th>
+        <th>#springMessage('fex.cotp.shortName')</th>
+        <th>#springMessage('fex.cotp.officialName')</th>
+    </tr>
+    </thead>
+</table>
+</body>
+    #parse("views/common/footer.vm")
+<script>
+    var dicts;
+    bt.use(["jquery", "datatable","dicts"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        dicts = bt.dicts.init();
+
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: "Brtlip",
+            colReorder: true,
+            ordering: false,
+            checkbox: true,
+            mulselect: true,
+            buttonsLayout: false,
+            ajax: {
+                "url": basePath + "/foreign/fexCotp/getNullParentCotpDataTable"
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: "cotpName",
+                    className: "center"
+                },
+                {
+                    data: "cotpLevel",
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("fex.cotp.level", data);
+                    }
+                },                {
+                    data: "shortName",
+                    className: "center"
+                },
+                {
+                    data: "officialName",
+                    className: "center"
+                }
+            ]
+        });
+
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    /**
+     * 增加子节点
+     * @returns {*}
+     */
+    function appendChild(parentId) {
+        var selectData = bt.datatable.getSelectData("#appTable");
+        var ids = "";
+        var result = null;
+        $.each(selectData,function (index,item) {
+            if (0 == index) {
+                ids = item.id;
+            } else {
+                ids += "," + item.id;
+            }
+        })
+        if ("" == ids || null == ids) {
+            return false;
+        }
+        if (null == parentId) {
+            return ids;
+        }
+        $.ajax({
+            url: basePath + "/foreign/fexCotp/appendChild",
+            data: {"parentId": parentId, "ids": ids},
+            dataType: "json",
+            type: "POST",
+            async: false,
+            success: function (data) {
+                result = data;
+            }
+        });
+        return result;
+    }
+
+</script>
+</html>

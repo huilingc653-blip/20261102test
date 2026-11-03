@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/common/caData.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        .layui-table {
+            margin: 0px 0;
+        }
+    </style>
+</head>
+<body>
+    #parse("views/bill/accebill/approve/viewApproveAbBillBase.vm")
+    <input type="hidden" id="caType"  value="10"/>
+    <input id="vvid" name="vvid" type="hidden" value="$!{info.vvid}">
+    <input id="corpId" name="corpId" type="hidden" value="$!{info.corpId}">
+    <input id="businessDate" name="businessDate" type="hidden" value="$!{info.businessDate}">
+    <input id="budgetSel" name="budgetSel" type="hidden" value="$!{info.budgetCode}">
+    <input id="discountItem" name="askItem" type="hidden" value="$!{discountItem}">
+    <input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+    <input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+    <input id="defItemCode" name="defItemCode" type="hidden" value="">
+    <input id="isBudget" name="isBudget" type="hidden" value="">
+    <div class="layui-colla-item" id="tagItemDetailDiv">
+        <h2 class="layui-colla-title">#springMessage('common.accebill.fbsBudgetInfo.title')</h2>
+        <div class="layui-colla-content layui-show">
+            <!-- 资金计划 -->
+            <div id="tagItemDetail">
+            </div>
+        </div>
+    </div>
+    #workFlowHtml()
+    #caDataHidden()
+    #caDataScript()
+    #workFlowScript()
+</body>
+<script>
+    bt.use([], function () {
+        var $ = bt.jquery;
+        /**
+         * 生成公共的属性
+         * @return
+         */
+            $genOtherHtml=function(corpId){
+            var url=basePath+"/budget/fbsBudgetProcess/getViewItemDetail";
+            var param={
+                corpId:corpId,
+                itemCode: $("#discountItem").val(),
+                billId: $("#vvid").val(),
+                businessName: $("#businessName").val(),
+                processSysname: $("#processSysname").val(),
+                processDate: $("#businessDate").val(),
+                type:'select',
+                date:(new Date()).getTime()
+            };
+            $.ajax({url:url,method: 'POST',data: param,async:true, success: function (json) {
+                    $("#tagItemDetail").html("");
+                    $("#tagItemDetail").html(json);
+                }
+            });
+        }
+        renderBudget($("#corpId").val())
+    });
+    /**
+     * 资金计划挂接
+     */
+    function renderBudget(corpId) {
+        //判断是否挂接资金计划
+        var budgetSel = $("#budgetSel").val();
+        if (budgetSel == null || budgetSel=="") {
+            $("#tagItemDetailDiv").hide();
+        }else{
+                $genOtherHtml(corpId);
+        }
+    }
+</script>
+</html>

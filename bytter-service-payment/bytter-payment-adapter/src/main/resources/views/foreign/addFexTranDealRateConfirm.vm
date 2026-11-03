@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="createBy" name="createBy" type="hidden" value="$!{fexTranDealPage.createBy}">
+		<input id="createDate" name="createDate" type="hidden" value="$!{fexTranDealPage.createDate}">
+		<input id="updateBy" name="updateBy" type="hidden" value="$!{fexTranDealPage.updateBy}">
+		<input id="updateDate" name="updateDate" type="hidden" value="$!{fexTranDealPage.updateDate}">
+		<input id="id" name="id" type="hidden" value="$!{fexTranDealPage.id}">
+		<input id="tranReqId" name="tranReqId" type="hidden" value="$!{fexTranDealPage.tranReqId}">
+		<input id="corpId" name="corpId" type="hidden" value="$!{fexTranDealPage.corpId}">
+		<input id="opType" name="opType" type="hidden" value="$!{fexTranDealPage.opType}">
+		<input id="status" name="status" type="hidden" value="$!{fexTranDealPage.status}">
+		<input id="curId" name="curId" type="hidden" value="$!{fexTranDealPage.curId}">
+		<!-- 系统参数 -->
+		<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+		<input id="payItem" name="payItem" type="hidden" value="$!{payItem}">
+		<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+		<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+		<!-- 资金计划参数 明细项控制模式-->
+		<input id="dtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+		<input id="settlType" name="settlType" type="hidden" value="0">
+		<table class="layui-table">
+			<tbody>
+				<tr>
+					##确认结算汇率
+    				<td class="textRight" width="40%">#springMessage('table.fexTranDeal.confirmRate')</td>
+                    <td width="60%">
+					#if($!{fexTranDealPage.status}=="0" || $!{fexTranDealPage.status}=="-1")
+						<input type="text" data-name="deliveryRate" data-biz-name="deliveryRate" data-decimal="6" lay-verify="required" value="$!{fexTranDealPage.deliveryRate}"
+							   id="deliveryRate" autocomplete="off" class="layui-input bt-biz-moneyType"  placeholder="#springMessage('table.fexTranDeal.confirmRate')">
+					#else
+						$!number.formatDoubles($!{fexTranDealPage.deliveryRate}, 6)
+					#end
+    				</td>
+				</tr>
+				<tr>
+					##现金流方向
+					<td class="textRight" width="40%">#springMessage('table.fexTranDeal.cashFlowSign')</td>
+					<td width="60%">
+						<input id="deliverySign" name="deliverySign" type="hidden" value="$!{fexTranDealPage.deliverySign}">
+						#if($!{fexTranDealPage.deliverySign} == "2")
+							$dictTag.get("fexCorp.cdSign",1)
+						#else
+							$dictTag.get("fexCorp.cdSign",0)
+						#end
+					</td>
+				</tr>
+				<tr>
+					##现金流金额
+					<td class="textRight" width="40%">#springMessage('table.fexTranDeal.cashFlowMoney')</td>
+					<td width="60%">
+						#if($!{fexTranDealPage.status}=="0" || $!{fexTranDealPage.status}=="-1")
+							<input type="text" id="settleMoney" name="settleMoney" style="text-align:right" lay-verify="required|number2" data-name="settleMoney" data-biz-name="settleMoney"
+								   autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.fexTranDeal.cashFlowMoney')" value="$!{fexTranDealPage.settleMoney}">
+						#else
+							$!number.formatNumeric($!{fexTranDealPage.settleMoney})
+						#end
+					</td>
+				</tr>
+				<tr>
+					##汇率确认日期
+					<td class="textRight">#springMessage('table.fexTranDeal.confirmRateDate')</td>
+					<td >
+						#if($!{fexTranDealPage.status}=="0" || $!{fexTranDealPage.status}=="-1")
+							<input type="hidden" id="newSettleDate" name="newSettleDate" lay-verify="required" class="layui-input bt-biz-dateType" value="$!{fexTranDealPage.newSettleDate}"
+								   data-today="true" data-type="date" data-name="newSettleDate" data-biz-name="newSettleDate">
+							<input type="text" name="deliveryDate" lay-verify="required" class="layui-input bt-biz-dateType" value="$!{fexTranDealPage.deliveryDate}"
+								   data-today="true" data-type="date" data-name="deliveryDate" data-biz-name="deliveryDate" data-callback="deliveryDateCallback">
+						#else
+							$!date.format('yyyy-MM-dd',$!{fexTranDealPage.deliveryDate})
+							<input id="deliveryDate" name="deliveryDate" type="hidden" value="$!{fexTranDealPage.deliveryDate}">
+						#end
+					</td>
+				</tr>
+				<tr>
+					##备注
+					<td class="textRight">#springMessage('fcVoucherType.rmk')</td>
+					<td>
+						#if($!{fexTranDealPage.status}=="0" || $!{fexTranDealPage.status}=="-1")
+							<textarea placeholder="#springMessage('bisAccAttribute.rmk')" class="layui-textarea" style="width:100%" id="rmk" name="rmk" >$!{fexTranDealPage.rmk}</textarea>
+						#else
+							$!{fexTranDealPage.rmk}
+						#end
+					</td>
+				</tr>
+        	</tbody>
+        </table>
+		<!-- 资金计划 -->
+		<div id="tagItemDetail"></div>
+		#if($!{fexTranDealPage.status}=="0" || $!{fexTranDealPage.status}=="-1")
+			<div style="text-align: center; padding-top: 10px;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit" value="95">#springMessage('common.button.submit')</button>
+				<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+			</div>
+		#else
+			<div class="layui-form-item layui-form-submit" id="buttonDiv">
+				<div class="layui-input-block">
+					<button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage('common.button.print')</button>
+				</div>
+			</div>
+		#end
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/foreign/fexTranDealRateConfirm.add.js?_btv=${resourceVersion}"></script>

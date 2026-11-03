@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    #set ($selectableSignRepayDate = "" )  ##所选计划的还款日期
+<form class="layui-form" method="post">
+
+    <input type="hidden" id="payInterest" value="$!{payInterest}">
+    <input type="hidden" id="provideInterestId" value="$!{provideInterestId}">
+    <input type="hidden" id="sumTotal"  class="layui-input" name="sumTotal" value="$!{sumTotal}">
+    <input type="hidden" id="listSize"  class="layui-input" name="listSize" value="$!{listSize}">
+    <div>
+        <table id="appTable" class="layui-table self-adaption dark-layui-table layui-table-border" style="width:100%;">
+            <input type="hidden" id="list" value="$!{list}">
+            <thead>
+            <tr>
+                <th>#springMessage('table.cmsProvideLoanInfo.repayDate')</th>##还款日期
+                <th>#springMessage('table.fcCompareAcc.interestStartDate')</th>##起息日期
+                <th>#springMessage('table.cmsPrecativeLoanInfo.endDate')</th>##结束日期
+                <th>#springMessage('table.provide.interestDay')</th>##计息天数
+                <th>#springMessage('table.provide.interestRate')</th>##计息利率
+                <th>#springMessage('cms.loan.repay.principal')</th>##本金
+                <th>#springMessage('cms.loan.repay.repayPrincipal')</th>##归还本金
+                <th>#springMessage('table.createRepayPlan.surplusMoney')</th>##剩余本金
+                <th>#springMessage('cms.loan.repay.principalInterest')</th>##归还本金利息
+                <th>#springMessage('cms.loan.repay.payInterest')</th>##支付利息
+                #if("$!{showSign}" == "0")
+                    <th>#springMessage('cms.loan.repay.acctuallyInterest')</th>##实际付息
+                    <th>#springMessage('table.cmsProvideLoanInfo.status')</th>
+                #else
+                    <th>#springMessage('common.table.thead.operation')</th>
+                #end
+            </tr>
+            </thead>
+            <tbody>
+                #set ($index = 1 )
+                #set ($rowIndex = 0 )
+                #set ($signRepayDate = "" )
+                #set ($rowsNum = 0 ) ##合并次数
+                #set($sumInterest=0) ##合计归还本金利息
+                #set($sumRepayMoney=0) ##合计归还本金
+                #set($sumPayInterest=0) ##合计支付利息
+                #set($sumRealInterest=0)
+                #foreach($interest in $list)
+                <tr>
+                    <input type="hidden" id="id_$!{rowIndex}" class="layui-input" name="interestVoList[$!{rowIndex}].id" value="$!{interest.id}">
+                    <input type="hidden" id="interestStartDate_$!{rowIndex}" class="layui-input" name="interestVoList[$!{rowIndex}].interestStartDate" value="$!date.format('yyyy-MM-dd',$!{interest.interestStartDate})">
+                    <input type="hidden" id="interestTime_$!{rowIndex}" class="layui-input" name="interestVoList[$!{rowIndex}].interestTime" value="$!date.format('yyyy-MM-dd',$!{interest.interestTime})">
+                    <input type="hidden" id="repayDate_$!{rowIndex}" class="layui-input" name="interestVoList[$!{rowIndex}].repayDate" value="$!date.format('yyyy-MM-dd',$!{interest.repayDate})">
+                    <input type="hidden" id="blnInstDate_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].blnInstDate" value="$!date.format('yyyy-MM-dd',$!{interest.blnInstDate})">
+                    <input type="hidden" id="contractCode_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].contractCode" value="$!{interest.contractCode}">
+                    <input type="hidden" id="interestRate_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].interestRate" value="$!{interest.interestRate}">
+                    <input type="hidden" id="loanMoney_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].loanMoney" value="$!{interest.loanMoney}">
+                    <input type="hidden" id="leftMoney_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].leftMoney" value="$!{interest.leftMoney}">
+                    <input type="hidden" id="interest_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].interest" value="$!{interest.interest}">
+                    <input type="hidden" id="repaymentScheduleId_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].repaymentScheduleId" value="$!{interest.repaymentScheduleId}">
+                    <input type="hidden" id="billCode_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].billCode" value="$!{interest.billCode}">
+                    <input type="hidden" id="corpId_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].corpId" value="$!{interest.corpId}">
+                    <input type="hidden" id="curId_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].curId" value="$!{interest.curId}">
+                    <input type="hidden" id="interestType_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].interestType" value="$!{interest.interestType}">
+                    <input type="hidden" id="days_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].days" value="$!{interest.days}">
+                    <input type="hidden" id="floatPoint_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].floatPoint" value="$!{interest.floatPoint}">
+                    <input type="hidden" id="rateFax_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].rateFax" value="$!{interest.rateFax}">
+                    <input type="hidden" id="totalInterest_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].totalInterest" value="$!{interest.totalInterest}">
+                    <input type="hidden" id="unPayInterest_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].unPayInterest" value="$!{interest.unPayInterest}">
+                    <input type="hidden" id="interestFax_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].interestFax" value="$!{interest.interestFax}">
+                    <input type="hidden" id="realInterest_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].realInterest" value="$!{interest.realInterest}">
+                    <input type="hidden" id="interestSign_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].interestSign" value="$!{interest.interestSign}">
+                    <input type="hidden" id="status_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].status" value="$!{interest.status}">
+                    <input type="hidden" id="count_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].count" value="$!{interest.count}">
+                    <input type="hidden" id="repayDate" value="$!{repayDate}">
+                    <input type="hidden" id="repayMoney" value="$!{repayMoney}">
+                    #if("$!{signRepayDate}" != $!date.format('yyyy-MM-dd',$!{interest.signRepayDate}))
+                        #set ($rowsNum = 0 )
+                    #else
+                        #set ($rowsNum = $rowsNum + 1 )
+                    #end
+
+                    #if($!{rowsNum} == 0)
+                        <td rowspan="$!{interest.count}" align="center">$!date.format(
+                            'yyyy-MM-dd',$!{interest.signRepayDate})</td>
+                    #end
+                    <input type="hidden" id="signRepayDate_$!{rowIndex}" class="layui-input" name="interestVoList[$!{rowIndex}].signRepayDate" value="$!date.format('yyyy-MM-dd',$!{interest.signRepayDate})">
+
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{interest.interestStartDate})</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{interest.blnInstDate})</td>
+                    <td align="center">$!{interest.days}</td>
+                    #set($interestRate =$!{interest.interestRate}*100)
+                    <td align="right">$!number.formatDoubles($!interestRate,4)%</td>
+                    <td class="textRight">$!number.formatNumeric($!{interest.loanMoney})</td>
+                    #if($!{interest.status} != 1)
+                        <td class="textRight"><input value="$!{interest.repayMoney}"
+                                                     class="layui-input bt-input-inline  bt-biz-moneyType"
+                                                     data-id="repayMoney_$!{rowIndex}"
+                                                     data-biz-name="repayMoney_$!{rowIndex}" type="text"
+                                                     data-decimal="2" data-min="0"
+                                                     data-name="interestVoList[$!{rowIndex}].repayMoney"
+                                                     onchange="editSumRepayMoney()"/>
+                        </td>
+                    #else
+                        <td class="textRight">$!number.formatNumeric($!{interest.repayMoney})</td>
+                        <input value="$!{interest.repayMoney}" type="hidden"
+                               class="layui-input bt-input-inline  bt-biz-moneyType"
+                               data-id="repayMoney_$!{rowIndex}"
+                               data-biz-name="repayMoney_$!{rowIndex}" type="text"
+                               data-decimal="2" data-min="0"
+                               data-name="interestVoList[$!{rowIndex}].repayMoney"/>
+##                        <input type="hidden" id="repayMoney_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].repayMoney" value="$!{interest.repayMoney}">
+                    #end
+                    #set($sumRepayMoney=$sumRepayMoney +$!{interest.repayMoney})
+                    <td class="textRight">$!number.formatNumeric($!{interest.leftMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{interest.interest})</td>
+                    #set($sumInterest=$sumInterest +$!{interest.interest}) ##合计归还本金利息
+                    #if($!{interest.status} != 1)
+                        <td class="textRight"><input value="$!{interest.payInterest}"
+                                                     class="layui-input bt-input-inline  bt-biz-moneyType"
+                                                     data-id="payInterest_$!{rowIndex}"
+                                                     data-biz-name="payInterest_$!{rowIndex}" type="text"
+                                                     data-decimal="2" data-min="0"
+                                                     data-name="interestVoList[$!{rowIndex}].payInterest"
+                                                     onchange="editPayInterest()"/>
+                        </td>
+                    #else
+                        <td class="textRight">$!number.formatNumeric($!{interest.payInterest})</td>
+                        <input value="$!{interest.payInterest}"
+                               class="layui-input bt-input-inline  bt-biz-moneyType"
+                               data-id="payInterest_$!{rowIndex}"
+                               data-biz-name="payInterest_$!{rowIndex}" type="hidden"
+                               data-decimal="2" data-min="0"
+                               data-name="interestVoList[$!{rowIndex}].payInterest"/>
+##                        <input type="hidden" data-id="payInterest_$!{rowIndex}"  class="layui-input" name="interestVoList[$!{rowIndex}].payInterest" value="$!{interest.payInterest}">
+                    #end
+                    #set($sumPayInterest=$sumPayInterest+$!{interest.payInterest}) ##合计支付利息
+                    #if("$!{showSign}" == "0") ##查看
+                        #if($!{rowsNum} == 0)
+                            <td rowspan="$!{interest.count}"
+                                class="textRight">$number.formatNumeric($!{interest.realInterest})</td>
+                            #set($sumRealInterest=$sumRealInterest+$!{interest.realInterest})
+                            <td rowspan="$!{interest.count}">
+                                #if("$!{interest.status}" == "1")
+                                    <span style="color:#5FB878">#springMessage('cms.repaymentSchedule.used')</span>
+                                #else
+                                    #springMessage('cms.repaymentSchedule.unused')
+                                #end
+                            </td>
+                        #end
+                    #else
+                        #if($!{rowsNum} == 0)
+                            <td rowspan="$!{interest.count}">
+                                #if("$!{interestID}" == $!{interest.id})##还款已经选中的数据
+                                    <span style="color:#009688">#springMessage('cms.msg.select')</span>
+                                    #set ($index = $index + 1 )
+                                #else
+                                    #if("$!{interest.status}" == "0")
+                                        #if("$!{repairSign}" == "1")##新增标识 ,补录、修改不能更改还款利息选项
+                                            #springMessage('cms.repaymentSchedule.unused')
+                                        #end
+                                    #else
+                                        <span style="color:#5FB878"> #springMessage(
+                                            'cms.repaymentSchedule.used') </span>
+                                    #end
+                                #end
+                            </td>
+                        #end
+                    #end
+                    #set ($signRepayDate = $!date.format('yyyy-MM-dd',$!{interest.signRepayDate}) )
+                    #set ($rowIndex = $rowIndex + 1 )
+                </tr>
+                #end
+            <tr>
+                <td align="center">#springMessage('table.interet.sum')</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td id="sumRepayMoney" class="textRight">$number.formatNumeric($sumRepayMoney)</td>
+                <td></td>
+                <td class="textRight">$number.formatNumeric($sumInterest)</td>
+                <td id="sumPayInterest" class="textRight">$number.formatNumeric($sumPayInterest)</td>
+                #if("$!{showSign}" == "0") ##查看
+                    <td class="textRight">$number.formatNumeric($sumRealInterest)</td>
+                #end
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+    <div style="text-align:center;padding:10px 0px 10px 0px;border: none;border:1px solid #D2D2D2;background:#D2D2D2; color:#000">
+        <b> 利息明细 </b></div>
+    <div style="padding:8px 0px 8px 40px;border: none;border:1px solid #D2D2D2;bgcolor:#D2D2D2;height: 20px;">
+        <input id="detailtype" name="detailtype" lay-filter="detailtype" type="radio" value="current" checked
+               title="还款计划对应明细"/>
+        <input id="detailtype" name="detailtype" lay-filter="detailtype" type="radio" style="margin-left:20px"
+               value="all" title="所有明细"/></div>
+    <div id="currentdetailtable" style="display: block;">
+        <table id="appTable2" class="layui-table layui-form self-adaption dark-layui-table layui-table-border"
+               style="width:100%;">
+            <thead>
+            <tr>
+                <th>序号</th>##还款日期
+                <th>项目</th>##还款日期
+                <th>#springMessage('table.fcCompareAcc.interestStartDate')</th>##起息日期
+                <th>#springMessage('table.cmsPrecativeLoanInfo.endDate')</th>##结束日期
+                <th>#springMessage('table.provide.interestDay')</th>##计息天数
+                <th>#springMessage('table.provide.interestRate')</th>##计息利率
+                <th>#springMessage('cms.loan.repay.principal')</th>##本金
+                <th>#springMessage('cms.loan.repay.payInterest')</th>##支付利息
+                <th>备注</th>##备注
+            </tr>
+            </thead>
+            <tbody>
+                #set ($index = 0 )
+                #foreach($selectableInterest in $selectableInterests)
+                <tr>
+                    #set ($index = $index + 1 )
+                    <td align="center">$!{index}</td>
+                    <td align="center">$!{selectableInterest.projectName}</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{selectableInterest.interestStartDate})</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{selectableInterest.blnInstDate})</td>
+                    <td align="center">$!{selectableInterest.days}</td>
+                    #set($interestRate =$!{selectableInterest.interestRate}*100)
+                    <td align="right">#if(
+                        "$!{selectableInterest.projectName}" != "结息") $!number.formatDoubles($!interestRate,4)
+                        % #else #end</td>
+                    <td class="textRight">#if("$!{selectableInterest.projectName}" !=
+                        "结息") $!number.formatNumeric($!{selectableInterest.loanMoney}) #else #end</td>
+                    <td class="textRight"> $!number.formatNumeric($!{selectableInterest.payInterest})</td>
+                    <td class="textRight">$!{selectableInterest.rmk}</td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    <div id="alldetailtable" style="display: none;">
+        <table id="appTable3" class="layui-table layui-form self-adaption dark-layui-table layui-table-border"
+               style="width:100%;">
+            <thead>
+            <tr>
+                <th>序号</th>##还款日期
+                <th>项目</th>##还款日期
+                <th>#springMessage('table.fcCompareAcc.interestStartDate')</th>##起息日期
+                <th>#springMessage('table.cmsPrecativeLoanInfo.endDate')</th>##结束日期
+                <th>#springMessage('table.provide.interestDay')</th>##计息天数
+                <th>#springMessage('table.provide.interestRate')</th>##计息利率
+                <th>#springMessage('cms.loan.repay.principal')</th>##本金
+                <th>#springMessage('cms.loan.repay.payInterest')</th>##支付利息
+                <th>备注</th>##支付利息
+            </tr>
+            </thead>
+            <tbody>
+                #set ($index = 0 )
+                #foreach($interestEle in $allInterests)
+                <tr #if($!{interestEle.selected}) style="background-color: #2b85e4" #end >
+                    #set ($index = $index + 1 )
+                    <td align="center">$!{index}</td>
+                    <td align="center">$!{interestEle.projectName}</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{interestEle.interestStartDate})</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{interestEle.blnInstDate})</td>
+                    <td align="center">$!{interestEle.days}</td>
+                    #set($interestRate =$!{interestEle.interestRate}*100)
+                    <td align="right">#if(
+                        "$!{interestEle.projectName}" != "结息") $!number.formatDoubles($!interestRate,4)
+                        % #else #end</td>
+                    <td class="textRight">#if("$!{interestEle.projectName}" !=
+                        "结息") $!number.formatNumeric($!{interestEle.loanMoney}) #else #end</td>
+                    <td class="textRight"> $!number.formatNumeric($!{interestEle.payInterest})</td>
+                    <td class="textRight">$!{interestEle.rmk}</td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    <div style="text-align: center;">
+        <button class="layui-btn layui-btn-small" lay-submit="" lay-filter="save">#springMessage(
+                'common.button.save')</button>
+        <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage(
+        'common.button.close')</button>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/provide/cmsInterestWayTest.list.js?_btv=${resourceVersion}"></script>
+</html>

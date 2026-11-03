@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="id" name="id" type="hidden" value="$!{fbsProcessRulePage.id}">
+    <input id="createBy" name="createBy" type="hidden" value="$!{fbsProcessRulePage.createBy}">
+    <input id="createDate" name="createDate" type="hidden" value="$!{fbsProcessRulePage.createDate}">
+    <input id="updateBy" name="updateBy" type="hidden" value="$!{fbsProcessRulePage.updateBy}">
+    <input id="updateDate" name="updateDate" type="hidden" value="$!{fbsProcessRulePage.updateDate}">
+    <table class="layui-table">
+        <tbody >
+        <tr >
+            <td class="textRight" width="40%">#springMessage('table.fbsProcessRule.processRule')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="plan.action.rule" data-defaultvalue="" data-required = "true"
+                     data-name="processRule" data-biz-name="processRule" data-callback="bt.processRuleCallback"></div>
+            </td>
+        </tr>
+        <tr >
+            <td class="textRight">#springMessage('table.fbsProcessRule.sort')</td>
+            <td>
+                <input type="text" name="sort" data-name="sort" data-biz-name="sort" autocomplete="off" class="layui-input bt-biz-moneyType"
+                       lay-verify="required" data-decimal="0" data-separator="" value="">
+            </td>
+        </tr>
+        <tr id="processRatioTr">
+            <td class="textRight">#springMessage('table.fbsBudgetProcessReport.ExerciseRatio')</td>
+            <td>
+                <input type="text" id="processRatio" name="processRatio" data-biz-name="processRatio" lay-verify="required"
+                       autocomplete="off" class="layui-input bt-biz-ratioType" placeholder="#springMessage('table.fbsBudgetProcessReport.ExerciseRatio')" value="">
+            </td>
+        </tr>
+        <tr >
+            <td class="textRight">#springMessage('fcVoucherType.validSign')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="valid_sign" data-defaultvalue="1"
+                     data-name="validSign" data-biz-name="validSign"></div>
+            </td>
+        </tr>
+        <tr >
+            <td colspan="2" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.save')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form','layedit','ratioType','moneyType','dicts'], function(){
+        var $ = bt.jquery,form = bt.form();
+        bt.moneyType.init();
+
+        bt.processRuleCallback = function(data){
+            var processRule = bt.dicts.get("processRule").val();
+            if(processRule == "5"){
+                $("#processRatioTr").hide();
+                bt.ratioType.get('processRatio').currentObject.removeAttr('lay-verify');
+            }else{
+                $("#processRatioTr").show();
+                bt.ratioType.get('processRatio').currentObject.attr('lay-verify', 'required');
+            }
+        }
+        bt.dicts.init();
+        bt.ratioType.init();
+
+        //监听提交
+        form.on('submit(submit)', function(data){
+            var action = "/budget/fbsprocessrule/save";
+            $.post(basePath + action,data.field,function(result){
+                parent.layer.alert(result.msg, {icon: result.success?1:2}, function(){
+                    parent.layer.closeAll();
+                    if(result.success){
+                        if(bt.navtab) {
+                            bt.navtab.refreshParent();
+                            bt.navtab.refreshCurrent()
+                        }else {
+                            parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                        }
+                    }
+                })
+            },'JSON');
+            return false;
+        });
+    });
+</script>
+</html>

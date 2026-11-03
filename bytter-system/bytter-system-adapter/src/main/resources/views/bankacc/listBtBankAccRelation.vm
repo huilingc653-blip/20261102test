@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input type="hidden" id="applyCodes" name="applyCodes" value="$shiro.hasPermission("netbank:bankAcc:btBankAccRelation:apply")">
+        <input type="hidden" id="poolCodes" name="poolCodes" value="$shiro.hasPermission("netbank:bankAcc:btBankAccRelation:pool:apply")">
+        <input type="hidden" name="poolSign" id="poolSign" value="$!{poolSign}"/>
+        <input type="hidden" name="netIdSel" id="netIdSel" value="$!{netId}"/>
+        <input type="hidden" name="corpIdSel" id="corpIdSel" value="$!{corpId}"/>
+        <table class="layui-table">
+            <tbody>
+            	<tr>
+                #if($!{poolSign} == "1")
+                    <td class="textRight" width="10%">#springMessage('nis.pool.fcCorpPool.pool')</td>
+                    <td width="25%">
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-selectType" data-url="" data-name="netId" data-biz-name="netId" data-callback="netIdCallback"
+                                 data-valuefield="id" data-textfield="showName" data-search="true" data-defaultValue="$!{netId}" data-required="required" data-url="${basePath}/bankacc/btbankaccrelation?getUserCorpPools"></div>
+                        </div>
+                    </td>
+                    <td class="textRight" width="10%">#springMessage('table.btBankAccApp.corpId')</td>
+                    <td width="25%">
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-selectType" data-url="" data-name="corpId" data-biz-name="corpId"
+                                 data-valuefield="corpId" data-textfield="showName" data-search="true" data-defaultValue="$!{corpId}" data-extraData="false"></div>
+                        </div>
+                    </td>
+                #else
+                    <td class="textRight" width="10%">#springMessage('table.fcAcc.netId')</td>
+                    <td width="25%">
+                        <div class="layui-inline">
+                            <div class="bt-biz-corp"
+                                 data-biz-type="net"
+                                 data-type="selectTree"
+								 data-biz-name="netId"
+                                 data-name="netId"
+                                 data-required="true"
+								 data-defaultValue="$!{netId}"
+                                 data-group="corpGroup"
+                                 data-change="corpId"
+                                 data-resource="netbank:bankAcc:btBankAccRelation:query"
+                                 data-scope="net">
+                            </div>
+                        </div>
+                    </td>
+                    <td class="textRight" width="10%">#springMessage('table.btBankAccApp.corpId')</td>
+                    <td width="25%">
+                        <div class="layui-inline">
+                            <div class="bt-biz-corp"
+                                 data-biz-type="corp"
+                                 data-type="selectTree"
+								 data-biz-name="corpId"
+                                 data-name="corpId"
+                                 data-defaultValue="$!{corpId}"
+                                 data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"
+                                 data-group="corpGroup"
+                                 data-resource="netbank:bankAcc:btBankAccRelation:query"
+                                 data-scope="all"></div>
+                        </div>
+                    </td>
+                #end
+                    <td class="textRight" width="10%">#springMessage('table.btBankAccApp.curId')</td>
+                    <td width="20%">
+                        <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-defaultvalue="$!{curId}"
+                             data-name ="curId" data-biz-name ="curId"  data-valueField="id" data-textField="curName"></div>
+                    </td>
+                </tr>
+                <tr>
+                	<td align="center" colspan="6">
+                        <button type="button" class="layui-btn" lay-submit lay-filter="search" id="search">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary" data-callback="bt.searchResetCallback">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    #set($btBankAccRelationApply=$shiro.hasPermission("netbank:bankAcc:btBankAccRelation:apply"))
+    #set($btBankAccRelationPoolApply=$shiro.hasPermission("netbank:bankAcc:btBankAccRelation:pool:apply"))
+    #if($treeList)
+    <form class="layui-form" method="post" id="tree-form">
+        <div>
+            <table class="layui-table" id="bankacc-table">
+                <thead>
+                <tr>
+                    <th width="60%">#springMessage('table.btBankAccApp.corpId')</th>
+                    <th width="30%">#springMessage('table.btBankAccApp.bankName')</th>
+                    <th width="30%">#springMessage('table.btBankAccApp.curId')</th>
+                    <th width="10%">#springMessage('common.table.thead.operation')</th>
+                </tr>
+                </thead>
+                <tbody>
+##                    #foreach($tree in $treeList)
+##                    <tr data-tt-id="$!{tree.id}" class="ttt" data-tt-parent-id="$!{tree.parentId}">
+##                        <td width="50%">($!{tree.code})$!{tree.name}</td>
+##                        <td width="30%"></td>
+##                        <td width="10%"></td>
+##                        <td width="10%"></td>
+##                    </tr>
+##                        #foreach($acc in $tree.accList)
+##                        <tr data-tt-id="$!{tree.id}_$!{acc.id}" class="ttt" data-tt-parent-id="$!{tree.id}">
+##                            <td width="50%">($!{acc.bankAcc})$!{acc.accName}</td>
+##                            <td width="30%">$!{acc.bankName}</td>
+##                            <td width="10%" align="center">$!{acc.curName}</td>
+##                            <td width="10%">
+####                                #if($btBankAccRelationApply || $btBankAccRelationPoolApply)
+##                                    <!-- 资金池银行账号父子关系维护 -->
+##                                    #if($!{poolSign} == "1")
+##                                        <!-- 资金池的账号才允许增加子账号，资金池子单位的账号不允许增加子账号 -->
+##                                        #if($!{tree.poolSign} == "1")
+##                                            <a class="" href="#"  onclick="updateForPool('$!{acc.id}', '$!{acc.curId}', '$!{tree.id}')">#springMessage("common.button.addchild") </a>
+##                                            <span class="text-explode">|</span>
+##                                        #end
+##                                    #else
+##                                        <a class="" href="#" data-row="" onclick="update('$!{acc.id}', '$!{acc.curId}')" >#springMessage("common.button.addchild")</a>
+##                                        <span class="text-explode">|</span>
+##                                    #end
+####                                #end
+##                                <a href="javascript:;" onclick="view('$!{acc.id}', '$!{acc.curId}')">#springMessage("common.button.view")</a>
+##                            </td>
+##                        </tr>
+##                            #foreach($childacc in $acc.childList)
+##                            <tr data-tt-id="$!{tree.id}_$!{acc.id}_$!{childacc.id}" class="ttt" data-tt-parent-id="$!{tree.id}_$!{childacc.prentAccId}">
+##                                <td width="50%">($!{childacc.bankAcc})$!{childacc.accName}</td>
+##                                <td width="30%">$!{childacc.bankName}</td>
+##                                <td width="10%" align="center">$!{childacc.curName}</td>
+##                                <td width="10%">
+##                                    #if($btBankAccRelationApply || $btBankAccRelationPoolApply)
+##                                        <a class="" href="#"  onclick="deleteColumn('$!{childacc.id}', '$!{acc.curId}')" >#springMessage("common.button.deletechild") </a>
+##                                        <span class="text-explode">|</span>
+##                                    #end
+##                                    <a class="" href="#"  onclick="view('$!{childacc.id}', '$!{acc.curId}')" >#springMessage("common.button.view") </a>
+##                                </td>
+##                            </tr>
+##                            #end
+##                        #end
+##                    #end
+                </tbody>
+            </table>
+        </div>
+    </form>
+    #end
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/bankacc/btBankAccRelation.list.js?_btv=${resourceVersion}"></script>
+</html>

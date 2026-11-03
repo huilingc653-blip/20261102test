@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##授权时间
+            <td class="textRight">#springMessage('bpm.delegation.proxytime')</td>
+            <td>
+                <input type="text" name="ged_startTime" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="ged_startTime"  >
+                <span class="date-mid">~</span>
+                <input type="text" name="led_startTime" class="layui-input bt-input-inline bt-biz-dateType"
+                       id="led_startTime" >
+            </td>
+        ##授权人
+            <td class="textRight">#springMessage('bpm.delegation.principal')</td>
+            <td>
+                <div class="bt-biz-selectType" data-width="214px" data-biz-name="principal" data-url="${basePath}/sys/user/listByCorpId?corpId=$currentUser.corpId" data-valuefield="id" data-textfield="username"
+                     data-name="eqs_principal" data-search="false"
+                     data-width="100px"
+                ></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('bpm.delegation.delegation.no')</th>
+        <th>#springMessage('bpm.delegation.principal')</th>
+        <th>#springMessage('bpm.delegation.proxy')</th>
+        <th>#springMessage('bpm.delegation.starttime')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+##<script src="${basePath}/static/modules/netbank/nisBillhead.query.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form', 'datatable', 'selectType', 'dateType', 'corp', 'money', 'moneyType', 'dicts', 'bank'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.selectType.init();
+        bt.dateType.init();
+        bt.dicts.init();
+
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                 'url': basePath + "/bpm/delegation/confirm/datatable"
+            },
+            buttons: [
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns:[
+                {data: "delegationNo", bSortable: true, className: 'center'},
+                {data: "principalName", bSortable: true, className: 'center'},
+                {data: "proxyName", bSortable: true, className: 'center'},
+                {
+                    data: "startTime", bSortable: true, className: 'center', render: function (data) {
+                        return bt.date.format(data, "yyyy-MM-dd");
+                    }
+                },
+                {data: "null",
+                    bSortable: false,
+                    anCells: true,
+                    className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = '';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="sure(this)">' + bt.lang("common.button.sure") + '</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="reject(this)">' + bt.lang("common.button.back") + '</a><span class="text-explode">|</span>';
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="detail(this)">' + bt.lang("common.button.view") + '</a>';
+
+                        return html;
+                    }
+                },
+            ]
+        });
+
+    });
+
+    function detail(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/bpm/delegation/detailCategory?id="+data.id,
+        });
+    }
+
+    // 打回
+    function reject(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        $.post(basePath + "/bpm/delegation/reject",{id: data.id},function(result){
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+            bt.datatable.refreshTable();
+        },"JSON");
+    }
+
+    // 确认转授
+    function sure(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        $.post(basePath + "/bpm/delegation/sure",{id: data.id},function(result){
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+            bt.datatable.refreshTable();
+        },"JSON");
+    }
+</script>

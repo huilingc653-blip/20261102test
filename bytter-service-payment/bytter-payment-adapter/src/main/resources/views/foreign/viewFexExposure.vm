@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body style="padding: 0 10px">
+	<form class="layui-form" method="post" id="inputForm">
+		<input type="hidden" name="inputCurIds" id="inputCurIds" value="$!{fexExposureMainPage.curId}">
+		<input type="hidden" name="periodSize" id="periodSize" value="$!{periodSize}">
+		<div class="layui-input-inline" style="margin-top: 10px">
+			<button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage('common.button.print')</button>
+			<button type="button" class="layui-btn" onclick="exports()">#springMessage('common.button.exports')</button>
+		</div>
+		<div id="print">
+		<table class="layui-table layui-table-border">
+			<tbody >
+			<tr>
+				##单位
+				<td class="textRight" width="20%">#springMessage('table.nisBillhead.corpId')</td>
+				<td width="25%">$!{fexExposureMainPage.corpName}</td>
+				##模板名称
+				<td class="textRight" width="25%">#springMessage('table.fexExposureTemplate.templateName')</td>
+				<td width="30%">$!{fexExposureMainPage.templateName}</td>
+			</tr>
+			<tr>
+				##总填报周期
+				<td class="textRight" width="20%">#springMessage('table.fexExposureTemplate.totalFillPeriod')</td>
+				<td width="25%">$!{fexExposureMainPage.totalFillPeriod}$dictTag.get("fexExposureTemplate.timeType",$!{fexExposureMainPage.totalFillUnit})</td>
+				##前面按周期填报，后续是否按年度填报 0-否 1-是
+				<td class="textRight" width="25%">#springMessage('table.fexExposureTemplate.isYearFill')</td>
+				<td width="30%">$dictTag.get("sf_yn",$!{fexExposureMainPage.isYearFill})</td>
+			</tr>
+			<tr>
+				##滚动总周期
+				<td class="textRight">#springMessage('table.fexExposureTemplate.scrollFillPeriod')</td>
+				<td>$!{fexExposureMainPage.scrollFillPeriod}$dictTag.get("fexExposureTemplate.timeType",$!{fexExposureMainPage.scrollFillUnit})</td>
+				##前面按周期填报，后续是否按总额填报 0-否 1-是
+				<td class="textRight">#springMessage('table.fexExposureTemplate.isTotalFill')</td>
+				<td>$dictTag.get("sf_yn",$!{fexExposureMainPage.isTotalFill})</td>
+			</tr>
+			<tr>
+				##滚动分解子周期
+				<td class="textRight">#springMessage('table.fexExposureTemplate.scrollResolvePeriod')</td>
+				<td>$!{fexExposureMainPage.scrollResolvePeriod}$dictTag.get("fexExposureTemplate.timeType",$!{fexExposureMainPage.scrollResolveUnit})</td>
+				##币种
+				<td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+				<td>$!{fexExposureMainPage.englishCode}</td>
+			</tr>
+			</tbody>
+		</table>
+		#foreach($curData in $dataMap.entrySet())
+			<div class="layui-input-inline" style="margin-top: 5px; margin-bottom: 5px;">
+				#springMessage('table.nisBillhead.curId')：$curData.key.englishCode
+			</div>
+			<div style="display:inline-block;width:100%;">
+				<div id="maingrid_$curData.key.id"></div>
+			</div>
+			<div style="width: 100%;margin-bottom: 10px;display: none">
+				<table id="appTable_$curData.key.id" class="layui-table" style="width:100%;">
+					<thead>
+					<tr>
+						<th>#springMessage('table.fbsBudgetYear.number')</th>
+						<th>#springMessage('table.fbsBudgetYear.itemCode')</th>
+						<th>#springMessage('table.fbsBudgetYear.itemName')</th>
+						#foreach($exposure in $curData.value)
+							<th>$exposure.exposurePeriod</th>
+						#end
+					</tr>
+					</thead>
+					<tbody>
+						#foreach($data in $listDtl)
+						<tr data-tt-id="$!{data.itemCode}" data-tt-parent-id="$!{data.superItemCode}" data-tt-subject-sort="$!{data.itemCode}">
+							<td>$!{velocityCount}</td>
+							<td>
+								$!{data.itemCode}
+								<input type="hidden" id="itemId_$!{data.itemCode}_$curData.key.id" name="itemId_$curData.key.id" value="$!{data.itemId}">
+								<input type="hidden" id="itemCode_$!{data.itemCode}_$curData.key.id" name="itemCode_$curData.key.id" value="$!{data.itemCode}">
+								<input type="hidden" id="itemName_$!{data.itemCode}_$curData.key.id" name="itemName_$curData.key.id" value="$!{data.itemName}">
+								<input type="hidden" id="sign_$!{data.itemCode}_$curData.key.id" name="sign_$curData.key.id" value="$!{data.sign}">
+								<input type="hidden" id="isNaturalHedge_$!{data.itemCode}_$curData.key.id" name="isNaturalHedge_$curData.key.id" value="$!{data.isNaturalHedge}">
+							</td>
+							<td>$!{data.itemName}</td>
+							#foreach($exposure in $curData.value)
+								#set($i = $!{velocityCount})
+								#foreach($dtl in $exposure.listDtl)
+									#if($!{dtl.itemCode} == $!{data.itemCode})
+									<td align="right">
+										$!number.formatNumeric($!{dtl.fillMoney})
+										<div style="display: none">
+										<input type="text" id="fillMoney$!{i}_$!{data.itemCode}_$curData.key.id" data-name="fillMoney$!{i}_$curData.key.id"
+											   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{dtl.fillMoney}" data-curId="$curData.key.id" data-key="$i"
+											   data-itemCode="$!{data.itemCode}" data-superItemCode="$!{data.superItemCode}" data-biz-name="fillMoney$!{i}_$!{data.itemCode}_$curData.key.id">
+										</div>
+									</td>
+									#end
+								#end
+							#end
+						</tr>
+						#end
+						<tr data-tt-parent-id="">
+							<td></td>
+							<td></td>
+							<td align="right"><b>#springMessage('common.button.collect')</b></td>
+							#foreach($exposure in $curData.value)
+								<td align="right" >
+									<div id="collectMoney$!{velocityCount}_$curData.key.id">0.00</div>
+								</td>
+							#end
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		#end
+		</div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+	bt.use(['form', 'layedit', 'btdate', 'moneyType', 'toLigerTree', 'btUpload', 'btImport', 'selectType', 'printType'], function () {
+		var $ = bt.jquery, form = bt.form();
+		bt.printType.init();
+		var curIds = $("#inputCurIds").val().split(',');
+		var periodSize = $("#periodSize").val();
+		moneyFun = bt.moneyType.getFun();
+		for(var i = 0; i < curIds.length; i++) {
+			var curId = curIds[i];
+			for(var j = 1; j <= periodSize; j++){
+				//树表格初始化前完成汇总，确保打印快照与页面展示值一致
+				calCollectMoney(curId, j);
+			}
+			bt.toLigerTree.init({
+				elem: '#appTable_'+curId,
+				newElem: '#maingrid_'+curId,
+				rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+				isDoubleHeader: false,//是否有双表头
+				allowHideColumn: false,
+				resize: false,
+				height: "80%",
+				fixedLeftColumns: 2,
+			});
+		}
+		moneyType = bt.moneyType.init();
+
+		/**
+		 * 汇总计算
+		 * @param curId
+		 * @param key
+		 */
+		function calCollectMoney(curId, key) {
+			//获取一级科目
+			var superItemcode = "";
+			var fillMoneyDataName = "fillMoney"+key+"_"+curId;
+			var collectMoney = 0;
+			$('form').find('input[data-superItemCode="' + superItemcode + '"][data-name="'+fillMoneyDataName+'"][data-curId="' + curId + '"]').each(function () {
+				//获取科目的流向标志
+				var sign = $("#sign_" + $(this).attr("data-itemCode")+"_"+curId).val();
+				if(sign == 1) {
+					collectMoney = moneyFun.add(collectMoney, moneyFun.toNumber($(this).val()));
+				}else{
+					collectMoney = moneyFun.sub(collectMoney, moneyFun.toNumber($(this).val()));
+				}
+			});
+			var collectMoneyShow = moneyFun.format(collectMoney);
+			$("#collectMoney"+key+"_"+curId).text(collectMoneyShow);
+		}
+		/**
+		 * 导出功能
+		 */
+		exports = function () {
+			var url = basePath + "/foreign/fexExposure/exportsExposure/1";
+			window.location.href = url;
+		};
+	});
+
+</script>
+</html>

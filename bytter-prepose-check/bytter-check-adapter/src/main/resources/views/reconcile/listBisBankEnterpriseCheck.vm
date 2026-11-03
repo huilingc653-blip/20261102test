@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input id="curId" name="curId" type="hidden" value="$!{curId}"/>
+    <div class="layui-collapse" lay-filter="collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title"></h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ## 所属单位
+                        <td class="textRight" width="8%">#springMessage('table.query.corpName')</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-tree-type="check"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-biz-name="corpId"
+                                     data-name="ins_corpId"
+                                     data-scope="all"
+                                     data-resource="bis:bank:enterprise:check:query"
+                                     data-callbackData="corpCallback"
+                                     data-placeholder="#springMessage('table.query.corpName')">
+                                </div>
+                            </div>
+                        </td>
+                        ## 银行类型
+                        <td class="textRight"><span style="color:red;">*</span> #springMessage(
+                            'table.ratBkration.bankType')</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType"
+                                     data-url="${basePath}/basic/business/btbanktype/json/1" data-extraData="false"
+                                     data-method="get" data-callback="bankTypeChange" name="ins_bankTypeId"
+                                     data-valuefield="id" data-textfield="typeName" data-biz-name="ins_bankTypeId"
+                                     data-name="ins_bankTypeId" data-inputvalue="inputvalue" data-search="true"></div>
+                            </div>
+                        </td>
+                        ## 账单日期
+                        <td class="textRight"><span style="color:red;">*</span>#springMessage('ttpay.billDate')</td>
+                        <td width="25%">
+                            <div class="layui-inline">
+                                <input type="text" name="tobillDate" data-name="tobillDate"
+                                       class="layui-input bt-biz-dateType" id="dateStart" value="$!{dateStart}" 
+                                       data-max="$!{dateEnd}" data-type="month"/>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('bis.bank.Enterprise.billNo')</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="likes_billNo" autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('bis.bank.Enterprise.billNo')">
+                            </div>
+                        </td>
+                        <td class="textRight">#springMessage('table.btBankAccApp.bankAcc')</td>
+                        <td width="25%">
+                            <div class="layui-input-inline" id="pledgeeAccDiv1">
+                                <input type="text" id="ins_bankAcc" data-curId="$!{curId}"
+                                       name="ins_bankAcc" data-name="ins_bankAcc" data-biz-name="ins_bankAcc"
+                                       data-resource="bis:bank:enterprise:check:query" permission="B"
+                                       class="bank layui-input bt-biz-accountTable" data-callback="accountPayeeCallBack"
+                                       placeholder="#springMessage('table.rasbankcardbinding.bankNo')">
+                            </div>
+
+                        </td>
+                        <td class="textRight">#springMessage('table.fcPredrawDtlTemp.balance')</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="geg_bal" data-moneyendid="leg_bal" autocomplete="off"
+                                       data-endid="mEnd"
+                                       class="layui-input bt-input-inline  bt-biz-moneyType">
+                                <span class="date-mid">~</span>
+                                <input type="text" name="leg_bal" id="leg_bal" autocomplete="off" id="mEnd"
+                                       class="layui-input bt-input-inline  bt-biz-moneyType">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('bis.bank.enterprise.check.data')</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-beforeinit="busBefore"
+                                     data-type="mulselect" data-group="bisExc.voucherStat" data-name="ins_voucherStat"
+                                     data-biz-name="voucherStat"></div>
+                            </div>
+                        </td>
+                        <td class="textRight">对账账户</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <input class="layui-input" type="text" name="checkAccount" autocomplete="off" placeholder="对账账户">
+                            </div>
+                        </td>
+                        <td class="textRight">是否保证金</td>
+                        <td width="25%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="sf_yn" data-name="isBail" data-biz-name="isBail"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+                            <button class="layui-btn" lay-submit="" type="button" lay-filter="search"
+                                    type="button">#springMessage('common.button.search')</button>
+                            <button type="reset" onclick="resetFristCarryOver()"
+                                    class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                            <button type="button" class="layui-btn" id="manual" name="manual">#springMessage(
+                                'billPool.button.manualSync')</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+    ##    #if($shiro.hasPermission("bis:bank:enterprise:check:query"))
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisPersonnelDetail.corpId')</th>
+        <th>#springMessage('btBankType.typeName')</th>
+        <th>#springMessage('table.btBankAccApp.natureId')</th>
+        <th>#springMessage('table.btBankAcc.accType')</th>
+        <th>#springMessage('table.nisPersonnelDetail.bankName')</th>
+        <th>#springMessage('bis.bank.Enterprise.billNo')</th>
+        <th>#springMessage('table.btBankAccApp.bankAcc')</th>
+        <th>#springMessage('table.btBankAccApp.accName')</th>
+        <th>#springMessage('table.fcAccBalance.curId')</th>
+        <th>#springMessage('ttpay.billDate')</th>
+        <th>#springMessage('table.fcPredrawDtlTemp.balance')</th>
+        <th>#springMessage('bis.bank.enterprise.check.data')</th>
+        <th>对账账户</th>
+        <th>是否保证金</th>
+    </tr>
+    </thead>
+</table>
+    ##    #end
+
+    #parse("views/common/footer.vm")
+</body>
+    ##<script src="${basePath}/static/modules/reconcile/bisBankEnterpriseCheck.list.js?_btv=${resourceVersion}"></script>
+<script>
+    var datatable = {}, mulselect, corp, accccountTable;
+    bt.use(['form', 'selectTable', 'datatable', 'bank', 'accountTable', 'moneyType', 'layedit', 'btdate', 'corp', 'selectType', 'dateType', 'element', 'dicts', 'mulselect'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.dicts.init();
+        bt.bank.init({elem: '.bank'});
+        bt.moneyType.init();
+        bt.dateType.init();
+        accccountTable = bt.accountTable.init({urldata: {accountType: '2'}});
+        var selectType = bt.selectType.init();
+        mulselect = bt.mulselect.init();
+        corp = bt.corp.init();
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/bis/bankEnterprise/datatable"
+            },
+            buttons: [
+                {
+                    text: bt.lang('bis.bank.enterprise.btnequal'),
+                    hide: bt.isnotResource('bis:bank:enterprise:check:opt'),
+                    action: function (e, dt, node, config) {
+                        optSure(dt.rows('.selected').data(), "Y");
+                    }
+                },
+                {
+                    text: bt.lang('bis.bank.enterprise.btnnotequal'),
+                    hide: bt.isnotResource('bis:bank:enterprise:check:opt'),
+                    action: function (e, dt, node, config) {
+                        optSure(dt.rows('.selected').data(), "N");
+                    }
+                },
+                {
+                    text: bt.lang('bis.bank.enterprise.btnmelody'),
+                    hide: bt.isnotResource('bis:bank:enterprise:check:opt'),
+                    action: function (e, dt, node, config) {
+                        optSure(dt.rows('.selected').data(), "T");
+                    }
+                },
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ]
+            , columns: [
+                {data: "corpCodeAndName", bSortable: false, className: 'center'},
+                {data: "bankTypeName", bSortable: false, className: 'center'},
+                {data: "accNature", bSortable: false, className: 'center'},
+                {data: "accTypeName", bSortable: false, className: 'center'},
+                {data: "bankName", bSortable: false, className: 'center'},
+                {data: "billNo", bSortable: true, className: 'center'},
+                {data: "bankAcc", bSortable: true, className: 'center'},
+                {data: "accName", bSortable: false, className: 'center'},
+                {data: "curName", bSortable: false, className: 'center'},
+                {data: "toBillDate", bSortable: true, className: 'center'},
+                {
+                    data: "bal", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.bal);
+                    }
+                },
+                {data: "voucherStatName", bSortable: false, className: 'center'},
+                {data: "checkAccount", bSortable: false, className: 'center'},
+                {
+                    data: "isBail", bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("sf_yn", full.isBail)
+                    }
+                }
+            ]
+        });
+
+
+        $("#manual").click(function () {
+            var bean = new Object();
+            if ($('select[name="ins_bankTypeId"]').val() == ""
+                    || $('select[name="ins_bankTypeId"]').val() == " ") {
+                parent.layer.msg(bt.lang("nis.personneldetail.message.cardtypename.null"), {icon: 2});
+                return false;
+            } else {
+                bean.bankTypeId = $('select[name="ins_bankTypeId"]').val();
+            }
+
+            if ($('#dateStart').val() == null) {
+                parent.layer.msg(bt.lang("fbs.budget.message.querydate.null"), {icon: 2});
+                return false;
+            } else {
+                bean.dateStart = $('#dateStart').val() + "-01";
+            }
+            bean.corpId = corp.get("corpId").val();
+            bean.bankAcc = $('input[name="ins_bankAcc"]').val();
+            bean.curId = $('input[name="curId"]').val();
+            $.post(basePath + "/bis/bankEnterprise/manualExc", bean, function (result) {
+                parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success) {
+//                  bt.datatable.refreshCurrentPage();
+                    location.reload();//重刷页面
+                }
+            }, 'JSON');
+
+        });
+
+    });
+
+
+    //业务种类初始化前回调
+    var busBefore = function (data, arguments) {
+        var bs = new Array(3);
+        var i, j = 0;
+        for (i = 0; i < data.length; i++) {
+            if (data[i].value == "2" | data[i].value == "6" | data[i].value == "9") {
+                bs[j++] = data[i]
+            }
+        }
+        return bs;
+    }
+
+
+    function optSure(data, opt) {
+        var len = data.length;
+        if (!len) {
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+            return;
+        }
+        //校验数据权限
+        var rowData = data.splice(0, len);
+        var ids;
+        var appScope = rowData[0].appScope;
+        var bankTypeId = rowData[0].bankTypeId;
+        var corpId = rowData[0].corpId;
+        for (i = 0; i < len; i++) {
+            if ("Y"!=opt &&(bankTypeId != rowData[i].bankTypeId || corpId != rowData[i].corpId) ) {
+                layer.alert(bt.lang('bis.bank.enterprise.repeat.msg'), {icon: 2});
+                return false;
+            }
+            if (ids) {
+                ids = ids + "," + rowData[i].id;
+            } else {
+                ids = rowData[i].id;
+            }
+
+        }
+        var url = basePath + "/bis/bankEnterprise/optContrast?opt=" + opt + "&ids=" + ids + "&bankTypeId=" + bankTypeId;
+        parent.layer.open({
+            type: 2,
+            area: ['950px', '269px'],
+            maxmin: true,
+            content: url,
+            end: function () {
+                bt.datatable.refreshCurrentPage();
+            }
+        });
+
+    }
+
+
+    //选择出票人账户回调方法
+    function accountPayeeCallBack(data) {
+        var $ = bt.jquery;
+        $("#ins_bankAcc").val(data.bankAcc);
+        $("#curId").val(data.curId);
+    }
+
+
+    function resetFristCarryOver() {
+        accccountTable.get("ins_bankAcc").reload({urldata: {corpId: null}});
+    }
+
+    function corpCallback(data) {
+        var bankTypeId = $('select[name="ins_bankTypeId"]').val();
+        var corpId = null;
+        if (null != data[0] && data.length == 1) {
+            corpId = data[0].id;
+        }
+        accccountTable.get("ins_bankAcc").reload({urldata: {corpId: corpId, bankTypeId: bankTypeId, permission: "B"}});
+
+    }
+
+    function bankTypeChange(data) {
+        var corpVar = corp.get("corpId").data();
+        var corpId = null;
+        if (null != corpVar[0] && corpVar.length == 1) {
+            corpId = corpVar[0].id;
+        }
+        accccountTable.get("ins_bankAcc").reload({urldata: {corpId: corpId, bankTypeId: data.id, permission: "B"}});
+    }
+
+</script>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input id="tranType" name="tranType" type="hidden" value="$!{params.tranType}">
+        <input id="eqs_validSign" name="eqs_validSign" type="hidden" value="1">
+        <input id="filterProIdNull" name="filterProIdNull" type="hidden" value="1">
+        <input id="filterId" name="filterId" type="hidden" value="$!{params.id}">
+        <input id="filterProId" name="filterProId" type="hidden" value="$!{params.proId}">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                ##名称
+                <td class="textRight">#springMessage('table.fexProduct.name')</td>
+                <td>
+                    <input type="text" name="likes_proName"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.fexProduct.name')">
+                </td>
+                ##层级
+                <td class="textRight">#springMessage('table.fexProduct.proLevel')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="fexProduct.proLevel" data-name="eqs_proLevel"></div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis" >
+        <thead>
+        <tr>
+            <th>#springMessage('table.fexProduct.name')</th>
+            <th>#springMessage('table.fexProduct.proId')</th>
+            <th>#springMessage('table.fexProduct.proLevel')</th>
+            <th>#springMessage('bisAccAttribute.validSign')</th>
+        </tr>
+        </thead>
+    </table>
+    <br />
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+    	<div class="layui-input-block">
+    	<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+#parse("views/common/footer.vm")
+<script type="text/javascript">
+var dataTable={};
+bt.use(['form','jquery','select','datatable','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.dicts.init();
+	//生成列表
+    dataTable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:true,
+        order: [3,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/foreign/fexproduct/datatable"
+        },
+        buttons: [
+            {
+                text:bt.lang('common.button.select'),
+                action: function ( e, dt, node, config ) {
+                    var datas = dt.rows('.selected').data();
+                    bt.selectOp(datas);
+                }
+            }
+        ]
+        ,columns: [
+            {data: "proName", bSortable: true},
+            {data: "parentProName", bSortable: true},
+            {
+                data: "proLevel", bSortable: true, className: 'center',
+                render: function (data, type, full, meta) {
+
+                    return bt.dict("fexProduct.proLevel", full.proLevel);
+                }
+            },
+            {
+                data: "validSign", bSortable: true, className: 'center',
+                render: function (data, type, full, meta) {
+
+                    return bt.dict("valid_sign", full.validSign);
+                }
+            }
+        ]
+    });
+	bt.selectOp = function(datas){
+		var len = datas.length;
+        if(!len){
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+        	return;
+        }
+		var rowDatas = datas.splice(0,len);
+        var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+        var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-fexProductInfo']['callback'];
+        if(func){
+			var data={"data":rowDatas};
+            func(data);
+        }
+	}
+});
+var closeForms=function(){
+	parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+</script>
+</body>
+</html>

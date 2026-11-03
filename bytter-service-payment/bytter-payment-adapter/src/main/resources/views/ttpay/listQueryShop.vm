@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight" width="10%">#springMessage('table.nisWageDetail.wageDtlNo')</td>
+            <td width="20%">
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_code" id="code" value=""
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.nisWageDetail.wageDtlNo')">
+                </div>
+            </td>
+            <td class="textRight" width="10%">#springMessage('商户名称')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_shopName" id="shopName" value=""
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('商户名称')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" type="button" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" type="button" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" >
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisWageDetail.wageDtlNo')</th>
+        <th>#springMessage('商户名称')</th>
+        <th>#springMessage('ttpay.shopType.type')</th>
+        <th>#springMessage('table.bvStorageBox.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form','corp','datatable','dicts','selectTree','mulselect','dateType'], function(){
+        $ = bt.jquery,form = bt.form();
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            order: [[0, 'desc']],
+            colReorder: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                isInitData:"false"
+            },
+            ajax: {
+                'url': basePath+"/ttpay/queryShop/datatable"
+            },
+            // ignoreButtons: ['print'],
+            buttons: [],
+            order: [[1,'desc']],
+            fixedColumns: {
+                rightColumns: 2//代表冻结右边一列
+            },
+            columns: [
+                {data:"code",bSortable:true},
+                {data:"shopName",bSortable:true},
+                {data:"shoptypeName",bSortable:true},
+                {data:"isFlag",bSortable:true,render: function (data, type, full, meta) {
+                        return bt.dict("valid_sign", full.isFlag);
+                    }},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html='';
+                        if(bt.isResource('ttpay:query:shop:op',full.corpId)){
+                            html+='<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+                        }
+
+                        return html;
+                    }}
+            ]
+        });
+    });
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/ttpay/bussiness/view/" + data.id
+        });
+    }
+</script>
+</html>

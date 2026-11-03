@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+
+    <style>
+        #collaTable .layui-input {
+            width: 100%;
+        }
+        #collaTable2 .layui-input {
+            width: 60%;
+        }
+        #collaTable2 td {
+            border: none;
+        }
+        #collaTable2 .layui-input,.rateWrap,td
+        {
+            border: none;
+        }
+
+        #collaTable2 .inputMark {
+            right: 11px !important;
+            top: 2px !important;
+        }
+
+        #collaTable2 .accountedSum {
+            padding-right: 25px !important;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="layui-collapse">
+    <form class="layui-form" method="post">
+        <input type="hidden" id="equityCode" name="equityCode" value="$!{infoDetail.equityCode}">
+        <input type="hidden" id="financingWay" name="financingWay" value="$!{infoDetail.financingWay}">
+        <input type="hidden" id="investor" name="investor" value="$!{infoDetail.investor}">
+        <input type="hidden" id="invWay" name="invWay" value="$!{infoDetail.invWay}">
+        <input type="hidden" id="id" name="id" value="$!{payPlanVO.id}">
+        <input type="hidden" id="infoDetailId" name="infoDetailId" value="$!{infoDetail.id}">
+        <input type="hidden" id="invMoney" name="invMoney" value="$!{infoDetail.invMoney}">
+        <div class="layui-collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">#springMessage('table.cmsEquity.detail')</h2>
+                <div class="layui-colla-content layui-show" style="margin-bottom: 10px;">
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                            ##融资编号
+                            <td class="textRight" style="width: 15%">#springMessage('table.cmsEquity.equityCode')</td>
+                            <td style="width: 35%">
+                                $!{infoDetail.equityCode}
+                            </td>
+                            ##融资方式
+                            <td class="textRight">#springMessage('table.cmsEquity.financingWay')</td>
+                            <td>
+                                $dictTag.get("cms.equity.financingWay",$!{infoDetail.financingWay})
+                            </td>
+                        </tr>
+                        <tr>
+                            ##出资人
+                            <td class="textRight" style="width: 15%">#springMessage('table.cmsEquity.investor')</td>
+                            <td style="width: 35%">
+                                $!{infoDetail.investor}
+                            </td>
+                            ##出资方式
+                            <td class="textRight">#springMessage('table.cmsEquity.invWay')</td>
+                            <td>
+                                 $dictTag.get("cms.equity.invWay",$!{infoDetail.invWay})
+                            </td>
+                        </tr>
+                        <tr>
+                            ##出资金额
+                            <td class="textRight" style="width: 15%">#springMessage('table.cmsEquity.invMoney')</td>
+                            <td style="width: 35%">
+                                $!number.formatNumeric($!{infoDetail.invMoney})
+                            </td>
+                            ##持股比例
+                            <td class="textRight">#springMessage('table.cmsEquity.equityProUn')</td>
+                            <td>
+                                $number.formatNumeric($math.mul($!{infoDetail.equityPro},100),"0.00")%
+                            </td>
+                        </tr>
+                        <tr>
+                            ##资产名称
+                            <td class="textRight" style="width: 15%">#springMessage('table.cmsEquity.assetName')</td>
+                            <td style="width: 35%">
+                                $!{infoDetail.assetName}
+                            </td>
+                            ##备注
+                            <td class="textRight">#springMessage('table.cmsEquity.rmk')</td>
+                            <td>
+                                $!{infoDetail.rmk}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        ##计划明细
+        <div class="layui-collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">#springMessage('cms.equity.planDetail')</h2>
+                <div class="layui-colla-content  layui-show" >
+                    <table class="layui-table self-adaption" id="planDetailTB" style="width:100%; margin-bottom:8px;margin-top: 8px;">
+                        <thead>
+                        <tr>
+                            <th >#springMessage('table.cmsEquity.equityCode')</th>##融资编号
+                            <th > #springMessage('cms.equity.payDate')</th>##缴付日期/过户日期
+                            <th >#springMessage('cms.equity.payMoney')</th>##本次缴付金额
+                            <th >#springMessage('cms.equity.rePayMoney')</th>##剩余缴付金额
+                            <th  style="width: 10%">#springMessage('cms.equity.accounted')</th>##本次占比
+                            <th >#springMessage('cms.equity.assName')</th>##资产名称
+                            <th >#springMessage('cms.equity.isPay')</th>##是否已缴付/过户
+                            <th >#springMessage('cms.equity.rmk')</th>##备注
+                        </tr>
+                        </thead>
+                        <tbody id="collaTable">
+                        </tbody>
+                        <tfoot>
+                            ##合计行
+                        <tr id="collaTable2" >
+                            <td align="center">#springMessage('table.interet.sum')</td>
+                            <td></td>
+                            <td align="right">##本次缴付金额合计
+                                <input type="text" id="payMoneySum" data-name="payMoneySum" data-biz-name="payMoneySum" readonly="readonly" data-decimal="2"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType">
+                            </td>
+                            <td align="right">##剩余缴付金额合计
+                            </td>
+                            <td align="right" style="width: 10%">##本次占比%合计
+                                <input type="text"  id="accountedSum" data-name="accountedSum"  data-biz-name="accountedSum" readonly="readonly"
+                                       autocomplete="off"  class="layui-input bt-biz-rateType accountedSum"/>
+                            </td>
+                            <td >&nbsp;</td>
+                            <td >&nbsp;</td>
+                            <td >&nbsp;</td>
+                            <td >&nbsp;</td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+#if($!{isApprove}==false)
+        <div class="layui-form-item layui-form-submit" id="buttonDiv">
+            <div class="layui-input-block">
+                #if($!{payPlanVO.id} )
+                    <button type="button" class="layui-btn" onclick="bt.trackFlowByBusinessId('$!{payPlanVO.id}')">#springMessage('common.button.trackFlow')</button>
+                #end
+                <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+            </div>
+        </div>
+#end
+    </form>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+
+
+<script type="text/javascript">
+    var $,form,moneyType,dateType,dateFun,dicts,moneyFun,bttable,selectTable,rateTypes,equityCode;
+    var rowNum = 0;//用来记录行
+    var maxPayMoney="";//最大缴付金额
+    var surplusPayMoney="";//剩余缴付金额
+    var minPayDate="";//最小缴付日期
+    var maxPayDate="";//最大缴付日期
+    var isPay="0";//初始化时，若为1：已缴付/过户，则设置不可编辑
+    bt.use(['form', 'datatable', 'corp', 'moneyType', 'dateType','btUpload', 'dicts', 'jquery','selectType','rateType','bttable'], function () {
+        $ = bt.jquery, form = bt.form();
+        moneyType = bt.moneyType.init();
+        moneyFun=bt.moneyType.getFun();
+        rateTypes = bt.rateType.init();//利率
+        dateType = bt.dateType.init();
+        dateFun = dateType.getFun();//获取时间操作方法
+        var equityCode=$("#equityCode").val();
+        /**
+         * 生成列表
+         */
+        bttable = bt.bttable.init({
+            elem: "#planDetailTB",
+            mulselect:false,
+            checkbox: false,
+            url: basePath+"/cms/equity/payPlan/getPlanDetailByEquityCode?equityCode="+equityCode,
+            buttons: [
+            ],
+            columns:[
+                {data:"equityCode", render:function(data, row){
+                        rowNum=row;
+                        isPay="disabled";
+                        return '<input type="text" id="equityCode_'+rowNum+'" name="detailDtl['+rowNum+'].equityCode" value="'+(data.equityCode==null?"":data.equityCode)+'" readonly="readonly" class="layui-input" />';
+                    }
+                },
+                {data:"payDate",
+                    render:function(data, row){
+                        return '<input '+isPay+' name="detailDtl['+rowNum+'].payDate" data-biz-name = "payDate_'+rowNum+'" id="payDate_'+rowNum+'" type="text" value="'+data.payDate+'" class="layui-input bt-biz-dateType" ' +
+                                /*'data-min="'+minPayDate+'" data-max="'+maxPayDate+'" data-callback="clickEvent"' +*/
+                                'data-type="date" lay-verify="required"/>';
+                    }
+                },
+
+                {data:"payMoney", bSortable: true, className: "textRight",render:function(data, row){
+                        return '<input '+isPay+' divName="payMoney"  class="layui-input bt-input-inline  bt-biz-moneyType" value="'+data.payMoney+'"  type="text" data-decimal="2" id="payMoney_'+rowNum+'"  data-biz-name="payMoney_'+rowNum+'" data-name="detailDtl['+rowNum+'].payMoney"/>';
+                    }
+                },
+                {data:"rePayMoney",bSortable: true, className: "textRight", render:function(data, row){
+                        return '<input disabled divName="rePayMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="rePayMoney_'+rowNum+'" type="text" value="'+(data.rePayMoney==null?"":moneyFun.format(data.rePayMoney))+'" data-decimal="2" id="rePayMoney_'+rowNum+'" data-min="0" data-name="detailDtl['+rowNum+'].rePayMoney"/>';
+                    }
+                },
+                {data:"accounted", bSortable: true, className: "textRight",render:function(data, row){
+                        return '<input disabled divName="accounted" class="layui-input   bt-biz-rateType" data-biz-name="accounted_'+rowNum+'"  type="text" value="'+(data.accounted==null?"":data.accounted)+'"  id="accounted_'+rowNum+'"   data-name="detailDtl['+rowNum+'].accounted"/>';
+                    }
+                },
+                {data:"assName", render:function(data, row){
+                        return '<input type="text" '+isPay+' id="assName" name="detailDtl['+rowNum+'].assName" value="'+(data.assName==null?"":data.assName)+'"  class="layui-input" />';
+                    }
+                },
+                {data:"isPay", bSortable: true, className: "textRight",render:function(data, row){
+                        if(data.isPay=="1"){
+                            return '<input  '+isPay+' type="checkbox" lay-skin="primary" name="detailDtl['+rowNum+'].isPay" value="1"  checked/>';
+                        }else{
+                            return '<input  '+isPay+' type="checkbox" lay-skin="primary" name="detailDtl['+rowNum+'].isPay" value="1" />';
+                        }
+                    }
+                },
+                {data:"rmk", render:function(data, row){
+                        return '<input readonly="readonly" name="detailDtl['+rowNum+'].rmk" id="rmk" value="'+(data.rmk==null?"":data.rmk)+'" class="layui-input" type="text"/>';
+                    }
+                }
+            ],
+            tableInitCallback:function(data){
+                rowNum = data.length;
+                addFun();
+                sumMoney();
+            }
+        });
+    })
+
+    /**
+     * 各金额的合计
+     */
+    function sumMoney(){
+        var invMoney=$("#invMoney").val();
+        //计算本次缴付金额
+        var payMoneySum=0;
+        $("input[divName^='payMoney']").each(function(i){
+            payMoneySum = bt.money.add(payMoneySum, $(this).val());
+        });
+        moneyType.get("payMoneySum").val(payMoneySum);
+        //计算占比
+        rateTypes.get("accountedSum").val(moneyFun.div(parseFloat(payMoneySum), parseFloat(invMoney), 4))
+    }
+
+    function addFun(){
+        //重新渲染datatype和moneyType
+        dateType.render();
+        moneyType.render();
+        rateTypes.render();//利率
+        form.render('checkbox');
+        //+1为了以防id重复
+        rowNum++;
+    }
+
+</script>
+</html>

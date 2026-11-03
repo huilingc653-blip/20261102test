@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        .layui-textarea {
+            line-height: 20px;
+            min-width: 120px;
+            min-height: 50px;
+        }
+        .hide {
+            display: none;
+        }
+        form .layui-elem-field .layui-table > thead > tr > th, form .layui-elem-field .layui-table > tbody >tr > td, form .layui-elem-field .layui-table > thead > tr > td{
+            border: 1px solid #EBEDF1;
+        }
+        form .uploader-list .layui-table > thead > tr > th, form .uploader-list .layui-table > tbody >tr > td, form .uploader-list .layui-table > thead > tr > td{
+            border: 1px solid #EBEDF1;
+        }
+        /*.layui-fluid table {*/
+        /*    width: 100%; !* 让表格宽度为100% *!*/
+        /*    table-layout: fixed; !* 使得所有列宽度固定，不会因内容长短而变化 *!*/
+        /*}*/
+        .layui-fluid table td {
+            width: 130px; /* 设置所有单元格的宽度为100像素 */
+        }
+        /*快捷支付信息*/
+        .qpi-title {
+            height: 33px;
+            line-height: 33px;
+            font-weight: 700;
+            background: #f2f2f2;
+            padding-left: 10px;
+            margin-bottom: 10px;
+        }
+        .payInfo-select {
+            width: 214px;
+            border-color: #e2e2e2;
+            height: 26px;
+            border-radius: 4px;
+            display: inline-block!important;
+        }
+        .accountInfo .table-scroll {
+            overflow: auto;
+            width: calc(100%);
+        }
+        /* 下拉展开时不要把账号表格滚动区域撑开，否则列表高度会跟着变 */
+        .accountInfo .table-scroll.wapper_div,
+        .wapper_div {
+            overflow: visible!important;
+        }
+        .select-show {
+            overflow: visible!important;
+        }
+    </style>
+</head>
+<body style="padding-bottom: 60px;">
+<form class="layui-form" action="">
+    <div class="layui-fluid" style="padding: 0">
+        <div class="layui-row">
+            <div class="layui-col-xs12">
+                <input id="isCommonValue" type="hidden" value="">
+                <input id="externalCorpId" type="hidden" value="$!{externalCorp.id}">
+                <input id="supplierIdHidden" type="hidden" value="$!{externalCorp.externalType}">
+                ##                <input id="isNativeValue" type="hidden" value="$!{externalCorp.isNative}">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <td colspan="4">#springMessage('table.externalCorp.basicInfo')</td>
+                    </tr>
+                    </thead>
+                    <tr>
+                        <td class="text-right">#springMessage('table.externalCorp.code')</td>
+                        <td>
+                            <input type="hidden" name="id" value="$!{externalCorp.id}"/>
+                            <input type="text" name="code" autocomplete="off" class="layui-input"
+                                   lay-verify="numberOrletter|strlength"
+                                   data-maxlength="32" value="$!{externalCorp.code}"/>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.source')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-group="sys.externalCorp.source"
+                                 data-required="true"
+                                 data-defaultvalue="$!{externalCorp.sourceSystem}" data-name="sourceSystem"
+                                 data-biz-name="externalSourceSystem"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">#springMessage('table.externalCorp.name')</td>
+                        <td>
+                            <input type="text" name="name" autocomplete="off" title="$!{externalCorp.name}"
+                                   class="layui-input" lay-verify="required|strlength"
+                                   data-maxlength="200" value="$!{externalCorp.name}" />
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.abbreviate')</td>
+                        <td>
+                            <input type="text" name="abbreviate" autocomplete="off" class="layui-input"
+                                   lay-verify="abbreviate"
+                                   value="$!{externalCorp.abbreviate}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">#springMessage('table.externalCorp.nameEn')</td>
+                        <td>
+                            <input type="text" name="nameEn" autocomplete="off" title="$!{externalCorp.nameEn}"
+                                   class="layui-input" lay-verify="strlength|nameEnEnglishOnly"
+                                   data-maxlength="200" value="$!{externalCorp.nameEn}" />
+                        </td>
+                        <td class="text-right">#springMessage("table.externalCorp.externalType")</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-group="external.type" data-required="true"
+                                 name="externalType" data-name="externalType" data-value="$!{externalCorp.externalType}"
+                                 data-callback="bt.externalTypeCallback"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">#springMessage('sys.externalCorp.bwType')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="SYS_BUS_ENTITY_TYPE" data-required="true"
+                                 data-name="bwType"
+                                #if(!$externalCorp)
+                                 data-value="00"
+                                #else
+                                 data-value="$!{externalCorp.bwType}"
+                                #end></div>
+                        </td>
+                        <td class="text-right showSupplierId">#springMessage("table.externalCorp.supplier")</td>
+                        <td>
+                            <div class="showSupplierId">
+                                <div class="bt-biz-selectType" data-url="${basePath}/sys/suppliertype/json"
+                                     data-valuefield="id" data-textfield="name" data-name="supplierId"
+                                     data-biz-name="supplierId" id="supplierId"
+                                     data-defaultvalue="$!{externalCorp.supplierId}" #if($!{externalCorp.externalType} == 1 || $!{externalCorp.externalType} == 2)
+                                     data-required="true"#end></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">#springMessage('table.externalCorp.corpStatus')</td>
+                        <td>
+                            <input type="checkbox" #if(!$externalCorp.isNative || $externalCorp.isNative==1)
+                                   checked #end name="isNative"
+                                   lay-skin="switch" lay-filter="checkNative"
+                                   lay-text="#springMessage("common.sc_yn.yes")|#springMessage("common.sc_yn.no")">
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.satus')</td>
+                        <td>
+                            <input type="checkbox" #if(!$externalCorp.status || $externalCorp.status==1) checked #end
+                                   name="status" lay-skin="switch"
+                                   lay-text="#springMessage("common.sc_yn.yes")|#springMessage("common.sc_yn.no")">
+                        </td>
+                    </tr>
+                    <tr>
+                        #*<td class="text-right">#springMessage('table.externalCorp.isCommon')</td>
+                        <td>
+                            <input type="checkbox" #if(!$externalCorp.isCommon || $externalCorp.isCommon==1)
+                                   checked #end
+                                   name="isCommon" lay-skin="switch" lay-filter="checkCorp"
+                                   lay-text="#springMessage("common.sc_yn.yes")|#springMessage("common.sc_yn.no")">
+                        </td>*#
+                        <td class="text-right" id="inputCorpName">#springMessage('table.externalCorp.corpName')</td>
+                        <td id="inputCorp">
+                            <div id="inputCorpDiv2">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-tree-type="check"
+                                     data-type="selectTree"
+                                     data-name="corpId2"
+                                     data-biz-name="corpId2"
+                                     data-scope="all"
+                                     data-defaultvalue="$!{corpId}"
+                                    #if(!$externalCorp)
+                                     data-resource="sys:external:corp:save"
+                                    #else
+                                     data-resource="sys:external:corp:update"
+                                    #end>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.socCode')</td>
+                        <td>
+                            <input type="text" name="socCode" autocomplete="off" class="layui-input"
+                                   lay-verify="strlength"
+                                   data-maxlength="32" value="$!{externalCorp.socCode}"/>
+                        </td>
+                    </tr>
+                    #*<tr>
+                        <td class="text-right">#springMessage('table.externalCorp.socCode')</td>
+                        <td>
+                            <input type="text" name="socCode" autocomplete="off" class="layui-input"
+                                   lay-verify="strlength"
+                                   data-maxlength="32" value="$!{externalCorp.socCode}"/>
+                        </td>
+                        <td class="text-right"></td>
+                        <td></td>
+                    </tr>*#
+                </table>
+            </div>
+            <div class="layui-col-xs12">
+                <table class="layui-table ">
+                    <thead>
+                    <tr>
+                        <td colspan="4">#springMessage('table.externalCorp.contactInfo')</td>
+                    </tr>
+                    </thead>
+                    <tr id="nativeY"
+                        #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                        class="is_city"
+                        #else
+                        class="is_city hide"
+                        #end>
+                        <td class="text-right">#springMessage('table.externalCorp.provAndCity')</td>
+                        <td>
+                            <div class="layui-input-inline bt-biz-region" data-group="externalRegion"
+                                 data-name="province" data-change="city" data-label="#springMessage('common.placeholder.select')"
+                                 data-defaultValue="$!{externalCorp.province}"></div>
+                            <div class="layui-input-inline bt-biz-region" data-group="externalRegion" data-name="city"
+                                 data-label="#springMessage('common.placeholder.select')" data-defaultValue="$!{externalCorp.city}"></div>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.address')</td>
+                        <td><input type="text" id="internalAddress" autocomplete="off" class="layui-input"
+                                   lay-verify="address" value="$!{externalCorp.address}"/></td>
+                    </tr>
+                    <tr id="nativeN"
+                        #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                        class="is_city ignore-required-hide hide"
+                        #else
+                        class="is_city ignore-required-hide"
+                        #end>
+                        ##所在国/城市
+                        <td class="text-right">#springMessage('table.btswiftinfo.countryCode')/#springMessage('table.fcAccbookExt.city')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <input id="province" name="province" type="hidden" value="$!{externalCorp.province}">
+                                <input type="text" id="provinceTemp" name="provinceTemp"  #if($externalCorp.isNative == 0) lay-verify="required" #end
+                                       class="layui-input province" data-biz-name="province"
+                                       value="$!{externalCorp.provinceFexName}" placeholder="#springMessage('table.btswiftinfo.countryCode')">
+                            </div>
+                            <div class="layui-inline">
+                                <input type="hidden" id="city" name="city" autocomplete="off" class="layui-input"
+                                       value="$!{externalCorp.city}" placeholder="#springMessage('table.fcAccbookExt.city')"/>
+                                <input type="text" id="cityTemp" name="cityTemp"
+                                       class="layui-input city" data-biz-name="cityTemp"
+                                       value="$!{externalCorp.cityFexName}" placeholder="#springMessage('table.btswiftinfo.cityName')">
+                            </div>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.provinceState')</td>
+                        <td><input type="text" name="provinceState" autocomplete="off" class="layui-input" lay-verify="englishOnly"
+                                   value="$!{externalCorp.provinceState}"/></td>
+                    </tr>
+                    <tr
+                        #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                                class="address ignore-required-hide hide"
+                        #else
+                                class="address ignore-required-hide"
+                        #end>
+                        <td class="text-right">#springMessage('table.externalCorp.address1')</td>
+                        <td>
+                            <input type="text" name="address1" autocomplete="off" class="layui-input" lay-verify="englishOnly"
+                                   placeholder="#springMessage('fex.cotp.streetAddress')" value="$!{externalCorp.address1}"/>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.address2')</td>
+                        <td>
+                            <input type="text" name="address2" autocomplete="off" class="layui-input" lay-verify="englishOnly"
+                                   placeholder="#springMessage('fex.cotp.streetAddress')" value="$!{externalCorp.address2}"/>
+                        </td>
+                    </tr>
+                    <tr
+                        #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                                class="zipCode ignore-required-hide hide"
+                        #else
+                                class="zipCode ignore-required-hide"
+                        #end>
+                        <td class="text-right">#springMessage('table.externalCorp.zipCode')</td>
+                        <td>
+                            <input type="text" name="zipCode" autocomplete="off" class="layui-input" lay-verify="alphaNumeric"
+                                   value="$!{externalCorp.zipCode}"/>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.fullAddress')</td>
+                        <td>
+                            <input type="text" id="externalAddress" autocomplete="off" class="layui-input" value="$!{externalCorp.address}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">#springMessage('table.externalCorp.linkMan')</td>
+                        <td>
+                            <input type="text" name="linkMan" autocomplete="off" class="layui-input"
+                                   lay-verify="linkMan"
+                                   value="$!{externalCorp.linkMan}"/>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.tel')</td>
+                        <td>
+                            <input type="text" name="tel" autocomplete="off" class="layui-input" lay-verify="phone1"
+                                   value="$!{externalCorp.tel}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">#springMessage('table.externalCorp.fax')</td>
+                        <td>
+                            <input type="text" name="fax" autocomplete="off" class="layui-input" lay-verify="fax"
+                                   value="$!{externalCorp.fax}"/>
+                        </td>
+                        <td class="text-right">#springMessage('table.externalCorp.email')</td>
+                        <td><input type="text" name="email" autocomplete="off" class="layui-input" lay-verify="email"
+                                   value="$!{externalCorp.email}"/></td>
+                    </tr>
+                    <tr
+                        #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                                class="addressEn ignore-required-hide"
+                        #else
+                                class="addressEn ignore-required-hide hide"
+                        #end>
+                        <td class="text-right">#springMessage('table.externalCorp.addressEn')</td>
+                        <td>
+                            <input type="text" name="addressEn" autocomplete="off" class="layui-input" lay-verify="addressEnEnglishOnly"
+                                   value="$!{externalCorp.addressEn}"/>
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="storageEvent" >#springMessage('common.button.temp')</button>
+            <button class="layui-btn" lay-submit="" lay-filter="submitEvent">#springMessage('common.button.submit')</button>
+            <button id="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+        </div>
+    </div>
+
+    ## 快捷支付信息
+    <div
+        #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                class="quicklyPayInfo hide"
+        #else
+                class="quicklyPayInfo"
+        #end id="quicklyPayInfo">
+        <div class="qpi-title">#springMessage('table.externalCorpQuickPay.quickPayInfo')</div>
+        <button class="layui-btn" type="button" id="addBtn">#springMessage('common.addTr')</button> ##新增行
+        <table class="layui-table layui-table-border breakRow">
+            <thead>
+            <tr>
+                <th width="20%">#springMessage('table.externalCorpQuickPay.proId')</th>
+                <th width="30%">#springMessage('table.externalCorpQuickPay.email')</th>
+                <th width="30%">#springMessage('table.externalCorpQuickPay.tel')</th>
+                <th width="20%">#springMessage('table.common.operation')</th>
+            </tr>
+            </thead>
+            <tbody id="qpiBody">
+            </tbody>
+        </table>
+    </div>
+    <div class="accountInfo">
+        <div class="qpi-title">#springMessage('table.externalCorp.accountInfo')</div>
+        <div class="ignore-required-icon">
+            <table id="bankAcc" style="width:100%">
+                <thead>
+                <tr id="bankAccY"
+                    #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                    class="is_city"
+                    #else
+                    class="is_city hide"
+                    #end">
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.externalBankAcc.bankAcc')</th>##关联账号
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.externalBankAcc.curId')</th>##币种
+                <th>#springMessage('table.externalBankAcc.bankName')</th>##开户行
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.externalBankAcc.bankSourceCode')</th>##联行号
+                    ##<th>#springMessage('table.externalBankAcc.bankTypeName')</th>
+                <th>#springMessage('table.externalBankAcc.prov')</th>##账号所在省
+                <th>#springMessage('table.externalBankAcc.city')</th>##账号所在市
+                <th>#springMessage('table.externalCorp.accIdentificationType')</th>##账户识别类型
+                <th>#springMessage('table.btswiftinfo.swiftCode')</th>##swiftCode
+                <th>#springMessage('table.externalBankAcc.remark')</th>##备注
+                <th>#springMessage('table.externalBankAcc.isDefaultAcc')</th>##首选账号
+                    ##<th>#springMessage('table.externalBankAcc.isSignAcc')</th>
+                <th>#springMessage('common.table.thead.operation')</th>##操作
+                </tr>
+                        <tr id="bankAccN"
+                    #if(!$externalCorp.isNative || $externalCorp.isNative ==1)
+                            class="is_city hide"
+                    #else
+                            class="is_city"
+                    #end">
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.externalBankAcc.bankAcc')</th>##关联账号
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.externalBankAcc.name')</th>##账户名称
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.externalBankAcc.curId')</th>##币种
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btswiftinfo.bankName')</th>##机构名称
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btswiftinfo.swiftCode')</th>##swiftCode
+                <th>#springMessage('table.btswiftinfo.localClearNo')</th>##本地清算号
+                <th>#springMessage('table.externalBankAcc.payExcType')</th>##支付指令类型
+                <th>#springMessage('table.externalBankAcc.intermediaryBank')</th>##中转行
+                <th>#springMessage('table.externalBankAcc.intermediaryBankSwiftCode')</th>##中转行SwiftCode
+                <th>#springMessage('table.externalBankAcc.intermediaryBankAddress')</th>##中转行地址
+                <th>#springMessage('table.externalBankAcc.intermediaryBankAcc')</th>##中转行账号
+                    #*<th>#springMessage('table.fcAcc.account')#springMessage('table.btswiftinfo.countryCode')</th>
+                    <th>#springMessage('table.fcAcc.account')#springMessage('table.btswiftinfo.cityName')</th>
+                    <th>#springMessage('table.externalCorp.accIdentificationType')</th>*#
+                <th>#springMessage('table.externalBankAcc.remark')</th>##备注
+                <th>#springMessage('table.externalBankAcc.isDefaultAcc')</th>##首选账号
+                    ##<th>#springMessage('table.externalBankAcc.isSignAcc')</th>
+                <th>#springMessage('common.table.thead.operation')</th>##操作
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- 附件上传 -->
+    <input id="attachmentId" name="attachmentId" type="hidden" value="$!{externalCorp.attachmentId}">
+    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+</form>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/sys/externalCorp/externalCorp.add.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+##修改人：zrs
+##修改内容：新增单位出纳维护菜单
+##修改时间：2025-07-11
+INSERT INTO sys_menu (ID, DESCRIPTION, NAME, PARENT_ID,  SORT, STATUS, URL, IS_MODULE, IS_EXTEND)
+SELECT '67540d805e0311f0a25e005056a84efa','单位出纳维护', '单位出纳维护', 'd61f91e27ed9473ab9e8183343ea4507',  32, 1, '/netbank/corpCashier/list', 0, 1 FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM sys_menu WHERE ID = '67540d805e0311f0a25e005056a84efa' LIMIT 1
+);
+commit;
+##GOGO
+
+##修改人：zrs
+##修改内容：新增单位出纳维护查询资源
+##修改时间：2025-07-11
+insert into SYS_RESOURCES (ID, DESCRIPTION, NAME, PERMISSION, STATUS, MENU_ID)
+SELECT 'ae4bc09d5e0311f0a25e005056a84efa', '查询资源', '查询资源', 'netbank:corpCashier:query', 1, '67540d805e0311f0a25e005056a84efa' FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM SYS_RESOURCES WHERE ID='ae4bc09d5e0311f0a25e005056a84efa' LIMIT 1
+);
+##GOGO
+
+##修改人：zrs
+##修改内容：新增单位出纳维护查询资源
+##修改时间：2025-07-11
+insert into SYS_RESOURCES (ID, DESCRIPTION, NAME, PERMISSION, STATUS, MENU_ID)
+SELECT 'b67d4f045e0511f0a25e005056a84efa', '编辑资源', '编辑资源', 'netbank:corpCashier:edit', 1, '67540d805e0311f0a25e005056a84efa' FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM SYS_RESOURCES WHERE ID='b67d4f045e0511f0a25e005056a84efa' LIMIT 1
+);
+##GOGO
+
+CREATE TABLE IF NOT EXISTS NIS_CORP_CASHIER
+(
+    ID                   	VARCHAR(32) NOT NULL COMMENT '主键',
+    CORP_ID			        VARCHAR(32) COMMENT '单位ID',
+    CORP_CODE			    VARCHAR(32) COMMENT '单位CODE',
+    CORP_NAME               VARCHAR(200) COMMENT '单位名称',
+    STATUS					VARCHAR(2) COMMENT '状态：1-正常，0-禁用',
+    CREATE_BY            	VARCHAR(32) COMMENT '创建人',
+    CREATE_DATE         	DATETIME COMMENT '创建时间',
+    UPDATE_BY            	VARCHAR(32) COMMENT '修改人',
+    UPDATE_DATE         	DATETIME COMMENT '修改时间'
+);
+ALTER TABLE NIS_CORP_CASHIER COMMENT '单位出纳表';
+
+CREATE TABLE IF NOT EXISTS NIS_CORP_CASHIER_USER
+(
+    ID                   	VARCHAR(32) NOT NULL COMMENT '主键',
+    CORP_CASHIER_ID			VARCHAR(32) COMMENT '主表ID',
+    CORP_ID			        VARCHAR(32) COMMENT '单位ID',
+    USER_ID			        VARCHAR(32) COMMENT '用户ID',
+    USER_CODE			    VARCHAR(100) COMMENT '用户登录名',
+    USER_NAME               VARCHAR(200) COMMENT '用户名称'
+);
+ALTER TABLE NIS_CORP_CASHIER_USER COMMENT '单位出纳表用户表';

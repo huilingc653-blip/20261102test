@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="currentUser" value="$shiro.getPrincipal().id">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ## 发布者
+            <td class="textRight">#springMessage("sys.article.publisher")</td>
+            <td>
+                <input type="text" name="username" class="layui-input bt-input-inline">
+            </td>
+            <td class="textRight">#springMessage('bpm.model.releaseTime')</td>
+            <td>
+                <input type="text" name="startTime" class="layui-input bt-input-inline bt-biz-dateType" data-endid="endTime"/>
+                <span class="date-mid">~</span>
+                <input type="text" name="endTime" id="endTime" class="layui-input bt-input-inline bt-biz-dateType">
+            </td>
+        </tr>
+        <tr>
+            ## 信息标题
+            <td class="textRight">#springMessage("sys.article.title")</td>
+            <td width="40%">
+                <input type="text" name="title" class="layui-input bt-input-inline"/>
+                <input type="hidden" name="review" value="$!{review}">
+                <input type="hidden" name="list" value="1">
+            </td>
+            #if($!{review} && $!{review} == '1')
+
+            #else
+                <td class="textRight">#springMessage('table.fcExcrateAdjust.status')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <select name="status">
+                            <option value=" ">#springMessage("common.placeholder.select")</option>
+                            <option value="-1">#springMessage("common.button.back")</option>
+                            <option value="0">#springMessage("common.button.temp")</option>
+                            <option value="1">#springMessage("sys.article.status.published")</option>
+                            <option value="2">#springMessage("sys.article.status.beCheck")</option>
+                            <option value="3">#springMessage("bpm.model.unRelease")</option>
+                        </select>
+                    </div>
+                </td>
+            #end
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        ## 信息类型
+        <th>#springMessage("sys.article.type")</th>
+        ## 信息标题
+        <th>#springMessage("sys.article.title")</th>
+        ## 编辑时间
+        <th>#springMessage("sys.article.editDate")</th>
+        ## 发布时间
+        <th>#springMessage("sys.article.publishDate")</th>
+        ## 发布者
+        <th>#springMessage("sys.article.publisher")</th>
+        ## 状态
+        <th>#springMessage("common.table.status")</th>
+        ## 置顶
+        <th>#springMessage("sys.article.isTop")</th>
+        ## 操作
+        <th>#springMessage("common.table.thead.operation")</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script type="application/javascript">
+    var datatable;
+    bt.use(['form', 'datatable','dateType','dicts'], function () {
+        var $ = bt.jquery, form = bt.form();
+        bt.dateType.init();
+        bt.dicts.init();
+        var buttons = [{
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }];
+        var review = $('input[name="review"]').val();
+        if(!review){
+            buttons[3] = buttons[0];
+            buttons[0] = {text: bt.lang('common.button.add'), action: function (e, dt, node, config) {add();}};
+            buttons[1] = {text: bt.lang('common.button.batchSubmit'), action: function (e, dt, node, config) {batchSubmit(e, dt, node, config);}};
+            buttons[2] = {text: bt.lang('common.button.batchDelete'), action: function (e, dt, node, config) {batchDelete(e, dt, node, config);}};
+        }else{
+            buttons[2] = buttons[0];
+            buttons[0] = {text: bt.lang('common.button.batchCheck'), action: function (e, dt, node, config) {batchCheck(e, dt, node, config);}};
+            buttons[1] = {text: bt.lang('common.button.batchBack'), action: function (e, dt, node, config) {batchBack(e, dt, node, config);}}
+        }
+        //生成列表
+        var datatable = bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {'url': basePath + "/sys/article/list"},
+            buttons: buttons
+            , columns: [
+                {data: "type", bSortable: true, render:function(data, type, full, meta){
+                    return full.type===1?bt.lang("sys.article.notice"):bt.lang("sys.article.law");
+                }},
+                {data: "title", bSortable: false},
+                {data: "createDate", bSortable: true,render:function(data, type, full, meta){return full.createDate?full.createDate:"---";}},
+                {data: "updateDate", bSortable: true, render:function(data, type, full, meta){return full.updateDate?full.updateDate:"---";}},
+                {data: "createByUserName", bSortable: false},
+                {data: "status", bSortable: false,render:function(data, type, full, meta){
+                    var status;
+                    switch (full.status) {
+                        case -1:
+                            status = bt.lang("common.button.back");
+                            break;
+                        case 0:
+                            status = bt.lang("common.button.temp");
+                            break;
+                        case 1:
+                            //已发布
+                            status = bt.lang("sys.article.status.published");
+                            break;
+                        case 2:
+                            //待复核
+                            status = bt.lang("sys.article.status.beCheck");
+                            break;
+                        case 3:
+                            status = bt.lang("bpm.model.unRelease");
+                            break;
+                    }
+                    return status;
+                }},
+                {data: "isTop", bSortable: true,render:function(data, type, full, meta){return full.isTop?bt.lang("common.sc_yn.yes"):bt.lang("common.sc_yn.no");}},
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = '<a class="editView" href="#" data-row="' + meta.row + '">' + bt.lang("common.button.view") + '</a>';
+                         html += '<span class="text-explode">|</span><a class="view" href="#" data-row="' + meta.row + '">' + bt.lang("common.button.excel.preview") + '</a>';
+                        if ((full.status === -1 || full.status === 0)) {
+                            html += '<span class="text-explode">|</span><a class="edit" href="#" data-row="' + meta.row + '">' + bt.lang("common.button.edit") + '</a>';
+                        }
+                        if($("#currentUser").val() !== full.createBy && review){
+                            html += '<span class="text-explode">|</span><a class="check" href="#" data-row="' + meta.row + '">' + bt.lang("common.button.check") + '</a>';
+                            html += '<span class="text-explode">|</span><a class="back" href="#" data-row="' + meta.row + '">' + bt.lang("common.button.back") + '</a>';
+                        }
+                        if(full.status===3){
+                            html += '<span class="text-explode">|</span><a class="deploy" href="#" data-row="' + meta.row + '">' + bt.lang("bpm.model.deploy") + '</a>';
+                        }
+                        if(!review && full.isTop && full.status===1){
+                            html += '<span class="text-explode">|</span><a class="cancel-top" href="#" data-row="' + meta.row + '">'+bt.lang("sys.article.cancelTop")+'</a>';
+                        }
+                        if(full.status!==2){
+                            html += '<span class="text-explode">|</span><a class="delete" href="#" data-row="' + meta.row + '">' + bt.lang("common.button.delete") + '</a>';
+                        }
+                        return html;
+                    }
+                }
+            ]
+        });
+
+        function add() {
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/sys/article/add",
+                end: function () {
+                    bt.datatable.refreshCurrentPage();
+                }
+            });
+        }
+
+        datatable.on("click",'.editView',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/sys/article/editView?id=" + data.id
+            });
+        });
+        datatable.on("click",'.view',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/sys/article/view?id=" + data.id
+            });
+        });
+
+        datatable.on("click",'.edit',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/sys/article/edit?id=" + data.id,
+                end: function () {
+                    bt.datatable.refreshCurrentPage();
+                }
+            });
+        });
+
+        datatable.on("click",'.check',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.confirm(bt.lang('common.message.confirm.check'), function () {
+                $.post(basePath + "/sys/article/confirm", {ids: [data.id],status:3}, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+        });
+        datatable.on("click",'.back',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.confirm(bt.lang('common.message.confirm.back'), function () {
+                $.post(basePath + "/sys/article/confirm", {ids: [data.id],status:-1}, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+        });
+        datatable.on("click",'.deploy',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.confirm(bt.lang("sys.article.confirm.release"), function () {
+                $.get(basePath + "/sys/article/deploy", {id: data.id}, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+        });
+
+        datatable.on("click",'.cancel-top',function(){
+            var data = datatable.row($(this).data('row')).data();
+                $.get(basePath + "/sys/article/cancelTop", {id: data.id}, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+        });
+
+
+        /**
+         * 批量打回
+         * @param e
+         * @param dt
+         * @param node
+         * @param config
+         */
+        function batchBack(e, dt, node, config) {
+            var data = dt.rows('.selected').data();
+            if (data.length < 1) {
+                layer.msg(bt.lang('common.message.confirm.selectData'));
+                return;
+            }
+            var ids = [];
+            var rowData = data.splice(0, data.length);
+            for (var i = 0; i < rowData.length; i++) {
+                ids.push(rowData[i].id);
+            }
+            parent.layer.confirm(bt.lang('common.message.confirm.batchBack'), function () {
+                $.post(basePath + "/sys/article/confirm", {ids: ids,status:-1}, function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    if (result.success) {
+                        bt.datatable.refreshCurrentPage();
+                    }
+                }, 'JSON');
+            });
+        }
+        /**
+         * 批量复核
+         * @param e
+         * @param dt
+         * @param node
+         * @param config
+         */
+        function batchCheck(e, dt, node, config) {
+            var data = dt.rows('.selected').data();
+            if (data.length < 1) {
+                layer.msg(bt.lang('common.message.confirm.selectData'));
+                return;
+            }
+            var ids = [];
+            var rowData = data.splice(0, data.length);
+            for (var i = 0; i < rowData.length; i++) {
+                ids.push(rowData[i].id);
+            }
+            parent.layer.confirm(bt.lang('common.message.confirm.batchCheck'), function () {
+                $.post(basePath + "/sys/article/confirm", {ids: ids,status:3}, function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    if (result.success) {
+                        bt.datatable.refreshCurrentPage();
+                    }
+                }, 'JSON');
+            });
+        }
+
+        function batchSubmit(e, dt, node, config) {
+            var data = dt.rows('.selected').data();
+            if (data.length < 1) {
+                layer.msg(bt.lang('common.message.confirm.selectData'));
+                return;
+            }
+            var ids = [];
+            var rowData = data.splice(0, data.length);
+            for (var i = 0; i < rowData.length; i++) {
+                if(rowData[i].status!==-1 && rowData[i].status!==0){
+                    layer.msg(bt.lang("sys.article.alert.selectTempData"));
+                    return;
+                }
+                ids.push(rowData[i].id);
+            }
+            parent.layer.confirm(bt.lang('common.message.confirm.batchSubmit'), function () {
+                $.post(basePath + "/sys/article/batchSubmit", {ids: ids}, function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    if (result.success) {
+                        bt.datatable.refreshCurrentPage();
+                    }
+                }, 'JSON');
+            });
+        }
+
+        function batchDelete(e, dt, node, config) {
+            var data = dt.rows('.selected').data();
+            if (data.length < 1) {
+                layer.msg(bt.lang('common.message.confirm.selectData'));
+                return;
+            }
+            var ids = [];
+            var deleteNotice = false;
+            var rowData = data.splice(0, data.length);
+            for (var i = 0; i < rowData.length; i++) {
+                if(rowData[i].status===2){
+                    deleteNotice = true;
+                    break;
+                }
+                ids.push(rowData[i].id);
+            }
+            if(deleteNotice){
+                layer.alert(bt.lang("sys.article.alert.delteNotice"),{icon:8});
+                return;
+            }
+            parent.layer.confirm(bt.lang('common.message.confirm.batchDelete'), function () {
+                $.post(basePath + "/sys/article/delete", {ids: ids}, function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    if (result.success) {
+                        bt.datatable.refreshCurrentPage();
+                    }
+                }, 'JSON');
+            });
+        }
+
+        datatable.on("click",'.delete',function(){
+            var data = datatable.row($(this).data('row')).data();
+            parent.layer.confirm(bt.lang('common.message.confirm.delete'), function () {
+                $.post(basePath + "/sys/article/delete",{ids:[data.id]}, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+        });
+    });
+</script>
+</html>

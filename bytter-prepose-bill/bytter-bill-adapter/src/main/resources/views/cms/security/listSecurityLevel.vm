@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##类型编码
+            <td width="10%" class="textRight">#springMessage('table.Security.levelCode')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_levelCode" class="layui-input" >
+                </div>
+            </td>
+            ##类型名称
+            <td width="10%" class="textRight">#springMessage('table.Security.levelName')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_levelName" class="layui-input" >
+                </div>
+            </td>
+        </tr>
+        <td colspan="6" style="text-align: center;">
+            <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+        </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.Security.levelCode')</th>
+        <th>#springMessage('table.Security.levelName')</th>
+        <th>#springMessage('table.cmsLoanRepay.rmk')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['form','datatable','btdate','dateType'], function(){
+        var dateType = bt.dateType.init();
+        $ = bt.jquery,form = bt.form();
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            order: [[1,'asc']],
+            colReorder: true,
+            scrollY:'300px',
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/cms/security/level/datatable"
+            },
+            buttons: [
+                {
+                    text: bt.lang('common.button.add'),
+                    hide: bt.isnotResource('cms:security:level:add'),
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                },
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            }
+            ,columns: [
+                {data:"levelCode",bSortable:true},
+                {data:"levelName",bSortable:true},
+                {data:"rmk",bSortable:true},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html = ''
+                        html += '<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a> ';
+                        html +='<a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                        return html;
+                    }}
+            ]
+        });
+    });
+    function add(){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/cms/security/level/add");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/security/level/add",
+            end:function(){
+                datatable && datatable.draw();
+                bt.navtab.closeCurrent();
+                bt.navtab.refreshParent();
+            }
+        });
+    }
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(data){
+            if(bt.navtab){
+                bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/cms/security/level/update/" + data.id);
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/cms/security/level/update/" + data.id,
+                end:function(){
+                    datatable && datatable.draw();
+                }
+            });
+        }
+    }
+    function deleteColumn(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            $.post(basePath + "/cms/security/level/delete/" + data.id, function(result){
+                datatable && datatable.draw();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+</script>
+</body>
+</html>

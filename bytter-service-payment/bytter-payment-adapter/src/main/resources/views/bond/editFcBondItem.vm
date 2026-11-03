@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    #parse("views/common/head.vm")
+  </head>
+ <body >
+ <form class="layui-form" method="post">
+	<input type="hidden" id="addOrUpdateFlag" name="addOrUpdateFlag" value="6"/>
+	<input type="hidden" id="saveType" name="saveType" />
+    <input type="hidden" id="bondId" name="bondId" value="$!{fcBondPreserveVO.bondId}"/>
+	<input type="hidden" id="bankId" name="bankId" value="$!{fcBondPreserveVO.bankId}"/>
+	<input type="hidden" id="id" name="id" value="$!{fcBondPreserveVO.id}"/>
+	<input type="hidden" id="billNo" name="billNo" value="$!{fcBondPreserveVO.billNo}"/>
+	<input type="hidden" id="createBy" name="createBy" value="$!{fcBondPreserveVO.createBy}"/>
+	<input type="hidden" id="createDate" name="createDate" value="$!date.format('yyyy-MM-dd',$!{fcBondPreserveVO.createDate})"/>
+	<input type="hidden" id="bondPercent" name="bondPercent" value="$!{fcBondPreserveVO.bondPercent}"/>
+     <input type="hidden" id="applyType" name="applyType"  value="$!{fcBondPreserveVO.applyType}"/>
+     <input type="hidden" id="itemType" name="itemType" value="$!{fcBondPreserveVO.itemType}"/>##占用项目类型为其他
+     <input type="hidden" id="applyMoneyPre" name="applyMoneyPre" value="$!{fcBondPreserveVO.applyMoney}"/>
+	<table class="layui-table">
+		<tbody >
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<label><b>#springMessage('table.fcBond.inputdate')</b></label>
+					<div class="layui-input-inline">
+                        <input id="inputDate" name="inputDate" value="$!date.format('yyyy-MM-dd',$!{fcBondPreserveVO.createDate})" readonly="readonly" autocomplete="off" class="layui-input">
+                    </div>
+				</td>
+			</tr>
+	</table>
+	<table class="layui-table">
+            <thead>
+			  <tr>
+                <th colspan="4" style="text-align:left">#springMessage('table.fcBond.itemMsg')</th>
+			  </tr>
+			</thead>
+			<tr>
+				##项目单号
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.billNo')</td>
+                <td><input name="itemNo" type="text" class="layui-input" value="$!{fcBondPreserveVO.itemNo}" placeholder="#springMessage('table.fcBond.billNo')"></td>
+				##单位名称
+				<td class="textRight" ><font color="red">*</font>#springMessage('table.fcBond.corpName')</td>
+				<td width="36%">
+					<div class="layui-input-inline">
+						<div class="bt-biz-corp" 
+							data-biz-type="corp"
+							data-type="selectTree"
+							data-name="corpId"
+							data-biz-name="corpId"
+							data-scope="all"
+							data-required="true"
+							data-callback="bt.corpCallback"
+							data-defaultvalue="$!{fcBondPreserveVO.corpId}">
+						</div>
+					</div>
+				</td>
+            </tr>
+            <tr>
+				##银行名称
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBondBack.bankName')</td>
+				<td id="dd">
+                      <div id="xz">        
+        			 	<div class="layui-inline">
+        					<input name="bankName"class="layui-input" id="showBankName" value="$!{fcBondPreserveVO.bankName}" readonly="readonly" type="text"/>
+        				        <div class="bt-div-search" >
+                            		<button class="bt-biz-bankInfo" type="button"  data-callback="bankinfoCallback" title="#springMessage('common.button.select')" data-beforeClick="bt.bankInfoBeforeClick" >
+                               			 <i class="layui-icon">&#xe615;</i>
+                           			 </button>
+                   				</div>
+        				</div>
+        			</div>	
+				</td>
+				##币别
+                    <td class="textRight">#springMessage('table.fcBond.curCode')</td>
+                    <td >
+                        <div class="layui-inline">
+                            <input type="hidden" id="curId" name="curId" value="$!{fcBondPreserveVO.curId}">
+                            <div class="bt-biz-selectType" data-biz-name="curCode" data-url="${basePath}/basic/business/btcurrency/json"
+                                 data-valuefield="id" data-textfield="curName" data-required="true" data-callback="curinfoCallback"
+                                 data-name="curCode" data-search="true" data-defaultvalue="$!{fcBondPreserveVO.curId}"></div>
+                        </div>
+                    </td>
+			</tr>
+			 <tr>
+				##项目金额
+				<td class="textRight">#springMessage('table.fcBond.itemMoney')</td>
+                <td><input name="itemMoney" type="text"  data-decimal="2" class="layui-input bt-biz-moneyType" value="$!{fcBondPreserveVO.itemMoney}"></td>
+				##项目期限
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.itemUnit')</td>
+			    <td>
+					<div class="layui-inline">
+					<input name="itemUnit" type="text" data-name="itemUnit"  data-decimal="0" data-biz-name="PrTerm" 
+						lay-verify="required" autocomplete="off" class="layui-input bt-biz-moneyType"
+						value="$!{fcBondPreserveVO.itemUnit}">
+                    </div>
+				     ##期限单位，默认为月
+					<div class="layui-inline">
+					<div data-name="termUnit"  data-biz-name="termUnit" data-callback="computePrTerm"  data-defaultvalue="M">
+						<label >#springMessage('table.fcBond.month')</label></div>
+					</div>
+                </td>
+			</tr>
+			<tr>
+        		##项目开始日期
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.itemStartDate')</td>
+				<td >
+					<!-- lay-verify="required" -->
+                    <input id="startDate" name="startDate"   value="$!date.format('yyyy-MM-dd',$!{fcBondPreserveVO.startDate})" data-biz-name="startDate" data-endid="endDate" data-type="date" class="layui-input bt-biz-dateType"></input>
+				</td>
+				##项目结束日期
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.itemEndDate')</td>
+				<td >
+                    <input id="endDate" name="endDate"  value="$!date.format('yyyy-MM-dd',$!{fcBondPreserveVO.endDate})" data-biz-name="endDate" data-callback="computePrTerm" data-type="date" class="layui-input bt-biz-dateType"></input>
+				</td>
+			</tr>
+        </tbody>
+    </table>
+	<table class="layui-table">
+            <thead>
+			  <tr>
+                <th colspan="4" style="text-align:left">#springMessage('table.fcBond.BondMsg')</th>
+			  </tr>
+			</thead>
+			<tr>
+				##存入账户
+				<td class="textRight" width="14.5%"><font color="red">*</font>#springMessage('table.fcBond.depositaccount')</td>
+				<td width="35%">
+					<div class="layui-inline">
+					<input id="bankAcc" name="bankAcc" value="$!{fcBondPreserveVO.bankAcc}" type="text" readonly="true"  class="layui-input" placeholder="#springMessage('table.fcBond.depositaccount')">
+                    </div>
+				     ##选择保证金账户按钮
+					<div class="layui-inline">
+					<button class="layui-btn bt-biz-bondAccInfo" type="button" data-callback="bondAccinfoCallback">#springMessage('common.button.select')</button>
+                    </div>
+                </td>
+				##账号名称
+				<td class="textRight" ><font color="red">*</font>#springMessage('table.fcBond.accountname')</td>
+			    <td ><input id="accName" name="accName" value="$!{fcBondPreserveVO.accName}" type="text" readonly="true" class="layui-input" placeholder="#springMessage('table.fcBond.accountname')"/></td>
+            </tr>
+            <tr>
+				##存入银行
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.bankName')</td>
+                <td><input id="bankName" name="bondBankName" value="$!{fcBondPreserveVO.bankName}" type="text"readonly="true"  class="layui-input" placeholder="#springMessage('table.fcBond.bankName')"></td>
+			    ##保证金存入日期
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.depositdate')</td>
+				<td><input id="bondDate" readonly="true" value="$!date.format('yyyy-MM-dd',$!{fcBondPreserveVO.bondDate})" class="layui-input"/></td>
+			</tr>
+			 <tr>
+				##保证金账户余额
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.accBalance')</td>
+                <td>
+					<input   data-name="bondMoney" data-biz-name="bondMoney" type="text" readonly="readonly" data-decimal="2" class="layui-input bt-biz-moneyType"  value="$!{fcBondPreserveVO.accBalance}"></td>
+				</td>	
+				##<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.bondmoney')</td>
+                ## <td><input id="accBalance" name="accBalance"  value="$!{fcBondPreserveVO.accBalance}" type="text"  data-decimal="2" class="layui-input bt-biz-moneyType" value="0"></td>
+				##项目合同
+			    <td class="textRight">#springMessage('table.fcBond.contractNum')</td>
+                <td><input name="bondContract" type="text" value="$!{fcBondPreserveVO.bondContract}" class="layui-input" placeholder="#springMessage('table.fcBond.contractNum')"></td>
+			</tr>
+			<tr>
+        		##账户当前可用金额
+				<td class="textRight">#springMessage('table.fcBond.availableMoney')</td>
+				<td><input  data-name="availMoney" data-biz-name="availMoney" type="text" value="$!{fcBondPreserveVO.availMoney}" readonly="readonly" data-decimal="2" class="layui-input bt-biz-moneyType"  value="0"></td>
+			        <input type="hidden" id="accAvailMoney" data-decimal="2" class="layui-input bt-biz-moneyType" value="$!{fcBondPreserveVO.availMoney}"/>
+				##占用金额
+			    <td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.occupyMoney')</td>
+			    <td><input id="applyMoney" name="applyMoney" data-biz-name="applyMoney" value="$!{fcBondPreserveVO.applyMoney}" type="text"  data-decimal="2" class="layui-input bt-biz-moneyType"  data-callback="calAvailMoney"></td>
+			</tr>
+			##备注
+			<tr>
+				<td class="textRight">#springMessage('table.fcBond.rmk')</td>
+				<td colspan="3">
+                	<textarea lay-verify="strlength" type="text" id="remark" name="remark"  class="layui-textarea" data-maxlength="100"  placeholder="#springMessage('table.cmsProvideLoanInfo.rmk')">$!{fcBondPreserveVO.remark}</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;" colspan="4">
+					<button class="layui-btn" lay-submit="" id="submit">#springMessage('common.button.submit')</button>
+					<button class="layui-btn" lay-submit="" id="temp">#springMessage('common.button.temp')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+	    ##币别
+        <input type="hidden" id="bondCurId"  value="$!{fcBondPreserveVO.curId}">
+        <input type="hidden" id="bondCorpId"  value="$!{fcBondPreserveVO.corpId}">
+        </tbody>
+    </table>
+ </form>
+	#parse("views/common/footer.vm")
+ </body>
+ <script src="${basePath}/static/modules/fcbond/fcBondPreserve.add.js?_btv=${resourceVersion}"></script>
+</html>

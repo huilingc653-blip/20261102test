@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post" id="inputForm">
+		<input type="hidden" name="id" value="$!{info.id}" >
+		<div class="layui-colla-item">
+			<div class="layui-colla-content layui-show" >
+			<table class="layui-table">
+			<tbody>
+	        <tr>
+	        	##单位
+				<td class="textRight" width="15%">#springMessage('sys.user.corpContain.show')</td>
+				<td width="35%"> 
+    				<div class="bt-biz-corp"
+                        data-biz-type="corp"
+                        data-biz-name="corpId"
+                        data-type="selectTree"
+                        data-name="corpId"
+                        data-scope="all"
+						data-required="true"
+						data-defaultvalue="$!{info.corpId}"
+                        data-resource="ttpay:merchant:op"
+						placeholder="#springMessage('sys.user.corpContain.show')">
+                    </div>
+				</td>  
+               ##商户号	
+				<td class="textRight" width="15%">#springMessage('ttpay.merchantNo')</td>   
+				<td width="35%">
+    				<div class="layui-input-inline">
+                    	<input type="text" name="merchantNo" class="layui-input" lay-verify="required|strlength" data-maxlength="200"  placeholder="#springMessage('ttpay.merchantNo')" value="$!{info.merchantNo}" >
+    				</div>
+                </td>
+			 </tr>
+			 <tr>
+	        	##支付方式
+				<td class="textRight" width="15%">#springMessage('ttpay.payType')</td>
+				<td width="35%"> 
+    				<div class="layui-input-inline">
+                    	<div class="bt-biz-dict" data-type="select" data-name="payType" data-biz-name="payType" data-group="TTPAY_PAY_TYPE" data-required="true" data-value="$!{info.payType}"></div>
+    				</div>
+                </td>
+                ##启用标志
+				<td class="textRight" width="15%">#springMessage('ttpay.isOnline')</td>
+				<td width="35%">  
+    				<div class="layui-input-inline">
+                    	<div class="bt-biz-dict" data-type="radio" data-name="isOnline" data-biz-name="isOnline" data-group="sf_yn" data-value="$!{info.isOnline}"></div>
+    				</div>
+                </td>  
+              </tr>		
+            <tr>
+	        	##备注
+				<td class="textRight" width="15%">#springMessage('ttpay.rmk')</td>
+				<td colspan="3">
+    				<div class="layui-input-inline">
+                    	<input type="text" name="rmk" class="layui-input" lay-verify="strlength" data-maxlength="200"  placeholder="#springMessage('ttpay.rmk')" value="$!{info.rmk}" >
+    				</div>
+                </td>  
+              </tr>	
+				</tbody>
+             </table>	
+  			</div>
+			
+			<h2 class="layui-colla-title">#springMessage('ttpay.title.sonMerchant')</h2>
+			<button class="layui-btn" type="button" onclick="addSonMerchant()" >#springMessage('common.button.add')</button><br>
+			<div class="layui-colla-content layui-show" >
+			<table class="layui-table" id="sonMerchantTable">
+			<tbody>
+			#foreach($data in $info.sonMerchantList)
+            <tr>
+            <td class="textRight" width="15%">#springMessage('ttpay.sonMerchantNo')</td>
+            <td width="35%"><div class="layui-input-inline"><input type="text" name="sonMerchantNo" class="layui-input" lay-verify="required|strlength" data-maxlength="200"  placeholder="#springMessage('ttpay.sonMerchantNo')" value="$!{data.merchantNo}" ></div></td>
+            <td class="textRight" width="15%">#springMessage('ttpay.rmk')</td>
+            <td><div class="layui-input-inline"><input type="text" name="sonRmk" class="layui-input" lay-verify="strlength" data-maxlength="200"  placeholder="#springMessage('ttpay.rmk')" value="$!{data.rmk}" ></div></td>
+            <td><button class="layui-btn" type="button" onclick="deleteTr(this)" >#springMessage('common.button.delete')</button></td>
+            </tr>
+			 #end
+			</tbody>
+            </table>	
+  			</div>
+			
+			<h2 class="layui-colla-title">#springMessage('ttpay.title.varMerchant')</h2>
+			<button class="layui-btn" type="button" onclick="addVarMerchant()" >#springMessage('common.button.add')</button>
+			<button class="layui-btn" type="button" onclick="addVarMerchantFile()" >#springMessage('common.button.add.file')</button><br>
+			<div class="layui-colla-content layui-show" >
+			<table class="layui-table" id="varMerchantTable">
+			<tbody>
+			#set($num = 0)
+			#foreach($data in $info.merchantVarList)
+            <tr>
+            <td class="textRight" width="15%">#springMessage('ttpay.varMerchant.code')</td>
+            <td width="35%"><div class="layui-input-inline"><input type="text" name="varCode" class="layui-input" lay-verify="required|strlength" data-maxlength="50"  placeholder="#springMessage('ttpay.varMerchant.code')" value="$!{data.varCode}" ></div></td>
+            <td class="textRight" width="15%">#springMessage('ttpay.varMerchant.name')</td>
+            <td width="35%"><div class="layui-input-inline"><input type="text" name="varName" class="layui-input" lay-verify="required|strlength" data-maxlength="50"  placeholder="#springMessage('ttpay.varMerchant.name')" value="$!{data.varName}" ></div></td>
+            <td class="textRight" width="15%">#springMessage('ttpay.varMerchant.value')</td>
+			#if($data.fileId && $data.fileId ne "")
+				#set($num = $num + 1)
+			<td><div class="layui-input-inline">
+					<input type="hidden" name="varValue" value="" >
+					<input type="hidden" name="fileId" id="fileIdOld-$!{num}-FileId" value="$!{data.fileId}" lay-verify="required">
+					<input id="fileIdOld-$!{num}" name="fileIdOld-$!{num}" type="file" /><a href="javascript:;"><i class="fa fa-download" title="$!{data.attachDTO.name}.$!{data.attachDTO.type}" id="fileIdOld-$!{num}-I" onClick="downloadFile('#fileIdOld-$!{num}-FileId')" ></i></a>
+			</div></td>
+			#else
+			<td><div class="layui-input-inline"><input type="text" name="varValue" class="layui-input" lay-verify="required|strlength"  placeholder="#springMessage('ttpay.varMerchant.value')" value="$!{data.varValue}" ><input type="hidden" name="fileId" value="" ></div></td>
+			#end
+            <td><button class="layui-btn" type="button" onclick="deleteTr(this)" >#springMessage('common.button.delete')</button></td>
+            </tr>
+			#end
+			</tbody>
+            </table>	
+    		</div>
+			<input type="hidden" id="fileNum" value="$!{num}" >
+            <div class="layui-form-submit-adaptive">
+                <div style="text-align: center;">
+                    <button class="layui-btn" lay-submit="" lay-filter="save" value="submit">#springMessage('common.button.submit')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                	<button class="layui-btn layui-btn-primary" type="button" onclick="closeForms()">#springMessage('common.button.cancel')</button>
+                </div>
+            </div>	
+            		
+		</div>					
+					
+</form>
+    #parse("views/common/footer.vm")
+</body> 
+<script src="${basePath}/static/modules/ttpay/tpMerchant.edit.js?_btv=${resourceVersion}"></script>
+</html>

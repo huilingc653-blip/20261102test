@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+
+<body>
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    	<thead>
+		##内部贷款
+        #if(${loanSign} == "01")
+            <tr>
+                <th>#springMessage("table.cmsLoanInfo.billCode")</th>##贷款流水号 infoBillCode
+                <th>#springMessage("table.cmsLoanInfo.net")</th>##所属资金中心 netName
+                <th>#springMessage("table.abBillTransfer.applyCorp")</th>##申请单位 corpName
+                <th>#springMessage("table.cmsLoanInfo.contractCode")</th>##贷款合同编号 contractCode
+                <th>#springMessage('table.cmsLoanSend.billCode')</th>##贷款发放编号 sendBillCode
+                <th>#springMessage("table.cmsLoanInfo.provideLoanAcc")</th>##放款账号 loanAcc
+                <th>#springMessage("table.fbsBudgetDetail.curId")</th>##币别 curName
+                <th>#springMessage('table.cmsLoanInfo.loanMoney')</th>##贷款金额 loanMoney
+                <th>#springMessage('table.cmsLoanInfo.loanDate')</th>##贷款日期 loanDate
+                <th>#springMessage('table.cmsLoanDeferred.matureDate')</th>##还款日期  repayDate
+                <th>#springMessage('table.cmsLoanInfo.loanGenre')</th>##贷款类型 repayType   cms.LoanRepayType
+                <th>#springMessage('table.cmsLoanInfo.loanTerm')</th>##贷款期限  loanClass  cms.LoanClass
+                <th>#springMessage('table.cmsProvideLoanSend.money')</th>##发放金额 sendMoney
+                <th>#springMessage('table.cmsProvideLoanRepay.repayFinish')</th>##已还款金额  repayMoney 
+                <th>#springMessage('table.cmsProvideLoanRepay.repayPassage')</th>##还款在途金额  repayAwayMoney
+                <th>#springMessage('table.accountDTO.balance')</th>##余额  stayMoney
+            </tr>##16
+        #end
+
+		##银行借款
+        #if(${loanSign} == "02")
+            <tr>
+                <th>#springMessage("table.cmsProvideLoanInfo.bankId")</th>##借款银行  bankName
+                <th>#springMessage("table.abBillTransfer.applyCorp")</th>##申请单位  corpName
+                <th>#springMessage("cms.provide.deferred.loanNo")</th>##借款申请单编号 infoBillCode
+                <th>#springMessage("table.cmsLoanSend.contractCode")</th>##借款合同编号  contractCode
+                <th>#springMessage('table.cmsProvideLoanSend.contractCode')</th>##发放申请单编号  sendBillCode
+                <th>#springMessage("table.fbsBudgetDetail.curId")</th>##币别  curName
+                <th>#springMessage("table.cmsProvideLoanInfo.plMoney")</th>##借款金额  plMoney
+                <th>#springMessage('table.cmsProvideLoanInfo.plDate')</th>##借款日期  sendDate
+                <th>#springMessage('table.cmsLoanDeferred.matureDate')</th>##还款日期  repayDate
+                <th>#springMessage('table.cmsProvideLoanInfo.contractTerm')</th>##合同期限 full.plTerm + full.ternUnitName;
+                <th>#springMessage('table.cmsProvideLoanSend.money')</th>##发放金额 sendMoney
+                <th>#springMessage('table.cmsProvideLoanRepay.repayFinish')</th>##已还款金额  sumRepayMoney
+                <th>#springMessage('table.cmsProvideLoanRepay.repayPassage')</th>##还款在途金额  sumRepayPassageMoney
+                <th>#springMessage('table.accountDTO.balance')</th>##余额  sendBalanceMoney
+            </tr>##14
+        #end
+        
+        
+		##委托贷款
+        #if(${loanSign} == "03")
+            <tr>
+                <th>#springMessage("cms.precative.info.billCode")</th>##委托单据编号  infoBillCode
+                <th>#springMessage("table.cmsPrecativeLoanInfo.precativeId")</th>##委托人 precativeName
+                <th>#springMessage("table.cmsPrecativeLoanInfo.corpId")</th>##受托人
+                <th>#springMessage("table.cmsPrecativeLoanInfo.loanOpp")</th>##借款人  loanOpp
+                <th>#springMessage("table.cmsLoanSend.contractCode")</th>##委托合同编号 infoContractCode
+                <th>#springMessage("table.cmsLoanSend.provideCode")</th>##发放申请编号 sendContractCode
+                <th>#springMessage("table.fbsBudgetDetail.curId")</th>##币别 curName
+                <th>#springMessage("table.cmsLoanInfo.loanMoney")</th>##贷款金额  infoMoney 
+                <th>#springMessage("table.cmsLoanInfo.loanDate")</th>##贷款日期  startDate 
+                <th>#springMessage("table.cmsLoanDeferred.matureDate")</th>##还款日期  endDate
+                <th>#springMessage("table.cmsLoanInfo.loanTerm")</th>##贷款期限  return full.term + full.ternUnitStatus;
+                <th>#springMessage("table.cmsProvideLoanSend.money")</th>##发放金额  sendMoney 
+                <th>#springMessage("table.cmsProvideLoanRepay.repayFinish")</th>##已还款金额  repayMoney 
+                <th>#springMessage("table.cmsProvideLoanRepay.repayPassage")</th>##还款在途金额  passageMoney 
+                <th>#springMessage("table.accountDTO.balance")</th>##余额
+            </tr>##15
+        #end
+    	</thead>
+		
+		<tbody>
+            #set($sumLoanMoney = 0)
+            #set($sumSendMoney = 0)
+            #set($sumRepayMoney = 0)
+            #set($sumRepayMoney1 = 0)
+            #set($sumRepayAwayMoney = 0)
+            #set($sumCurrentBalance = 0)
+            #set($curName="")
+        
+            #if(${loanSign} == "01")
+				#foreach($item in $list)
+                <tr>
+                    #set($curName=$!{item.curName})
+                    #set($sumLoanMoney = $sumLoanMoney + $!{item.loanMoney})
+                    #set($sumSendMoney = $sumSendMoney + $!{item.sendMoney})
+                    #set($sumRepayMoney = $sumRepayMoney + $!{item.repayMoney})
+                    #set($sumRepayAwayMoney = $sumRepayAwayMoney + $!{item.repayAwayMoney})
+                    #set($sumCurrentBalance = $sumCurrentBalance + $!{item.currentBalance})
+                    
+                    <td class="center">$!{item.infoBillCode}</td>
+                    <td class="center">$!{item.netName}</td>
+                    <td class="center">$!{item.corpName}</td>
+                    <td class="center">$!{item.contractCode}</td>
+                    <td class="center">$!{item.sendBillCode}</td>
+                    <td class="center">$!{item.loanAcc}</td>
+                    <td class="center">$!{item.curName}</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.loanMoney})</td>
+                    <td class="center">$!date.format('yyyy-MM-dd',$!{item.loanDate})</td>
+                    <td class="center">$!date.format('yyyy-MM-dd',$!{item.repayDate})</td>
+                    <td class="center">$dictTag.get("cms.LoanRepayType",$item.repayType)</td>
+                    <td class="center">$dictTag.get("cms.LoanClass",$item.loanClass)</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.sendMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.repayMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.repayAwayMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.currentBalance})</td>
+                </tr>
+				#end
+                    <tr>
+                        <td class="center">#springMessage("finacial.interest.accu.total")</td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="center">$curName</td>
+                        <td class="textRight">$!number.formatNumeric($sumLoanMoney)</td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="center"></td>
+                        <td class="textRight">$!number.formatNumeric($sumSendMoney)</td>
+                        <td class="textRight">$!number.formatNumeric($sumRepayMoney)</td>
+                        <td class="textRight">$!number.formatNumeric($sumRepayAwayMoney)</td>
+                        <td class="textRight">$!number.formatNumeric($sumCurrentBalance)</td>
+                    </tr>
+             #end
+
+            #if(${loanSign} == "02")
+                #foreach($item in $list)
+                    #set($curName=$!{item.curName})
+                    #set($sumLoanMoney = $sumLoanMoney + $!{item.loanMoney})
+                    #set($sumSendMoney = $sumSendMoney + $!{item.sendMoney})
+                    #set($sumRepayMoney1 = $sumRepayMoney1 + $!{item.sumRepayMoney})
+                    #set($sumRepayAwayMoney = $sumRepayAwayMoney + $!{item.repayAwayMoney})
+                    #set($sumCurrentBalance = $sumCurrentBalance + $!{item.currentBalance})
+                <tr>
+                    <td class="center">$!{item.bankName}</td>
+                    <td class="center">$!{item.corpName}</td>
+                    <td class="center">$!{item.infoBillCode}</td>
+                    <td class="center">$!{item.contractCode}</td>
+                    <td class="center">$!{item.sendBillCode}</td>
+                    <td class="center">$!{item.curName}</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.loanMoney})</td>
+                    <td class="center">$!date.format('yyyy-MM-dd',$!{item.sendDate})</td>
+                    <td class="center">$!date.format('yyyy-MM-dd',$!{item.repayDate})</td>
+                    <td class="center">$!{item.plTerm}$dictTag.get("finacial.EndUnit",$!{item.ternUnitName})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.sendMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.sumRepayMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.repayAwayMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.currentBalance})</td>
+                </tr>
+                #end
+                <tr>
+                    <td class="center">#springMessage("finacial.interest.accu.total")</td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                    <td class="center">$curName</td>
+                    <td class="textRight">$!number.formatNumeric($sumLoanMoney)</td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                    <td class="textRight">$!number.formatNumeric($sumSendMoney)</td>
+                    <td class="textRight">$!number.formatNumeric($sumRepayMoney1)</td>
+                    <td class="textRight">$!number.formatNumeric($sumRepayAwayMoney)</td>
+                    <td class="textRight">$!number.formatNumeric($sumCurrentBalance)</td>
+                </tr>
+            #end
+
+            #if(${loanSign} == "03")
+                #foreach($item in $list)
+                    #set($curName=$!{item.curName})
+                    #set($sumLoanMoney = $sumLoanMoney + $!{item.loanMoney})
+                    #set($sumSendMoney = $sumSendMoney + $!{item.sendMoney})
+                    #set($sumRepayMoney = $sumRepayMoney + $!{item.repayMoney})
+                    #set($sumRepayAwayMoney = $sumRepayAwayMoney + $!{item.repayAwayMoney})
+                    #set($sumCurrentBalance = $sumCurrentBalance + $!{item.currentBalance})
+                <tr>
+                    <td class="center">$!{item.infoBillCode}</td>
+                    <td class="center">$!{item.precativeName}</td>
+                    <td class="center"> $!{item.corpName}</td>
+                    <td class="center">$!{item.loanOppName}</td>
+                    <td class="center">$!{item.infoContractCode}</td>
+                    <td class="center">$!{item.sendContractCode}</td>
+                    <td class="center">$!{item.curName}</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.loanMoney})</td>
+                    <td class="center">$!date.format('yyyy-MM-dd',$!{item.sendDate})</td>
+                    <td class="center">$!date.format('yyyy-MM-dd',$!{item.endDate})</td>
+                    <td class="center">$!{item.plTerm}$dictTag.get("finacial.EndUnit",$!{item.ternUnitName})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.sendMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.repayMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.repayAwayMoney})</td>
+                    <td class="textRight">$!number.formatNumeric($!{item.currentBalance})</td>
+                </tr>
+                #end
+            <tr>
+                <td class="center">#springMessage("finacial.interest.accu.total")</td>
+                <td class="center"></td>
+                <td class="center"></td>
+                <td class="center"></td>
+                <td class="center"></td>
+                <td class="center"></td>
+                <td class="center">$curName</td>
+                <td class="textRight">$!number.formatNumeric($sumLoanMoney)</td>
+                <td class="center"></td>
+                <td class="center"></td>
+                <td class="center"></td>
+                <td class="textRight">$!number.formatNumeric($sumSendMoney)</td>
+                <td class="textRight">$!number.formatNumeric($sumRepayMoney)</td>
+                <td class="textRight">$!number.formatNumeric($sumRepayAwayMoney)</td>
+                <td class="textRight">$!number.formatNumeric($sumCurrentBalance)</td>
+            </tr>
+            #end
+		</tbody>
+	</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+
+bt.use(['form','datatable','dateType','dicts','corp','select','moneyType','selectType','jquery'], function(){
+	$ = bt.jquery,form = bt.form();
+	bt.dateType.init();
+	bt.selectType.init();
+	bt.dicts.init();
+	bt.moneyType.init();
+	bt.moneyType.getFun();
+	bt.corp.init();
+
+
+    form.on('submit(search)', function(data){
+        var action =basePath + "/cms/report/cmsloaninterestpayments/list";
+        $("#searchForm").attr("action",action);
+        $("#searchForm").submit();
+    });
+
+    $("#reset").click(function(){
+        reset();
+    });
+});
+
+
+function getDetails(sendBillCode,sign,cmsType){
+    if(sendBillCode){
+        if(bt.navtab){
+           // var startTime = bt.dateType.init().get('ged_accOpenTime').val();
+          //  var endTime = $("#date").val();
+            var url = basePath+"/cms/report/cmsloaninterestpayments/getDetails?sendBillCode="+sendBillCode+"&isRepay="+sign+"&cmsType="+cmsType+"&startDate="+$("#date1").val()+"&endDate="+$("#date2").val();
+            bt.navtab.addNavtab(bt.lang('common.view.data'),url);
+            return;
+        }
+    }
+}
+
+function reset(){
+    bt.dicts.init().get("cmsType").val("");
+    bt.dateType.init().get("searchStartDate").val("");
+    bt.dateType.init().get("searchEndDate").val("");
+    bt.corp.init().get("corpId").val("");
+    $("#bankName").attr("value","");
+    
+}
+
+
+</script>
+</html>

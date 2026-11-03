@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+    <style type="text/css">
+        .sign {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="agreedDepositOriId" name="agreedDepositOriId" type="hidden"
+           value="$!{fcAgreedDepositPage.agreedDepositOriId}">
+    <input id="curId" name="curId" type="hidden" value="$!{fcAgreedDepositPage.curId}">
+    <input id="id" name="id" type="hidden" value="$!{fcAgreedDepositPage.id}">
+    <input id="blnctrAcc" name="blnctrAcc" type="hidden" value="$!{fcAgreedDepositPage.blnctrAcc}">
+    <input id="opType" name="opType" type="hidden" value="2">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##资金池
+            <td class="textRight">#springMessage('nis.pool.fcCorpPool.pool')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="netId" data-biz-name="netId"
+                         data-callback="getNetIdCallback"
+                         data-url="${basePath}/agreeddeposit/fcagreeddeposit?getUserCorpPools&opType=2&checkSign=0"
+                         data-required="required"
+                         data-valuefield="id" data-textfield="showName" data-search="true"
+                         data-defaultValue="$!{fcAgreedDepositPage.netId}">
+                    </div>
+                </div>
+            </td>
+        ##开户单位
+            <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="corpId" data-biz-name="corpId"
+                         data-callback="getCorpCallback"
+                         data-url="${basePath}/agreeddeposit/fcagreeddeposit?listUserCorpPoolChilds&poolId=${fcAgreedDepositPage.netId}&opType=2&checkSign=0"
+                         data-valuefield="corpId" data-textfield="showName" data-search="true" data-required="required" data-defaultValue="$!{fcAgreedDepositPage.corpId}" data-extraData="false"></div>
+                </div>
+        </tr>
+        <tr>
+        ##账号
+            <td class="textRight" width="15%">#springMessage('table.fcAcc.account')</td>
+            <td>
+                <div class="layui-input-inline">
+
+                    <div class="bt-biz-selectType"
+                         data-url="${basePath}/agreeddeposit/fcagreeddeposit?getBlnctrAcc&netId=${fcAgreedDepositPage.netId}&corpId=$!{fcAgreedDepositPage.corpId}&busType=2"
+                         data-name="accId" data-biz-name="accId" data-required="required"
+                         data-valuefield="id" data-textfield="blnctrAcc" data-search="true"
+                         data-callback="getAccCallBack" data-defaultValue="$!{fcAgreedDepositPage.accId}" data-extraData="false"></div>
+                </div>
+            </td>
+        ##账户名称
+            <td class="textRight" width="15%">#springMessage('table.fcAcc.accName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div id="accName">$!{fcAgreedDepositPage.accName}</div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##开始日期
+            <td class="textRight" width="15%">#springMessage('table.fbsBudgetReport.beginDate')</td>
+            <td>
+                <input type="text" class="layui-input" name="beginDate" id="beginDate" readonly="readonly"
+                       value="$!date.format('yyyy-MM-dd',$!fcAgreedDepositPage.beginDate)">
+            </td>
+        ##结束日期
+            <td class="textRight" width="15%">#springMessage('table.fbsBudgetReport.endDate')</td>
+            <td>
+                <input type="text" class="layui-input" name="endDate" id="endDate" readonly="readonly"
+                       value="$!date.format('yyyy-MM-dd',$!fcAgreedDepositPage.endDate)">
+            </td>
+        </tr>
+        <tr>
+        ##合同号
+            <td class="textRight">#springMessage('table.cgsBill.pactCode')</td>
+            <td width="40%">
+                <input type="text" name="contractNo" id="contractNo" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.cgsBill.pactCode')" lay-verify="required" readonly="readonly"
+                       value="$!{fcAgreedDepositPage.contractNo}">
+            </td>
+        ##终止日期
+            <td class="textRight" width="15%">#springMessage('table.fcPredraw.endDate')</td>
+            <td>
+                <input type="text" name="stopDate"
+                       class="layui-input bt-input-inline bt-biz-dateType" id="stopDate"
+                       lay-verify="required" data-biz-name="stopDate" value="$!{fcAgreedDepositPage.stopDate}"
+                       data-callback="stopCallBack">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" type="button" lay-filter="submit" value="0">#springMessage(
+                    'common.button.temp')</button>
+                <button class="layui-btn" lay-submit="" type="button" lay-filter="submit" value="11">#springMessage(
+                    'common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                <button type="button" onclick="closeDoc()" class="layui-btn layui-btn-primary">#springMessage(
+                    'common.button.close')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+## 协定表格数据
+    <table id="dataTable" class="layui-table">
+        <thead>
+        <th style="text-align: center;">#springMessage('table.fc_charge_type_dtl.min_range_money')（>）</th>
+        <th style="text-align: center;">#springMessage('table.fc_charge_type_dtl.max_range_money')（<=）</th>
+        <th style="text-align: center;">#springMessage('table.btBankAcc.agrInterest')</th>
+        </thead>
+        <tbody>
+            #foreach($detail in $!{fcAgreedDepositPage.detailList})
+                #set($vcount = $velocityCount - 1)
+            <tr data-row="${vcount}">
+                <td class="textRight">
+                    $!number.formatNumeric(${detail.minMoney})
+                    <input type="hidden" id="minMoney${vcount}" name="detailList[${vcount}].minMoney"
+                           data-name="detailList[${vcount}].minMoney" value="$!{detail.minMoney}" class="min">
+                </td>
+                <td class="textRight">
+                    $!number.formatNumeric(${detail.maxMoney})
+                    <input type="hidden" id="maxMoney${vcount}" name="detailList[${vcount}].maxMoney"
+                           data-name="detailList[${vcount}].maxMoney" value="$!{detail.maxMoney}" class="max">
+                </td>
+                <td class="textRight">
+                    $!rateTag.show($!{detail.agreeRate})
+                    <input type="hidden" id="agreeRate${vcount}" name="detailList[${vcount}].agreeRate"
+                           data-name="detailList[${vcount}].agreeRate" value="$!{detail.agreeRate}" class="agreeRate">
+                </td>
+            </tr>
+            #end
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/agreeddeposit/updateTermAgreedDeposit.edit.js?_btv=${resourceVersion}"></script>
+</html>

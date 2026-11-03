@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+
+        #tagItemDetail .bt-selectTree-close, .bt-selectTableType-close {
+            right: 15px!important;
+            top: 8px!important;
+            height: 16px!important;
+        }
+        #tagItemDetail .line_border {
+            border-top:none;
+        }
+        #tagItemDetail x* {
+            position: relative;
+        }
+        #tagItemDetail .x10.line.line_border {
+            border-right: none!important;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form layui-form-pane">
+    <input id="createBy" name="createBy" type="hidden" value="$!{fbsBudgetProcessPage.createBy}">
+    <input id="createDate" name="createDate" type="hidden" value="$!{fbsBudgetProcessPage.createDate}">
+    <input id="updateBy" name="updateBy" type="hidden" value="$!{fbsBudgetProcessPage.updateBy}">
+    <input id="id" name="id" type="hidden" value="$!{fbsBudgetProcessPage.id}">
+    <input id="processMoney" name="processMoney" type="hidden" value="$!{fbsBudgetProcessPage.processMoney}">
+    <input id="corpId" name="corpId" type="hidden" value="$!{fbsBudgetProcessPage.corpId}">
+    <input id="processDate" name="processDate" type="hidden" value="$!{fbsBudgetProcessPage.processDate}">
+    <input id="curId" name="curId" type="hidden" value="$!{fbsBudgetProcessPage.curId}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight" width="15%">#springMessage('table.fbsBudgetProcess.corpId')</td>
+            <td width="35%">&nbsp;
+                ($!{corpCode})$!{fbsBudgetProcessPage.corpName}
+            </td>
+        ##单据号
+            <td class="textRight" width="15%">#springMessage('table.fbsBudgetProcess.billNo')</td>
+            <td width="35%">
+                $!{fbsBudgetProcessPage.billNo}
+            </td>
+        </tr>
+        <tr>
+        ##执行金额
+            <td class="textRight">#springMessage('table.fbsBudgetProcess.processMoney')</td>
+            <td>
+            ##金额（小写）
+                <label id="processMoneyText"></label>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.money.upper')</td>
+            <td>
+            ##金额（大写）
+                <label id="moneyUp"></label>
+            </td>
+        </tr>
+        <tr>
+        ##内转标识
+            <td class="textRight">#springMessage('table.fbsBudgetProcess.innerSign')</td>
+            <td>$dictTag.get("sf_yn",$!{fbsBudgetProcessPage.innerSign})</td>
+        ##收款账号名称
+            <td class="textRight">#springMessage('bisBifRule.payeeName')</td>
+            <td>
+                $!{fbsBudgetProcessPage.payeeAccName}
+            </td>
+        </tr>
+        <tr>
+        ##执行日期
+            <td class="textRight">#springMessage('table.fbsBudgetProcess.processDate')</td>
+            <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetProcessPage.processDate})
+        ##币别
+            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+            <td>
+                $!{fbsBudgetProcessPage.curName}
+            </td>
+        </tr>
+        <tr>
+        ##备注
+            <td class="textRight">#springMessage('table.fbsBudgetProcess.rmk')</td>
+            <td colspan="3">
+                $!{fbsBudgetProcessPage.rmk}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div id="tagItemDetail">
+
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form', 'capNumber', 'moneyType'], function () {
+        var $ = bt.jquery;
+        var moneyFun = bt.moneyType.getFun();
+        $("#processMoneyText").text(moneyFun.format($("#processMoney").val()));
+        // 金额大写
+        bt.capNumber.init({
+            elem: '#processMoney',
+            linkElemDiv: "#moneyUp"
+        });
+        /**
+         * 生成公共的属性
+         * @return
+         */
+            $genOtherHtml = function () {
+            var url = basePath + "/budget/fbsBudgetProcess/getViewItemDetail";
+            var param = {
+                id: $("#id").val(),
+                corpId: $("#corpId").val(),
+                itemCode: "",
+                billNo: $("#billNo").val(),
+                curId: $("#curId").val(),
+                processDate: $("#processDate").val(),
+                type: 'select',
+                date: (new Date()).getTime()
+            };
+            $.ajax({
+                url: url, method: 'POST', data: param, async: true, success: function (json) {
+                    $("#tagItemDetail").html("");
+                    $("#tagItemDetail").html(json);
+                }
+            });
+        };
+            $genOtherHtml();
+    });
+</script>
+</html>

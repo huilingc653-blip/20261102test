@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="customPrintVal">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##模板编号
+            <td class="textRight">#springMessage('table.configTemplate.templateCode')</td>
+            <td>
+                <input type="text" name="templateNo" id="templateNo"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.configTemplate.templateCode')">
+            </td>
+
+            ##模板名称
+            <td class="textRight">#springMessage('table.transfer.templateName')</td>
+            <td>
+                <input type="text" name="templateName" id="templateName"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.transfer.templateName')">
+            </td>
+
+            ##银行类型
+            <td class="textRight">#springMessage('table.btswiftinfo.bankType')</td>
+            <td>
+                <div class="layui-inline">
+                    <div data-name="bankTypeId" class="bt-biz-mulselectType"
+                         data-url="${basePath}/basic/business/btbanktype/json" data-method="get"
+                         data-valuefield="id"
+                         data-name="bankTypeId"
+                         data-textfield="typeName"
+                         data-biz-name="bankTypeId"
+                         data-search="true"
+                         data-callback="bankTypeIdCallBack"
+                    ></div>
+                </div>
+            </td>
+
+        </tr>
+        <tr>
+            ##接口代码
+            <td class="textRight">#springMessage('table.btBankAcc.bifCode')</td>
+            <td>
+                <div class="layui-inline">
+                    <div id="bifId"  class="bt-biz-mulselectType"
+                         data-url="${basePath}/basic/business/bisbifinit/json" data-method="get"
+                         data-valuefield="id"
+                         data-textfield="name"
+                         data-name="bifId"
+                         data-biz-name="bifId"
+                    ></div>
+                </div>
+            </td>
+            ##国家地区
+            <td class="textRight">#springMessage('table.btswiftinfo.countryCode')</td>
+            <td>
+                <div class="layui-inline">
+                    <div id="countryId" data-name="countryId" class="bt-biz-mulselectType"
+                         data-url="${basePath}/basic/business/syscountrycust/listSysCountryCust"
+                         data-method="get"
+                         data-valuefield="id"
+                         data-textfield="nameZh"
+                         data-name="countryId"
+                         data-biz-name="countryId"
+                    ></div>
+                </div>
+            </td>
+            ##支付类型
+            <td class="textRight">#springMessage('table.fexForeign.payType')</td>
+            <td>
+                <input type="text" name="payTypeName" id="payTypeName"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.fexForeign.payType')">
+            </td>
+
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th width="30">#springMessage('common.table.thead.operation')</th>##操作
+            <th>#springMessage('table.configTemplate.templateCode')</th>
+            <th>#springMessage('table.fexExposureTemplate.templateName')</th>
+            <th>#springMessage('table.btswiftinfo.bankType')</th>
+            <th>#springMessage('table.btBankAcc.bifCode')</th>
+            <th>#springMessage('table.btswiftinfo.countryCode')</th>
+            <th>#springMessage('table.fexForeign.payType')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+    #parse("views/common/footer.vm")
+
+<script>
+    bt.use(['form', 'datatable', 'dicts', 'mulselect'], function () {
+        var $ = bt.jquery, form = bt.form();
+
+
+ /*      var params = bt.navtab.getCurrentDom().window.frames["tranDtl"].setParentParams();
+       console.log(params)*/
+
+        var dicts = bt.dicts.init();
+        var idIndex = 1;
+        bt.mulselect.init();
+        //生成列表
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            selectCss: false,
+            ignoreButtons:['colvis','output','print','state'],// 忽略的表单默认按钮 state取消状态保存按钮
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/foreign/fexTranConfigTemplate/configTemplateChildrenList"
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="acc-bank-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "templateNo", bSortable: false, className: 'center'},
+                {data: "templateName", bSortable: false, className: 'center'},
+                {data: "bankTypeName", bSortable: false, className: 'center'},
+                {data: "bifName", bSortable: false, className: 'center'},
+                {data: "countryZhName", bSortable: false, className: 'center'},
+                {data: "payTypeName", bSortable: false, className: 'center'},
+
+            ]
+        });
+
+        table.on('click', '.acc-bank-select', function (event) {
+            var selectedData = table.row($(this).data('row')).data();
+            var currentTabWin = bt.navtab.getCurrentDom();
+            if(currentTabWin){
+                currentTabWin.updateFormByConfig &&　currentTabWin.updateFormByConfig(selectedData)
+                currentTabWin.window.frames["tranDtl"] && currentTabWin.window.frames["tranDtl"].setParentParams && currentTabWin.window.frames["tranDtl"].setParentParams(selectedData);
+            }
+            parent.layer.closeAll();
+            console.log(selectedData);
+        })
+    })
+
+
+
+    //选择银行类型回调
+    function bankTypeIdCallBack(selectedData) {
+        // 获取选中的银行类型ID
+        var bankTypeValue = bt.mulselect.get("bankTypeId").val();
+        var bankTypeId = bankTypeValue && bankTypeValue.length > 0
+                ? bankTypeValue.map(function(item) { return item.id; }).join(',')
+                : null;
+        var bifMulselect = bt.mulselect.get("bifId");
+        if (bankTypeId && bankTypeId !== "0" && bankTypeId !== "") {
+
+            var newUrl = basePath + "/basic/business/bisbifinit/getByBankType/" + bankTypeId;
+            // 使用组件的 attr 方法修改 URL
+            bifMulselect.attr({
+                "data-url": newUrl
+            });
+        }else {
+
+            var newUrl = basePath + "/basic/business/bisbifinit/getByBankType/" + 0;
+            // 使用组件的 attr 方法修改 URL
+            bifMulselect.attr({
+                "data-url": newUrl
+            });
+        }
+        // ：重置组件
+        var $bifId = $("#bifId");
+            $bifId.removeClass("init").empty();
+        bt.mulselect.render('reset');
+
+    }
+
+</script>
+</body>
+</html>

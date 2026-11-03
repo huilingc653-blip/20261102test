@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="poolSign" id="poolSign" value="$!{poolSign}"/>
+    <input type="hidden" name="eqs_corpId" id="eqs_corpId" value="$!{corpId}"/>
+    <input type="hidden" name="eqs_curId" id="eqs_curId" value="$!{curId}"/>
+    <table class="layui-table">
+        <tbody>
+            ##账号
+            <td class="textRight">#springMessage('fcAccBalanceQuery.account')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="likes_account" name="likes_account"
+                           autocomplete="off" class="layui-input bank" placeholder="#springMessage('fcAccBalanceQuery.account')">
+                </div>
+            </td>
+            #if($!{poolSign} == "1")
+                ##科目
+            <td class="textRight">#springMessage('fcAccBalanceQuery.subjectId')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-search="true" data-beforeinit="beforeInit"
+                         data-name="eqs_subjectId" data-url="${basePath}/finacial/paramconfig/FcSubjectPool/jsonValidSubjectDate"
+                         data-valueField="id" data-textField="subjectName"></div>
+                </div>
+            </td>
+            #else
+                ##科目
+                <td class="textRight">#springMessage('fcAccBalanceQuery.subjectId')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <div class="bt-biz-selectType" data-search="true" data-beforeinit="beforeInit"
+                             data-name="eqs_subjectId" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate"
+                             data-valueField="id" data-textField="subjectName"></div>
+                    </div>
+                </td>
+            </tr>
+            #end
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</form>
+<table id="appTable" class="layui-table layui-form layui-table-border" style="width:100%;" data-btns="print">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('fcAccBalanceQuery.account')</th>
+        <th>#springMessage('fcAccBalanceQuery.accName')</th>
+        <th>#springMessage('fcAccBalanceQuery.subjectId')</th>
+        <th>#springMessage('fcAccBalanceQuery.curId')</th>
+        <th>#springMessage('fcAccBalanceQuery.onlineBalance')</th>
+        <th>#springMessage('fcAccBalanceQuery.availableBalance')</th>
+        <th>#springMessage('fcAccBalanceQuery.overdraftMoney')</th>
+        <th>#springMessage('fcAccBalanceQuery.accOpenTime')</th>
+        <th>#springMessage('fcAccBalanceQuery.deadlineDate')</th>
+        <th>#springMessage('fcAccBalanceQuery.interestRate')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script type="text/javascript">
+    bt.use(['form', 'datatable', 'corp', 'money', 'bank', 'selectType', 'rateType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.corp.init();
+
+        /**
+         * 科目加载自定义组装
+         * @param text
+         * @param data
+         * @returns {*}
+         */
+        beforeInit = function (text, data) {
+            if (data.subjectCode) {
+                return "(" + data.subjectCode + ")" + data.subjectName;
+            }
+            return text;
+        }
+        bt.selectType.init();
+        bt.bank.init({
+            elem: '.bank',
+        });
+
+        //生成列表
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            selectCss: false,
+            order: [[1, 'desc'], [0, 'asc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/inneraccount/fcacc/dataTableSelect"
+            },
+            buttonsLayout: true,
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="acc-bank-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "account", bSortable: true},
+                {data: "accName", bSortable: true},
+                {data: "subjectName", bSortable: true},
+                {data: "curName", bSortable: true},
+                {
+                    data: "checkBalance", bSortable: true, className: "textRight",
+                    render: function (data, type, row, meta) {
+                        return bt.money.format(data);
+                    }
+                },
+                {
+                    data: "availableBalance", bSortable: true, className: "textRight",
+                    render: function (data, type, row, meta) {
+                        return bt.money.format(data);
+                    }
+                },
+                {
+                    data: "overdraftMoney", bSortable: true, className: "textRight",
+                    render: function (data, type, row, meta) {
+                        return bt.money.format(data);
+                    }
+                },
+                {data: "accOpenTime", bSortable: true},
+                {data: "deadlineDate", bSortable: true},
+                {
+                    data: "interestRate", bSortable: true, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.rateType.getFun().format(full.interestRate);
+                    }
+                }
+            ],
+            // 暂时注释导出全部回调
+            customExportAll: function (params, processing, data) {
+                var exportUrl = basePath + "/inneraccount/fcaccbalancequery/exportAll";
+                openExportExcel(exportUrl, data);
+                processing(false);
+            }
+        });
+
+        table.on('click', '.acc-bank-select', function (event) {
+            var parentsIndex = parent.$('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex;
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            console.log(currentParentIframe)
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-accountInfo']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-accountInfo']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                data.isExternal=true;
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

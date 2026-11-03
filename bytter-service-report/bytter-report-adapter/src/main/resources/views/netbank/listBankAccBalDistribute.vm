@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts2/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/modules/bi/statics/homeBankAccBalDistribute.css?_btv=${resourceVersion}"
+          media="all">
+</head>
+<body class="$!{shiro.getPrincipal().sysSkin}">
+<input id="uiStyle" name="uiStyle" type="hidden" value="$!{configTag.getConfig('sys','uiStyle')}">
+<div class="panel-wrapper">
+    <div class="header-panel header-height layui-form">
+        ##浅色：文字：#9497AC  边线：#EBEDF1
+        ##深色：文字：#797979  边线：#2E2F34
+        ##边线颜色
+        <input id="lineColor" name="lineColor" type="hidden"
+            #if($shiro.getPrincipal().sysSkin == 'dark-skin')
+               value="#2E2F34"
+            #else
+               value="#EBEDF1"
+            #end
+        >
+        ##文字颜色
+        <input id="textColor" name="textColor" type="hidden"
+            #if($shiro.getPrincipal().sysSkin == 'dark-skin')
+               value="#797979"
+            #else
+               value="#9497AC"
+            #end
+        >
+        <input id="curId" name="curId" type="hidden" value="$!{currencyTag.getNatualCurrency().id}">
+        <input id="bal" name="bal" type="hidden" value="$!{curBal.bal}">
+        <input id="standardBal" name="standardBal" type="hidden" value="$!{curBal.standardBal}">
+        <input id="foreignBal" name="foreignBal" type="hidden" value="$!{curBal.foreignBal}">
+        <div class="panel-left header-height">
+            #springMessage('repot.bankAccBal.distribute')
+        </div>
+        <div class="panel-right header-height">
+            #*<span class="panel-time">2022-07-22 12:05</span>*#
+            <label>#springMessage('table.fcBond.corpName')</label>
+            <div class="layui-inline">
+                <div class="bt-biz-corp"
+                     data-biz-type="corp"
+                     data-type="selectTree"
+                     data-name="corpId"
+                     data-biz-name="corpId"
+                     data-resource="netbank:bankAcc:bisAccBal:query"
+                     data-scope="all"
+                     data-tree-type="check"
+                     data-callback="bt.corpCallback"></div>
+            </div>
+            <label>#springMessage('table.bankAccBalTrend.corpId')</label>
+            <div class="layui-inline" style="width: 160px;">
+                <div class="bt-biz-dict" data-type="select" data-defaultvalue="10000" data-filterData="1" data-callback="bt.moneyTypeCallback"
+                     data-group="common.MoneyType" data-name="moneyType" data-biz-name="moneyType" style="position: absolute;top: 0;"></div>
+            </div>
+            <span class="refresh-btn">
+                 <span class="iconfont byhome_refresh" id="refreshMap"></span>
+            </span>
+        </div>
+    </div>
+    <div class="layui-row layui-col-space20 report-wrapper">
+        ##当前余额
+        <div class="layui-col-lg3 layui-col-sm3 layui-col-xs3">
+            <div class="current-bal">
+                <div class="card-title">
+                    #springMessage('repot.bankAccBal.bal')
+                </div>
+                <div class="current-content">
+                    <div class="total-money" id="balContainer">$!number.formatNumeric($!{curBal.bal})</div>
+                    <div class="total-name">
+                        #springMessage('table.fbsBudgetProcess.convert')$!{currencyTag.getNatualCurrency().curName}
+                    </div>
+                    <div class="money-detail">
+                        <div>
+                            <span class="iconfont byhome_warn_a"></span>
+                            #springMessage('repot.bankAccBal.availBal')：<span id="availBalContainer">$!number.formatNumeric($!{curBal.availBal})</span>
+                        </div>
+                        <div>
+                            <span class="iconfont byhome_warn_f"></span>
+                            #springMessage('repot.bankAccBal.frzBal')：<span id="frzBalContainer">$!number.formatNumeric($!{curBal.frzBal})</span>
+                        </div>
+                        <div>
+                            <span class="iconfont byhome_warn_z"></span>
+                            #springMessage('repot.bankAccBal.standardBal')：<span id="standardBalContainer">$!number.formatNumeric($!{curBal.standardBal})</span>
+                        </div>
+                        <div>
+                            <span class="iconfont byhome_warn_x"></span>
+                            #springMessage('repot.bankAccBal.foreignBal')：<span id="foreignBalContainer">$!number.formatNumeric($!{curBal.foreignBal})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ##银行账户余额趋势
+        <div class="layui-col-lg6 layui-col-sm6 layui-col-xs6">
+            <div class="card-wrapper">
+                <div class="card-header">
+                    ##银行账户余额趋势
+                    #springMessage('repot.bankAccBal.balDistributeTitle')
+                </div>
+                <div class="layui-form date-wrapper">
+                    <div class="layui-inline">
+                        <div class="bt-biz-dict" data-type="select" data-defaultvalue="M" data-biz-name="timeType"
+                             data-group="report.timeType" data-name="timeType" data-callback="bt.timeTypeCallback"></div>
+                    </div>
+                    <div class="layui-inline">
+                        <select lay-filter="year" id="year" name="year">
+                            #foreach($y in $years)
+                                #if("$y" == $!{year})
+                                    <option value="$y" selected>$y</option>
+                                #else
+                                    <option value="$y">$y</option>
+                                #end
+                            #end
+                        </select>
+                    </div>
+                    <div class="layui-inline" id="monthsDiv">
+                        <div class="bt-biz-dict" data-type="select" data-defaultvalue="$!{month}" data-biz-name="month"
+                             data-group="btBankAccDtl.months" data-name="month" data-callback="bt.monthCallback"></div>
+                    </div>
+                </div>
+                <div id="chartBalDistribute" style="width:calc(100%);">
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-lg3 layui-col-sm3 layui-col-xs3">
+            <div class="card-wrapper" style="padding-right: 4px;">
+                <div class="card-header">
+                    ##银行余额币别分布
+                    #springMessage('repot.bankAccBal.curBalDistributeTitle')
+                </div>
+                <div class="card-content" id="curBalContainer">
+                    <table id="curBalTable" class="report-table">
+                        <tbody>
+                            <tr class="report-table-header">
+                                <td>#springMessage('table.bisAccDtl.curName')</td>
+                                <td class="textRight">#springMessage('table.btBankAccDtl.bal')</td>
+                                <td class="textRight">#springMessage('table.accbook.rate')</td>
+                            </tr>
+                            #foreach($bal in $listBalCur)
+                            <tr>
+                                <td>$!{bal.curName}</td>
+                                <td align="right">$!number.formatNumeric($!{bal.bal})</td>
+                                <td align="right">$!number.formatNumeric($!{bal.balRatio})%</td>
+                            </tr>
+                            #end
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-row layui-col-space20 report-wrapper">
+        ##银行账户余额类别统计占比
+        <div class="layui-col-lg3 layui-col-sm3 layui-col-xs3">
+            <div class="card-wrapper">
+                <div class="card-header">
+                    ##银行账户余额类别统计占比
+                    #springMessage('repot.bankAccBal.bankTypeBalDistributeTitle')
+                </div>
+                <div class="card-content">
+                    <div id="chartBankType" style="width:calc(100%);height:264px;"></div>
+                </div>
+            </div>
+        </div>
+        ##账户余额分布
+        <div class="layui-col-lg6 layui-col-sm6 layui-col-xs6">
+            <div class="card-wrapper">
+                <div class="card-header">
+                    ##账户余额分布
+                    #springMessage('repot.bankAccBal.bankAccBalDistributeTitle')
+                </div>
+                <div class="select-wrapper layui-form">
+                </div>
+                <div class="card-content" id="topBalContainer">
+                    <table id="topBalTable" class="report-table">
+                        <tbody>
+                        <tr class="report-table-header">
+                            <td style="width: 60px;"></td>
+                            <td>#springMessage('table.nisBillhead.accId')</td>
+                            <td>#springMessage('table.btBankAcc.bankTypeId')</td>
+                            <td>#springMessage('table.fcBond.corpName')</td>
+                            <td class="textRight">#springMessage('table.btBankAccDtl.bal')</td>
+                        </tr>
+                            #foreach($bal in $listBal)
+                                #if($!{velocityCount} < 6)
+                                <tr>
+                                    <td align="center">$!{velocityCount}</td>
+                                    <td>$!{bal.bankAcc}</td>
+                                    <td>$!{bal.bankTypeName}</td>
+                                    <td>$!{bal.corpName}</td>
+                                    <td align="right">$!number.formatNumeric($!{bal.bal})</td>
+                                </tr>
+                                #end
+                            #end
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        ##银行账户余额属性分布
+        <div class="layui-col-lg3 layui-col-sm3 layui-col-xs3" >
+            <div class="card-wrapper">
+                <div class="card-header width-auto" style="height: auto;width: calc(100% - 148px);">
+                    ##银行账户余额属性分布
+                    #springMessage('repot.bankAccBal.attributeBalDistributeTitle')
+                </div>
+                <span class="select-wrapper layui-form" style="">
+                        <button type="button" class="active" style="margin-right: 12px;margin-left: 12px;" id="attributeBut">#springMessage('repot.bankAccBal.attribute')</button>
+                        <button type="button" id="natureBut">#springMessage('repot.bankAccBal.nature')</button>
+                    </span>
+                <div class="card-content">
+                    <div id="chartAttribute" style="width:calc(100%);"></div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bi/homeBankAccBalDistribute.list.js?_btv=${resourceVersion}"></script>
+</html>

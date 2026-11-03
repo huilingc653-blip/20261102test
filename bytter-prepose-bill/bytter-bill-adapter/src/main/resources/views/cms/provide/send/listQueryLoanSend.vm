@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+    <input type="hidden" name="eqs_curId" value="$!{bisDTO.curId}" >
+##    <input type="hidden" name="eqs_bankCode" value="$!{bankAccDTO.bankCode}" >
+    <input type="hidden" name="eqs_bankType" value="$!{bankAccDTO.bankTypeId}" >
+    <input type="hidden" name="eqg_money" value="$!number.formatNumeric($!{bisDTO.amt})" >
+    <input type="hidden"  id="row" value="$!{row}"/>
+	<table class="layui-table">
+		<tbody>
+		   	<tr>
+		   		##单位
+				<td class="textRight" style="width: 10%">#springMessage('table.cmsProvideLoanInfo.corpId')</td>
+		   		<td style="width: 10%">$!{bisDTO.corpName}
+                    <input type="hidden" name="ins_corpId" value="$!{bisDTO.corpId}" >
+		   		</td>
+				##借款发放日期
+                    <td class="textRight" style="width: 10%">#springMessage('table.cmsProvideLoanSend.sendDate')</td>
+                    <td style="width: 10%">
+                        <div class="layui-inline">
+                            <input name="ged_sendDate" data-endid="endSendDate" class="layui-input bt-biz-dateType" type="text">
+                        </div>
+                        <div class="layui-inline">
+                            <span class="date-mid">~</span>
+                        </div>
+                        <div class="layui-inline">
+                            <input name="led_sendDate" id="endSendDate" class="layui-input bt-biz-dateType" value="$!date.format('yyyy-MM-dd',$!{bisDTO.transTime})" type="text">
+                        </div>
+                    </td>
+                ##银行类别
+                    <td class="textRight" style="width: 10%">#springMessage('table.btBankAcc.bankTypeId')</td>
+                    <td style="width: 10%">$!{bankTypeName}</td>
+
+		   	</tr>
+            <tr>
+            ##币别
+                <td class="textRight">#springMessage('table.cmsProvideLoanInfo.curId')</td>
+                <td>$!{bisDTO.curName}</td>
+            ##借款到期日期
+                <td class="textRight">#springMessage('table.cmsProvideLoanSend.repayDate')</td>
+                <td>
+                    <div class="layui-inline">
+                        <input name="ged_repayDate" data-endid="endRepayDate" class="layui-input bt-biz-dateType" type="text" value="$!date.format('yyyy-MM-dd',$!{bisDTO.transTime})">
+                    </div>
+                    <div class="layui-inline">
+                        <span class="date-mid">~</span>
+                    </div>
+                    <div class="layui-inline">
+                        <input name="led_repayDate" id="endRepayDate" class="layui-input bt-biz-dateType" type="text">
+                    </div>
+                </td>
+            ##发放金额
+                <td class="textRight">#springMessage('table.cmsProvideLoanSend.money')</td>
+                <td>
+                    $!number.formatNumeric($!{bisDTO.amt})
+                </td>
+            </tr>
+            <tr>
+            ##状态
+                <td class="textRight">#springMessage('table.cmsProvideLoanSend.status')</td>
+                <td>$dictTag.get("common.status", "95")</td>
+            </tr>
+		   	<tr>
+		   		<td colspan="6" style="text-align: center;">
+		   			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+		           	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+		   		</td>
+		   	</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+    	<th>#springMessage('table.cmsProvideLoanInfo.corpId')</th><!-- 单位名称 -->
+        <th>#springMessage('table.cmsProvideLoanSend.billCode')</th><!-- 发放单号 -->
+    	<th>#springMessage('table.cmsProvideLoanInfo.billCode')</th><!-- 申请单号 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.bankId')</th><!-- 银行名称 -->
+        <th>#springMessage('table.cmsProvideLoanSend.sendDate')</th><!-- 借款发放日期 -->
+        <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th><!-- 借款到期日期 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.curId')</th><!-- 币别-->
+        <th>#springMessage('table.cmsProvideLoanInfo.plMoney')</th><!-- 借款金额-->
+        <th>#springMessage('table.cmsProvideLoanSend.money')</th><!-- 本次发放金额-->
+        <th>#springMessage('table.cmsProvideLoanInfo.plRate')</th><!-- 借款利率 -->
+    	<th>#springMessage('table.cmsProvideLoanSend.createDate')</th><!-- 录入日期-->
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+	bt.use(['form','datatable','corp','moneyType','dateType','selectType','date'], function(){
+	    $ = bt.jquery,form = bt.form(),moneyFun = bt.moneyType.getFun();
+	    bt.corp.init();//单位
+	    bt.moneyType.init();//金额
+	    bt.dateType.init();//日期
+	    bt.selectType.init();//日期
+		var relateCon=$("#relateCon").val();
+	    //生成列表
+	    datatable = bt.datatable.init({
+	        elem: "#appTable",
+            colReorder: true,
+            // isInitData: false,//初始化不加载数据，点击查询后加载
+            rowsGroup:[2,5],
+	        searchForm:{
+	            formElem:"#searchForm",
+	            formFilter:"search"
+	        },
+            fixedColumns: {
+                leftColumns:3,//代表冻结左边两列
+                rightColumns:0//代表冻结右边一列
+            },
+	        checkbox:false,
+	        ajax: {
+	            'url': basePath+"/cms/provide/loansend/proLoanSendDataTables"
+	        },
+	        buttons: [
+	           {
+	                extend: "colvis",
+	                text: bt.lang('common.button.theadHide'),
+	                columns: ':not(:first):not(:last)'
+	            }
+	        ],
+	        fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+	        columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="businessInfo-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data:"corpName",bSortable:true,className: 'center'},
+                {data:"billCode",className: 'center'},
+                {data:"loanCode",bSortable:true,className: 'center'},
+                {data:"bankName",bSortable:true,className: 'center'},
+                {data:"sendDate",className: 'center',render: function ( data, type, full, meta ){
+                        return bt.date.format(full.sendDate, "yyyy-MM-dd");
+                    }},
+                {data:"sendRepayDate",className: 'center',render: function ( data, type, full, meta ){
+                        return bt.date.format(full.repayDate, "yyyy-MM-dd");
+                    }},
+                {data:"curName",className: 'center'},
+	            {data:"plMoney",bSortable:true,className:"textRight",render: function ( data, type, full, meta ){
+	            	return bt.money.format(full.plMoney);
+	            }},
+	            {data:"money", className:"textRight",render: function ( data, type, full, meta ){
+                        return bt.money.format(full.money);
+	            }},
+	            {data:"plRate",className: 'center',render: function ( data, type, full, meta ){
+	            	return moneyFun.format(full.plRate * 100, {decimal:4}) +" %";
+	            }},
+                {data:"createDate",className: 'center',render: function ( data, type, full, meta ){
+                    return bt.date.format(full.createDate, "yyyy-MM-dd");
+                }},
+	        ]
+	    });
+
+
+        datatable.on('click', '.businessInfo-select', function () {//点击选择触发
+            var data = datatable.row($(this).data('row')).data();
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            // 调父页面的回调方法
+            top.frames[currentParentIframe].window.busTypeCallback(data,$("#row").val());
+            var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+            parent.layer.close(index); //再执行关闭
+        });
+	});
+
+</script>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+#parse("views/common/head.vm")
+<style type="text/css">
+	body{
+	    	text-align: center;
+	    }
+   	.rateNotice-title {
+			font-weight: bold;
+			font-size: 15px;
+			text-align: center;
+		}
+    </style>
+</head>
+<body>
+<input type="hidden" id="noticesSize" value="$!{noticesSize}">
+<button class="layui-btn layui-btn-sm" style="position:relative;top: -5px;" onclick="printVoucher()">
+  #springMessage("common.button.print")
+</button>
+#if($rateNotices)
+	#foreach($rateNotice in $rateNotices)
+	<div id="print_${velocityCount}" >
+		<div class="print-list">
+			##凭证头部
+			<div class="print-header">
+				##记账凭证
+				<div style="text-align:center;">
+					<div class="print-header-name">$rateNotice.corpName</div>
+					<div class="print-header-title">#springMessage("table.interet.lxtzd.title")</div>
+				</div>
+			</div>
+			##凭证内容
+			<div class="print-body">
+				<table style="width: 100%; " class="print-body-header">
+					<tr>
+						##网点
+						<td width="33%">#springMessage('table.fcAcc.corpId')：$rateNotice.corpName</td>
+						##当前日期
+						<td width="33%">$rateNotice.nowDate</td>
+						##币别
+						<td width="33%">#springMessage("table.fcAcc.curId")：$rateNotice.curName</td>
+					</tr>
+				</table>
+				<table id="dataTable" style="width: 100%; " class="layui-table">
+				<colgroup>
+					<col width="19%">
+					<col width="17%">
+					<col width="17%">
+					<col width="17%">
+					<col width="15%">
+					<col width="15%">
+				</colgroup>
+					<tr>
+						<td>#springMessage('table.fcAccuBalance.account')</td><!-- 账号 -->
+						<td>$rateNotice.account</td>
+						<td>#springMessage('table.fcAcc.accName')</td><!-- 户名 -->
+						<td colspan="3">$rateNotice.accName</td>
+					</tr>
+					<tr>
+						<td>#springMessage('table.fcInterestDtlTemp.interestStartDate')</td><!-- 起息日期 -->
+						<td>#springMessage('table.fcInterestDtlTemp.blnInstDate')</td><!-- 结息日期 -->
+						<td>#springMessage('table.fcInterestDtlTemp.interestRate')</td><!-- 利率 -->
+						<td colspan="3">#springMessage('table.fcInterestDtlTemp.interest')</td><!-- 利息 -->
+					</tr>
+					#set($InterestSum = 0)
+					#foreach($dtl in $rateNotice.interestDtls)
+					#set($InterestSum = $InterestSum+$dtl.interest)
+					<tr>
+						<td>$!date.format('yyyy-MM-dd', ${dtl.interestStartDate})</td>
+						<td>$!date.format('yyyy-MM-dd', ${dtl.blnInstDate})</td>
+						<td>$rateTag.show($!{dtl.interestRate})</td>
+						<td colspan="3" style="text-align: right;">$!number.formatNumeric($!{dtl.interest})</td>
+					</tr>
+					#end
+					<tr>
+						<td>#springMessage('table.interet.sum')</td><!-- 合计 -->
+						<td colspan="5" style="text-align: right;">$!number.formatNumeric($!{InterestSum})</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td>#springMessage("table.fcLessPayBill.checkerCode")</td><!-- 复核人 -->
+						<td>$!rateNotice.checkerName</td>
+						<td>#springMessage("table.fcFreeze.operator")</td><!-- 经办人 -->
+						<td>$!rateNotice.printName</td>
+					</tr>
+				</table>
+				<br>
+			</div>
+		</div>
+	</div>
+	#end
+#end
+
+
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+function printVoucher(){
+	var noticesSize = $("#noticesSize").val();
+	var LODOP=getLodop();
+	LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Width:100%");
+	for(var i=1;i<=noticesSize;i++){
+		LODOP.NewPageA();
+    	//var html = printStyle+'<body>'+$("#print_"+i).html()+'</body>';
+		//LODOP.ADD_PRINT_HTM(0,0,"100%","100%",html);
+		LODOP.ADD_PRINT_HTML(10,10,"100%","100%",printStyle+'<body>'+ $("#print_"+i).html()+'</body>');
+	}
+	LODOP.PREVIEW();
+}
+</script>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="corpName" id="corpName" value="$!{vo.corpName}"/>
+    <input type="hidden" name="curId" id="curId" value="$!{vo.curId}"/>
+    <input type="hidden" name="corpIds" id="corpIds" value="$!{vo.corpIds}"/>
+    <input type="hidden" name="beforeDate" id="beforeDate" value="$!{vo.beforeDate}"/>
+    <input type="hidden" name="afterDate" id="afterDate" value="$!{vo.afterDate}"/>
+    <input type="hidden" name="isConverted" id="isConverted" value="$!{vo.isConverted}"/>
+    <input type="hidden" name="moneyUnit" id="moneyUnit" value="$!{vo.moneyUnit}"/>
+    <input type="hidden" name="statistical" id="statistical" value="$!{vo.statistical}"/>
+    <input type="hidden" name="depositType" id="depositType" value="$!{vo.depositType}"/>
+    <input type="hidden" name="frequency" id="frequency" value="$!{vo.frequency}"/>
+    <input type="hidden" name="reducedCurId" id="reducedCurId" value="$!{vo.reducedCurId}"/>
+    <input type="hidden" name="corpCurId" id="corpCurId" value="$!{vo.corpCurId}"/>
+</form>
+
+<div id="chart" style="width: 100%;height:600px;margin:0 auto"></div>
+    #parse("views/common/footer.vm")
+
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form'], function () {
+        $ = bt.jquery, form = bt.form();
+        var myChart = echarts.init(document.getElementById('chart'));
+        let data = {
+            corpName: $("input[name=corpName]").val(),
+            corpIds: $("input[name=corpIds]").val(),
+            depositType: $("input[name=depositType]").val(),
+            statistical: $("input[name=statistical]").val(),
+            curId: $("input[name=curId]").val(),
+            isConverted: $("input[name=isConverted]").val(),
+            moneyUnit: $("input[name=moneyUnit]").val(),
+            beforeDate: $("input[name=beforeDate]").val(),
+            afterDate: $("input[name=afterDate]").val(),
+            frequency: $("input[name=frequency]").val(),
+            reducedCurId: $("input[name=reducedCurId]").val(),
+            corpCurId: $("input[name=corpCurId]").val(),
+        };
+
+
+
+        $.get(basePath + '/report/deposit/average/balance/chatAvgData', data, function (data) {
+            let echartData = new Array();
+            let echartArray = new Array();
+            for (let i = 0; i < data.length; i++) {
+                echartArray.push(data[i].date);
+                echartData.push(data[i].averageBalance)
+            }
+
+            let option = {
+                title: {
+                    text: bt.lang("table.report.statistical.deposit.distribution"),
+                    // subtext: '测试'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                toolbox: {
+                    show: true,
+                    feature: {
+                        magicType: {show: true, type: ['line', 'bar']},
+                        restore: {show: true},
+                        saveAsImage: {show: true}
+                    }
+                },
+                calculable: true,
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: echartArray,
+                        axisLabel: {
+                            interval: 0,
+                            rotate: 45,
+                            formatter: function (value) {
+                                return value
+                            },
+                        },
+                    },
+                ],
+                yAxis: [
+                    {
+                        type: 'value'
+                    }
+                ],
+                series: [
+                    {
+                        name: bt.lang("table.report.statistical.deposit.distribution"),
+                        type: 'bar',
+                        data: echartData,
+                        markLine: {
+                            data: [
+                                {yAxis:$!{average}, name: bt.lang("table.report.statistical.deposit.average")}
+                            ],
+                            label: {
+                                formatter: bt.lang("table.report.statistical.average.daily")+":"+$!{average}
+                            }
+                        }
+                    }
+
+                ]
+            };
+
+            myChart.setOption(option);
+        }, 'json')
+    });
+</script>
+</html>

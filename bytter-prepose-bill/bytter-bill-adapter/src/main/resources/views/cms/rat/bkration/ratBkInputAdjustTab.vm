@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body {
+            padding: 0;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body style="padding-bottom: 40px;">
+<div class="layui-tab-item layui-show">
+    <input type="hidden" id="businessType" value="0">##类型为授信录入
+    <input type="hidden" id="curr" value="${model.curr}">
+    <input type="hidden" id="pageCount" value="${model.pageCount}">
+    <input type="hidden" id="pageSize" value="${model.pageSize}">
+    <input type="hidden" id="resultCount" value="${model.resultCount}">
+    <input type="hidden" id="corpId" value="$!{corpId}">
+    <input type="hidden" id="contractNo" value="$!{contractNo}">
+    <input type="hidden" id="ratCode" value="$!{ratCode}">
+    <input type="hidden" id="bankCode" value="$!{bankCode}">
+    <input type="hidden" id="itemCode" value="$!{itemCode}">
+    <input type="hidden" id="ratMode" value="$!{ratMode}">
+    <input type="hidden" id="gBeginDate" value="$!{gBeginDate}">
+    <input type="hidden" id="lBeginDate" value="$!{lBeginDate}">
+    <input type="hidden" id="lEndDate" value="$!{lEndDate}">
+    <input type="hidden" id="gEndDate" value="$!{gEndDate}">
+    <table id="ratInputTable" class="layui-table layui-form dark-layui-table layui-table-border" style="width:100%;">
+        <button class="layui-btn" type="button" onclick="exports(0)">#springMessage('common.button.exportsCurrentPage')</button>
+        <button class="layui-btn" type="button" onclick="exports(1)">#springMessage('common.button.exportsAll')</button>
+        <br>
+        <thead>
+        <tr>
+            <th>#springMessage('table.ratBkration.ratMode')</th>
+            <th>#springMessage('table.ratBkration.ratCode')</th>
+            <th>#springMessage('table.ratBkration.contractNo')</th>
+            <th>#springMessage('table.ratBkration.corpId')</th>
+            <th>#springMessage('table.ratBkration.bankCode')</th>
+            <th>#springMessage('table.ratBkration.curCode')</th>
+            <th>#springMessage('table.ratBkrationDetail.itemCodeFlag')</th>
+            <th>#springMessage('table.ratBkrationDetail.itemCode')</th>
+            <th>#springMessage('table.ratBkrationDetail.creditType')</th>##授信方式
+            <th>#springMessage('table.ratBkration.money')</th>
+            <th>#springMessage('table.ratBkrationDetail.maxMoney')</th>##最高额度
+            <th>#springMessage('table.ratBkration.begindate')</th>
+            <th>#springMessage('table.ratBkration.enddate')</th>
+            <th>#springMessage('table.ratBkration.status')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+        <tbody>
+            #foreach($ration in $!{model.rations})
+            <tr>
+                <td align="center" rowspan="$!{ration.itemSize}">$dictTag.get("RatBkration.RatMode", $!{ration.ratMode})</td>
+                <td align="center" rowspan="$!{ration.itemSize}">$!{ration.ratCode}</td>
+                <td align="center" rowspan="$!{ration.itemSize}">$!{ration.contractNo}</td>
+                <td align="center" rowspan="$!{ration.itemSize}">$!{ration.corpName}</td>
+                <td align="center" rowspan="$!{ration.itemSize}">$!{ration.bankName}</td>
+                <td align="center" rowspan="$!{ration.itemSize}">$!{ration.curName}</td>
+                #foreach($rationDtl in $!{ration.rationDtls})
+                    #if(${rationDtl.itemOrder} == 1)
+                        #if($!{rationDtl.itemFlag} == "0")
+                            <td align="center">
+                        #else
+                            <td align="center" rowspan="$!{ration.compItemSize}">
+                        #end
+                        $dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})
+                        </td>
+                        <td align="center">
+                            $!{rationDtl.itemName}
+                        </td>
+                        <td align="center">
+                            $dictTag.get("rat.creditType", $!{rationDtl.creditType})
+                        </td>
+                        #if($!{rationDtl.itemFlag} == "0")
+                            <td align="right">
+                        #else
+                            <td align="right" rowspan="$!{ration.compItemSize}">
+                        #end
+                        $number.formatNumeric($!{rationDtl.money})
+                        </td>
+                        ##最高额度
+                        <td align="right">
+                            $number.formatNumeric($!{rationDtl.maxMoney})
+                        </td>
+                        <td align="center" rowspan="$!{ration.itemSize}">$!date.format('yyyy-MM-dd',$!ration.beginDate)</td>
+                        <td align="center" rowspan="$!{ration.itemSize}">$!date.format('yyyy-MM-dd',$!ration.endDate)</td>
+                        <td align="center" rowspan="$!{ration.itemSize}">
+                            #if($!{ration.overdueSign} == "1")
+                                <font color="red">#springMessage('common.ration.overdue')</font>
+                            #else
+                                $dictTag.get("common.status", $!{ration.status})
+                            #end
+                        </td>
+                        <td align="center" rowspan="$!{ration.itemSize}">
+                        ##操作链接
+                            #if($!{ration.overdueSign} != "1")
+                                <a class="" href="#" onclick="adjustList('$!{ration.id}')">#springMessage(
+                                "ration.maxMoneyAdjust.list")</a>&nbsp;|
+                                <a class="" href="#" onclick="adjust('$!{ration.id}')">#springMessage(
+                                "ration.maxMoneyAdjust.add")</a>&nbsp;|
+                            #end
+                            <a class="" href="#" onclick="view('$!{ration.id}')">#springMessage(
+                                "common.button.view")</a>
+                        </td>
+                    #else
+                    </tr>
+                    <tr>
+                        #if($!{rationDtl.itemFlag} == "0")
+                            <td align="center">$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})</td>
+                            <td align="center">$!{rationDtl.itemName}</td>
+                            <td align="center">$dictTag.get("rat.creditType", $!{rationDtl.creditType})</td>
+                            <td align="right">$number.formatNumeric($!{rationDtl.money})</td>
+                            <td align="right">$number.formatNumeric($!{rationDtl.maxMoney})</td>
+                        #else
+                            #if($!{rationDtl.firstComp} == "1")
+                                ## 授信类型：单品种，综合品种
+                                <td align="center" rowspan="$!{ration.compItemSize}">$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})</td>
+                                ## 授信品种名称
+                                <td align="center">$!{rationDtl.itemName}</td>
+                                ## 授信额度类型 0-不循环 1-循环
+                                <td align="center">$dictTag.get("rat.creditType", $!{rationDtl.creditType})</td>
+                                ## 授信额度
+                                <td align="right" rowspan="$!{ration.compItemSize}">$number.formatNumeric($!{rationDtl.money})</td>
+                                ## 最高额度
+                                <td align="right">$number.formatNumeric($!{rationDtl.maxMoney})</td>
+                            #else
+                                <td align="center">$!{rationDtl.itemName}</td>
+                                <td align="center">$dictTag.get("rat.creditType", $!{rationDtl.creditType})</td>
+                                ## 最高额度
+                                <td align="right">$number.formatNumeric($!{rationDtl.maxMoney})</td>
+                            #end
+                        #end
+                    #end
+                #end
+            </tr>
+            #end
+        </tbody>
+    </table>
+</div>
+<div id="page"></div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratBkAdjust.js?_btv=${resourceVersion}"></script>
+</html>

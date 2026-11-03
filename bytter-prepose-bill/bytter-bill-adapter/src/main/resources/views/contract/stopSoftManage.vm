@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body style="padding-bottom: 60px;">
+<form class="layui-form" method="post" id="inputForm">
+<div>
+    <input type="hidden" id="mid" name="mid" value="$!{conInfo.mid}"/>
+    <input type="hidden" id="rid" name="rid" value="$!{conInfo.rid}"/>
+    <input type="hidden"  data-name="beginDate" class="layui-input bt-biz-dateType" data-endid="opDate" data-type="date"
+                                       data-biz-name="beginDate" value="$!date.format('yyyy-MM-dd',$!{conInfo.beginDate})">
+    #if($!conInfo)
+         #parse("views/contract/viewConInfo.vm")            
+    #end
+<table class="layui-table" width="100%">
+	<thead>
+			<tr><td colspan="4">#springMessage('contract.terminateInfo')</td></tr>
+     </thead>	
+      <tbody>
+      	  <tr>
+             <td class="textRight" width="15%">#springMessage('contract.terminateMsg')</td>
+             <td td width="35%" >
+                 <input type="text" name="opMsg" autocomplete="off" class="layui-input" lay-verify="required|strlength"
+                        data-maxlength="200" value="$!{conInfo.opMsg}"/>
+             </td>
+             <td class="textRight" width="15%">#springMessage('contract.suspend.date')</td>
+             <td width="35%" >
+				 <input type="text" name="opDate" id="opDate" data-name="opDate" class="layui-input bt-biz-dateType" id="opDate" data-type="date"
+                                   data-biz-name="opDate"  lay-verify="required" value="$!date.format('yyyy-MM-dd',$!{conInfo.opDate})"/>
+             </td>
+         </tr>
+         <tr>
+             <td class="textRight" width="15%">#springMessage('contract.suspend.applyno')</td>
+             <td width="35%" >
+                 <input type="text" name="opNo" autocomplete="off" class="layui-input" lay-verify="strlength"
+                        data-maxlength="50"  value="$!{conInfo.opNo}"/>
+             </td>
+         </tr>
+         <tr >
+         	 <td class="textRight"  width="15%">#springMessage('contract.terminateAttachmen')</td>
+             <td  width="35%" colspan="3">
+                 <input id="reAttachmentIde" name="reAttachmentIde" type="hidden"  value="$!{conInfo.reAttachmentIde}">
+                 <div id="reUploader" class="layui-input-inline"  style="width: 100%"></div>
+             </td>
+         </tr>
+      </tbody>
+     </table>
+	<div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+			<button class="layui-btn" lay-submit="" type="button" lay-filter="submit">#springMessage('contract.suspend.stop')</button>
+            <button class="layui-btn" lay-submit="" type="button" lay-filter="save">#springMessage('common.button.temp')</button>
+       		<button class="layui-btn layui-btn-primary" id="cancel">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+</div>
+</form>
+ #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form','dateType', 'btUpload'], function () {
+    	var dateType,form;
+        var $ = bt.jquery, form = bt.form();
+        dateType = bt.dateType.init();
+        var up = bt.btUpload.init({
+            elem: "#reUploader",
+            auto: false,
+            hasDelete: true,
+            hasUpload: true,
+            isExpand: true,
+            gid: $("#reAttachmentIde").val()
+        });
+        
+        var reup = bt.btUpload.init({
+            elem: "#uploader",
+            auto: false,
+            hasDelete: false,
+            hasUpload: false,
+            isExpand: true,
+            gid: $("#attachmentId").val()
+        });
+        
+        //监听终止
+        form.on('submit(submit)', function (data) {
+            submit(data, "/contract/suspend/shutOpt/submit");
+        });
+        //监听暂存
+        form.on('submit(save)', function (data) {
+            submit(data, "/contract/suspend/shutOpt/save");
+        });
+        
+        //取消按钮
+        $("#cancel").click(function(){
+        	bt.navtab.closeCurrent();
+        	return false;
+        });
+        
+        var submit = function (data, action) {
+            bt.loading.show();
+           	$("#reAttachmentIde").val(up.getGroupId());
+            data.field.reAttachmentIde = up.getGroupId();
+            $.post(basePath + action, data.field, function (result) {
+                bt.loading.hide();
+                parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success) {
+                	bt.navtab.closeCurrent();
+                	parent.layer.closeAll();
+                	bt.navtab.refreshParentTable();//刷新父页面表格
+                }
+            }, 'JSON');
+            return false;
+        }
+        
+        
+    });
+</script>
+</html>

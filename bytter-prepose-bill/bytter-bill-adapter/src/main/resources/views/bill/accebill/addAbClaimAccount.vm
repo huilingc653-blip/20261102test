@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="inputForm" class="layui-form input150-container">
+    <input type="hidden" id="corpId" name="corpId" value="">
+    <input type="hidden" id="corpName" name="corpName" value="">
+    <input type="hidden" id="bankId" name="bankId" value="">
+    <input type="hidden" id="bankName" name="bankName" value="">
+    <input type="hidden" id="bankTypeId" name="bankTypeId" value="">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##所属单位
+            <td class="textRight" width="16%">#springMessage('bill.accebill.corpId')</td>
+            <td width="34%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-tree-type="radio"
+                         data-biz-name="corpId"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-required="true"
+                         data-resource="bill:accebill:claim:accountConfig"
+                         data-callbackData="corpCallback"
+                         data-placeholder="#springMessage('bill.accebill.corpId')">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##账号
+            <td class="textRight" width="16%">#springMessage('bill.accebill.bankacc')</td>
+            <td width="34%">
+                <input type="text" id="bankAcc" name="bankAcc" data-name="bankAcc" data-biz-name="bankAcc"
+                       data-resource="bill:accebill:abemitbill:query" lay-verify="required" data-defaultcorp="xx"
+                       electricBill="1"
+                       class="bank layui-input bt-biz-accountTable" data-callback="accountCallBack"
+                       data-biz-name="bankAcc">
+            </td>
+            ##银行类型
+            <td class="textRight" width="16%"><font color="red">*</font>#springMessage('bill.accebill.bankTypeName')
+            </td>
+            <td width="34%">
+                <input type="text" id="bankTypeName" name="bankTypeName"
+                       data-maxlength="240" readonly="readonly"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('bill.accebill.bankTypeName')">
+            </td>
+        </tr>
+        <tr>
+            ##业务类型
+            <td class="textRight">#springMessage('bill.accebill.bustype')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" id="busType" name="busType" data-required="true"
+                     data-group="AB_CLAIM_ACCOUNTCONFIG" data-name="busType" data-biz-name="busType">
+                </div>
+            </td>
+            ##有效标记
+            <td class="textRight">#springMessage('bill.accebill.validSign')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="1"
+                         data-name="validSign" data-biz-name="validSign" data-required="true"></div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="layui-form-submit-adaptive">
+        <div style="text-align: center;">
+            <button class="layui-btn" lay-submit="" type="button" lay-filter="save">#springMessage(
+                'common.button.save')</button>
+            <button class="layui-btn" type="button" onclick="closeForms()">#springMessage(
+                'common.button.revert')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    var datatable = {};
+    bt.use(['form', 'corp', 'dicts', 'bank', 'bankInfo', 'accountTable'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.corp.init();
+        bt.bank.init({
+            elem: '.bank'
+        });
+        bt.bankInfo.init();
+        bt.dicts.init();
+        bt.accountTable.init({urldata: {accountType: '2,3'}});
+
+        //监听新增保存
+        form.on('submit(save)', function (data) {
+            var url = "/bill/accebillClaim/config/accountConfigSave";
+            $.post(basePath + url, data.field, function (result) {
+                bt.loading.hide();
+                parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success) {
+                    if (!bt.navtab) {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                    }
+                    bt.navtab.closeCurrent();//刷新父页面表格
+                }
+            }, 'JSON');
+        });
+
+    });
+
+    //单位回调函数
+    function corpCallback(data) {
+        if (!data) return;
+        var $ = bt.jquery, form = bt.form();
+        $("#corpId").val(data.corpId);
+        $("#corpName").val(data.corpName);
+        //通过单位id加载银行账号
+        if (data.id) {
+            bt.accountTable.get("bankAcc").reload({
+                urldata: {
+                    corpId: data.id,
+                    electricBill: "1",
+                    permission: "",
+                    ignorePermission: "true"
+                }
+            });
+        }
+    }
+
+    //选择账号回调方法
+    function accountCallBack(data) {
+        console.log(data)
+        var $ = bt.jquery;
+        $("#bankId").val(data.bankAccId);
+        $("#bankAcc").val(data.bankAcc);
+        $("#bankName").val(data.accName);
+        $("#bankTypeId").val(data.bankTypeId);
+        $("#bankTypeName").val(data.bankTypeName);
+    }
+
+</script>

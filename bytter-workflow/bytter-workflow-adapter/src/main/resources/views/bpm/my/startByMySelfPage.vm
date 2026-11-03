@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" id="searchForm">
+    <table class="layui-table">
+        <tr>
+            <td class="textRight" width="16%">所属单位：</td>
+            <td width="16%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="net"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-callbackData="bt.netChange"
+                         data-placeholder="#springMessage('common.placeholder.select')"></div>
+                </div>
+            </td>
+            <td  width="16%" class="textRight">帐号：</td>
+            <td  width="16%">
+                <input type="text" name="loginName" class="layui-input">
+            </td>
+            <td  width="16%" class="textRight">姓名：</td>
+            <td  width="16%">
+                <input type="text" name="username" class="layui-input">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" class="text-center">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="userTable"></table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery', 'corp','tableGrid'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var $ = bt.jquery;
+
+        var table = bt.tableGrid.init({
+            elem: "#userTable",
+            url: basePath + "/bpm/my/startByMySelf",
+            colModel: [
+                { name: "processDefinitionName", label: "流程类型"},
+                { name: "corpName", label: "所属单位",formatter:function(cellvalue, options, rowObject){
+                    return '('+ rowObject.corpCode +')'+rowObject.corpName;
+                }},
+                { name: "startTime", label: "流程发起时间" },
+                { name: "endTime", label: "流程结束时间",formatter:function(cellvalue, options, rowObject){
+                    return rowObject.endTime?rowObject.endTime:'-----';
+                }},
+                { name: "durationInMillis", label: "流程耗时",formatter:function(cellvalue, options, rowObject){
+                    return rowObject.durationInMillis?rowObject.durationInMillis:'-----';
+                }},
+                { name: "status", label: "状态",formatter:function(cellvalue, options, rowObject){
+                    return rowObject.endTime?'已完成':'审批中';
+                }},{ label: "操作",sortable:false,width:80,formatter:function(cellvalue, options, rowObject){
+                    var html = '<a href="javascript:void(0);" data-row="' + rowObject.id + '" class="assign-role">查看详情</a>';
+                    return html;
+                }}
+            ]
+        });
+
+
+        table.on('click', '.assign-role', function (event) {
+            var data = table.grid("getOriginalData",$(this).data("row"));
+            layer.open({
+                type: 2,
+                area: ['850px', '580px'],
+                content: basePath + "/bpm/my/detailPage?processInstanceId=" + data.id
+            });
+
+        });
+
+        bt.corp.init();
+    });
+</script>
+</body>
+</html>

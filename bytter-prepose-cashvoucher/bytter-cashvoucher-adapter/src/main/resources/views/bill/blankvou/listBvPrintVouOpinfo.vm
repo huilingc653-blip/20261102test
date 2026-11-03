@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form input150-container">
+		<input id="isInbox" type="hidden" value="$!{vouTypeInfo.isInbox}">
+			<table class="layui-table">
+				<tbody>
+					<tr>
+                <td class="textRight">#springMessage('table.bvPrintFormat.voucherType')</td>
+				<td width="25%">
+                <div class="layui-input-inline">
+					##<div id="voucherType" data-defaultvalue="$!{vouTypeInfo.id}" ></div>
+					<input type="hidden" name="voucherTypeId" value="$!{vouTypeInfo.id}" />
+					<div class="layui-inline">
+                        <div class="bt-biz-selectType" 
+							data-url="${basePath}/bill/blankvou/bvvouchertype/queryVoucherTypeValid" 
+							data-valuefield="id" 
+							data-textfield="name"
+							data-search="true" 
+							data-placeholder=""
+							data-defaultvalue="$!{vouTypeInfo.id}" 
+							data-callback="bt.voucherTypeReplace" 
+							data-name="voucherType"
+							data-biz-name="voucherType"/>
+                    </div>
+
+                </div>
+				</td>
+            
+                <td class="textRight">#springMessage('table.bvVouInfoDtl.corpId')</td>
+              <td width="25%">
+                <div class="bt-biz-corp"
+                    data-tree-type="check"
+                    data-biz-type="corp"
+                    data-type="selectTree"
+                    data-name="ins_corpid"
+                    data-scope="all">
+					</div>
+              </td>
+            
+			  
+            
+                <td class="textRight">#springMessage('table.bvPrintVouOpinfo.opDate')</td>
+				<td width="25%">
+                <div class="layui-inline">
+					<div id="opdatepop" ></div>
+                </div>
+                </td>
+                    </tr>
+            <tr>
+				#set($num = 0)
+				#if($!isShowMoney eq '1')	
+				#set($num = $num+1)			
+                <td class="textRight">$!moneyName</td>
+					<td width="25%">
+					<input type="text" data-name="gen_$!{moneyCode}" class="layui-input bt-input-inline bt-biz-moneyType" data-moneyendid="len_$!{moneyCode}" placeholder="$!moneyName" >
+                    <span class="date-mid">~</span>
+                    <input type="text" data-name="len_$!{moneyCode}" class="layui-input bt-input-inline bt-biz-moneyType" id="len_$!{moneyCode}" placeholder="$!moneyName">
+					</td>
+            
+				#end
+           
+                <td class="textRight">#springMessage('table.bvPrintVouOpinfo.isPrint')</td>
+                <td width="25%">
+                    <div class="bt-biz-dict" data-group="sf_yn" data-name="eqs_isprintpop" data-type="select" ></div>
+                </td>
+				#set($num = $num+1)
+			
+				#if($!vouTypeInfo&&$!{vouTypeInfo.isInbox} eq '1')
+				#set($num = $num+1)				
+                <td class="textRight">#springMessage('table.bvPrintVouOpinfo.vouNo')</td>
+                <td width="25%">
+                    <input type="text" name="likes_vounopop"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.bvPrintVouOpinfo.vouNo')">
+                </td>
+				#if($num%3 eq 0)
+					</tr>
+					<tr>
+					#end
+				#end				
+			#if($!voubankaccpopCode && $!voubankaccpopName && $voubankaccpopCode ne "" && $voubankaccpopName ne "")
+				#set($num= $num+1)				
+                <td class="textRight">$!voubankaccpopName</td>
+                <td width="25%">
+                    <input type="text" name="likes_$!voubankaccpopCode"
+                                autocomplete="off" class="bank layui-input" placeholder="$!voubankaccpopName">
+                </td>   
+				#if($num%3 eq 0)
+					</tr>
+					<tr>
+					#end
+			#end
+			
+			#if($!voubanktypepopCode && $!voubanktypepopName && $voubanktypepopCode ne "" && $voubanktypepopName ne "")
+				#set($num = $num+1)				
+                <td class="textRight">$!voubanktypepopName</td>
+                <td width="25%">
+                    <input type="text" name="likes_$!voubanktypepopCode"
+                                autocomplete="off" class="layui-input" placeholder="$!voubanktypepopName">
+                </td>
+            #if($num%3 eq 0)
+					</tr>
+					<tr>
+					#end
+			#end
+			</tr>
+			<tr>
+##			#if($shiro.hasPermission("bill:blankvou:bvPrintVouOpinfo:query"))
+				<tr>
+				<td colspan="6" style="text-align: center;">
+            <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+			</td>
+                </tr>
+##			#end
+			</tr>
+   
+	</tbody>
+	</table>
+    </form>
+## #if($shiro.hasPermission("bill:blankvou:bvPrintVouOpinfo:query"))
+<form class="layui-form" id="fromVerify">
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis">
+    <thead>
+    <tr>
+		#if($!vouTypeInfo&&$!{vouTypeInfo.isInbox} eq '1')
+        <th>#springMessage('table.bvPrintVouOpinfo.vouNo')</th>
+		#end
+        <th>#springMessage('table.bvPrintVouOpinfo.printSize')</th>
+        <th>#springMessage('table.bvPrintVouOpinfo.opName')</th>
+        <th>#springMessage('table.bvPrintVouOpinfo.opDate')</th>
+		#if($!isShowMoney eq '1')
+        <th>$!moneyName</th>
+		#end
+		#if($!vtDaFieldList)
+		#foreach($vtDaField in $vtDaFieldList)
+			#if($vtDaField.isShow eq '1')
+		<th>#springMessage($!{vtDaField.fieldName})</th>
+			#end
+		#end
+        #end
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+</form>
+## #end
+#parse("views/common/footer.vm")
+<object  id="LODOP_OB" classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0> 
+       <embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0></embed>
+</object>
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+##<script src="${basePath}/static/plugins/Lodop/Lodop.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bill/blankvou/bvLodopPrint.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bill/blankvou/bvPrintVouOpinfo.list.js?_btv=${resourceVersion}"></script>
+<script language="javascript" type="text/javascript">   
+var datatable={};
+bt.use(['form','select','datatable','btdate','moneyType','bank','date'], function(){
+    $ = bt.jquery,form = bt.form();
+	#if($!isShowMoney eq '1')
+	var moneyType = bt.moneyType.init();
+	#end
+    #if($!voubankaccpopCode && $!voubankaccpopName && $voubankaccpopCode ne ""&&$voubankaccpopName ne "")
+    bt.bank.init({
+        elem:'.bank'
+    });
+    #end
+
+    bt.btdate.init({
+    	elem:"#opdatepop",
+    	startname:"ged_opdatepop",
+    	endname:"led_opdatepop"
+    });
+	#if($!sceneList)
+	var prints=[];
+	var printViews=[];
+	
+	#foreach($sceneInfo in $sceneList)
+	prints.push({
+        hide: bt.isnotResource('bill:blankvou:bvPrintVouOpinfo:print'),
+        className: 'printAll active',
+        text: '$!sceneInfo.sceneName',
+        exportOptions: {
+            columns: ':visible'
+        },
+        action: function (e, dt, node, config) {
+            toBatchPrint(true,false,dt,'$!sceneInfo.id','$!sceneInfo.sceneName');
+        }
+    });
+	printViews.push({
+        hide: bt.isnotResource('bill:blankvou:bvPrintVouOpinfo:print'),
+        className: 'printAll active',
+        text: '$!sceneInfo.sceneName',
+        exportOptions: {
+            columns: ':visible'
+        },
+        action: function (e, dt, node, config) {
+            toBatchPrint(false,false,dt,'$!sceneInfo.id','$!sceneInfo.sceneName');
+        }
+    });
+	#end
+    var printButtions = {
+        extend: 'collection',
+		hide:bt.isnotResource('bill:blankvou:bvPrintVouOpinfo:print'),
+        text: ''+bt.lang('common.button.tPrint'),
+        buttons: prints ,
+        fade: true
+    };
+    var printViewButtions = {
+        extend: 'collection',
+        hide:bt.isnotResource('bill:blankvou:bvPrintVouOpinfo:print'),
+        text: ''+bt.lang('common.button.tPreview'),
+        buttons: printViews ,
+        fade: true
+    };
+	#end
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:true,
+		order: [1,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/bill/blankvou/bvprintvouopinfo/datatable"
+        },
+        buttons: [
+		#if($!sceneList)
+            printButtions,printViewButtions
+		#else
+			{
+                hide:bt.isnotResource('bill:blankvou:bvPrintVouOpinfo:print'),
+                text: ''+bt.lang('common.button.tPrint'),
+                action: function ( e, dt, node, config ) {
+                    toBatchPrint(true,false,dt,'$!sceneId');
+                }
+            },{
+                hide:bt.isnotResource('bill:blankvou:bvPrintVouOpinfo:print'),
+                text: ''+bt.lang('common.button.tPreview'),
+                action: function ( e, dt, node, config ) {
+                    toBatchPrint(false,false,dt,'$!sceneId');
+                }
+            }
+		#end
+        ]
+        ,columns: [
+			#if($!vouTypeInfo&&$!{vouTypeInfo.isInbox} eq '1')
+            {
+    		   data:"vounopop",
+    		   bSortable:true,
+        	   render:function(data, type, full, meta){
+        		   var reInfo='<input id="vounopop'+(full.id||'')+'" name="vounopop" value="'+(full.vounopop||'')+'" class="tableinput layui-input" type="text" lay-verify="strlength" data-maxlength="50" />';
+        		   return reInfo;
+        	   }
+			},
+			#end
+            {data:"printsizepop",bSortable:true},
+            {data:"opnamepop",bSortable:true},
+            {data:"opdatepop",bSortable:true,className:'center',render: function (data, type, full, meta) {
+                return full.opdatepop?bt.date.format(bt.date.get(full.opdatepop)):'';
+            }},
+			#if($!isShowMoney eq '1')
+            {data:"$!moneyCode",bSortable:true,className:"textRight",
+				render: function ( data, type, full, meta ) {
+                	return bt.money.format(full.$!moneyCode);
+                }
+			},
+    		#end
+			#if($!vtDaFieldList)
+        	#foreach($vtDaField in $vtDaFieldList)
+			#if($vtDaField.isShow eq '1')
+				#if($!vtDaField.dictGroup && $!vtDaField.dictGroup ne "" && $!vtDaField.dictGroup ne " ")
+			{data:"$string.toLowerCase($string.replace($!{vtDaField.fieldCode},"_",""))",bSortable:true,
+				render: function ( data, type, full, meta ) {
+                	return bt.dict("$vtDaField.dictGroup", data);
+                }
+			},
+				#else
+            {data:"$string.toLowerCase($string.replace($!{vtDaField.fieldCode},"_",""))",bSortable:true},
+				#end
+        	#end
+        	#end
+            #end
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+                return html;
+            }}
+        ],
+        fixedColumns:{
+        	rightColumns:1
+        },
+##		exportFile:{
+##			outputTitle:function(){
+##				return selectType.get("voucherType").text();
+##				return "";
+##			}
+##		}
+    });
+});
+</script>
+</html>

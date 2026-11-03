@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+    .dark-skin .fllow-table td {
+        border: 1px solid #2E2F34;
+    }
+    .dark-skin .layui-table > tbody >tr > td {
+        border: 1px solid #2E2F34;
+        background-color: #2E2F34;
+    }
+    </style>
+</head>
+<body>
+#if($!noFlow)
+    #springMessage("bpm.message.flowEmpty")
+#else
+<table class="layui-table breakRow fllow-table dark-layui-table layui-table-border">
+    <thead>
+    <tr>
+##        节点名称
+            <td>#springMessage("bpm.model.node")</td>
+##        开始时间
+            <td><div style="width: 100px">#springMessage("common.table.createTime")</div></td>
+##        结束时间
+        <td><div style="width: 100px">#springMessage("bpm.model.endTime")</div></td>
+##        耗时
+        <td><div style="width: 100px">#springMessage("bpm.model.durationTime")</div></td>
+##            审批人
+        <td><div style="width: 80px">#springMessage("bpm.model.assign")</div></td>
+##            状态
+            <td>#springMessage("common.table.status")</td>
+##            审批意见
+            <td>#springMessage("bpm.model.approve")</td>
+    </tr>
+    </thead>
+    #foreach($detail in $details)
+        #if($detail.activity)
+        #end
+        <tr>
+            <td>
+                #if($detail.taskName)
+                    $!{detail.taskName}
+                #else
+                    /
+                #end
+            </td>
+            <td align="center">$!date.format('yyyy-MM-dd HH:mm:ss ',$!detail.startTime)</td>
+            <td align="center">$!date.format('yyyy-MM-dd HH:mm:ss ',$!detail.endTime)</td>
+            <td>
+                #if($detail.taskPassFlag==1)
+                    $timeSwitch.millisToTime($!detail.durationTime)
+                #end
+            </td>
+            <td>$!{detail.userName}
+#if($!detail.owner)
+##    转授
+($!detail.ownerName #springMessage("bpm.model.status.delegation"))
+            #end</td>
+            <td>
+                #if(!$detail.activity && !$detail.taskPassFlag)
+                    ----
+                #else
+##                    通过
+                    #if($detail.taskPassFlag==1)#springMessage("bpm.model.status.agree")#end
+##                    撤回
+                    #if($detail.taskPassFlag==2)#springMessage("bpm.model.status.withdraw")#end
+##                    打回上一级
+                    #if($detail.taskPassFlag==3)#springMessage("bpm.model.status.brefore")#end
+##                    打回制单处
+                    #if($detail.taskPassFlag==4)#springMessage("bpm.model.status.remake")#end
+##                    审批中
+                    #if(!$detail.taskPassFlag)#springMessage("bpm.model.status.approving")#end
+                #end
+
+            </td>
+
+            <td>
+                #if($detail.endTime)
+                    #if($detail.comment)
+                        #if($detail.commentType == 'drawComment')
+                            <img style="min-height: 250px;min-width: 150px;"
+                                 src="data:image/jpeg;base64,$!{detail.comment}" alt="">
+                        #else
+                            $!{detail.comment}
+                        #end
+                    #else
+                        ## 当“审批意见”为空时，显示空白
+                    #end
+                #end
+            </td>
+        </tr>
+    #end
+</table>
+    <img src="${basePath}/bpm/processInstance/trace/$!{processInstanceId}" alt="">
+#end
+    #parse("views/common/footer.vm")
+</body>
+</html>

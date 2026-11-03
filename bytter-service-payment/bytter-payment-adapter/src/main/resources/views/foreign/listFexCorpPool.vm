@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="poolIdSel" id="poolIdSel" value="$!{poolId}"/>
+    <input type="hidden" name="corpIdSel" id="corpIdSel" value="$!{corpId}"/>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight" width="10%">#springMessage('nis.pool.fcCorpPool.pool')</td>
+            <td width="25%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexcorppool/getUserCorpPools" data-name="poolId" data-biz-name="poolId"
+                         data-callback="poolIdCallback"
+                         data-valuefield="id" data-textfield="showName" data-search="true"
+                         data-defaultValue="$!{poolId}" data-required="true"></div>
+                </div>
+            </td>
+            <td class="textRight" width="10%">#springMessage('table.btBankAccApp.corpId')</td>
+            <td width="25%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexcorppool/getUserCorpPoolChilds?poolId=$!{poolId}" data-name="corpId" data-biz-name="corpId"
+                         data-valuefield="corpId" data-textfield="showName" data-search="true"
+                         data-defaultValue="$!{corpId}" data-extraData="false"></div>
+                </div>
+            </td>
+            <td class="textRight" width="10%">#springMessage('table.btBankAccApp.curId')</td>
+            <td width="20%">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                     data-name="curId" data-biz-name="curId" data-valueField="id" data-textField="englishCode" data-defaultValue="$!{curId}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center" colspan="6">
+                #if($shiro.hasPermission("foreign:foreign:fexCorpPool:query"))
+                    <button type="button" class="layui-btn" lay-submit lay-filter="search" id="search">#springMessage(
+                        'common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary"
+                            data-callback="bt.searchResetCallback">#springMessage('common.button.reset')</button>
+                    <button type="button" class="layui-btn" lay-submit onclick="addPool()">#springMessage(
+                        'common.button.add')</button>
+                #end
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<form class="layui-form" method="post" id="tree-form">
+    <div style="display: none">
+        <table class="layui-table layui-form table-border" id="bankacc-table" style="background-color:#ffffff;">
+            <thead>
+            <tr>
+                <th width="20%">#springMessage('nis.pool.fcCorpPool.pool')</th>##资金池
+                <th width="10%">#springMessage('table.btBankAccApp.corpId')</th>##单位
+                <th width="10%">#springMessage('table.accountDTO.bankAcc')</th>##账户
+                <th width="5%">#springMessage('contract.currency')</th>##币种
+                <th width="20%">#springMessage('table.fexCorpPool.poolNature')</th>##资金池性质
+                <th width="10%">#springMessage('table.fexCorpPool.accNature')</th>##账户资金性质
+                <th width="5%">#springMessage('table.btCurrency.validSign')</th>##有效标志
+                <th width="20%">#springMessage('common.table.thead.operation')</th>
+            </tr>
+            </thead>
+        <tbody>
+            #if($treeList)
+                #foreach($tree in $treeList)
+                <tr data-tt-id="$!{tree.id}" class="ttt" data-tt-parent-id="$!{tree.parentId}">
+                    <td width="20%" align="center">($!{tree.code})$!{tree.name}</td>
+                    <td width="10%" align="center">$!{tree.corpName}</td>
+                    <td width="10%" align="center"></td>
+                    <td width="5%" align="center"></td>
+                    <td width="20%" align="center"></td>
+                    <td width="10%" align="center"></td>
+                    <td width="5%" align="center"></td>
+                    <td width="20%" align="center">
+                        #if($shiro.hasPermission("foreign:foreign:fexCorpPool:apply"))
+                            <!-- 资金池的才允许增加主账号-->
+                            #if($!{tree.poolSign} == "1")
+                                <a class="" href="#" onclick="updatePool('$!{tree.id}')">#springMessage('common.button.edit')</a>##编辑
+                                <span class="text-explode">|</span>
+                                <a class="" href="#" onclick="del('$!{tree.id}','1','0')">#springMessage('common.button.delete')</a>##删除
+                                <span class="text-explode">|</span>
+                                <a class="" href="#" onclick="viewPool('$!{tree.id}')">#springMessage('common.button.view')</a>##查看
+                                <span class="text-explode">|</span>
+                                <a class="" href="#" onclick="addPoolAcc('$!{tree.id}')">#springMessage('common.button.add')#springMessage('table.fexCorpPool.mainAccount')</a>
+                            #end
+                        #end
+                    </td>
+                </tr>
+                    #foreach($acc in $tree.accList)
+                    <tr data-tt-id="$!{tree.id}_$!{acc.id}" class="ttt" data-tt-parent-id="$!{tree.id}">
+                        <td width="20%" align="center"></td>
+                        <td width="10%" align="center">$!{acc.corpName}</td>
+                        <td width="10%" align="center">$!{acc.bankAcc}</td>
+                        <td width="5%" align="center">$!{acc.englishCode}</td>
+                        <td width="20%" align="center">$dictTag.get("fexCorpPool.poolNature",$!{acc.poolNature})</td>
+                        <td width="10%" align="center">$dictTag.get("fexCorpPoolBank.accNature",$!{acc.accNature})</td>
+                        <td width="5%" align="center">$dictTag.get("sf_yn",$!{acc.validSign})</td>
+                        <td width="20%" align="center">
+                            #if($shiro.hasPermission("foreign:foreign:fexCorpPool:apply"))
+                                <!-- 主账号才允许增加成员账号 -->
+                                #if($!{acc.parentSign} == "1")
+                                    <a class="" href="#" onclick="updatePoolAcc('$!{acc.id}')">#springMessage('common.button.edit')</a>##编辑
+                                    <span class="text-explode">|</span>
+                                    <a class="" href="#" onclick="del('$!{acc.id}','0','1')">#springMessage('common.button.delete')</a>##删除
+                                    <span class="text-explode">|</span>
+                                    <a class="" href="#" onclick="viewPoolAcc('$!{acc.id}')">#springMessage('common.button.view')</a>##查看
+                                    <span class="text-explode">|</span>
+                                    <a class="" href="#" onclick="addPoolAccChild('$!{acc.id}')">#springMessage('common.button.add')#springMessage('table.fexCorpPool.memberAccount')</a>
+                                #end
+                            #end
+                        </td>
+                    </tr>
+                        #foreach($childacc in $acc.childList)
+                        <tr data-tt-id="$!{tree.id}_$!{acc.id}_$!{childacc.id}" class="ttt"
+                            data-tt-parent-id="$!{tree.id}_$!{childacc.prentAccId}">
+                            <td width="20%" align="center"></td>
+                            <td width="10%" align="center">$!{childacc.corpName}</td>
+                            <td width="10%" align="center">$!{childacc.bankAcc}</td>
+                            <td width="5%" align="center">$!{childacc.englishCode}</td>
+                            <td width="20%" align="center">$dictTag.get(
+                                "fexCorpPool.poolNature",$!{childacc.poolNature})</td>
+                            <td width="10%" align="center">$dictTag.get(
+                                "fexCorpPoolBank.accNature",$!{childacc.accNature})</td>
+                            <td width="5%" align="center">$dictTag.get("sf_yn",$!{acc.validSign})</td>
+                            <td width="20%" align="center">
+                                #if($shiro.hasPermission("foreign:foreign:fexCorpPool:apply"))
+                                    <a class="" href="#" onclick="del('$!{childacc.id}','0','0')">#springMessage("common.button.delete") </a>##删除
+                                    <span class="text-explode">|</span>
+                                #end
+                                <a class="" href="#"
+                                   onclick="viewPoolChildAcc('$!{acc.id}','$!{childacc.id}')">#springMessage("common.button.view") </a>##查看
+                            </td>
+                        </tr>
+                        #end
+                    #end
+                #end
+            #else
+            <tr>
+                <td colspan="8" class="" align="center" style="height: 300px;">
+                    <img src="${basePath}/static/v3.2/images/pic_blank.png" class="empty-pic" style="margin-top: 30px;"><div class="empty-text">#springMessage("common.msg.temporarily_no_data")</div>
+                </td>
+            </tr>
+            #end
+            </tbody>
+        </table>
+    </div>
+</form>
+
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/foreign/fexCorpPool.list.js?_btv=${resourceVersion}"></script>
+</html>

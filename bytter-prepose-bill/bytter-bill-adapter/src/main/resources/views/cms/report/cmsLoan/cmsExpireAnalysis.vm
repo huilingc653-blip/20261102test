@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form id="searchForm" class="layui-form input150-container">
+##    <input type="hidden" lay-verify="isNatualCur" value="$!{curId}">##value是本位币的值
+    <table class="layui-table">
+        <tr>
+        ##单位
+            <td class="textRight">
+                #springMessage('table.fbsBudget.corpId')
+            </td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp" data-biz-name="corpId" data-name="corpId"
+                         data-tree-type="check" data-resource="cms:expireAnalysis:report:query"
+                         data-biz-type="corp" data-type="selectTree"></div>
+                </div>
+            </td>
+
+        ##是否折合币种
+##            <td class="textRight">#springMessage('cms.report.loan.convertLoaclCur')</td>
+            <td class="textRight">#springMessage('common.isConvert.currency')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-value="0"
+                         data-name="isConvert" data-biz-name="isConvert" data-callback="isConvertCallBack"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+        ##币种
+            <td class="textRight">#springMessage('table.ratBkrationRelief.curCode')</td>
+            <td>
+                <div class="bt-biz-selectType" data-name="curId" data-biz-name="curId" data-inputValue="false"
+                     data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id"
+                     data-callback="checkConvertCurCallBack"
+                     data-required="true"
+                     data-textfield="curName"></div>
+            </td>
+        ##折合币种
+            <td class="textRight">#springMessage('commom.converted.into.currency')</td>
+            <td>
+                <div class="bt-biz-selectType" data-name="convertCurId" data-biz-name="convertCurId" data-inputValue="false"
+                     data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id" data-disabled = "true"
+                     data-callback="checkConvertCurCallBack"
+                     data-textfield="curName"></div>
+            </td>
+        </tr>
+
+        <tr>
+        ##融资种类
+            <td class="textRight">#springMessage('common.Types.of.financing')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="Loan.Sign" data-name="loanType"
+                         data-biz-name="loanType"></div>
+                </div>
+            </td>
+        ##剩余期限
+            <td class="textRight">#springMessage('cms.report.loan.RemainingPeriod')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-biz-name="expireAnalysis"
+                         data-url="${basePath}/cms/report/cmsExpireAnalysis/getBiRemainTerm" data-valuefield="id"
+                         data-textfield="termName" data-name="expireAnalysis"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+
+        ##金额单位
+            <td class="textRight">#springMessage('common.moneyType')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.MoneyType" data-name="moneyType" data-defaultvalue="1"
+                         data-selecttext="false" data-biz-name="moneyType"></div>
+                </div>
+            </td>
+        ##展示方式
+            <td class="textRight">#springMessage('common.display.mode')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="display.mode" data-name="showType" data-value="1"
+                     data-callback="setOther" data-biz-name="showType"></div>
+            </td>
+        </tr>
+
+        <tr>
+        ##余额是否包含在途
+            <td class="textRight">#springMessage('table.cmsLoan.includeFreezeMoney')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-value="0"
+                         data-name="isInclude" data-biz-name="isInclude"></div>
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td style="text-align: center;" colSpan="6">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button" onclick="showChartsOrTable();">#springMessage(
+                    'common.button.search')</button>
+                <button id="reset" type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+
+    <div id="showDataTable">
+        <table id="appTable" class="layui-table layui-form" style="width:100%;">
+            <thead>
+            <tr>
+                <th>#springMessage('table.fbsBudget.corpId')</th><!--单位  -->
+                <th>#springMessage('table.cmsLoanInfo.loanGenre')</th><!--贷款类型  -->
+                <th>#springMessage('cms.report.loan.RemainingPeriod')</th><!--剩余期限  -->
+                <th>#springMessage('ttpay.currency')</th><!--币种  -->
+                <th>#springMessage('cms.report.loan.FinancingBalance')</th><!--融资余额-->
+                <th>#springMessage('cms.report.loan.convertMoney')</th><!--折合本位币金额  -->
+            </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="showChart" style="width: 100%;height: 700px;text-align: center;display: none;">
+        <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+            <ul class="layui-tab-title">
+##                柱状图统计
+                <li class="layui-this">#springMessage('cms.report.loan.columnChart')</li>
+##              饼图统计
+                <li>#springMessage('cms.report.loan.pieChart')</li>
+            </ul>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show" style="height: 400px;">
+                    <div id="barCharts" style="width: 1200px;height: 400px;overflow: auto">
+                    </div>
+##                    <iframe id="chartDataTable1" style="width: 100%;height: 500px;" frameborder="no" border="0" marginwidth="0" marginheight="0" scrolling="no" src=""></iframe>
+                </div>
+                <div class="layui-tab-item" style="height: 400px;">
+                    <div id="pieCharts" style="width: 800px;height: 400px;overflow: auto">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <iframe id="chartDataTable" style="width: 100%;height: 500px;" frameborder="no" border="0" marginwidth="0" marginheight="0" scrolling="no" src=""></iframe>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    var dicts, selectType, moneyType, moneyfun, element, form;
+    bt.use(["jquery", "dicts", "selectType", "form", "corp","datatable","moneyType","element"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        element = layui.element;
+        corp = bt.corp.init();
+        dicts = bt.dicts.init();
+        selectType = bt.selectType.init();
+        moneyType = bt.moneyType.init();
+        moneyfun = moneyType.getFun();
+
+        bt.datatable.init({
+            elem: "#appTable",
+            ajax: {
+                url: basePath + "/cms/report/cmsExpireAnalysis/getDataTables",
+            },
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            isInitData: false,
+            checkbox:true,
+            columns: [
+                {
+                    data: "corpName",
+                    className: "center"
+                },
+                {
+                    data: "loanType",
+                    className: "center",
+                    render:function (data, type, row, meta) {
+                        return bt.dict("Loan.Sign",data);
+                    }
+                },
+                {
+                    data: "expireAnalysis",
+                    className: "center"
+                },
+                {
+                    data: "curName",
+                    className: "center"
+                },
+                {
+                    data: "money",
+                    className: "textRight",
+                    render: function (data, type, row, meta) {
+                        html = "<a href=\"#\" onclick=\"view('" + row.corpId + "','" + row.loanType + "','" + row.remainTermId + "','" + row.curId + "')\">" + moneyfun.format(data) + "</a>";
+                        return html;
+                    }
+                },
+                {
+                    data: "convertMoney",
+                    className: "textRight",
+                    render: function (data, type, row, meta) {
+                        return moneyfun.format(data);
+                    }
+                },
+            ],
+            summary: {
+                pageSum: true,//小计功能开启
+                selectSum: true,//已选汇总功能开启
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '5',//汇总列序号
+                        dataName: 'money',//汇总列数据
+                    },
+                    {
+                        colNum: '6',//汇总列序号
+                        dataName: 'convertMoney',//汇总列数据
+                    }
+                ]
+            }
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    /**
+     *点击链接查看详细数据
+     */
+    function view(corpId, loanType, remainTermId, curId) {
+        if (checkData(corpId, loanType, remainTermId, curId)) {
+            layer.alert("cms.report.loan.viewError", {icon: 2})
+            return false;
+        }
+        var url = "/cms/report/cmsExpireAnalysis/viewCmsLoanDtl?corpId=" + corpId + "&loanType=" + loanType + "&remainTermId=" + remainTermId + "&curId=" + curId;
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + url);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + url,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    /**
+     *数据检查
+     */
+    function checkData(corpId, loanType, remainTermId, curId) {
+        var flag = false;
+        if (isEmpty(corpId)) {
+            flag = true;
+        }
+        if (isEmpty(loanType)) {
+            flag = true;
+        }
+        if (isEmpty(remainTermId)) {
+            flag = true;
+        }
+        if (isEmpty(curId)) {
+            flag = true;
+        }
+        return flag;
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " " || stringData == "null") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+
+    function showChartsOrTable() {
+        var showType = dicts.get("showType").val();
+        if (1 == showType) {
+            // 表格显示，隐藏统计图
+            $("#showDataTable").css("display", "");
+            $("#showChart").css("display","none")
+        } else {
+            // 统计图显示，隐藏表格
+            var curId = selectType.get("curId").val();
+            // 是否折合本位币
+            var isConvert = dicts.get("isConvert").val();
+            var convertCurId = dicts.get("convertCurId").val();
+            if (1 == isConvert && isEmpty(convertCurId)) {
+                return false;
+            }
+            // 币种校验
+            if (0 == isConvert) {
+                if (isEmpty(curId)) {
+                    // layer.alert(bt.lang("nis.pay.message.cur.null"), {icon: 2});
+                    return false;
+                }
+            }
+            // 金额类型校验
+            var moneyUnit = dicts.get("moneyType").val();
+            if (isEmpty(moneyType)) {
+                layer.alert(bt.lang("cms.report.loan.selectMoneyType"), {icon: 2});
+                return false;
+            }
+            $("#showDataTable").css("display", "none");
+            $("#showChart").css("display","")
+            var isInclude = dicts.get("isInclude").val();
+            var corpIds = corp.get("corpId").val();
+            $.ajax({
+                url: basePath + "/cms/report/cmsExpireAnalysis/getchartsOption",
+                type: "post",
+                data: {
+                    "isInclude": isInclude,
+                    "curId": curId,
+                    "moneyType": moneyUnit,
+                    "corpIds": corpIds,
+                    "isConvert": isConvert,
+                    "convertCurId": convertCurId
+                },
+                dataType: "json",
+                success: function (data) {
+                    echarts.init(document.getElementById("barCharts")).setOption($.parseJSON(data.barOption));
+                    echarts.init(document.getElementById("pieCharts")).setOption($.parseJSON(data.pieOption));
+                }
+            });
+            // 刷新iframe数据
+            var url = basePath + "/cms/report/cmsExpireAnalysis/listChartsData?isInclude=" + isInclude + "&curId=" + curId + "&moneyType=" + moneyUnit + "&isConvert=" + isConvert + "&convertCurId=" + convertCurId;
+            $('#chartDataTable').attr('src', url);
+        }
+    }
+
+    /**
+     * 图标切换时禁用部分搜索选项
+     * @param selectedData
+     */
+    function setOther(selectedData) {
+        if (selectedData.value == 2) {
+            selectType.get("expireAnalysis").attr({"data-disabled": true, "data-value": ""});
+            dicts.get("loanType").attr({"data-disabled": true, "data-value": ""});
+        } else {
+            selectType.get("expireAnalysis").attr({"data-disabled": false, "data-value": ""});
+            dicts.get("loanType").attr({"data-disabled": false, "data-value": ""});
+        }
+    }
+
+    /**
+     * 获取选中的单位
+     * @returns {*}
+     */
+    function getCorpIds() {
+        return corp.get("corpId").val();
+    }
+
+    /**
+     * 是否折算本位币回调
+     */
+    function isConvertCallBack() {
+        var isConvert = dicts.get("isConvert").val();
+        if ("1" == isConvert) {
+            selectType.get("convertCurId").attr({"data-disabled": false, "data-required": true});
+            selectType.get("curId").attr({"data-value":"","data-required":false, "data-disabled": true});
+        } else {
+            selectType.get("convertCurId").attr({"data-disabled": true, "data-required": false});
+            selectType.get("curId").attr({"data-value":"","data-required":true, "data-disabled": false});
+        }
+        form.renderIcon();
+        checkConvertCurCallBack()
+    }
+
+
+    /**
+     * 币种转换校验
+     */
+    function checkConvertCurCallBack() {
+/*        var origCur = selectType.get("curId").val();
+        var convertCurId = selectType.get("convertCurId").val();
+        if (isNotEmpty(origCur) && isNotEmpty(convertCurId)) {
+            $.ajax({
+                url: basePath + "/cms/report/cmsExpireAnalysis/checkConvertCurId",
+                type:"post",
+                data:{
+                    "origCurId": origCur,
+                    "convertCurId": convertCurId
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("convertCurId").val("");
+                    }
+                }
+            });
+        }*/
+        var convertCurId = selectType.get("convertCurId").val();
+        if (isNotEmpty(convertCurId)) {
+            $.ajax({
+                url: basePath + "/report/deposit/balance/checkConvertCurId",
+                type:"post",
+                data:{
+                    "isAllCur":"1",
+                    "convertCurId": convertCurId
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("convertCurId").val("");
+                    }
+                }
+            });
+        }
+
+    }
+</script>
+</body>
+</html>

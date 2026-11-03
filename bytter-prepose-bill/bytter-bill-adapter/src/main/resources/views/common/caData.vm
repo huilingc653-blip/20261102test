@@ -1,0 +1,2163 @@
+#set($encrypt=$configTag.getConfig('sys','encrypt'))
+##ca隐藏域
+#macro(caDataHidden)
+    <input type="hidden" name="random" id="random" />
+    <input type="hidden" name="encrySource" id="encrySource" />
+    <input type="hidden" name="caCoding" id="caCoding" />
+    <input type="hidden" id="cadn" value="$!shiro.getPrincipal().userCadn"/>
+    <input type="hidden" id="loginName" value="$!shiro.getPrincipal().loginName"/>
+#end
+##ca主引用js
+#macro(caDataScript)
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <script src="${basePath}/static/modules/sys/nmCryptoKit.js"></script>
+    <input type="hidden" id="encrypt" value="$configTag.getConfig('sys','encrypt')"/>##加密方式选择
+    <input type="hidden" id="issuer" value="$configTag.getConfig('sys','issuer')"/>##证书颁发者
+    <input type="hidden" id="licenceApp" value="$configTag.getConfig('sys','licenceApp')"/>##证书应用
+    <input type="hidden" id="bSelectCertResult" />
+    <input type="hidden" id="isCFCACheck"/>
+    #if($encrypt==1)
+    <script src="${basePath}/static/modules/sys/topEsa.min.js"></script>
+        #iTrusScript()
+    #end
+    #if($encrypt==2)
+    <input type="hidden" id="cspList" value="$configTag.getConfig('sys','cspList')"/>
+        #cfcaScript()
+    #end
+    #if($encrypt==3)
+        #xyScript()
+    #end
+    #if($encrypt==4)
+        #sdScript()
+    #end
+    #if($encrypt==5)
+        #sacaScript()
+    #end
+    <script>
+        /**
+         * 根据加密方式加载证书控件
+         * @param encrypt 加密方式
+         */
+        function loadCa(encrypt) {
+            if(encrypt == 1){
+                //天威证书
+                iTrusLoad();
+            }else if(encrypt == 2){
+                //cfca证书
+                OnLoad();
+            }else if(encrypt == 3){
+                xyLoad();
+            }
+        }
+
+        /**
+         *  显示证书列表
+         * @param encrypt 加密方式
+         */
+        function selectCa(encrypt,sourceData,msg,caCodId) {
+            if(encrypt == 1){
+                //天威证书
+                selectiTrusCa();
+            }else if(encrypt == 2){
+                //cfca证书
+                SelectCertificateOnClick(getChromeCa,sourceData,msg,caCodId);
+            }else if(encrypt == 3){
+                //兴业证书
+                selectXyCa();
+            }
+        }
+        function getChromeCa(sourceData,msg,caCodId) {
+            if(isChrome){
+                var caCoding = "";
+                CryptoKit.signMsgPKCS7(sourceData, "SHA-1", true)
+                        .then(function (response) {
+                            caCoding = response.result;
+                            if (caCoding == "") {
+                                msg = "sys.ca.abnormal";
+                            }
+                            if(caCodId){
+                                $("#" + caCodId).val(caCoding);
+                            }
+                            $("#caCoding").val(caCoding);
+                            $("#isCFCACheck").val("");
+                        })
+                        .catch(function (response) {
+                            ShowErrorInfo(response);
+                            msg = "sys.ca.abnormal";
+                            $("#isCFCACheck").val("sys.ca.abnormal");
+                });
+            }
+        }
+
+        /**
+         * 根据不同的加密方式选择验签方法
+         * @param encrypt 加密方式
+         * @param signature 签名结果
+         */
+        function verify(encrypt,sourceData,signature) {
+            var bResult = false;
+            if(encrypt == 1){
+                //天威证书
+                bResult = iTrusVerifyData(sourceData,signature);
+            }else if(encrypt == 2){
+                //cfca证书
+                bResult = VerifyPKCS7OnClick(signature);
+            }else if(encrypt == 4){
+                //山地证书
+                bResult = check(sourceData,signature);
+            }else if(encrypt == 5){
+                //晟安证书
+                bResult = verifySa(sourceData,signature);
+            }
+            return bResult;
+        }
+
+        /**
+         *  根据不同的加密方式选择不同的签名方法
+         * @param encrypt 加密方式
+         * @param signature 签名源
+         */
+        function sign(encrypt,sourceData){
+            var signature = "";
+            if(encrypt == 1){
+                //天威证书
+                signature = iTrusSignData(sourceData);
+            }else if(encrypt == 2){
+                //cfca证书
+                signature = SignOnClick(sourceData);
+            }else if(encrypt == 3){
+                signature = signXyCa(sourceData);
+            }else if(encrypt == 4){
+                signature = signsd(sourceData);
+            }else if(encrypt == 5){
+                signature = signsa(sourceData);
+            }
+            return signature;
+        }
+
+        /**
+         * 得到证书序列号
+         * @param encrypt加密方式
+         */
+        function getCertInfo(encrypt) {
+            var InfoContent = "";
+            if(encrypt == 1){
+                //天威证书
+                InfoContent = getCertiTrus();
+            }else if(encrypt == 2){
+                //cfca证书
+                InfoContent = GetCertInfoOnClick();
+            }else if(encrypt == 3){
+                InfoContent = getXyCertCN();
+            }else if(encrypt == 4){
+                InfoContent = getCertSN();
+            }else if(encrypt == 5){
+                InfoContent = getCertSN();
+            }
+            return InfoContent;
+        }
+
+        bt.use(['form','jquery'], function() {
+            var form = bt.form();
+            var $ = bt.jquery;
+            var encrypt = $("#encrypt").val();
+            loadCa(encrypt);
+        });
+        /**
+         * 签名接口
+         * @param sourceData
+         */
+        function signData(sourceData,type) {
+            var msg = "";
+            bt.use(['form', 'jquery'], function () {
+                var form = bt.form();
+                var $ = bt.jquery;
+                try {
+                    var licenceApp = $("#licenceApp").val();
+                    var encrypt = $("#encrypt").val();
+                    var caCoding = "";
+                    var cadn = store.get('cadn');
+                    var t = licenceApp.indexOf(type) >= 0
+                    if( '0' != encrypt && t) {
+                        if (encrypt == 1) {
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                CurCert = selectSingleCert("", cadn);
+                                if(CurCert == null){
+                                    msg = "sys.ca.abnormal";
+                                }else {
+                                    caCoding = iTrusSignData(sourceData);
+                                    $("#encrySource").val(sourceData);
+                                    $("#caCoding").val(caCoding);
+                                    if(caCoding == null){
+                                        msg = "sys.ca.abnormal";
+                                    }
+                                    if(caCoding == "time"){
+                                        msg = "sys.ca.time";
+                                    }
+                                }
+                            }
+                        } else if (encrypt == 2) {
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                selectCa(encrypt,sourceData,msg);
+                                $("#encrySource").val(sourceData);
+                                if (!isChrome) {
+                                    caCoding = sign(encrypt, sourceData);
+                                    if (caCoding == "") {
+                                        msg = "sys.ca.abnormal";
+                                    }
+                                    $("#caCoding").val(caCoding);
+                                }
+                            }
+                        }else if(encrypt == 3){
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                selectCa(encrypt,sourceData,msg);
+                                $("#encrySource").val(sourceData);
+                                caCoding = sign(encrypt, sourceData);
+                                if (caCoding == "") {
+                                    msg = "sys.ca.abnormal";
+                                }
+                                $("#caCoding").val(caCoding);
+                            }
+                        }else if(encrypt == 4){
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                var key = keyExist();
+                                if(key != "true"){
+                                    msg = "sys.login.insertCertificate";
+                                    return false;
+                                }
+                                var loginName = $("#loginName").val();
+                                var certName = getCertName();
+                                if(loginName != certName){
+                                    msg = "sys.ca.cert.name";
+                                    return false;
+                                }
+                                $("#encrySource").val(sourceData);
+                                caCoding = sign(encrypt, sourceData);
+                                if (caCoding == "") {
+                                    msg = "sys.ca.abnormal";
+                                }
+                                $("#caCoding").val(caCoding);
+                            }
+                        }else if(encrypt == 5){
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                $("#encrySource").val(sourceData);
+                                caCoding = sign(encrypt, sourceData);
+                                if (caCoding == "") {
+                                    msg = "sys.ca.abnormal";
+                                }
+                                $("#caCoding").val(caCoding);
+                            }
+                        }
+                    }
+
+                }catch (e){
+                    msg = "sys.ca.abnormal";
+                }
+
+            });
+            return msg;
+        }
+        /**
+         * 批量签名接口
+         * @param sourceData
+         */
+        function batchSignData(sourceData,caCodId,type) {
+            var msg = "";
+            bt.use(['form', 'jquery'], function () {
+                var form = bt.form();
+                var $ = bt.jquery;
+                try {
+                    var licenceApp = $("#licenceApp").val();
+                    var encrypt = $("#encrypt").val();
+                    var caCoding = "";
+                    var cadn = store.get('cadn');
+                    var t = licenceApp.indexOf(type) >= 0
+                    if( '0' != encrypt && t) {
+                        if (encrypt == 1) {
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                CurCert = selectSingleCert("", cadn);
+                                if(CurCert == null){
+                                    msg = "sys.ca.abnormal";
+                                }else {
+                                    caCoding = iTrusSignData(sourceData);
+                                    $("#" + caCodId).val(caCoding);
+                                    $("#caCoding").val(caCoding);
+                                    if(caCoding == null){
+                                        msg = "sys.ca.abnormal";
+                                    }
+                                }
+                            }
+                        } else if (encrypt == 2) {
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                var bSelectCertResult = $("#bSelectCertResult").val();
+                                if (!bSelectCertResult) {
+                                    selectCa(encrypt,sourceData,msg,caCodId);
+                                }
+                                if (!isChrome) {
+                                    caCoding = sign(encrypt, sourceData);
+                                    $("#" + caCodId).val(caCoding);
+                                    $("#caCoding").val(caCoding);
+                                    if (caCoding == "") {
+                                        msg = "sys.ca.abnormal";
+                                    }
+                                }
+                            }
+                        }else if(encrypt == 3){
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                selectCa(encrypt,sourceData,msg,caCodId);
+                                caCoding = sign(encrypt, sourceData);
+                                $("#" + caCodId).val(caCoding);
+                                $("#caCoding").val(caCoding);
+                                if (caCoding == "") {
+                                    msg = "sys.ca.abnormal";
+                                }
+                            }
+                        }else if(encrypt == 4){
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                var key = keyExist();
+                                if(key != "true"){
+                                    msg = "sys.login.insertCertificate";
+                                    return false;
+                                }
+                                var loginName = $("#loginName").val();
+                                var certName = getCertName();
+                                if(loginName != certName){
+                                    msg = "sys.ca.cert.name";
+                                    return false;
+                                }
+                                caCoding = sign(encrypt, sourceData);
+                                $("#" + caCodId).val(caCoding);
+                                $("#caCoding").val(caCoding);
+                                if (caCoding == "") {
+                                    msg = "sys.ca.abnormal";
+                                }
+                            }
+                        }else if(encrypt == 5){
+                            if (cadn == "") {
+                                msg = "sys.login.ca.no.binding";
+                            }else {
+                                $("#encrySource").val(sourceData);
+                                caCoding = sign(encrypt, sourceData);
+                                $("#" + caCodId).val(caCoding);
+                                $("#caCoding").val(caCoding);
+                                if (caCoding == "") {
+                                    msg = "sys.ca.abnormal";
+                                }
+                            }
+                         }
+                    }
+
+                }catch (e){
+                    msg = "sys.ca.abnormal";
+                }
+
+            });
+            return msg;
+        }
+
+        /**
+         * 取签名后信息
+         */
+        function getcaCoding() {
+            return document.getElementById("caCoding").value;
+        }
+    </script>
+#end
+
+##cfca js 方法
+#macro(cfcaScript)
+    <script>
+        //cfca script begin
+        var CryptoAgent = "";
+        var CryptoKit;
+        var isChrome = false;
+        function BrowserInfo() {
+            var res = {
+                name: "",
+                version: "",
+            };
+            var reg;
+            var userAgent = self.navigator.userAgent;
+
+            if (reg = /edge\/([\d\.]+)/i.exec(userAgent)) {
+                res.name = "Edge";
+                res.version = reg[1];
+            }
+            else if (/msie/i.test(userAgent)) {
+                res.name = "Internet Explorer";
+                res.version = /msie ([\d\.]+)/i.exec(userAgent)[1];
+            }
+            else if (/Trident/i.test(userAgent)) {
+                res.name = "Internet Explorer";
+                res.version = /rv:([\d\.]+)/i.exec(userAgent)[1];
+            }
+            else if (/chrome/i.test(userAgent)) {
+                res.name = "Chrome";
+                res.version = /chrome\/([\d\.]+)/i.exec(userAgent)[1];
+            }
+            else if (/safari/i.test(userAgent)) {
+                res.name = "Safari";
+                res.version = /version\/([\d\.]+)/i.exec(userAgent)[1];
+            }
+            else if (/firefox/i.test(userAgent)) {
+                res.name = "Firefox";
+                res.version = /firefox\/([\d\.]+)/i.exec(userAgent)[1];
+            }
+            return res;
+        }
+        function ShowErrorInfo(response) {
+            if(null == response){
+                alert("Extension has been remove!");
+            }
+            else if(1 == response.errorcode) { // connection error
+                alert(response.result);
+            }
+            else { // host error
+                CryptoKit.getLastErrorDesc()
+                        .then(function (response) {
+                            alert(response.result);
+                        });
+            }
+        }
+        //加载证书控件
+        function OnLoad() {
+            try {
+                var browser = BrowserInfo();
+                if (("Chrome" == browser.name && parseInt(browser.version) > 41) ||
+                        ("Firefox" == browser.name && parseInt(browser.version) > 52)) {
+
+                    CryptoKit = new nmCryptokit(browser.name);
+                    CryptoKit.init()
+                            .then(function () {
+                                isChrome = true;
+                            })
+                            .catch(function (response) {
+                                // alert(response.result);
+                                installExtension();
+                            });
+                }else {
+                    var eDiv = document.createElement("div");
+                    //cfca sm2 by zhoul
+                    var cspList = document.getElementById("cspList").value;
+                    if(cspList){
+                        if (navigator.appName.indexOf("Internet") >= 0 || navigator.appVersion.indexOf("Trident") >= 0) {
+                            if (window.navigator.platform == "win32" || window.navigator.cpuClass == "x86") {
+                                eDiv.innerHTML = "<object id=\"CryptoAgent\" codebase=\"${basePath}/static/cabs/CryptoKit.NEPTUNUS.x86.cab\" classid=\"clsid:11831B08-CF8D-40E5-9AC0-0EBE0AA894DE\" ></object>";
+                            } else {
+                                eDiv.innerHTML = "<object id=\"CryptoAgent\" codebase=\"${basePath}/static/cabs/CryptoKit.NEPTUNUS.x64.cab\" classid=\"clsid:CCF04070-B493-46FD-8F51-7C8B6E90BE73\" ></object>";
+                            }
+                        } else {
+                            eDiv.innerHTML = "<embed id=\"CryptoAgent\" type=\"application/npCryptoKit.NEPTUNUS.x86\" style=\"height: 0px; width: 0px\">";
+                        }
+                    } else {
+                        if (navigator.appName.indexOf("Internet") >= 0 || navigator.appVersion.indexOf("Trident") >= 0) {
+                            if (window.navigator.cpuClass == "x86") {
+                                eDiv.innerHTML = "<object id=\"CryptoAgent\" codebase=\"${basePath}/static/cabs/CryptoKit.Ultimate.x86.cab\" classid=\"clsid:4C588282-7792-4E16-93CB-9744402E4E98\" ></object>";
+                            } else {
+                                eDiv.innerHTML = "<object id=\"CryptoAgent\" codebase=\"${basePath}/static/cabs/CryptoKit.Ultimate.x64.cab\" classid=\"clsid:B2F2D4D4-D808-43B3-B355-B671C0DE15D4\" ></object>";
+                            }
+                        } else {
+                            eDiv.innerHTML = "<embed id=\"CryptoAgent\" src=\"${basePath}/static/cabs/npCryptoKit.Ultimate.x86.exe\" type=\"application/npCryptoKit.Ultimate.x86\" style=\"height: 0px; width: 0px\">";
+                        }
+                    }
+                    document.body.appendChild(eDiv);
+                }
+            }
+            catch (e) {
+                alert(e);
+                return;
+            }
+            CryptoAgent = document.getElementById("CryptoAgent");
+        }
+
+        function installExtension(){
+            var browser = BrowserInfo();
+            if ("Firefox" == browser.name) {
+                var extensionURL = "";
+                var xpi = { 'CryptoKit for Firefox': extensionURL };
+
+                InstallTrigger.install(xpi);
+            }
+            else if ("Chrome" == browser.name) {
+               // alert("请联系管理员安装谷歌浏览器插件！");
+            }
+            else {
+                alert("Unsupported browser!");
+            }
+        }
+
+        function OnUnLoad() {
+            try {
+                CryptoKit.uninit().then(function () {
+                    EnableButton(false);
+                });
+            }
+            catch (e) {
+                alert(e);
+                return;
+            }
+        }
+
+        /**
+         * 选择证书
+         */
+        function SelectCertificateOnClick(callback,sourceData,msg,caCodId) {
+            try {
+                var issuer = document.getElementById("issuer").value;
+                var cadn = document.getElementById("cadn").value;
+                if(isChrome){
+                  CryptoKit.selectCertificate("", issuer, cadn, "")
+                          .then(function (response) {
+                              document.getElementById("bSelectCertResult").value = response.result;
+                              CryptoKit.getSignCertInfo("SerialNumber")
+                                      .then(function (response) {
+                                          document.getElementById("bSelectCertResult").value = response.result;
+                                          CryptoKit.getSignCertInfo("SerialNumber")
+                                                  .then(function (response) {
+                                                      InfoContent = response.result;
+                                                      callback(sourceData,msg,caCodId);
+                                                  })
+                                                  .catch(function (response) {
+                                                      ShowErrorInfo(response);
+                                                      msg = "sys.ca.abnormal";
+                                                      $("#isCFCACheck").val("sys.ca.abnormal");
+                                                  });
+                                      })
+                                      .catch(function (response) {
+                                          ShowErrorInfo(response)
+                                          msg = "sys.ca.abnormal";
+                                          $("#isCFCACheck").val("sys.ca.abnormal");
+                                      });
+                          })
+                          .catch(function (response) {
+                              ShowErrorInfo(response)
+                              msg = "sys.ca.abnormal";
+                              $("#isCFCACheck").val("sys.ca.abnormal");
+                          });
+                }else {
+                    //cfca sm2 byzhoul
+                    var cspList = document.getElementById("cspList").value;
+                    if(cspList){
+                        bSelectCertResult = CryptoAgent.SelectCertificate("", issuer, cadn, cspList);
+                    }else{
+                        bSelectCertResult = CryptoAgent.SelectCertificate("", issuer, cadn);
+                    }
+                    document.getElementById("bSelectCertResult").value = bSelectCertResult;
+                }
+            }
+            catch (e) {
+                var errorDesc = CryptoAgent.GetLastErrorDesc();
+            }
+        }
+
+        /**
+         *签名
+         *sourceData 签名源
+         */
+        function SignOnClick(sourceData) {
+            var signature = "";
+            try {
+                if(isChrome){
+                    CryptoKit.signMsgPKCS7(sourceData, "SHA-1", true)
+                            .then(function (response) {
+                                signature = response.result;
+                            })
+                            .catch(function (response) {
+                                ShowErrorInfo(response);
+                            });
+                }else {
+                    signature = CryptoAgent.SignMsgPKCS7(sourceData, "SHA-1", true);
+                }
+            }
+            catch (e) {
+                var errorDesc = CryptoAgent.GetLastErrorDesc();
+                alert(errorDesc);
+            }
+            return signature;
+        }
+        /**
+         * 验签
+         * signature 签名结果
+         */
+        function VerifyPKCS7OnClick(signature) {
+            try {
+                var bResult = false;
+                if(isChrome){
+                    CryptoKit.verifyMsgSignaturePKCS7Attached(signature, "RSA")
+                            .then(function (response) {
+                                alert("验签结果：" + response.result);
+                            })
+                            .catch(function (response) {
+                                ShowErrorInfo(response);
+                            });
+                }else {
+                    bResult = CryptoAgent.VerifyMsgSignaturePKCS7Attached(signature, "RSA");
+                    if (!bResult) {
+                        var errorDesc = CryptoAgent.GetLastErrorDesc();
+                        bResult = false;
+                    }
+                    //alert("验签结果：" + bResult);
+                    // Opera浏览器，NPAPI函数执行结果为false时，不能触发异常，需要自己判断返回值。
+                    if (!signature) {
+                        var errMsg = "";
+                        errMsg = CryptoAgent.GetLastErrorDesc();
+                        return;
+                    }
+                }
+            } catch (e) {
+                var errorDesc = CryptoAgent.GetLastErrorDesc();
+                alert(errorDesc);
+            }
+            return bResult;
+        }
+        /**
+         * 获取证书序列号
+         * @returns {String}
+         */
+        function GetCertInfoOnClick() {
+            try {
+                var InfoTypeID = "SerialNumber";
+                var InfoContent = "";
+                if(isChrome){
+                    CryptoKit.getSignCertInfo(InfoTypeID)
+                            .then(function (response) {
+                                InfoContent = response.result;
+                                alert(InfoContent+"获取序列号");
+                                return InfoContent;
+                            })
+                            .catch(function (response) {
+                                ShowErrorInfo(response);
+                            });
+                }else {
+                    InfoContent = CryptoAgent.GetSignCertInfo(InfoTypeID);
+                    // Opera浏览器，NPAPI函数执行结果为false时，不能触发异常，需要自己判断返回值。
+                    if (!InfoContent) {
+                        var errorDesc = CryptoAgent.GetLastErrorDesc();
+                        return;
+                    }
+                }
+            } catch (e) {
+                var errorDesc = CryptoAgent.GetLastErrorDesc();
+            }
+            return InfoContent;
+        }
+        function userbinding(callback){
+            var InfoContent = "";
+            try {
+                var issuer = document.getElementById("issuer").value;
+                var cadn = document.getElementById("cadn").value;
+                if(isChrome){
+                    var bSelectCertResult = CryptoKit.selectCertificate("", issuer, cadn, "")
+                            .then(function (response) {
+                                document.getElementById("bSelectCertResult").value = response.result;
+                                CryptoKit.getSignCertInfo("SerialNumber")
+                                        .then(function (response) {
+                                            InfoContent = response.result;
+                                            callback(InfoContent);
+                                        })
+                                        .catch(function (response) {
+                                            ShowErrorInfo(response);
+                                        });
+                            })
+                            .catch(function (response) {
+                                ShowErrorInfo(response);
+                            });
+                }else {
+                    var InfoTypeID = "SerialNumber";
+                    var bSelectCertResult = "";
+                    //cfca sm2 byzhoul
+                    var cspList = document.getElementById("cspList").value;
+                    if(cspList){
+                        bSelectCertResult = CryptoAgent.SelectCertificate("", issuer, cadn, cspList);
+                    }else{
+                        bSelectCertResult = CryptoAgent.SelectCertificate("", issuer, cadn);
+                    }
+                    document.getElementById("bSelectCertResult").value = bSelectCertResult;
+                    InfoContent = CryptoAgent.GetSignCertInfo(InfoTypeID);
+                    callback(InfoContent);
+                }
+            }
+            catch (e) {
+                var errorDesc = CryptoAgent.GetLastErrorDesc();
+                throw new Error(errorDesc);
+            }
+        }
+        /**
+         *签名
+         *sourceData 签名源
+         */
+        function SignHaveCallBack(sourceData,callback) {
+            var signature = "";
+            try {
+                if(isChrome){
+                    CryptoKit.signMsgPKCS7(sourceData, "SHA-1", true)
+                            .then(function (response) {
+                                signature = response.result;
+                                callback(signature);
+                            })
+                            .catch(function (response) {
+                                ShowErrorInfo(response);
+                            });
+                }else {
+                    signature = CryptoAgent.SignMsgPKCS7(sourceData, "SHA-1", true);
+                    callback(signature);
+                }
+            }
+            catch (e) {
+                var errorDesc = CryptoAgent.GetLastErrorDesc();
+                alert(errorDesc);
+            }
+        }
+        //cfca script end
+    </script>
+#end
+##兴业证书 js方法
+#macro(xyScript)
+    <script>
+        var bSelectUserCerts = false;
+        //加载证书
+        function xyLoad() {
+            try {
+                var eDiv = document.createElement("div");
+                eDiv.innerHTML = " \t<OBJECT width=\"0\" height=\"0\" classid=\"clsid:0D99625B-0619-4420-BB61-82DEE1B91D3A\"\n" +
+                        "\tcodeBase=\"${basePath}/static/cabs/CertKitAx.CAB#version=1,2,2,3>\"\n" +
+                        "\tid=\"BlockHouse1\" style=\"VISIBILITY: hidden\">\n" +
+                        "  </OBJECT> ";
+                document.body.appendChild(eDiv);
+            }
+            catch (e) {
+                return;
+            }
+        }
+        //选择证书
+        function selectXyCa() {
+            var cadn = document.getElementById("cadn").value;
+            try {
+                if(cadn != "") {
+                    bSelectUserCerts = BlockHouse1.CFCA_InitCertAppContext(true, cadn);
+                }else{
+                    bSelectUserCerts = BlockHouse1.CFCA_SelectUserCerts(true);
+                }
+            }catch (e) {
+                alert("没有取到证书！");
+                return false;
+            }
+
+        }
+        //签名
+        function signXyCa(sourceData) {
+            var signature = BlockHouse1.CFCA_SignData(sourceData);
+            return signature;
+        }
+        //获取序列号
+        function getXyCertCN() {
+           return BlockHouse1.CFCA_GetCertCN(true);
+        }
+    </script>
+#end
+##天威 js 方法
+#macro(iTrusScript)
+    #pta()
+    <script src="${basePath}/static/cabs/iTrusChrome.js"></script>
+    <script>
+        //天威CA script start
+        var CurCert = null;
+        var miniPTAVersion=0x0204;
+
+        var iTrusPTA;
+        var ienroll ;
+        var cabPath="iTrusPTA.cab";
+        var OptionImport = 0;
+        var OptionExport = 0;
+        //加载证书控件
+        function iTrusLoad() {
+            try {
+                var eDiv = document.createElement("div");
+                eDiv.innerHTML = "<object width=\"0\" height=\"0\" id=\"ienroll_ie\" codebase=\"${basePath}/static/cabs/itruscertctl.cab#Version=1.1.2013.801\" classid=\"clsid:DD2257CE-4FEE-455A-AD8B-860BEEE25ED6\" type=\"application/Itrusenroll.CertEnroll\">\n" +
+                        "</object>\n" +
+                        "<embed id=\"ienroll_firefox\" src=\"${basePath}/static/cabs/iTrusPTA.exe\" type=\"application/iTrusCertEnroll.CertEnroll.Version.1\" width=\"0\" height=\"0\" />\n" +
+                        "<object width=\"0\" height=\"0\"  id=\"iTrusPTA_ie\" codebase=\"${basePath}/static/cabs/itruscertctl.cab#Version=2.5.7.1\" classid=\"clsid:F1F0506B-E2DC-4910-9CFC-4D7B18FEA5F9\" type=\"download/itruscertctl.cab#Version=2,5,7,1\" >\n" +
+                        "</object>\n" +
+                        "<embed id=\"iTrusPTA_firefox\" src=\"${basePath}/static/cabs/iTrusPTA.exe\" type=\"application/iTrusPTA.iTrusPTA.Version.1\" width=\"0\" height=\"0\" />";
+                document.body.appendChild(eDiv);
+            }
+            catch (e) {
+                return;
+            }
+            if(IsValidBrowser()){
+                iTrusPTA = document.getElementById("iTrusPTA_ie");
+                ienroll = document.getElementById("ienroll_ie");
+
+            }else{
+                iTrusPTA = document.getElementById("iTrusPTA_firefox");
+                ienroll = document.getElementById("ienroll_firefox");
+            }
+        }
+
+        function getCNFromSubject(cert) {
+            try {
+                var t = cert.subject().replace(/\x00/g,"").match(/(S(?!N)|L|O(?!U)|OU|SN|CN|E)=([^=]+)(?=, |$)/g);
+                for (var i = 0; i < t.length; i++) {
+                    if (t[i].indexOf("CN=") === 0)
+                        return t[i].substr(3, t[i].length);
+                }
+                return null;
+            } catch (e) {
+                return e;
+            }
+        }
+
+        if (/chrome/i.test(self.navigator.userAgent)){
+            var license = iTrusChromeLicense;
+            var exepath = "download/TopCertKit-3.7.2.0.exe";
+            var config = {"license" : license,
+                "certDateFmtMode":true,
+                "exepath":exepath,
+                "disableExeUrl":true};
+            try{
+                TCA.config(config);
+            }catch(e){
+                if (e instanceof TCACErr && e.number==="16777220") {
+                    window.location.href=exepath;
+                }
+                if(e instanceof TCACErr){
+                    alert("尚未安装控件，请安装控件后再试。");
+                    window.location.href="${basePath}/static/cabs/TopCertKit-3.7.2.0.exe";
+                }
+            }
+        }
+        ##获取服务器时间
+        function getServerDate(){
+            return new Date($.ajax({type:"HEAD",async:false,cache:false}).getResponseHeader("Date"));
+        }
+        ##选择证书
+        function selectiTrusCa() {
+            var certList = "<select id = 'iTrusCaList' >";
+            if (/chrome/i.test(self.navigator.userAgent)){
+                try{
+                    var certs = CertStore.listAllCerts();
+                    if(certs.size()>0){
+                        for(var i = 0;i<certs.size();i++){
+                            var cert = certs.get(i);
+                            ##证书结束时间
+                            var after = cert.notAfter();
+                            var before  = cert.notBefore();
+                            ##服务器当前时间
+                            var nowDate = getServerDate();
+                            if(after<nowDate || before>nowDate){
+                                continue;
+                            }
+                            var name = getCNFromSubject(cert);
+                            certList = certList+"<option value='"+cert.serialNumber().toLowerCase()+"'>"+name+"</option>";
+                        }
+                    }else{
+                        alert("没有插入key，或key内无证书。");
+                    }
+                } catch (e) {
+                    throw e;
+                }
+            }else{
+                bt.use(['form','jquery'], function() {
+                    var form = bt.form();
+                    var $ = bt.jquery;
+                    var issuer = $("#issuer").val();
+                    var cadn = store.get('cadn');
+                    var certs = filterCerts(issuer,"",cadn,1,"",false);
+                    var i,count = certs.length;
+                    for(i=0;i<=count;i++){
+                        var cert= certs[i];
+                        var uid = '';
+                        try {
+                            var names = new Names(certs[i].Subject);
+                            var ous = names.getItems('OU');
+                            for (var j in ous) {
+                                if (ous[j].indexOf('UID:') != -1) {
+                                    var uid = ous[j].substring(4);
+                                    break;
+                                }
+                            }
+                            certList=certList+"<option value='"+cert.SerialNumber+"'>"+cert.CommonName+"</option>";
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                });
+            }
+            certList=certList+"</select>";
+            return certList;
+        }
+
+        ##签名
+        function iTrusSignData(sourceData){
+            if (/chrome/i.test(self.navigator.userAgent)){
+                ##证书结束时间
+                var after = CurCert.notAfter();
+                var before  = CurCert.notBefore();
+                ##服务器当前时间
+                var nowDate = getServerDate();
+                if(after<nowDate || before>nowDate){
+                   return "time";
+                }
+                var P7 = CurCert.signMessage(sourceData,false);
+                return P7;
+            }else{
+                var validFrom = eval(CurCert.ValidFrom);
+                var validTo = eval(CurCert.ValidTo);
+                ##服务器当前时间
+                var nowDate = getServerDate();
+                if(validTo<nowDate || validFrom>nowDate){
+                    return "time";
+                }
+                var signedData = SignMessage("txt","base64",true,sourceData,CurCert);
+                return signedData;
+            }
+        }
+
+        ##验签
+        function iTrusVerifyData(sourceData,signedData){
+            var signer = VerifySignature("txt","base64",true,sourceData,signedData);
+            if(signer!=null){
+                alert("签名验证成功。签名证书为：" + signer.CommonName);
+            }else{
+                alert("验证签名失败");
+            }
+        }
+
+        ##获取序列号
+        function getCertiTrus(){
+            return getCertField(CurCert,"serialNumber");
+        }
+        //天威CA script
+    </script>
+    <div>
+
+    </div>
+#end
+
+#macro(pta)
+    <script>
+        //  密钥用法选项
+        var KEY_USAGE_UNDEFINED		= 0x00
+        var KEY_USAGE_ALL			= 0x01
+        var KEY_USAGE_CRL_SIGN		= 0x02
+        var KEY_USAGE_CERT_SIGN		= 0x04
+        var KEY_USAGE_KEY_AGREEMENT	= 0x08
+        var KEY_USAGE_DATA_ENCIPHERMENT	= 0x10
+        var KEY_USAGE_KEY_ENCIPHERMENT	= 0x20
+        var KEY_USAGE_NON_REPUDIATION	= 0x40
+        var KEY_USAGE_DIGITAL_SIGNATURE	= 0x80
+
+        //  签名验签选项
+        var INPUT_BASE64		= 0x01; //SignMessage和VerifySignature输入参数
+        var INPUT_HEX			= 0x02; //SignMessage和VerifySignature输入参数
+        var OUTPUT_BASE64		= 0x04; //以BASE64编码pkcs7签名值
+        var OUTPUT_HEX			= 0x08; //以16进制字符串编码pkcs7签名值
+        var	INNER_CONTENT		= 0x10; //SignMessage...signData参数：是否包含原文
+        var	PLAINTEXT_UTF8		= 0x20; //原文UTF-8编码(SignMessage & VerifySignature函数)，缺省使用GB2312编码原文
+        var	MIN_CERTSTORE		= 0x40; //最小化证书链(仅包含签名证书)
+        var	HTML_SHOW			= 0x80; //接受HTML数据并渲染
+        var	MSG_BASE64			= 0x04; //VerifySignature输入参数
+        var MSG_HEX				= 0x08; //VerifySignature输入参数
+        var MSG_IMAGE			= 0x100; //VerifySignature输入参数
+
+        //  证书导入导出选项
+        var MARK_CERT_TO_UNEXPORTABLE = 0x02;//标记证书为不可导出
+        var DELETE_CERT = 0x04;//删除该证书
+
+        //  全局变量
+        var iTrusPTA;
+        var ienroll;
+
+        function encrypt(msg){
+            var CertFilter = iTrusPTA.Filter;
+            CertFilter.Clear();
+            CertFilter.Issuer = ftIssuer.value;
+            CertFilter.SerialNumber = ftSerial.value;
+            CertFilter.Subject = ftSubject.value;
+            var certs = iTrusPTA.MyCertificates;
+            return certs.EncryptMessage(msg,OUTPUT_BASE64);
+        }
+
+        function encryptFile(srcPath,desPath){
+            var CertFilter = iTrusPTA.Filter;
+            CertFilter.Clear();
+            CertFilter.Issuer = ftIssuer.value;
+            CertFilter.SerialNumber = ftSerial.value;
+            CertFilter.Subject = ftSubject.value;
+            var certs = iTrusPTA.MyCertificates;
+            return certs.EncryptFileEx(srcPath,desPath,OUTPUT_BASE64);
+        }
+
+        function decrypt(msg){
+            try{
+                alert(iTrusPTA.DecryptMessage(msg,INPUT_BASE64));
+            }catch(e){
+                alert( "解密失败\n错误代码：0x" + (e.number>0?e.number: 0x100000000+e.number).toString(16));
+            }
+        }
+
+        function decryptFile(srcPath,desPath){
+            iTrusPTA.DecryptFileEx(srcPath,desPath,INPUT_BASE64);
+        }
+
+        /**获取证书信息
+         *@param cert证书对象
+         *@param field要获取的证书属性字段
+         *@return 相应属性的值，如果输入了不支持属性，返回null
+         */
+        function getCertField(cert,field){
+            var value =null;
+            if(field=="subject"){
+                value=cert.Subject;
+            }else if(field=="issuer"){
+                value=cert.Issuer;
+            }else if(field=="serialNumber"){
+                value=cert.SerialNumber;
+            }else if(field=="validFrom"){
+                value=eval(cert.ValidFrom)+"";
+            }else if(field=="validTo"){
+                value=eval(cert.ValidTo)+"";
+            }else if(field=="keyContainer"){
+                value=cert.KeyContainer;
+            }else if(field=="commonName"){
+                value=cert.CommonName;
+            }else if(field=="keyUsage"){
+                var KeyUsage=cert.KeyUsage;
+                usage="";
+                if (KeyUsage == 0) usage = " UNDEFINED";
+                if (KeyUsage & KEY_USAGE_CRL_SIGN )			usage += " CRL_SIGN";
+                if (KeyUsage & KEY_USAGE_CERT_SIGN)			usage += " CERT_SIGN";
+                if (KeyUsage & KEY_USAGE_KEY_AGREEMENT)		usage += " KEY_AGREEMENT";
+                if (KeyUsage & KEY_USAGE_DATA_ENCIPHERMENT) usage += " DATA_ENCIPHERMENT";
+                if (KeyUsage & KEY_USAGE_KEY_ENCIPHERMENT)	usage += " KEY_ENCIPHERMENT";
+                if (KeyUsage & KEY_USAGE_NON_REPUDIATION)	usage += " NON_REPUDIATION";
+                if (KeyUsage & KEY_USAGE_DIGITAL_SIGNATURE)	usage += " DIGITAL_SIGNATURE";
+                value=usage.substr(1);
+            }else if(field=="csp"){
+                value=cert.CSP;
+            }
+            return value;
+        }
+
+        /**签名
+         * @param plainType 明文的类型，可以为 base64,hex,image,file,
+         * @param signedType 输出的签名值的类型，可以为base64,hex
+         * @param detached 当为false时，签名数据将会含有原文，当为true时，签名数据没有原文
+         * @param plainData 代签名数据，当plainType为image时，该项为图片的url;
+         * @param cert 签名使用的私钥对应的证书
+         * @return 签名后的数据，签名失败返回null
+         */
+        function SignMessage(plainType,signedType,detached,plainData,cert){
+            var signopt=0;
+            var signedData = null;
+            //设置原文的类型标识
+            if(plainType=="base64"){
+                signopt=INPUT_BASE64;
+            }else if(plainType=="hex"){
+                signopt=INPUT_HEX;
+            }
+//	else if(plainType=="image"){
+//		signopt=MSG_IMAGE;
+//	}
+            //设置签名值类型的标识
+            if(signedType == "hex"){
+                signopt |= OUTPUT_HEX;
+            }else if (signedType=="base64"){
+                signopt |= OUTPUT_BASE64;
+            }
+            //设置签名值里是否含有原文
+            if(!detached){
+                signopt|=INNER_CONTENT;
+            }
+            signopt|=MIN_CERTSTORE;//在签名中，最小化证书列，可以减少签名值长度
+//	signopt|=HTML_SHOW;		//弹出的确认框，采用IE引擎渲染样式
+//	signopt|=PLAINTEXT_UTF8;//如果签名值是UTF-8编码，需要加上此行，默认UTF-8;
+//	signopt|=512;
+            try{
+                if(plainType=="image") {
+                    signedData =cert.SignImage(plainData,signopt);
+                }else if(plainType=="file"){
+                    //TODO:
+                }else if (plainType=="logon"){
+                    signedData = cert.SignLogonData(plainData,signopt);
+                }else{
+                    signedData = cert.SignMessageEx(plainData,signopt);
+                }
+            }catch(e){
+                signedData = null;
+                alert(e.message+"["+e.number+"]");
+            }
+            return signedData;
+        }
+
+        /**验证签名
+         * @param msgType 明文的类型，可以为 base64,hex,image,file,
+         * @param signedType 输出的签名值的类型，可以为base64,hex
+         * @param detached 当为false时，签名数据里含有原文，当为true时，签名数据里没有原文
+         * @param plainData 代签名数据，当plainType为image时，该项为图片的url;
+         * @param signedData 签名后的数据
+         * @return 验签结果，验签成功返回对应证书，验签失败，返回null;
+         */
+        function VerifySignature(msgType,signedType,detached,plainData,signedData){
+            var signopt=0;
+            //设置原文的类型标识
+            if(msgType=="base64"){
+                signopt=MSG_BASE64;
+            }else if(msgType=="hex"){
+                signopt=MSG_HEX;
+            }else if(msgType=="image"){
+                signopt=MSG_IMAGE;
+            }
+            //设置签名值类型的标识
+            if(signedType == "hex"){
+                signopt |= INPUT_HEX;
+            }else if (signedType=="base64"){
+                signopt |= INPUT_BASE64;
+            }
+            //设置签名值里是否含有原文
+            if(!detached){
+                signopt|=INNER_CONTENT;
+            }
+            var Signer = null;
+            try{
+                Signer=iTrusPTA.VerifySignature(plainData,signedData,signopt);
+            }catch(e){
+                alert( "签名验证失败。\n错误代码：0x" + (e.number>0?e.number: 0x100000000+e.number).toString(16));
+            }
+            return Signer;
+        }
+
+        function verifySignatures(strToSign, base64StrSignature, opt) {
+
+            opt = 0;
+            opt = opt|PLAINTEXT_UTF8;
+            opt = opt|MIN_CERTSTORE;
+            if (strToSign == "" || base64StrSignature == "")
+                return;
+            try {
+                opt = typeof(opt) == "number" ? opt | INPUT_BASE64 : INPUT_BASE64;
+
+                alert("原文："      +strToSign);
+                alert("签名值:   "  +base64StrSignature);
+                alert("签名类型  "  +opt);
+
+                //var signCert = iTrusPTA.VerifySignature(strToSign, base64StrSignature, opt);
+
+                var	signCert=iTrusPTA.VerifySignature("MSG_HEX", "INPUT_BASE64", true,strToSign,base64StrSignature);
+
+                alert("Signing Successfully! Signer is " + signCert.CommonName + ".");
+                return true;
+            } catch (e) {
+                if (e.number == -2146893818)
+                    alert("Signing failed!\nSignature value are not match with the original message, the text has been juggled!");
+                else
+                    alert("PTA error\nError No.: " + e.number + "\nError Description: " + e.description);
+                return false;
+            }
+        }
+
+        /**删除证书
+         * @param cert 要删除的证书
+         * @return void;
+         */
+        function removeCert(cert){
+            try{
+                cert.Remove();
+                return true;
+            }catch(e){
+                //alert("error code:["+iTrusPTA.ErrorCode+"]");
+                return false;
+            }
+        }
+
+        /**导入证书
+         * @param certPath 待导入的证书路径
+         * @param password 待导入证书的密码
+         * @param option 导入证书的选项 MARK_CERT_TO_UNEXPORTABLE；
+         * @return void
+         */
+        function importCert(certPath,password,option){
+            try{
+                iTrusPTA.ImportPKCS12(certPath,password,option);
+                return true;
+            }catch(e){
+                //alert("error code:["+iTrusPTA.ErrorCode+"]");
+                return false;
+            }
+        }
+
+        /**导出证书
+         * @param certPath 导出的证书路径
+         * @param password 导出证书的密码
+         * @param option 导出证书的选项 MARK_CERT_TO_UNEXPORTABLE | DELETE_CERT;
+         * @return void
+         */
+        function exportCert(cert, option, password){
+            try{
+                var filePath = iTrusPTA.GetExportPath(cert.CommonName);
+                var iRet = cert.ExportPKCS12(password,option,filePath);
+                return true;
+            }catch(e){
+                //alert("code:[" + toHex(e.number) + "],message[" + e.message+"]");
+                return false;
+            }
+        }
+
+        //申请证书
+        function enroll(name){
+            ienroll.Reset();
+            ienroll.DeleteRequestCert = true;
+            ienroll.ProviderType = 1;
+            ienroll.ProviderName = "Microsoft Base Cryptographic Provider v1.0";
+            ienroll.HashAlgorithm = "MD5";
+            ienroll.KeySpec = 1;
+            ienroll.GenKeyFlags = 0x04000000 | 0; //1024bits
+            var p10ret = ienroll.createPKCS10("CN="+name, "1.3.6.1.5.5.7.3.2");
+            return p10ret;
+        }
+
+        //让用户选择导出的路径,并返回选择的路径
+        function exportPath(){
+            var path = ienroll.GetExportPath("");
+            return path;
+        }
+
+        //让用户选择导入的路径，并返回选择的路径
+        function importPath(){
+            var path = ienroll.GetImportPath("");
+            return path;
+        }
+
+        //产生用户登录时随机数
+        function getLogonData(){
+            var logonData="LOGONDATA:"+Date()+"|"+Math.random().toString().substr(2);
+            return logonData
+        }
+
+        /**
+         * filterCerts 根据所设置条件过滤证书
+         * @param arrayIssuerDN(optional) Array() or string，缺省为""，证书的颁发者字符串和字符串数组，支持多个CA时使用字符串数组
+         * @param arraySerialNumber(optional)缺省为""，证书序列号（微软格式）
+         * @param dateFlag(optional) 缺省为0，0表示所有证书，1表示处于有效期内的证书，2表示待更新证书，3表示未生效或已过期证书
+         * @param keyUsage(option) 缺省为1;具体可以为密钥用法的各个值及相应组合
+         * @return Array(), PTALib.Certificate
+         */
+        function filterCerts(arrayIssuerDN, subject, arraySerialNumber, dateFlag, keyUsage, weak) {
+            var m_certs = new Array();
+            var i = 0;var m=0;
+            if (typeof(arrayIssuerDN) == "undefined") {
+                arrayIssuerDN = new Array("");
+            } else if (typeof(arrayIssuerDN) == "string") {
+                arrayIssuerDN = new Array(arrayIssuerDN);
+            }
+            if (typeof(arraySerialNumber) == "undefined"){
+                arraySerialNumber = new Array("");
+            } else if (typeof(arraySerialNumber) == "string") {
+                arraySerialNumber = new Array(arraySerialNumber);
+            }
+
+            if(typeof(subject) == "undefined")
+                subject = "";
+            for (i = 0; i < arrayIssuerDN.length; i++) {
+                for(m = 0; m < arraySerialNumber.length; m++){
+                    var CertFilter = iTrusPTA.Filter;
+                    CertFilter.Clear();
+//			alert(arrayIssuerDN[i].length);
+                    CertFilter.Issuer = arrayIssuerDN[i];
+//			alert(arraySerialNumber[m].length);
+                    CertFilter.SerialNumber = arraySerialNumber[m];
+//			alert(subject.length);
+                    CertFilter.Subject = subject;
+//			alert("issuer:"+arrayIssuerDN[i]+":"+CertFilter.Issuer);
+//			alert("serial:"+arraySerialNumber[m]+":"+CertFilter.SerialNumber);
+                    var t_Certs = iTrusPTA.MyCertificates; // 临时变量
+                    var now = getServerDate();
+                    var t_count = parseInt(t_Certs.Count);
+                    if ( t_count> 0) { // 找到了证书
+                        for (var j = 1; j <= t_count; j++) {
+                            if(!containUsage(t_Certs.Item(j),keyUsage,weak))
+                                continue;
+                            var validFrom = eval(t_Certs.Item(j).ValidFrom);
+                            var validTo = eval(t_Certs.Item(j).ValidTo);
+                            switch (dateFlag) {
+                                case 0 :// 所有证书
+                                    m_certs.push(t_Certs.Item(j));
+                                    break;
+                                case 1 :// 处于有效期内的证书
+                                    if (validFrom < now && now < validTo)
+                                        m_certs.push(t_Certs.Item(j));
+                                    break;
+                                case 2 :// 待更新证书
+                                    if (JSDateAdd(validTo, -30) < now && now < validTo)
+                                        m_certs.push(t_Certs.Item(j));
+                                    break;
+                                case 3 :// 未生效或已过期证书
+                                    if (now < validFrom || validTo < now)
+                                        m_certs.push(t_Certs.Item(j));
+                                    break;
+                                default :// 缺省当作所有证书处理
+                                    m_certs.push(t_Certs.Item(j));
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            return m_certs;
+        }
+
+        /**判断该证书是否包含给出的密钥用法
+         * @param cert  要判断的证书；
+         * @param usage 要判断的密钥用法；
+         * @param weak  判断的模式，当weak为true时，只要证书的
+         *			密钥用法包含所给出用法的任意一个就返回true。否则需要包含所有的给出的用法,才返回true
+         *
+         */
+        function containUsage(cert,usage,weak){
+            var keyUsage=cert.KeyUsage;
+            var flag = true;
+            if(weak){
+                if((keyUsage&usage)==0){
+                    flag=false;
+                }
+            }else{
+                if (usage & KEY_USAGE_CRL_SIGN)
+                    flag= flag &&(keyUsage & KEY_USAGE_CRL_SIGN);
+                if (usage & KEY_USAGE_CERT_SIGN)
+                    flag= flag &&(keyUsage & KEY_USAGE_CERT_SIGN)
+                if (usage & KEY_USAGE_KEY_AGREEMENT)
+                    flag= flag &&(keyUsage & KEY_USAGE_KEY_AGREEMENT);
+                if (usage & KEY_USAGE_DATA_ENCIPHERMENT)
+                    flag= flag &&(keyUsage & KEY_USAGE_DATA_ENCIPHERMENT);
+                if (usage & KEY_USAGE_KEY_ENCIPHERMENT)
+                    flag= flag &&(keyUsage & KEY_USAGE_KEY_ENCIPHERMENT);
+                if (usage & KEY_USAGE_NON_REPUDIATION)
+                    flag= flag &&(keyUsage & KEY_USAGE_NON_REPUDIATION);
+                if (usage & KEY_USAGE_NON_REPUDIATION)
+                    flag= flag &&(keyUsage & KEY_USAGE_NON_REPUDIATION);
+            }
+            return flag;
+        }
+
+        /**
+         * JSDateAdd Javascript 计算给定日期+天数
+         * @param theDate:给定日期，Date类型
+         * @param days:整型
+         * @return 计算结果，Date类型
+         */
+        function JSDateAdd(theDate, days) {
+            var dateValue = theDate.valueOf();
+            dateValue += days * 1000 * 60 * 60 * 24;
+            var newDate = new Date(dateValue);
+            return newDate;
+        }
+
+        /**
+         * JSDateDiffByDays Javascript 计算两个日期之间的间隔天数
+         * @param date1:给定日期1，Date类型
+         * @param date2:给定日期2，Date类型
+         * @return 天数，整型
+         */
+        function JSDateDiffByDays(date1, date2) {
+            var mill = date1.valueOf() - date2.valueOf();
+            var millStr = new String(mill / 1000 / 60 / 60 / 24)
+            return parseInt(millStr);
+        }
+
+        //从证书数组里获取，主题中的name为value的证书
+        function chooseCertFromArray(certs,name,value){
+            var cert = null;
+            var i,count = certs.length;
+            for(i=0;i<count;i++){
+                cert = certs[i];
+                var names = new Names(getCertField(certs[i],"subject"));
+                if(value==names.getItem(name))
+                    return certs[i];
+            }
+            return null;
+        }
+
+        //根据颁发者和序列号过滤证书，如果存在，返回第一张证书，否则返回null
+        function selectSingleCert(issuer,serial){
+            if (/chrome/i.test(self.navigator.userAgent)){
+                var certs = CertStore.listAllCerts();
+                if(certs.size()>0){
+                    for(var i = 0;i<certs.size();i++){
+                        if(certs.get(i).serialNumber().toLowerCase()===serial){
+                            return certs.get(i);
+                        }
+                    }
+                }
+                return null;
+            }else{
+                var filter=iTrusPTA.Filter;
+                filter.Clear();
+                if(issuer.length>0)
+                    filter.Issuer=issuer;
+                if(serial.length>0)
+                    filter.SerialNumber=serial;
+                if(iTrusPTA.MyCertificates.Count==0){
+                    alert("未找到指定的数字证书");
+                    return null;
+                }
+
+                return iTrusPTA.MyCertificates.Item(1);
+            }
+        }
+
+        //将数据转化为十六进制格式
+        function toHex(number) {
+            number = number >>> 0;
+            return number.toString(16);
+        }
+        //Base64Encode
+        function Base64Encode(str) {
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            var encoded = [];
+            var c = 0;
+            while (c < str.length) {
+                var b0 = str.charCodeAt(c++);
+                var b1 = str.charCodeAt(c++);
+                var b2 = str.charCodeAt(c++);
+                var buf = (b0 << 16) + ((b1 || 0) << 8) + (b2 || 0);
+                var i0 = (buf & (63 << 18)) >> 18;
+                var i1 = (buf & (63 << 12)) >> 12;
+                var i2 = isNaN(b1) ? 64 : (buf & (63 << 6)) >> 6;
+                var i3 = isNaN(b2) ? 64 : (buf & 63);
+                encoded[encoded.length] = chars.charAt(i0);
+                encoded[encoded.length] = chars.charAt(i1);
+                encoded[encoded.length] = chars.charAt(i2);
+                encoded[encoded.length] = chars.charAt(i3);
+            }
+            return encoded.join('');
+        }
+        //Base64Decode
+        function Base64Decode(str) {
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            var invalid = {
+                strlen: (str.length % 4 != 0),
+                chars:  new RegExp('[^' + chars + ']').test(str),
+                equals: (/=/.test(str) && (/=[^=]/.test(str) || /={3}/.test(str)))
+            };
+            if (invalid.strlen || invalid.chars || invalid.equals)
+                alert('Invalid base64 data');
+            var decoded = [];
+            var c = 0;
+            while (c < str.length) {
+                var i0 = chars.indexOf(str.charAt(c++));
+                var i1 = chars.indexOf(str.charAt(c++));
+                var i2 = chars.indexOf(str.charAt(c++));
+                var i3 = chars.indexOf(str.charAt(c++));
+                var buf = (i0 << 18) + (i1 << 12) + ((i2 & 63) << 6) + (i3 & 63);
+                var b0 = (buf & (255 << 16)) >> 16;
+                var b1 = (i2 == 64) ? -1 : (buf & (255 << 8)) >> 8;
+                var b2 = (i3 == 64) ? -1 : (buf & 255);
+                decoded[decoded.length] = String.fromCharCode(b0);
+                if (b1 >= 0) decoded[decoded.length] = String.fromCharCode(b1);
+                if (b2 >= 0) decoded[decoded.length] = String.fromCharCode(b2);
+            }
+            return decoded.join('');
+        }
+
+        /**
+         * class Names
+         *
+         * @method getItem(name) return names' first value
+         * @method getItems(name) return names' value sting array object
+         */
+        function Names(distinguishName) {
+            this.names = init(distinguishName);
+
+            this.getItem = function(name) {
+                var values = this.names.get(name);
+                if (null == values) {
+                    return null;
+                } else {
+                    return values[0];
+                }
+            }
+
+            this.getItems = function(name) {
+                return this.names.get(name);
+            }
+
+            function init(dn) {
+                var _names = new Hashtable();
+                var partition = ", ";
+
+                var Items = dn.split(partition);
+                var itemString = "";
+                for (var i = Items.length - 1; i >= 0; i--) {
+                    if (itemString != "") {
+                        itemString = Items[i] + itemString;
+                    } else {
+                        itemString = Items[i];
+                    }
+
+                    var pos = itemString.indexOf("=");
+                    if (-1 == pos) {
+                        itemString = partition + itemString;
+                        continue;
+                    } else {
+                        var name = itemString.substring(0, pos);
+                        var value = itemString.substring(pos + 1, itemString.length);
+                        // wipe off the limitrophe quotation marks
+                        if (value.indexOf("\"") == 0
+                                && (value.length - 1) == value.lastIndexOf("\"")) {
+                            value = value.substring(1, value.length);
+                            value = value.substring(0, value.length - 1);
+                        }
+
+                        if (_names.containsKey(name)) {
+                            var array = _names.get(name);
+
+                            array.push(value);
+                            _names.remove(name);
+                            _names.put(name, array);
+                        } else {
+                            var array = new Array();
+                            array.push(value);
+                            _names.put(name, array);
+                        }
+                        itemString = "";
+                    }
+                }
+                return _names;
+            }
+        }
+
+
+        /*******************************************************************************
+         * Object: Hashtable Description: Implementation of hashtable Author: Uzi
+         * Refaeli
+         ******************************************************************************/
+
+// ======================================= Properties
+// ========================================
+        Hashtable.prototype.hash = null;
+        Hashtable.prototype.keys = null;
+        Hashtable.prototype.location = null;
+
+        /**
+         * Hashtable - Constructor Create a new Hashtable object.
+         */
+        function Hashtable() {
+            this.hash = new Array();
+            this.keys = new Array();
+
+            this.location = 0;
+        }
+
+        Hashtable.prototype.containsKey = function(key) {
+            if (this.hash[key] == null)
+                return false;
+            else
+                return true;
+        }
+
+        /**
+         * put Add new key param: key - String, key name param: value - Object, the
+         * object to insert
+         */
+        Hashtable.prototype.put = function(key, value) {
+            if (value == null)
+                return;
+
+            if (this.hash[key] == null)
+                this.keys[this.keys.length] = key;
+
+            this.hash[key] = value;
+        }
+
+        /**
+         * get Return an element param: key - String, key name Return: object - The
+         * requested object
+         */
+        Hashtable.prototype.get = function(key) {
+            return this.hash[key];
+        }
+
+        /**
+         * remove Remove an element param: key - String, key name
+         */
+        Hashtable.prototype.remove = function(key) {
+            for (var i = 0; i < this.keys.length; i++) {
+                // did we found our key?
+                if (key == this.keys[i]) {
+                    // remove it from the hash
+                    this.hash[this.keys[i]] = null;
+                    // and throw away the key...
+                    this.keys.splice(i, 1);
+                    return;
+                }
+            }
+        }
+
+        /**
+         * size Return: Number of elements in the hashtable
+         */
+        Hashtable.prototype.size = function() {
+            return this.keys.length;
+        }
+
+        /**
+         * populateItems Deprecated
+         */
+        Hashtable.prototype.populateItems = function() {
+        }
+
+        /**
+         * next Return: true if theres more items
+         */
+        Hashtable.prototype.next = function() {
+            if (++this.location < this.keys.length)
+                return true;
+            else
+                return false;
+        }
+
+        /**
+         * moveFirst Move to the first item.
+         */
+        Hashtable.prototype.moveFirst = function() {
+            try {
+                this.location = -1;
+            } catch (e) {/* //do nothing here :-) */
+            }
+        }
+
+        /**
+         * moveLast Move to the last item.
+         */
+        Hashtable.prototype.moveLast = function() {
+            try {
+                this.location = this.keys.length - 1;
+            } catch (e) {/* //do nothing here :-) */
+            }
+        }
+
+        /**
+         * getKey Return: The value of item in the hash
+         */
+        Hashtable.prototype.getKey = function() {
+            try {
+                return this.keys[this.location];
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
+         * getValue Return: The value of item in the hash
+         */
+        Hashtable.prototype.getValue = function() {
+            try {
+                return this.hash[this.keys[this.location]];
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
+         * getKey Return: The first key contains the given value, or null if not found
+         */
+        Hashtable.prototype.getKeyOfValue = function(value) {
+            for (var i = 0; i < this.keys.length; i++)
+                if (this.hash[this.keys[i]] == value)
+                    return this.keys[i]
+            return null;
+        }
+
+        /**
+         * toString Returns a string representation of this Hashtable object in the form
+         * of a set of entries, enclosed in braces and separated by the ASCII characters ", "
+         * (comma and space). Each entry is rendered as the key, an equals sign =, and
+         * the associated element, where the toString method is used to convert the key
+         * and element to strings. Return: a string representation of this hashtable.
+         */
+        Hashtable.prototype.toString = function() {
+
+            try {
+                var s = new Array(this.keys.length);
+                s[s.length] = "{";
+
+                for (var i = 0; i < this.keys.length; i++) {
+                    s[s.length] = this.keys[i];
+                    s[s.length] = "=";
+                    var v = this.hash[this.keys[i]];
+                    if (v)
+                        s[s.length] = v.toString();
+                    else
+                        s[s.length] = "null";
+
+                    if (i != this.keys.length - 1)
+                        s[s.length] = ", ";
+                }
+            } catch (e) {
+                // do nothing here :-)
+            } finally {
+                s[s.length] = "}";
+            }
+
+            return s.join("");
+        }
+
+        /**
+         * add Concatanates hashtable to another hashtable.
+         */
+        Hashtable.prototype.add = function(ht) {
+            try {
+                ht.moveFirst();
+                while (ht.next()) {
+                    var key = ht.getKey();
+                    // put the new value in both cases (exists or not).
+                    this.hash[key] = ht.getValue();
+                    // but if it is a new key also increase the key set
+                    if (this.get(key) != null) {
+                        this.keys[this.keys.length] = key;
+                    }
+                }
+            } catch (e) {
+                // do nothing here :-)
+            } finally {
+                return this;
+            }
+        };
+
+        function installCert(certChain) {
+
+            try {
+                cenroll.DeleteRequestCert = false;
+                cenroll.WriteCertToCSP = true;
+                cenroll.acceptPKCS7(certChain);
+                return true;
+            } catch(e) {
+                if(-2147023673 == e.number) {
+                    alert("您取消了我们为您颁发的数字证书安装，证书安装失败！\n在您还未离开本页面前，您还可以点击“安装数字证书”按钮安装。");
+                    return false;
+                } else if(-2146885628 == e.number) {
+                    alert("您的证书已经成功安装过了！");
+                    return false;
+                } else {
+                    alert("安装证书发生错误！\n错误号: " + e.number + "\n错误描述: " + e.description);
+                    return false;
+                }
+            }
+        }
+
+        /**
+         * installCAChain 安装CA证书链
+         * @param cACertSignBufP7(mandatory) PKCS7格式证书链
+         */
+        function installCAChain(cACertSignBufP7) {
+
+            try{
+                cenroll.acceptPKCS7(cACertSignBufP7);
+            } catch(e) {
+                if(-2147023673 == e.number) {
+                    return false;
+                } else {
+                    alert("安装证书链时发生错误！\n错误原因：" + e.description + "\n错误代码：" + toHex(e.number));
+                }
+            }
+        }
+
+        /**
+         * findProviders 查询本地计算机的密钥服务提供者，并显示在指定的<select>中
+         * @param objProviderList(mandatory) 密钥服务提供者列表<select>对象
+         * @param defaultProvider(optional) 缺省密钥服务提供者名称
+         * @param allowedProviders(optional) 允许的密钥服务提供者Array
+         */
+        function findProviders(objProviderList, defaultProvider, allowedProviders) {
+
+            if(typeof(defaultProvider) == "undefined" || defaultProvider == "")
+                defaultProvider = "Microsoft Enhanced Cryptographic Provider v1.0";
+            var i = 0; nIndex = 0;
+            var providerType = 1;//The default value for this property is 1
+            var maxProviderType = 1; //max is 24
+
+            var providerName;
+
+            while(providerType <= maxProviderType) {
+                i = 0; //从0开始枚举
+                cenroll.ProviderType = providerType;
+                while(true) {
+                    try {
+
+                        providerName = cenroll.enumProviders(i, 0);
+                        if(providerName == "" || providerName == null) {
+                            break;
+                        }
+                    } catch(e) {
+                        break;
+                    }
+                    if(providerName.length == 0) {
+                        break;
+                    } else {
+                        if(typeof(allowedProviders) == "string") {
+                            if(providerName == allowedProviders) {
+                                $(objProviderList).append("<option value = " +providerType+ ">" +providerName );
+                                nIndex++; //总索引
+                            }
+                        } else if(typeof(allowedProviders) == "object" && allowedProviders.length > 0) {
+                            for(var j = 0; j < allowedProviders.length; j++){
+                                if(providerName == allowedProviders[j]) {
+                                    $(objProviderList).append("<option value = " +providerType+ ">" +providerName );
+                                    nIndex++; //总索引
+                                }
+                            }
+                        } else { //typeof(allowedProviders)=="undefined" || allowedProviders == ""
+                            $(objProviderList).append("<option value = " +providerType+ ">" +providerName );
+                            nIndex++; //总索引
+                        }
+
+                        if(providerName == defaultProvider)
+                            objProviderList.selectedIndex = nIndex - 1;
+                        i++;
+                    }
+                }
+                providerType++;
+            }
+            if(objProviderList.length == 0){
+                $(objProviderList).append("<option value = ''>您的电脑上未安装指定USB KEY的驱动程序！");
+            }
+        }
+        /**
+         * genEnrollCSR 申请证书，创建密钥对并生成证书签名请求
+         * @param objProviderList(mandatory) 加密服务提供者列表的<select>对象
+         * @param cryptFlag(optional)
+         *		0x0表示私钥既不可以导出，又不要求强私钥保护
+         *		0x1表示私钥可导出，默认值
+         *		0x2表示强私钥保护
+         *		0x3(0x1|0x2)表示私钥既可以导出，又要求强私钥保护
+         */
+        function genEnrollCSR(objProviderList, cryptFlag) {
+
+            var selectedItem = objProviderList.item(objProviderList.selectedIndex);
+
+            return genKeyAndCSR(selectedItem.text, selectedItem.value, cryptFlag);
+        }
+
+        /**
+         * genRenewCSR 更新证书，生成更新证书的证书签名请求
+         * @param objProviderList(mandatory) 加密服务提供者列表的<select>对象
+         * @param cryptFlag(mandatory)
+         *		0x0表示私钥既不可以导出，又不要求强私钥保护
+         *		0x1表示私钥可导出，默认值
+         *		0x2表示强私钥保护
+         *		0x3(0x1|0x2)表示私钥既可以导出，又要求强私钥保护
+         * @param objOldCert(mandatory) 要更新的证书对象（PTALib.Certificate）
+         */
+        function genRenewCSR(objProviderList, cryptFlag, objOldCert,useOldKey) {
+
+            var oldCertCSP = objOldCert.CSP; //旧证书CSP
+            var providerName, providerType;
+
+            if(typeof(objProviderList) == "string") {
+                providerName = objProviderList;
+                providerType = 1;
+            } else if(typeof(objProviderList) == "object") {
+                providerName = objProviderList.item(objProviderList.selectedIndex).text;
+                providerType = objProviderList.item(objProviderList.selectedIndex).value;
+            } else {
+                alert("Paramter [objProviderList] is not correct.");
+                return "";
+            }
+
+            var useOldKey = true;
+            if(oldCertCSP != providerName) {
+                var info = "您选择的密钥服务提供者与您正在更新的证书不匹配！"
+                        + "\n如果您点击“确定”，将会生成新的密钥对进行更新，点击“取消”重新选择密钥服务提供者。";
+
+                if(!window.confirm(info)) {
+                    return "";
+                } else
+                    useOldKey = false;
+            }
+            if(useOldKey) {
+                //使用旧的密钥对，更新后的证书只是更新了证书有效期
+                return genKeyAndCSR(providerName, providerType, cryptFlag, objOldCert.KeyContainer);
+            } else {
+                //生成新的密钥对，更新后的证书不仅更新了证书有效期，而且换了密钥对
+                return genKeyAndCSR(providerName, providerType, cryptFlag);
+            }
+        }
+
+        /**
+         * genKeyAndCSR()必须包含xenroll_install.js和xenroll_function.js
+         * genKeyAndCSR 产生密钥对，并返回证书签名请求CSR
+         * @param providerName(mandatory) 密钥服务提供者名称
+         * @param providerType(mandatory) 密钥服务提供者类型
+         * @param cryptFlag(optional)
+         *		0x0表示私钥既不可以导出，又不要求强私钥保护
+         *		0x1表示私钥可导出，默认值
+         *		0x2表示强私钥保护
+         *		0x3(0x1|0x2)表示私钥既可以导出，又要求强私钥保护
+         * @param keyContainer(optional)
+         *		可使用PTALib.Certificate对象的.KeyContainer方法获取原证书的密钥容器
+         *		密钥容器名称，更新证书时需要设置，会使用原来的密钥对发出签名请求。
+         *		如果在原证书存储在USB KEY中，更新的证书会自动覆盖老证书
+         * @return 证书申请请求CSR
+         */
+        function genKeyAndCSR(providerName, providerType, cryptFlag, keyContainer) {
+
+            try {
+                cenroll.Reset(); //首先Reset
+                cenroll.ProviderName = providerName;
+                cenroll.ProviderType = providerType;
+
+                var keyflags = 0;
+                if(typeof(cryptFlag) != "number") {
+                    cryptFlag = 0x00000001; //表示私钥可导出，默认值
+                }
+                keyflags = keyflags | cryptFlag;
+
+                if(typeof(keyContainer) == "string" && keyContainer != "") {//适用于更新证书
+                    cenroll.UseExistingKeySet = true;
+                    cenroll.ContainerName = keyContainer;
+
+                    alert(cenroll.ContainerName);
+                }
+                cenroll.HashAlgorithm = "MD5"; //SHA1
+                cenroll.KeySpec = 1;
+
+                var csr = "";
+                cenroll.GenKeyFlags = 0x04000000 | keyflags; //1024bits
+                //objCEnroll.GenKeyFlags = 0x02000000 | keyflags; //512bits，一旦出错，不再尝试512bits的密钥对
+                csr = cenroll.createPKCS10("CN=itrus_enroll", "1.3.6.1.5.5.7.3.2");
+                return csr.replace(/\r*\n/g, "");
+            } catch(e) {
+                var keyNotPresent = "指定的密钥服务提供者不能提供服务！可能出现的原因："
+                        + "\n1、您没有插入USB KEY，或者插入的USB KEY不能识别。"
+                        + "\n2、您的USB KEY还没有初始化。";
+                var keyContainerNotPresent = "指定的KeyContainer不能提供服务！\n如果您正在更新证书，请选择原证书的密钥服务提供者(CSP)。";
+                if(-2147023673 == e.number //800704C7 User Canceled
+                        || -2147418113 == e.number || -2146893795 == e.number //Zhong chao USB key User Canceled when input PIN
+                        || -2146434962 == e.number //FT ePass2001 USB key User Canceld
+                ) {
+                    return "";
+                } else if(-2146893802 == e.number) { //80090016
+                    if(providerName.indexOf("SafeSign") != -1)
+                        alert(keyNotPresent); //捷德的KEY没插KEY会报这个错误
+                    else
+                        alert(keyContainerNotPresent); //当KeyContainer无法提供服务时，其他KEY会报这个错误
+                    return "";
+                } else if(-2146435060 == e.number //8010000C FTSafe ePass2000没插KEY会报
+                        || -2146893792 == e.number //80090020 FEITIAN ePassNG没插KEY会报
+                ) {
+                    alert(keyNotPresent); //捷德的KEY没插KEY会报这个错误
+                    return "";
+                } else if(-2146955245 == e.number) {
+                    alert("创建新密钥容器错误:0x80081013(00000005)\n提示：请将当前站点加入可信站点！");
+                    return "";
+                }
+                else {//创建1024位密钥对或产生CSR时发生其他未知错误，将错误报告给用户
+                    alert("在证书请求过程中发生错误！\n错误原因：" + e.description + "\n错误代码：" + e.number);
+                    return "";
+                }
+            }
+        }
+
+        /**
+         * IsValidBrowser 判断是否IE浏览器
+         * @return true:是IE，false:不是IE
+         */
+        function IsValidBrowser() {
+            var iePos = navigator.userAgent.indexOf("MSIE");
+            if (navigator.userAgent.indexOf("MSIE")>0||navigator.userAgent.toLocaleLowerCase().indexOf("trident")>-1) {
+                //是IE浏览器
+                return true;
+            } else {
+                return false;
+            }
+        }
+        /**
+         * IsWindowsOfOS 判断是否windows操作系统
+         * @return true是windows ； false非windows
+         */
+        function IsWindowsOfOS() {
+            if(navigator.userAgent.indexOf("NT") >= 0){
+//		判断windows系统
+//		navigator.userAgent.substr(navigator.userAgent.indexOf("NT")+3, 3)
+//		5.1是windowsXP系统，6.0是Vista系统，6.1是Windows7系统
+                return true;
+            }else{
+                return false;
+            }
+        }
+    </script>
+#end
+##山地 js 方法
+#macro(sdScript)
+    <script>
+        ##判断是否插入了key
+        function keyExist(){
+            let msg = "";
+            $.ajax({
+                url: "https://localhost:8191/keyExist",
+                method: 'GET',
+                contentType:'application/json; charset=UTF-8',
+                dataType: 'json',
+                async:false,
+                success: function(result){
+                    if(result && result.msg=="true"){
+                        msg = "true";
+                    }
+                },
+                error:function(err){
+                    console.log(err);
+                }
+            });
+            return msg;
+        }
+
+        ##获取证书序列号
+        function getCertSN(){
+            let msg = "";
+            $.ajax({
+                url: "https://localhost:8191/getCertSN",
+                method: 'GET',
+                contentType:'application/json; charset=UTF-8',
+                dataType: 'json',
+                async:false,
+                success: function(result){
+                    if(result && result.code==200 ){
+                        msg =  result.msg;
+                    }
+                },
+                error:function(err){
+                    console.log(err);
+                }
+            });
+            return msg;
+        }
+
+        ##获取证书名字
+        function getCertName(){
+            let msg = "";
+            $.ajax({
+                url: "https://localhost:8191/getCertName",
+                method: 'GET',
+                contentType:'application/json; charset=UTF-8',
+                dataType: 'json',
+                async:false,
+                success: function(result){
+                    if(result && result.code==200 ){
+                        msg =  result.msg;
+                    }
+                },
+                error:function(err){
+                    console.log(err);
+                }
+            });
+            return msg;
+        }
+
+        ##签名
+        function signsd(sourceData){
+            let msg = "";
+            $.ajax({
+                url: "https://localhost:8191/sign",
+                method: 'GET',
+                data: {"plain":sourceData,"useCache":"1"},
+                contentType:'application/json; charset=UTF-8',
+                dataType: 'json',
+                async:false,
+                success: function(result){
+                    if(result && result.code==200){
+                        msg = result.msg;
+                    }
+                },
+                error:function(err){
+                    console.log(err);
+                }
+            });
+            return msg;
+        }
+
+        ##验签
+        function check(sourceData,signedData){
+            let serialNumber = getCertSN();
+            let userCode = getCertName();
+            let msg = "";
+            $.ajax({
+                url: "${basePath}/sys/sdCert/check",
+                method: 'POST',
+                data: {"serialNumber":serialNumber,"userPlain":sourceData,"signUserData":signedData,"userCode":userCode},
+                contentType:'application/json; charset=UTF-8',
+                dataType: 'json',
+                async:false,
+                success: function(result){
+                    if(result){
+                        msg = result.msg;
+                    }
+                },
+                error:function(err){
+                    console.log(err);
+                }
+            });
+            return msg;
+        }
+    </script>
+#end
+
+#macro(sacaScript)
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <script src="${basePath}/static/modules/sys/sasign.js"></script>
+    <script src="${basePath}/static/modules/sys/sha256.js"></script>
+    <script src="${basePath}/static/modules/sys/ca1.js"></script>
+    <script>
+        ## 获取证书
+        function getCert() {
+            let cert = exportCert();
+            return cert;
+        };
+        ##获取证书序列号
+        function getCertSN(){
+            let cert = exportCert();
+            let sn;
+            ##field：要获取的证书属性字段；0：颁发者，1：使用者，2：序列号，3：公钥，4：到期时间
+            let field = 3;
+            sn = getCertField(cert,field);
+            return sn;
+        }
+        ##签名
+        function signsa(sourceData){
+            ##SignMessage(plainType,signedType,detached,plainData,cert)
+            ##plainType ：明文的类型，可以为 base64,hex,image,file；0为字符串，1为base64，2为16进制串
+            ##signedType ：输出的签名值的类型，可以为base64,hex；1为base64，2为16进制串
+            ##detached ：当为false时，签名数据将会含有原文，当为true时，签名数据没有原文
+            ##plainData ：待签名数据，当plainType为image时，该项为图片的url
+            ##cert ： 签名使用的私钥对应的证书
+            let cert = exportCert();
+            let signature = "";
+            signature = SignMessage(0,1,true,sourceData,cert);
+            return signature;
+        }
+        ##验签
+        function verifySa(sourceData,signedData) {
+            ## VerifySignature(msgType,signedType,detached,plainData,signedData)
+            let sigcert = "";
+            sigcert = VerifySignature(0,1,true,sourceData,signedData);
+            return sigcert;
+        }
+    </script>
+#end

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="opType" value="${opType}">
+    <table class="layui-table">
+        <tbody>
+        	<tr>
+        		##委托人
+				<td style="text-align:right;">#springMessage('table.cmsPrecativeLoanInfo.precativeId')</td>
+				<td width="35%">
+					<div class="layui-input-inline">
+						<div class="bt-biz-corp" data-biz-type="corp"  data-type="selectTree" data-name="likes_precativeId" data-scope="all"></div>
+					</div>
+				</td>
+        		<td style="text-align:right;">#springMessage('table.cmsPrecativeLoanInfo.billCode')</td>
+        		<td width="35%" style="text-align:left;">
+                       <input type="text layui-input" name="likes_billCode"  autocomplete="off" class="layui-input">
+           		 </td>
+        	</tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                  <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                  <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+  	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+			<thead>
+				<tr>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.billCode')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.precativeId')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.loanOpp')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.startDate')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.endDate')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.term')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.curId')</th>
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.money')</th>
+			     <!--    <th>#springMessage('table.cmsPrecativeLoanInfo.plType')</th> -->
+			        <th>#springMessage('table.cmsPrecativeLoanInfo.status')</th>
+			       	<th>#springMessage('common.table.thead.operation')</th>
+    			</tr>
+			</thead>
+		</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','btdate','corp','moneyType','rateType','dateType','selectType','date'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+  	//生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        mulselect:false,
+        selectCss:true,
+        ajax: {
+            'url': basePath+"/cms/precative/loaninfo/datatable?type="+ $("#opType").val()
+        },searchForm:{
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+        buttons: [
+             {
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ],
+        columns: [
+            {data:"billCode",bSortable:true,className:'center'},
+            {data:"precativeName",bSortable:true,className:'center'},
+            {data:"loanOppName",bSortable:true,className:'center'},
+            {data:"startDate",bSortable:true,className:'center'},
+            {data:"endDate",bSortable:true,className:'center'},
+            {data:"term",bSortable:true,className:'center',
+            	render : function( data , type , full , meta ){
+                    if (full.ternUnit == 'D') {
+                        return full.term + bt.lang("cms.loan.ternUnit.day");
+                    } else if (full.ternUnit == 'M') {
+                        return full.term + bt.lang("cms.loan.ternUnit.month");
+                    } else {
+                        return full.term;
+                    }
+            	}	
+            },
+            {data:"curName",bSortable:true,className:'center'},
+            {data:"money",bSortable:true,className:"textRight",
+            	render: function (data, type, full, meta) {
+            		return moneyFun.format(full.money);
+            	}
+            },
+           ## {data:"plName",bSortable:true,className:"textRight"},
+            {data:"bizStatus",bSortable:true,className:'center',
+            	render : function(data,type,full,meta){
+            		return bt.dict("cms.bizStatus",full.bizStatus);
+            	}
+    		},
+        	{data:null,bSortable:false,className:'center',
+               	render: function (data, type, full, meta) {
+               		var html="";
+               		if($("#opType").val() == "Edit"){
+               			html += '<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>';
+               			html += ' | <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+               		}else if($("#opType").val() == "repair"){
+               			html += '<a class="" href="#" data-row="'+meta.row+'" onclick="repair(this)">'+bt.lang("common.button.makeup")+'</a>';
+               		}
+               	 	html += ' | <a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+               	 	html += ' |<a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("common.button.logInfo")+'</a>';
+   //            	 	html += '<span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="bt.trackFlowByBusinessId(\''+full.id+'\')">'+bt.lang("common.button.trackFlow")+'</a>';
+					return html;
+               	}
+            }
+        ],
+        summary:{
+            pageSum: true,//小计功能开启
+            selectSum: false,//已选汇总功能开启
+            //groupColumn: 'curName',//分类汇总列参数
+            outerData: true,
+            format: {
+                decimal: 2
+            },
+            sumList: [
+                {
+                    colNum: '8', //汇总列序号
+                    dataName: 'money' //汇总列贷款金额
+                }
+            ]
+        }
+    });
+});
+
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	if($("#opType").val() == "Edit"){ 
+	  //录入查看
+	  var loan="entry";
+	}else if($("#opType").val() == "repair"){
+	  //补录查看
+	  var loan="repair";
+	}
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.button.view'),basePath + "/cms/precative/loaninfo/view?billCode=" + data.billCode+"&type=view"+"&loan="+loan+"&status="+data.bizStatus);
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '650px'],
+        maxmin: true,
+        content: basePath + "/cms/precative/loaninfo/view/" + data.billCode
+    });
+}
+
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/cms/precative/loaninfo/update?billCode=" + data.billCode);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/precative/loaninfo/update?billCode=" + data.billCode,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+
+function del(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm("#springMessage('confirm.delete.this.record')",function(){
+        $.post(basePath + "/cms/precative/loaninfo/delete/" + data.id, function(result){
+            location.reload();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+
+function repair(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.makeup'),basePath + "/cms/precative/loaninfo/repair?billCode=" + data.billCode);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/precative/loaninfo/repair?billCode=" + data.billCode,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+
+//日志列表
+function listMsg(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.logInfo'),basePath + "/cms/basedata/cmsprocessmsg/list?billCode=" + data.billCode);
+            return;
+        }
+	}
+}
+</script>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage("table.supplierType.code")</td>
+            <td width="40%">
+                <input type="text" name="likes_code"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage("table.supplierType.code")">
+            </td>
+            <td class="textRight">#springMessage("table.supplierType.name")</td>
+            <td width="40%">
+                <input type="text" name="likes_name"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage("table.supplierType.name")">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    </div>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage("table.supplierType.code")</th>
+        <th>#springMessage("table.supplierType.name")</th>
+        <th>#springMessage("table.btCurrency.rmk")</th>
+        <th>#springMessage("table.btCurrency.validSign")</th>
+        <th>#springMessage("common.table.thead.operation")</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery'], function () {
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            order: [[1,'asc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/sys/suppliertype/datatable",
+            },
+            buttons: [
+                {
+                    text: bt.lang("common.button.add"),
+                    action: function (e, dt, node, config) {
+                        add();
+                    }
+                },{
+                    text: bt.lang("common.button.batchDelete"),
+                    action: function (e, dt, node, config) {
+                        //获取选中行数据
+                        var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        if(!len){
+                            layer.msg(bt.lang('common.message.confirm.selectData'));
+                            return;
+                        }
+                        var rowData = data.splice(0, len);
+                        var ids = [];
+                        for (var i = 0; i < rowData.length; i++) {
+                            ids.push(rowData[i].id);
+                        }
+                        parent.layer.confirm(bt.lang('common.message.confirm.batchDelete'), function () {
+                            $.post(basePath + "/sys/suppliertype/delete", {externalIds: ids}, function (result) {
+                                table.draw();
+                                layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                            }, 'JSON');
+                        });
+                    }
+                }
+            ],
+            columns: [
+                {data: "code",bSortable:true,className:'center'},
+                {data: "name",bSortable:true,className:'center'},
+                {data: "rmk", orderable: false,className:'center'},
+                {
+                    data: "validSign",bSortable:true,className:'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("sf_yn", full.validSign);
+                    }
+                },
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = '';
+                        html += '<a href="javascript:void(0);" data-row="' + meta.row + '" onclick="update(this)">' + bt.lang("common.button.edit") + '</a><span class="text-explode">|</span>';
+                        html += '&nbsp;<a href="javascript:void(0);" data-row="' + meta.row + '" onclick="deleteColumn(this)">' + bt.lang("common.button.delete") + '</a><span class="text-explode">|</span>';
+                        html += '&nbsp;<a href="javascript:void(0);" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a>';
+                        return html;
+                    }
+                }
+            ],
+        });
+
+        function add() {
+            var url = basePath + "/sys/suppliertype/addOrUpdate";
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.add.data'), url);
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: url,
+                end: function () {
+                    datatable && datatable.draw();
+                }
+            })
+        }
+
+        view = function (el) {
+            var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/sys/suppliertype/view?id=" + data.id
+            });
+        }
+
+        update = function (el) {
+            var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+            if (data) {
+                var url = basePath + "/sys/suppliertype/addOrUpdate?id=" + data.id;
+                if (bt.navtab) {
+                    bt.navtab.addNavtab(bt.lang('common.update.data'), url);
+                    return;
+                }
+                parent.layer.open({
+                    type: 2,
+                    area: ['850px', '530px'],
+                    maxmin: true,
+                    content: url,
+                    end: function () {
+                        datatable && datatable.draw();
+                    }
+                });
+            }
+        }
+
+        deleteColumn = function (el) {
+            var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+            if (data) {
+                var ids = [data.id];
+                parent.layer.confirm(bt.lang('common.message.confirm.delete'), function () {
+                    $.post(basePath + "/sys/suppliertype/delete", {externalIds: ids}, function (result) {
+                        location.reload();
+                        parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    }, 'JSON');
+                });
+            }
+        }
+    });
+</script>
+</body>
+</html>

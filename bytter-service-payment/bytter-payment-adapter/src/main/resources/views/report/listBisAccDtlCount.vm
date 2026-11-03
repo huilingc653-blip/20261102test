@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody >
+        <tr>
+            <td class="textRight" width="10%">#springMessage('业务日期')</td>
+            <td width="20%">
+                <input type="text" name="beginDate" data-type="date" data-biz-name="beginDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="endDate" value="$!{beginDate}" lay-verify="required">
+                <span class="date-mid">~</span>
+                <input type="text" name="endDate" data-type="date" data-biz-name="endDate" class="layui-input bt-input-inline bt-biz-dateType" id="endDate" value="$!{endDate}" lay-verify="required">
+            </td>
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.corp')</td>
+            <td width="20%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="ins_corpId"
+                         data-scope="all" data-resource="report:bisaccdtl:count:query"
+                         data-callback="corpCallback"></div>
+                </div>
+            </td>
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.bankAcc')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <input type="text" id="likes_bankAcc" name="likes_bankAcc" data-name="likes_bankAcc" data-biz-name="likes_bankAcc" accountType="2,3"
+                           data-resource="report:bisaccdtl:count:query"  class="layui-input bt-biz-accountTable" data-callback="accountCallBack"
+                           ignorePermission="true"  autocomplete="off" containDelBankAcc="true"/>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('是否直联')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="select"
+                         data-group="sf_yn" data-name="eqs_isOnline"></div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('笔数')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" name="number" autocomplete="off" data-minus="true" class="layui-input bt-biz-moneyType"
+                           data-biz-name="number" data-decimal="0" data-min="0">
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6" class="center">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('大区')</th>
+        <th>#springMessage('省区')</th>
+        <th>#springMessage('单位名称')</th>
+        <th>#springMessage('银行户名')</th>
+        <th>#springMessage('银行账号')</th>
+        <th>#springMessage('开户行')</th>
+        <th>#springMessage('是否直联')</th>
+        <th>#springMessage('开始日期')</th>
+        <th>#springMessage('结束日期')</th>
+        <th>#springMessage('笔数')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    var  moneyType;
+    bt.use(['form', 'datatable', 'dateType', 'corp', 'dicts', 'money', 'selectType', 'accountTable', 'bank', 'moneyType','mulselect'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.dateType.init();
+        moneyType = bt.moneyType.init();
+        bt.dicts.init();
+        bt.mulselect.init();
+        var selectType = bt.selectType.init();
+
+        accountCallBack = function (data) {
+            $("#likes_bankAcc").val(data.bankAcc);
+        }
+        var accountTable = bt.accountTable.init();
+
+        // 选择单位回调
+        corpCallback = function (id) {
+            // 重新根据单位ID加载账户表格
+            accountTable.get("likes_bankAcc").setCorp(id);
+        }
+
+        bt.corp.init();
+
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+            },
+            checkbox: true,
+            order: [[3, 'desc']],
+            ajax: {
+                'url': basePath + "/report/bisaccdtlCount/datatable"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns: [
+                {data: "parentName", bSortable: true,className:"center"},
+                {data: "provinceName", bSortable: true,className:"center"},
+                {data: "corpName", bSortable: true},
+                {data: "accName", bSortable: true},
+                {data: "bankAcc", bSortable: true},
+                {data: "bankName", bSortable: true},
+                {data: "isOnlineName", bSortable: true,className:"center"},
+                {data: "beginDate", bSortable: false,className:"center"},
+                {data: "endDate", bSortable: false,className:"center"},
+                {data: "number", bSortable: false,className:"center"},
+            ],
+            summary: {
+                pageSum: true,//小计功能关闭
+                selectSum: true,//已选汇总功能开启
+                format: {
+                    decimal: 0
+                },
+                sumList: [
+                    {
+                        colNum: '10',
+                        dataName: 'number',
+                        money:false
+                    }
+                ]
+            },
+        });
+    });
+
+</script>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<!-- 总账查询表 -->
+<body>
+<form id="searchForm" class="layui-form tt">
+	<input id="pageNum" type="hidden" name="pageNum" value="$!{pageNum}"/>##当前页
+<table class="layui-table ">
+	<tbody>
+		<tr>
+			<!-- 网点 -->
+			<td class="textRight">#springMessage('table.fcAcc.netId')</td>
+			<td width="40%"><div id="netId" class="bt-biz-corp" data-scope="net" data-biz-name="netId" data-name="netId" data-biz-type="net" data-type="selectTree" data-resource="finacial:outaccbook:ledgerQueryList:query" data-defaultvalue="$!{condition.netId}"></div></td>
+
+			<!-- 记账日期 -->
+			<td class="textRight">#springMessage('table.nisBillhead.tallyDate')</td>
+			<td width="40%">
+				 <INPUT class="layui-input bt-input-inline bt-biz-dateType" data-biz-name="startDate" type=text name="startDate"  data-endid="t2" 
+				 	value="$!date.format('yyyy-MM-dd',$!condition.startDate)">
+				 	<SPAN class=date-mid>~</SPAN>
+				 <INPUT id=t2 class="layui-input bt-input-inline bt-biz-dateType"  data-biz-name="endDate" type=text name="endDate" value="$!date.format('yyyy-MM-dd',$!condition.endDate)">
+			</td>
+		</tr>	
+
+		<tr>
+			<!-- 科目 -->
+	     	<td class="textRight">#springMessage('fcInstrate.subjectCode')</td>
+	     	<td width="40%">
+	     		<div class="layui-inline">
+            			<div id="subjectSort" />
+            			<input type="hidden" id="subjectSortValue" data-biz-name="subjectSortValue" value="$!{condition.subjectSort}" >
+	            	</div>
+	     	</td>
+				
+			<!-- 币别 -->
+			<td class="textRight">#springMessage('table.btBankAccCur.cur')</td>
+			<td width="40%">
+				<div class="layui-inline">
+                    	  	<div class=bt-biz-selectType  data-name="curId" data-textField="curName"  data-valuefield="id" data-url="${basePath}/basic/business/btcurrency/json" data-biz-name="curId" data-defaultvalue="$!{condition.curId}"></div>
+				</div>
+				
+	     	</td>
+	    </tr>
+
+	<!--提交按钮 -->
+	<tr>
+	   <td style="text-align: center;" colSpan="6">
+	 		 <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+              <button id="reset" type="button" class="layui-btn" style="background-color:#009688;color:#fbfbfb;">#springMessage('common.button.reset')</button>
+	   </td>
+	</tr>
+	
+</tbody>
+</table>
+</form>
+	<div id="print">
+		##网点
+		<div  class="layui-input-inline"  style="width:25%">
+			<span>#springMessage('table.fcAcc.netId')</span>
+			<span>$!{search.netName}</span>
+		</div> 
+		##日期范围
+		<div  class="layui-input-inline"  style="width:25%">
+			<span>#springMessage('table.accountSummary.date_scope')</span>
+			<span>$!{search.startDate} ~ $!{search.endDate}</span>
+		</div> 
+		##科目代码
+		<div  class="layui-input-inline"  style="width:25%">
+			<span>#springMessage('table.fcAcc.subjectId')</span>
+			<span>$!{search.subjectCode}</span>
+		</div>
+		##科目名称 
+		<div  class="layui-input-inline"  style="width:24%">
+			<span>#springMessage('table.fbsBudgetDetail.itemName')</span>
+			<span>$!{search.subjectName}</span>
+		</div> 
+
+<br>
+<br>
+		##币别
+		<div  class="layui-input-inline"  style="width:25%">
+			<span>#springMessage('table.fcAcc.curId')</span>
+			<span>$!{search.curName}</span>
+		</div> 
+		##期初笔数
+		<div  class="layui-input-inline"  style="width:25%">
+			<span>#springMessage('table.accountSummary.beginning _num')</span>
+			<span>$!{qcCount}</span>
+		</div>
+		##期初余额
+		<div  class="layui-input-inline"  style="width:25%">
+			<span>#springMessage('table.accountSummary.beginning_balance')</span>
+			<span>$!number.formatNumeric($!{qcBalance})</span>
+		</div>
+<br>
+<br>
+
+		<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    		<thead>
+   				 <tr>
+    				<th rowspan="2" width="10%">#springMessage('table.fcOutAccbook.tallyDate')</th>
+    				<th colspan="2" width="30%">#springMessage('fcAccDetail.creditMoney')</th>
+    				<th colspan="2" width="30%"> #springMessage('fcAccDetail.debitMoney')</th>
+    				<th colspan="2" width="30%">#springMessage('table.fcAccbookDtlHis.balance')</th>
+   				 </tr>
+   				 
+   				 <tr>
+    				<th width="15%">#springMessage('table.fcAccBalance.cnt')</th>
+    				<th width="15%">#springMessage('table.nisBillhead.payMoney')</th>
+    				<th width="15%">#springMessage('table.fcAccBalance.cnt')</th>
+    				<th width="15%">#springMessage('table.nisBillhead.payMoney')</th>
+					<th width="15%">#springMessage('table.fcAccBalance.cnt')</th>
+    				<th width="15%">#springMessage('table.nisBillhead.payMoney')</th>
+    			</tr>
+    		</thead>
+    		<tbody>
+    	#if("$!{table}" !="")
+   			#foreach($item in $table)	
+   			<tr>
+   				<td align="center">$!{item.LEDGEROPTDATE}</td>
+   				<td align="center">$!{item.DEBITCOUNT}</td>
+   				<td class="textRight">$!number.formatNumeric($!{item.DEBITMONEY})</td>
+   				<td align="center">$!{item.CREDITCOUNT}</td>
+   				<td class="textRight">$!number.formatNumeric($!{item.CREDITMONEY})</td>
+   				<td align="center">$!{item.TCOUNT}</td>
+   				<td class="textRight">$!number.formatNumeric($!{item.TBALANCE})</td>
+   			</tr>
+   			#end
+   		#else
+   			<tr>
+   				<td colspan="11" align="center">#springMessage('common.msg.temporarily_no_data')</td>
+   			</tr>
+   		#end
+   		</tbody>		
+   		 	
+		</table>
+		</div>
+		<div id="page" style="position:fixed ; bottom:0px;width:100%"></div>##页码
+		<input id="size" type="hidden" value="$!{size}">##总页数
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/outaccbook/ledgerQuery.list.js?_btv=${resourceVersion}"></script>
+</html>

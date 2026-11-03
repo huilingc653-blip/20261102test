@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input type="hidden" name="type" id="type">
+		<table class="layui-table">
+			<tbody >
+				<tr>
+                    <td class="textRight" width="10%">#springMessage('table.bisAccDtlClaim.transTime')</td>
+                    <td width="20%">
+                        <input type="text" name="startDate" data-type="date" data-biz-name="ged_transTime"
+                               class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_transTime" data-today="true" value="$!{startDate}">
+                        <span class="date-mid">~</span>
+                        <input type="text" name="endDate" data-type="date" data-biz-name="
+                        led_transTime" class="layui-input bt-input-inline bt-biz-dateType" id="led_transTime" data-today="true" value="$!{endDate}">
+                    </td>
+                    <td align="right">银行类型：</td>
+                    <td align="left">
+                        <div class="layui-input-inline">
+                        <select name="bankType" id="bankType">
+                            <option value="">全部</option>
+                            #foreach($bankType in $bankTypeList)
+                                <option value="${bankType.bankType}">${bankType.bankTypeName}</option>
+                            #end
+                        </select>
+                        </div>
+                    </td>
+                </tr>
+				<tr>
+                    <td colspan="6" class="center">
+                        <button class="layui-btn" lay-submit lay-filter="search" value="dtl" type="button">#springMessage('common.button.searchDtl')</button>
+                        <button class="layui-btn" lay-submit lay-filter="search" value="bal" type="button">#springMessage('common.button.searchBal')</button>
+                        <button class="layui-btn" lay-submit lay-filter="search" value="bankBill" type="button">#springMessage('common.button.searchBankBill')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+				</tr>
+            </tbody>
+		</table>
+    </form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form', 'datatable', 'selectType', 'dateType','radioType', 'dicts', 'bank', 'corp'], function () {
+        $ = bt.jquery, form = bt.form();
+        var dicts = bt.dicts.init();
+        bt.dateType.init();
+        bt.selectType.init();
+        //监听提交
+        form.on('submit(search)', function (data) {
+            var type = $(this).attr("value");
+            $("#type").val(type);
+            bt.loading.hide();
+            var action = "/erp/swap/rpa/toSave";
+            bt.loading.show();
+            //控制重复提交
+            if ($(data.elem).parent().hasClass('isSubmiting')) {
+                bt.loading.hide();
+                return false
+            }
+            $.post(basePath + action, $('#searchForm').serialize(), function (result) {
+                bt.loading.hide();
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+                    parent.layer.closeAll();
+                })
+            }, 'JSON');
+        });
+    });
+</script>
+</html>

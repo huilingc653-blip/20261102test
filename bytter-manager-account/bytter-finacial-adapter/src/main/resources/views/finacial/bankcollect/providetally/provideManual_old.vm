@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 22px; 
+	text-decoration: underline;
+	text-align: center;
+	/*color: blue;*/
+	/*color: #00CC33;*/
+}
+</style>    
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="opType" name="opType" value="$!{opType}">
+	<input type="hidden" id="menuType" name="menuType" value="$!{menuType}">
+	<input type="hidden" id="onlineSign" name="onlineSign" value="$!{onlineSign}">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				##申请单位
+        		<td style="text-align:right;">#springMessage('table.abBillTransfer.applyCorpId')</td>
+        		<td width="40%" style="text-align:left;">
+       				<div class="layui-input-inline">
+                   		<div class="bt-biz-corp" 
+							 data-biz-type="corp" 
+							 data-type="selectTree" 
+							 data-name="eqs_corpId" 
+							 data-biz-name="corpId" 
+							 data-scope="all"
+							 data-tree-type="check"
+                             data-resource="fcl:provide:tally:apply"></div>
+           			</div>
+           		</td>
+           	
+           		##借款发放单号
+        		<td style="text-align:right;">#springMessage('table.cmsProvideLoanDeferred.liCode')</td>
+       			<td width="40%" style="text-align:left;">
+                   	<input type="text" name="likes_sendCode" class="layui-input bt-input-inline ">
+          		</td>
+       		</tr>
+      			
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+			<thead>
+				<tr>
+		      	  	<th>#springMessage('table.abBillTransfer.applyCorpId')</th>##申请单位
+		       		<th>#springMessage('table.cmsProvideLoanDeferred.liCode')</th>##发放单号
+		       	 	<th>#springMessage('table.cmsProvideLoanInfo.billCode')</th>##借款单号
+		       		<th>#springMessage('table.cmsProvideLoanInfo.bankId')</th>##借款银行
+		      		<th>#springMessage('table.cmsProvideLoanSend.sendDate')</th>##发放日期
+		        	<th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>##到期日期
+		        	<th>#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+		        	<th>#springMessage('table.cmsPrecativeLoanInfo.loanSendOutType')</th>##发放方式
+		        	<th>#springMessage('table.cmsLoanSend.provideCode')</th>##发放编号
+		        	<th>#springMessage('table.cmsProvideLoanInfo.plMoney')</th>##借款金额
+		        	<th>#springMessage('table.cmsProvideLoanSend.money')</th>##发放金额
+					<th>#springMessage('table.cmsPrecativeLoanInfo.tallySign')</th> 
+		        	
+  			</tr>
+		</thead>
+</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','selectTable','btdate','bank','select','moneyType','dicts','bttable','element','datatable','mulselect','corp','dateType','selectType','region','date'], function(){
+	var tableData ;
+	element = layui.element();
+    $ = bt.jquery;
+    form = bt.form();
+    tt = bt.mulselect.init();
+    bt.bank.init({ elem:'.bank',})
+    region = bt.region.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+    dataType = bt.dateType.init();
+    bt.corp.init();
+    selectType = bt.selectType.init();
+    bt.dicts.init();
+
+    
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'rtlip',
+        colReorder: true,
+        checkbox:false,
+        mulselect:false,
+        selectCss:true,
+        buttonsLayout:false,
+        order: [2,'desc'],
+        fixedColumns:{
+        	leftColumns:0
+        },
+        ajax: {
+            'url': basePath+"/finacial/bankCollect/provideSendTally/datatable"
+        },searchForm:{
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+       /*  buttons: [{
+            text: bt.lang("Finacial.accbook.common.button.add"),
+            action: function ( e, dt, node, config ) {
+            	var length = $("#printMRTable tbody>tr").length;
+            	var data = dt.rows('.selected').data();
+            	var len = data.length;
+                if(len<1){
+                	layer.msg("#springMessage('table.fcBankBill.msg.chooseLeastOne')");
+                	return;
+                }
+                var rowData = data.splice(0,len);
+             	var id = rowData[0].billCode;
+             	var type = $("#opType").val();
+             	var menuType = $("#menuType").val();
+             	parent.parent.$("#menuType").val(menuType);
+             	parent.parent.$("#key").val(id);
+             	parent.parent.$("#curCode").val(rowData[0].curId);
+             	parent.parent.$("#netId").val(rowData[0].corpId);
+             	parent.parent.$("#precativeId").val(rowData[0].precativeId);
+             	parent.parent.$("#loanOpp").val(rowData[0].loanOpp);
+             	$.post(basePath + "/finacial/bankCollect/precativeTally/processAccbook/",{key:id,type:type,menuType:menuType}, function(result){
+             		if(typeof result.success == "boolean" && result.success == false){
+             			layer.alert(result.msg);
+                    	return;
+             		}
+             		parent.parent.bt.setDate(result);
+             	},'JSON');
+            }
+        }
+        ], */
+        columns: [
+            {data:"corpName",bSortable:false,className:"center"},
+            {data:"billCode",bSortable:false,className:"center"},
+            {data:"loanCode",bSortable:false,className:"center"},
+            {data:"bankName",bSortable:false,className:"center"},
+            {data:"sendDate",bSortable:false,className:'center'},
+            {data:"sendRepayDate",bSortable:false,className:"center",
+				render:function(data,type,full,meta){
+					return bt.date.format(full.sendRepayDate,'yyyy-MM-dd');
+				}
+			},
+            {data:"curName",bSortable:false,className:"center"},
+            {data:"loanSendOutType",bSortable:false,className:'center',
+            	render: function (data, type, full, meta) {
+            		return bt.dict("cms.loan.loanSendOutType",full.loanSendOutType);
+            	}
+            },
+            {data:"sendContractCode",bSortable:false,className:"center"},
+            {data:"plMoney",bSortable:false,className:"textRight",
+            	render: function (data, type, full, meta) {
+            		return moneyFun.format(full.plMoney);
+            	}
+            },
+            {data:"money",bSortable:false,className:"textRight",
+            	render: function (data, type, full, meta) {
+            		return moneyFun.format(full.money);
+            	}
+           	},
+           	{data:"tallySign",bSortable:false,className:"center",
+			    render:function(data,type,full,meta){
+				   return bt.dict("cms.tallySign",full.tallySign == null ? 0 : full.tallySign );
+				}
+			}
+        ],
+        btInitComplete:function(setting,json){
+        	tableData = json.data;
+        },
+		btDrawCallback:function(setting){
+        	tableData = setting.json.data;
+        }
+    });
+    
+     $('#appTable tbody').on('dblclick','tr',function(data){ 
+        var dataIndex = $(this).context.rowIndex - 1;
+        //var data = tableData.rows('.selected').data();
+        rowData = tableData[dataIndex];
+        var id = rowData.billCode;
+     	var type = $("#opType").val();
+     	var menuType = $("#menuType").val();
+     	parent.parent.$("#menuType").val(menuType);
+     	parent.parent.$("#key").val(id);
+     	parent.parent.$("#curCode").val(rowData.curId);
+     	parent.parent.$("#netId").val(rowData.corpId);
+     	parent.parent.$("#corpCode").val(rowData.corpId);
+     	$.post(basePath + "/finacial/bankCollect/provideSendTally/processAccbook/",{key:id,type:type,menuType:menuType}, function(result){
+     		if(typeof result.success == "boolean" && result.success == false){
+     			layer.alert(result.msg);
+            	return;
+     		}
+			//增加背景色
+			var row = datatable.row(dataIndex).node();
+			$(".row_bg").removeClass("row_bg");
+			$(row).addClass("row_bg");
+     		parent.parent.bt.setDate(result);
+			parent.parent.uploaderRender(type,result);
+     	},'JSON');
+	});   
+});
+
+</script>
+</html>

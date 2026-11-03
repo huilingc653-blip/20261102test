@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+        .inCenter{
+            text-align: center!important;
+        }
+        .addRow {
+            cursor: pointer;
+            color: rgb(0, 0, 204);
+        }
+
+        .noneElem {
+            display: none;
+        }
+
+        .input-bp input {
+            border: none;
+            width: 192px;
+        }
+        .input-bp span {
+            position: absolute;
+            right: 4px;
+            top: 1px;
+        }
+
+        .layui-table>tfoot td {
+            border: 1px solid #d2d2d2 !important;
+        }
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+    #parse("views/common/footer.vm")
+<input type="hidden" id="planId" name="planId" value="$!{planId}">##还款计划id
+<input type="hidden" id="id" value="$!{inlSend.id}">##发放id
+<input type="hidden" id="orig_repayType" value="$!{inlSend.repayType}">
+<input type="hidden" value="$!{inlSend.isDeferred}" id="isDeferred">
+<input type="hidden" value="$!date.format('yyyy-MM-dd',$!{inlSend.deferredEndDate})" id="deferredEndDate">
+<input type="hidden" value="$!date.format('yyyy-MM-dd',$!{inlSend.endDate})" id="endDate">
+<input type="hidden" value="$!date.format('yyyy-MM-dd',$!{inlSend.sendDate})" id="sendDate">
+<input type="hidden" value="$!{inlSend.sendMoney}" id="sendMoney">
+<input type="hidden" value="$!{inlSend.rate}" id="sendRate">
+<input type="hidden" value="$!{inlSend.rateBase}" id="rateBase">
+<input type="hidden" value="$!{inlSend.deferredRate}" id="deferredRate">
+<input type="hidden" value="$!date.format('yyyy-MM-dd',$!{maxRepayStartDate})" id="maxRepayStartDate">
+<input type="hidden" id="repayMinDate" value="$!{repayMainInfo.repayBeginDate}">
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        #parse("views/cms/inl/send/sendCommonInfo.vm")
+    </table>
+
+    <table class="layui-table">
+        ##############################内部资金拆借利率调整信息######################################################################
+        <tr>
+            ##            内部资金拆借利率调整信息
+            <td colspan="6" style="font-weight: bolder;text-align: center" class="textLeft">#springMessage('cms.inl.info.repayPlan')
+                <input type="hidden" id="page" value="update">
+                <input type="hidden" name="corpId" value="$!{inlInfo.borrowInCorp}">
+                <input type="hidden" name="inlInfoId" value="$!{inlInfo.id}">
+                <input type="hidden" name="inlSendId" value="$!{inlSend.id}">
+                <input type="hidden" name="id" value="$!{inlChange.id}">
+            </td>
+        </tr>
+        <tr>
+            ##            还款开始日期
+            <td class="textRight">#springMessage('cms.inl.info.repayStartDate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" id="repayStartDate" class="layui-input bt-biz-dateType"
+                           data-min="$!date.format('yyyy-MM-dd',$!{maxRepayStartDate})"
+                        #if($!{inlSend.isDeferred} == '1')
+                           data-max="$!date.format('yyyy-MM-dd',$!{inlSend.deferredEndDate})"
+                        #else
+                           data-max="$!date.format('yyyy-MM-dd',$!{inlSend.endDate})"
+                        #end
+                           data-biz-name="repayStartDate" value="$!date.format('yyyy-MM-dd',$!{inlChange.repayStartDate})" name="repayStartDate">
+                </div>
+            </td>
+            ##            更改还款方式
+            <td class="textRight">#springMessage('cms.RepaymentSchedule.repayTypeMsg')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-name="repayType" data-biz-name="repayType" data-value="$!{inlChange.repayType}"
+                         data-url="$basePath/cms/repay/repaytype/queryNoNRepayTypeList" data-callback="repayTypeCallback" data-initcallback="repayTypeCallback"
+                         data-valuefield="id" data-textfield="repayName"
+                    ></div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn layui-btn-small" id="calBtn" type="button" onclick="calRepayPlan()">#springMessage('cms.provide.inerest.cal')</button>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##            备注
+            <td colspan="6">
+                <div>
+                    <div class="layui-inline" id="addRowDiv">
+                        ##                <button class="layui-btn layui-btn-small layui-disabled" id="addRowBtn" disabled="disabled" onclick="addRow(1,0)">#springMessage('common.button.add')</button>
+                    </div>
+                    <div class="layui-inline">
+                        <button type="button" class="layui-btn layui-btn-small layui-disabled" id="importBtn" disabled="disabled" onclick="importExcel()">#springMessage('common.button.imports')</button>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn layui-btn-small" type="button" onclick="exportExcel()">#springMessage('common.button.exports')</button>
+                    </div>
+                </div>
+                <table class="layui-table self-adaption" id="repayPlanTB">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('table.createRepayPlan.prediceRepayDate')</th> ##预计还款日
+                        <th>#springMessage('table.createRepayPlan.repaymentMoney')</th>	##还款本金
+                        <th>#springMessage('table.createRepayPlan.repaymentIst')</th> ##还款利息
+                        <th>#springMessage('table.createRepayPlan.currentRepayMoney')</th>	##本期还款金额
+                        <th>#springMessage('table.createRepayPlan.surplusMoney')</th> ##剩余本金
+                        <th>#springMessage('table.createRepayPlan.isRepay')</th>	##是否已还
+                        <th>#springMessage('table.createRepayPlan.rmk')</th> ##备注
+                        <th>#springMessage('table.createRepayPlan.operation')</th>	##操作
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td style="text-align: center">#springMessage('table.interet.sum')</td>
+                        <td class="textRight">
+                            <input type="text" style="border:none;" id="repaymentMoneySum" data-name="repaymentMoneySum"
+                                   data-biz-name="repaymentMoneySum" readonly="readonly" data-decimal="2"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType">
+                        </td>
+                        <td class="textRight">
+                            <input type="text" style="border:none;" id="repaymentIstSum" data-name="repaymentIstSum"
+                                   data-biz-name="repaymentIstSum" readonly="readonly" data-decimal="2"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType">
+                        </td>
+                        <td class="textRight">
+                            <input type="text" style="border:none;" id="currentRepayMoneySum" data-name="currentRepayMoneySum"
+                                   data-biz-name="currentRepayMoneySum" readonly="readonly" data-decimal="2"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType">
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            ##            备注
+            <td class="textRight">#springMessage('table.cmsLoanInfo.rmk')</td>
+            <td colspan="5">
+                <textarea name="rmk" class="layui-textarea"></textarea>
+            </td>
+        </tr>
+        <tr>
+            ##            附件
+            <td class="textRight">#springMessage('cms.loan.attachment')</td>
+            <td colspan="5">
+                <input type="hidden" name="attachmentId" id="adjuestrateAttachmentId">
+                <div id="AdjuestrateUploader" class="layui-input-inline" style="width:100%;"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6"style="text-align: center">
+                <button class="layui-btn" type="button" lay-submit="submit" value="11" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" type="button" onclick="doClose()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<script src="${basePath}/static/modules/finacial/report/export.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/inl/addInlChange.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" name="dtlId" id="dtlId" value="$!{abPoolEmitApplyVO.dtlId}"/>
+    <input type="hidden" name="payer" id="payer" value="$!{abPoolEmitApplyVO.payer}"/>
+    <input type="hidden" name="payerBankName" id="payerBankName" value="$!{abPoolEmitApplyVO.payerBankName}"/>
+    <input type="hidden" name="payerbankno" id="payerbankno" value="$!{abPoolEmitApplyVO.payerbankno}"/>
+    <input type="hidden" name="aid" id="aid" value="$!{abPoolEmitApplyVO.aid}"/>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight" width="17%">#springMessage('billPool.bail.corp')</td>
+            <td style="width: 291px">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-billPoolCorp"
+                         data-tree-type="radio"
+                         data-biz-name="corpId"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-callback="corpCallback"
+                         data-required="true"
+                         data-resource="abpool:emit:apply:resource:op"
+                         data-defaultvalue="$!{abPoolEmitApplyVO.corpId}"
+                         data-placeholder="#springMessage('billPool.bail.corp')">
+                    </div>
+                </div>
+            </td>
+        ##票据池
+            <td class="textRight" width="17%">#springMessage('billPool.bail.bp')</td>
+            <td style="width: 291px">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-billPool"
+                         data-biz-type="billPool"
+                         data-biz-name="bpId"
+                         data-name="bpId"
+                         data-required="true"
+                         data-callback="poolCallback"
+                         data-defaultvalue="$!{abPoolEmitApplyVO.bpId}">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##票据类型
+            <td class="textRight">#springMessage('table.abVoucherinfo.billType')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="AB_BILL_TYPE" #if($!{abPoolEmitApplyVO.billType}) data-defaultvalue="$!{abPoolEmitApplyVO.billType}"
+                #else data-defaultvalue="10" #end data-name="billType" data-biz-name="billType" data-required="true" ></div>
+            </td>
+        ##票据介质
+            <td class="textRight">#springMessage('billPool.emitFinaApply.billFlag')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="AB_BILL_FLAG" #if($!{abPoolEmitApplyVO.billFlag}) data-defaultvalue="$!{abPoolEmitApplyVO.billFlag}"
+                #else data-defaultvalue="11" #end data-name="billFlag" data-biz-name="billFlag" data-required="true" ></div>
+            </td>
+        </tr>
+        <tr>
+        ##申请人账号
+            <td class="textRight">#springMessage('billPool.emitFinaApply.applyAcc')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="payeracc" name="payeracc" data-name="payeracc" data-biz-name="payeracc"
+                        #if($!{externalCorpNum} eq '1' ) readonly="readonly" #end data-resource="abpool:emit:apply:resource:op" lay-verify="required" isOnline="1"
+                            #if($!{abPoolEmitApplyVO.corpId}) data-defaultcorp = "$!{abPoolEmitApplyVO.corpId}" #else data-defaultcorp = "xx" #end electricBill="1"
+                           class="bank layui-input bt-biz-accountTable" data-callback="accountPayeeCallBack" data-biz-name="payeracc" value="$!{abPoolEmitApplyVO.payeracc}">
+                </div>
+            </td>
+        ##票据金额
+            <td class="textRight">#springMessage('table.abVoucherinfo.billMoney')</td>
+            <td>
+                <input type="text" data-name="billMoney" lay-verify="required" class="layui-input bt-biz-moneyType" value="$!{abPoolEmitApplyVO.billMoney}"
+                       placeholder="#springMessage('table.abVoucherinfo.billMoney')" data-biz-name="test" id="billMoney" data-min="0.01">
+            </td>
+        </tr>
+        <tr>
+        ##出票日期
+            <td class="textRight">#springMessage('table.abVoucherinfo.startDate')</td>
+            <td >
+                <input type="text" name="startDate" data-name="startDate" class="layui-input bt-biz-dateType" data-endid="endDate" data-type="date"
+                       lay-verify="required" data-biz-name="startDate" value="$!{abPoolEmitApplyVO.startDate}">
+            </td>
+        ##到期日期
+            <td class="textRight">#springMessage('table.abVoucherinfo.endDate')</td>
+            <td >
+                <input type="text" name="endDate" data-name="endDate" class="layui-input bt-biz-dateType" id="endDate" data-type="date"
+                       lay-verify="required" data-biz-name="endDate"  value="$!{abPoolEmitApplyVO.endDate}">
+            </td>
+
+        </tr>
+        <tr>
+        ##收票人账号
+            <td class="textRight">
+                <div class="layui-input-inline" id="pledgeeAccSpanDiv">
+                    <span style="color:red;font-size: 14px;font-weight:bold;vertical-align: middle;">*</span>
+                </div>
+                #springMessage('table.abVoucherinfo.payeeacc')
+            </td>
+            <td>
+                <div class="layui-input-inline" id="pledgeeAccDiv">
+                ##收票人账号--客商
+                    <input type="text" id="payeeacc" name="payeeacc" lay-verify="required|strlength" data-maxlength="30"
+                        #if($!{externalCorpNum} eq '1' ) readonly="readonly" #end value="$!{abPoolEmitApplyVO.payeeacc}"
+                           autocomplete="off" class="bank layui-input" placeholder="#springMessage('table.abVoucherinfo.payeeacc')">
+                    <div class="bt-div-search" id="pledgeeNameDiv">
+                        <button class="bt-biz-externalCorpBankAcc" type="button" data-callback="bt.payeeCorpCallback"
+                                data-beforeClick="bt.externalCorpBankAccParams">
+                            <i class="layui-icon">&#xe615;</i></button>
+                    </div>
+                </div>
+            </td>
+        ##收票人全称
+            <td class="textRight">#springMessage('table.abVoucherinfo.payee')</td>
+            <td>
+            ##收票人全称--客商
+                <div class="layui-input-inline" id="payeeAccNameDiv">
+                    <input type="text" id="payeeAccName" name="payee" #if($!{externalCorpNum} eq '1' ) readonly="readonly" #end lay-verify="required|strlength" data-maxlength="240"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.payee')" value="$!{abPoolEmitApplyVO.payee}" >
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##收票人开户银行名称
+            <td class="textRight">#springMessage('table.abVoucherinfo.payeeBankName')</td>
+            <td >
+                <input type="text" id="payeeBankName" name="payeeBankName" lay-verify="required|strlength" data-maxlength="240"
+                    #if($!{externalCorpNum} eq '1' ) readonly="readonly" #end value="$!{abPoolEmitApplyVO.payeeBankName}"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.payeeBankName')">
+            </td>
+        ##收票人开户银行行号
+            <td class="textRight">#springMessage('table.abVoucherinfo.payeebankno')</td>
+            <td >
+                <input type="text" id="payeebankno" name="payeebankno" lay-verify="required|strlength" data-maxlength="30"
+                    #if($!{externalCorpNum} eq '1' ) readonly="readonly" #end value="$!{abPoolEmitApplyVO.payeebankno}"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.payeebankno')">
+            </td>
+        </tr>
+        <tr>
+        ##承兑人账号
+            <td class="textRight"><span id="spanAcc" style="color:red;font-size: 14px;font-weight:bold;vertical-align: middle;">*</span>#springMessage('table.abVoucherinfo.acceptoracc')</td>
+            <td>
+                <div class="layui-input-inline"  >
+                    <input type="text" id="acceptoracc" name="acceptoracc" value="$!{abPoolEmitApplyVO.acceptoracc}" lay-verify="required" data-maxlength="30"
+                           autocomplete="off" class="layui-input bank" placeholder="#springMessage('table.abVoucherinfo.acceptoracc')">
+                    <div class="bt-div-search" >
+                        <button class="bt-biz-externalCorpBankAcc" type="button" data-callback="bt.bailCorpCallback"><i class="layui-icon">&#xe615;</i></button>
+                    </div>
+                </div>
+            </td>
+        ##承兑人
+            <td class="textRight">#springMessage('table.abVoucherinfo.acceptor')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="acceptor" name="acceptor" lay-verify="required|strlength" data-maxlength="240" value="$!{abPoolEmitApplyVO.acceptor}"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.acceptor')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##承兑人开户行行号
+            <td class="textRight"><span id="spanBankNo" style="color:red;font-size: 14px;font-weight:bold;vertical-align: middle">*</span>#springMessage('table.abVoucherinfo.acceptorbankno')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="acceptorbankno" name="acceptorbankno"  readonly="true" lay-verify="required|strlength" data-maxlength="12"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.acceptorbankno')" value="$!{abPoolEmitApplyVO.acceptorbankno}">
+                    <div class="bt-div-search"  >
+                        <button class="bt-biz-bankInfo" type="button" data-callback="bt.bankinfoCallback"><i class="layui-icon">&#xe615;</i></button>
+                    </div>
+                </div>
+            </td>
+        ##承兑人开户行名称
+            <td class="textRight">#springMessage('table.abVoucherinfo.acceptorBankName')</td>
+            <td >
+                <input type="text" id="acceptorBankName" name="acceptorBankName" lay-verify="required|strlength" data-maxlength="240" value="$!{abPoolEmitApplyVO.acceptorBankName}"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.acceptorBankName')">
+            </td>
+        </tr>
+        ##是否转让
+        <tr>
+            <td class="textRight" width="17%">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+            <td width="33%">
+                <div class="bt-biz-dict" data-type="select" data-group="AB_BANEM" data-name="banendrsmtmk"
+                     data-placeholder="" data-defaultvalue="$!{abPoolEmitApplyVO.banendrsmtmk}"></div>
+            </td>
+        ##融资用途
+            <td class="textRight" width="17%"></td>
+            <td width="33%">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="layui-form-submit-adaptive">
+        <div style="text-align: center;">
+            <button class="layui-btn" lay-submit="" type="button" lay-filter="save">#springMessage('common.button.save')</button>
+            <button class="layui-btn" lay-submit="" type="button" lay-filter="submit">#springMessage('common.button.submit')</button>
+            <button class="layui-btn" type="button" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/billPool/abPoolEmitApply.add.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form id="searchForm" class="layui-form">
+
+    <table class="layui-table">
+        <tr>
+            <td width="10%" class="textRight">#springMessage('df.businessCode')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_businessCode" class="layui-input" >
+                </div>
+            </td>
+            <td width="10%" class="textRight">#springMessage('df.businessName')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_businessName" class="layui-input" >
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center">
+                <button class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+                <button type="reset" class="layui-btn layui-btn-primary layui-btn-small">#springMessage("common.button.reset")</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+    <table id="appTable" class="layui-table layui-form">
+        <thead>
+        <tr>
+            <th>#springMessage('df.businessCode')</th>
+            <th>#springMessage('df.businessName')</th>
+            <th>#springMessage('finacial.paramConfig.fcSubject.valid')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+    </table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(["jquery","datatable"], function(){
+        $ = bt.jquery;
+        form = bt.form();
+
+
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: "Brtlip",
+            colReorder: true,
+            ordering:false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                "url": basePath+"/cms/dfBusinessType/dataTable"
+            },
+            buttons: [
+                {
+                    text: bt.lang('common.button.add'),
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                }
+            ]
+            , columns: [
+                {
+                    data: "businessCode",
+                    className: "center"
+                },
+                {
+                    data: "businessName",
+                    className: "center"
+                },
+                {
+                    data: "isValid",
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        var value = "";
+                        if ("1" == data) {
+                            value = bt.lang("common.license.validDate");
+                        } else {
+                            value = bt.lang("df.invalid.no");
+                        }
+                        return value;
+                    }
+                },
+                {
+                    data: null,
+                    className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = "";
+                        var split = "<span class=\"text-explode\">|</span>"
+                        html += "<a href=\"#\" onclick=\"edit('" + full.id + "')\">" + bt.lang("common.button.edit") + "</a>";
+                        html += split;
+                        html += "<a href=\"#\" onclick=\"deleteCostById('" + full.id + "')\">" + bt.lang("common.button.delete") + "</a>";
+                        html += split;
+                        html += "<a href=\"#\" onclick=\"view('" + full.id + "')\">" + bt.lang("common.button.view") + "</a>";
+                        return html;
+                    }
+                }
+            ]
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+    
+    function add() {
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/cms/dfBusinessType/add");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/dfCostType/add",
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+    
+    function edit(id) {
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.edit'), basePath + "/cms/dfBusinessType/edit?id=" + id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/dfBusinessType/edit?id=" + id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function deleteCostById(id) {
+        parent.layer.confirm(bt.lang("table.sysTask.deletedsw")+"?",function () {
+            bt.loading.show();
+            var url = "/cms/dfBusinessType/delete?id=" + id;
+            $.post(basePath + url,function(data){
+                bt.loading.hide();
+                parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                datatable.draw();
+            },'JSON');
+        });
+    }
+
+
+    function view(id) {
+        parent.layer.open({
+            type: 2,
+            btnAlign: 'c',
+            btn: [bt.lang("common.button.close")],
+            area: ['850px', '300px'],
+            content: basePath + "/cms/dfBusinessType/view?id=" + id,
+            yes: function(index, layero){
+                parent.layer.close(index);
+            }
+        });
+    }
+</script>
+</body>
+</html>

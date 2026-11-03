@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            font-size:14px;
+            padding-bottom: 60px;
+        }
+        .layui-form-label{
+            width: 180px;
+        }
+        .layui-input-block{
+            margin-left: 220px;
+        }
+    </style>
+</head>
+<body>
+
+<form class="layui-form" action="">
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.ist.title')</h2>
+            <div class="layui-colla-content layui-show">
+				<table class="layui-table">
+					<thead>
+						<tr>
+							<th width="20%" class="textRight">#springMessage('config.fbs.paramName')</th>
+							<th class="textLeft">#springMessage('config.fbs.paramValue')</th>
+						</tr>
+					</thead>
+					<tbody>
+						##预提冲预提方式
+						<tr>
+							<td class="textRight">#springMessage('config.ist.predrawRushWay')</td>
+							<td>
+								<input type="radio" name="ist.predrawRushWay" value="0" #if($config.ist.predrawRushWay == 0)checked#end title="#springMessage('config.ist.predrawRushWay_false')"><!-- 不控制预提日 -->
+								<input type="radio" name="ist.predrawRushWay" value="1" #if($config.ist.predrawRushWay == 1)checked#end title="#springMessage('config.ist.predrawRushWay_true')"><!-- 计息日预提冲销 -->
+								<!-- <input type="radio" name="ist.predrawRushWay" value="2" #if($config.ist.predrawRushWay == 2)checked#end title="月末预提月初冲销 "> -->
+							</td>
+						</tr>
+						##批量结息方式
+						<tr>
+							<td class="textRight">#springMessage('config.ist.batchInstWay')</td>
+							<td>
+                                <input type="radio" name="ist.batchInstWay" value="0" #if($config.ist.batchInstWay == 0)checked#end title="#springMessage('config.ist.batchInstWay_false')"  lay-filter="chooseBatchInstWay"><!--不控制计息日  -->
+                                <input type="radio" name="ist.batchInstWay" value="1" #if($config.ist.batchInstWay == 1)checked#end title="#springMessage('config.ist.batchInstWay_true') "  lay-filter="chooseBatchInstWay"><!--计息日结息   -->
+                            </td>
+							</td>
+						</tr>
+						##定期计息方式
+						<tr style="display: none;">
+							<td class="textRight">#springMessage('config.ist.fixInstWay')</td>
+							<td>
+							<div class="layui-input-inline">
+								<select name="ist.fixInstWay">
+									<option value="0" #if($config.ist.fixInstWay == 0)selected#end>#springMessage("config.ist.fixInstWay_false")</option><!-- 不分段 -->
+									<option value="1" #if($config.ist.fixInstWay == 1)selected#end>#springMessage("config.ist.fixInstWay_yearMonth")</option><!-- 分段--对年对月  -->
+									<option value="2" #if($config.ist.fixInstWay == 2)selected#end>#springMessage("config.ist.fixInstWay_day")</option><!-- 分段--实际天数 -->
+								</select>
+							 </div>
+							</td>
+						</tr>
+						##每月批量计息日
+						<tr>
+							<td class="textRight">#springMessage('config.ist.batchInstDay')</td>
+							<td>
+							<div class="layui-input-inline">
+								<select name="ist.batchInstDay">
+								#foreach($day in [1..31])
+								<option value="$day" #if($config.ist.batchInstDay == $day)selected#end>$day</option>
+								#end
+								</select>
+							 </div>
+							</td>
+						</tr>
+                        ##计息提前提醒天数
+                        <tr>
+                            <td class="textRight">#springMessage('finacial.interest.warn')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text"  name="ist.insWarnDays" autocomplete="off" class="layui-input bt-biz-moneyType init" data-decimal="0" data-separator="" value="$config.ist.insWarnDays">
+                                </div>
+                            </td>
+                        </tr>
+						##批量计息自动复核
+						<tr>
+							<td class="textRight">#springMessage('config.ist.batchInstAutoCheck')</td>
+							<td>
+								<input type="radio" name="ist.batchInstAutoCheck" value="0" #if($config.ist.batchInstAutoCheck == 0)checked#end title="#springMessage('common.sc_yn.no')"><!--否  -->
+								<input type="radio" name="ist.batchInstAutoCheck" value="1" #if($config.ist.batchInstAutoCheck == 1)checked#end title="#springMessage('common.sc_yn.yes')"><!--是  -->
+							</td>
+						</tr>
+						##定期月份计算日利率天数
+						<tr style="display: none;">
+							<td class="textRight">#springMessage('config.ist.fixedActrueDays')</td>
+							<td>
+								<input type="radio" name="ist.fixedActrueDays" value="0" #if($config.ist.fixedActrueDays == 0)checked#end title="#springMessage('config.ist.fixedActrueDays_false')"><!--30天  -->
+								<input type="radio" name="ist.fixedActrueDays" value="1" #if($config.ist.fixedActrueDays == 1)checked#end title="#springMessage('config.ist.fixedActrueDays_true')"><!--月份实际天数  -->
+							</td>
+						</tr>
+						##批量计息分录方式
+						<tr>
+                            <td class="textRight">#springMessage('table.interest.entrySign')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-dict" data-type="radio" data-group="ist.entrySign" data-name="ist.entrySign"
+                                         data-biz-name="ist.entrySign" data-defaultvalue="$config.ist.entrySign" data-callback="moreVoucherDtl"></div>
+                                </div>
+                                <div style="font-size: 12px; color: red;word-break: break-all;white-space: normal;">
+									#springMessage('table.interest.msg')
+									<br>
+									#springMessage('table.interest.msg1')
+                                </div>
+                                #if($config.ist.entrySign == 1)
+                                    #set($moreVoucherDtl ="0,1")
+                                #end
+							</td>
+						</tr>
+                        ##分录方式
+                        <tr>
+                            <td class="textRight">#springMessage('table.interest.voucherDtl')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-dict" data-type="radio" data-group="ist.moreVoucherDtl" data-name="ist.moreVoucherDtl"
+                                         data-biz-name="ist.moreVoucherDtl" data-defaultvalue="$config.ist.moreVoucherDtl" data-disabledValue="$!{moreVoucherDtl}"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        ##利息清单是否显示0记录
+                        <tr>
+                            <td class="textRight">#springMessage('table.interest.zeroInterest')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                <input type="radio" name="ist.zeroInterest" value="0" #if($config.ist.zeroInterest == 0)checked#end title="#springMessage('common.sc_yn.no')"><!--否  -->
+                                <input type="radio" name="ist.zeroInterest" value="1" #if($config.ist.zeroInterest != 0)checked#end title="#springMessage('common.sc_yn.yes')"><!--是  -->
+                                </div>
+                            </td>
+                        </tr>
+##						<tr>
+##							<td></td>
+##							<td>
+##								<button class="layui-btn" lay-submit="" lay-filter="configSubmit">#springMessage('common.button.submit')</button>
+##								<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+##							</td>
+##						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+    <table class="layui-table border0">
+        <tbody>
+        <tr>
+            <td width="20%"></td>
+            <td>
+                <button class="layui-btn" lay-submit="" lay-filter="configSubmit">#springMessage('common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+#parse("views/common/footer.vm")
+<script>
+    var dicts={};
+    bt.use(['form','jquery','element','dicts'], function(){
+        var form = bt.form(),$  = bt.jquery;
+        var elemnt = bt.element();
+        //监听提交
+        form.on('submit(configSubmit)', function(data){
+            $.post(basePath + "/sys/config/save",data.field,function(result){
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },"JSON");
+            return false;
+        });
+        dicts=bt.dicts.init();
+        var batchInstWay = $('input[name="ist.batchInstWay"]:checked').val()
+        if (batchInstWay=='0'){
+            $('input[name="ist.insWarnDays"]').attr("disabled", "disabled");
+        }
+        form.on('radio(chooseBatchInstWay)', function(data){
+            // 批量结息方式监听事件
+            if (data.value=='0') {
+                $('input[name="ist.insWarnDays"]').attr("disabled", "disabled");
+                $('input[name="ist.insWarnDays"]').val("0")
+            }else{
+                $('input[name="ist.insWarnDays"]').removeAttr("disabled");
+            }
+        })
+    });
+
+    moreVoucherDtl=function(){
+        if($('input:radio[name="ist.entrySign"]:checked').val()=="0"){
+            dicts.get('ist.moreVoucherDtl').attr({
+                'data-disabledValue':''
+            });
+        }else{
+            dicts.get('ist.moreVoucherDtl').attr({
+                'data-disabledValue':'0,1'
+            });
+            $('input[type=radio][name="ist.moreVoucherDtl"][value="0"]').prop("checked",'true');
+            form.render();
+        }
+    }
+</script>
+</body>
+</html>

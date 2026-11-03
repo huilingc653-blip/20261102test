@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" name="fexTranType" value="$!{fexTranType}">
+    <input type="hidden" id="recordDecimalPlaces" name="recordDecimalPlaces" value="6">
+    <input type="hidden" id="spotDecimalPlaces" name="spotDecimalPlaces" value="6">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.nisBillhead.corpId')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="ins_corpId"
+                         #if($!{fexTranType}==1)
+                         data-resource="foreign:fextranreq:fexTranType1:report:query"
+                         #else
+                         data-resource="foreign:fextranreq:fexTranType0:report:query"
+                         #end
+                         data-scope="all"></div>
+                </div>
+            </td>
+            ##产品远期
+            <td class="textRight">#springMessage('table.fexBankAcc.proId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexproduct/getProductByType?fexTranType=$!{fexTranType}" data-name ="eqs_proId" data-biz-name ="eqs_proId"
+                     data-valueField="id" data-textField="proName"></div>
+            </td>
+            ##记账汇率类型
+            <td class="textRight">#springMessage('table.fexForeign.recording.rateType')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btratetype/json" data-name ="recordRateType"
+                     data-valueField="id" data-textField="typeName" data-required="required" data-callback="bt.recordRateTypeCallback"></div>
+            </td>
+
+        </tr>
+        <tr>
+
+            ##重估日期
+            <td class="textRight">#springMessage('table.fexForeign.revaluation.date')</td>
+            <td>
+                <input type="text" name="expectDate" class="layui-input bt-biz-dateType" data-type="date" lay-verify="date|required" data-today="true">
+            </td>
+            ##记账本位币
+            <td class="textRight">#springMessage('table.fexForeign.functional.currency')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="standardCur" data-required="required" data-biz-name="standardCur"
+                     data-valueField="id" data-textField="englishCode"></div>
+            </td>
+
+            ##即期汇率类型
+            #if($!{fexTranType}==1)
+                <td class="textRight">#springMessage('table.fexForeign.spot.rateType')</td>
+                <td>
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btratetype/json" data-name ="spotRateType"
+                         data-valueField="id" data-textField="typeName" data-required="required" data-callback="bt.spotRateTypeCallback"></div>
+                </td>
+            #end
+        </tr>
+        <tr>
+            ##买入币种
+            <td class="textRight">#springMessage('table.fexTranReq.buyCurId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="eqs_buyCurId" data-biz-name ="eqs_buyCurId"
+                     data-valueField="id" data-textField="englishCode"></div>
+            </td>
+            ##卖出币种
+            <td class="textRight">#springMessage('table.fexTranReq.sellCurId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="eqs_sellCurId" data-biz-name ="eqs_sellCurId"
+                     data-valueField="id" data-textField="englishCode"></div>
+            </td>
+            ##结算日期
+            <td class="textRight">#springMessage('table.fcSubjectDay.optDate')</td>
+            <td>
+                <input type="text" name="ged_settleDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_settleDate" >
+                <span class="date-mid">~</span>
+                <input type="text" name="led_settleDate" class="layui-input bt-input-inline bt-biz-dateType" id="led_settleDate">
+            </td>
+
+
+        </tr>
+        <tr>
+            ##交易对手
+            <td class="textRight">#springMessage('table.fexForeign.copt')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexCotp/listBankCotp" data-name ="eqs_cotpId"
+                         data-valueField="id" data-textField="cotpName"></div>
+                </div>
+            </td>
+            ##交易日期
+            <td class="textRight">#springMessage('table.revenue.transTime')</td>
+            <td>
+                <input type="text" name="ged_tranDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_tranDate" >
+                <span class="date-mid">~</span>
+                <input type="text" name="led_tranDate" class="layui-input bt-input-inline bt-biz-dateType" id="led_tranDate">
+            </td>
+
+
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button" id="tips">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisBillhead.corpId')</th>
+        <th>#springMessage('table.choProduct.productName')</th>
+        <th>#springMessage('table.fexTranReq.billNo')</th>
+        <th>#springMessage('fex.cotp')</th>
+        <th>#springMessage('table.eExchangeBill.curIn')</th>
+        <th>#springMessage('table.fexTranReq.buyMoney')</th>
+        <th>#springMessage('table.eExchangeBill.curOut')</th>
+        <th>#springMessage('table.fexTranReq.sellMoney')</th>
+        <th>#springMessage('table.revenue.transTime')</th>
+        <th>#springMessage('table.fcSubjectDay.optDate')</th>
+        <th>#springMessage('table.fexTranReq.contractRate')</th>
+        #if($!{fexTranType}==1)
+            <th>#springMessage('table.fexTranDeal.wishRate')</th>
+            <th>#springMessage('table.fexForeign.recording.rate')</th>
+            <th>#springMessage('table.fexForeign.actual.profitAndLoss')</th>
+            <th>#springMessage('table.fexForeign.account.profitAndLoss')</th>
+        #else
+            <th>#springMessage('table.fexForeign.recording.rate')</th>
+            <th>#springMessage('table.fexForeign.account.profitAndLoss')</th>
+        #end
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    var dicts;
+    bt.use(['form', 'dateType', 'corp', 'datatable', 'jquery','moneyType', 'selectType', 'dicts', 'rateType', 'date'], function () {
+        var $ = bt.jquery, form = bt.form();
+        dicts = bt.dicts.init();
+        bt.dateType.init();
+        var rateType = bt.rateType.getFun();
+        var moneyFun = bt.moneyType.getFun();
+
+        /** 币别下拉框 begin*/
+        var select = bt.selectType.init();
+        /** 币别下拉框 end*/
+        //汇率类型回调函数
+        bt.recordRateTypeCallback = function (data) {
+            $("#recordDecimalPlaces").val(data.decimalplaces);
+        };
+        bt.spotRateTypeCallback = function (data) {
+            $("#spotDecimalPlaces").val(data.decimalplaces);
+        };
+        /** 数据列表,组件：datatable begin*/
+        var url = basePath + '/foreign/fextranreq/dataTableForeignReport';
+        #if($!{fexTranType}==1)
+            bt.datatable.init({
+                elem: '#appTable',
+                dom: 'Brtlip',
+                colReorder: true,
+                checkbox: true,
+                searchForm: {
+                    formElem: '#searchForm',
+                    formFilter: 'search'
+                },
+                ajax: {
+                    'url':url
+                },
+                buttons: [
+                    {
+                        extend: "colvis",
+                        text: bt.lang('common.button.theadHide'),
+                        columns: ':not(:first):not(:last)'
+                    }
+                ],
+                columns: [
+                    {data: "corpName", className: 'center',},
+                    {data: "proName", bSortable: true,className: 'center'},
+                    {data: "billNo", bSortable: true, className: 'center'},
+                    {data: "cotpName", bSortable: true,className: 'center'},
+                    {data: "buyEnglishCode", bSortable: true,className: 'center'},
+                    {data: "buyMoney", bSortable: true,className: 'textRight',
+                        render: function (data, type, full, meta) {
+                            if (data != null) {
+                                return bt.money.format(data);
+                            } else {
+                                return "-";
+                            }
+                        }},
+                    {data: "sellEnglishCode", bSortable: true,className: 'center'},
+                    {data: "sellMoney", bSortable: true,className: 'textRight',
+                        render: function (data, type, full, meta) {
+                            if (data != null) {
+                                return bt.money.format(data);
+                            } else {
+                                return "-";
+                            }
+                        }},
+                    {data: "tranDate", bSortable: true,className: 'center'},
+                    {data: "settleDate", bSortable: true,className: 'center'},
+                    {data: "contractRate", bSortable: true,className: 'center',
+                        render: function (data, type, full, meta) {
+                            var opt = {
+                                separator: ",",
+                                decimal: 6
+                            }
+                            return moneyFun.format(full.contractRate, opt);
+                        }},
+                    {data: "spotRate", bSortable: true,className: 'center',
+                        render: function (data, type, full, meta) {
+                            if(!data){
+                                return '-';
+                            }
+                            var decimalPlaces = $("#spotDecimalPlaces").val();
+                            var opt = {
+                                separator: ",",
+                                decimal: decimalPlaces
+                            }
+                            return moneyFun.format(full.spotRate, opt);
+                        }},
+                    {data: "recordRate", bSortable: false,className: 'center',
+                        render: function (data, type, full, meta) {
+                            if(!data){
+                                return '-';
+                            }
+                            var decimalPlaces = $("#recordDecimalPlaces").val();
+                            var opt = {
+                                separator: ",",
+                                decimal: decimalPlaces
+                            }
+                            return moneyFun.format(full.recordRate, opt);
+                        }},
+                    {data: "realProfit", bSortable: true,className: 'textRight',
+                        render: function (data, type, full, meta) {
+                            if (data != null) {
+                                return bt.money.format(data);
+                            } else {
+                                return "-";
+                            }
+                        }},
+                    {data: "recordProfit", bSortable: false, className: 'textRight',
+                        render: function (data, type, full, meta) {
+                            if(!data){
+                                return '-';
+                            }
+                            return bt.money.format(data);
+                        }},
+                ],
+                btDrawCallback:function (setting) {
+                            var tableData = setting.json.data;
+                            if(tableData && tableData.length>0){
+                                var temp= {}
+                                var msg=bt.lang('alert.please.maintain')+' ';
+                                var flag=false;
+                                var curName = select.get('standardCur').getData().text;
+                                for(var i=0;i<tableData.length;i++){
+                                    if(tableData[i].id === '1'){
+                                        flag=true;
+                                        if(!temp[tableData[i].buyEnglishCode+curName]){
+                                            msg += tableData[i].buyEnglishCode+'-'+curName+' ';
+                                            temp[tableData[i].buyEnglishCode+curName] = tableData[i].buyEnglishCode+curName;
+                                        }
+                                    }
+                                    if(tableData[i].id === '2'){
+                                        flag=true;
+                                        if(!temp[tableData[i].sellEnglishCode+tableData[i].buyEnglishCode]){
+                                            msg += tableData[i].sellEnglishCode+'-'+tableData[i].buyEnglishCode+' ';
+                                            temp[tableData[i].sellEnglishCode+tableData[i].buyEnglishCode] = tableData[i].sellEnglishCode+tableData[i].buyEnglishCode;
+                                        }
+                                    }
+                                }
+                                msg += bt.lang('table.btCurrency.curExrate');
+                                if(flag){
+                                    layer.msg(msg)
+                                }
+                            }
+                        },
+                summary: {
+                    pageSum: false,
+                    allSum: true,
+                    selectSum: true,
+                    format: {
+                        decimal: 2
+                    },
+                    sumList: [
+                        {
+                            colNum: '14',
+                            dataName: 'realProfit'
+                        },{
+                            colNum: '15',
+                            dataName: 'recordProfit'
+                        }
+                    ]
+                },
+            });
+            #else
+                bt.datatable.init({
+                    elem: '#appTable',
+                    dom: 'Brtlip',
+                    colReorder: true,
+                    checkbox: true,
+                    searchForm: {
+                        formElem: '#searchForm',
+                        formFilter: 'search'
+                    },
+                    ajax: {
+                        'url': url
+                    },
+                    buttons: [
+                        {
+                            extend: "colvis",
+                            text: bt.lang('common.button.theadHide'),
+                            columns: ':not(:first):not(:last)'
+                        }
+                    ],
+                    columns: [
+                        {data: "corpName", className: 'center',},
+                        {data: "proName", bSortable: true,className: 'center'},
+                        {data: "billNo", bSortable: true, className: 'center'},
+                        {data: "cotpName", bSortable: true,className: 'center'},
+                        {data: "buyEnglishCode", bSortable: true,className: 'center'},
+                        {data: "buyMoney", bSortable: true,className: 'textRight',
+                            render: function (data, type, full, meta) {
+                                if (data != null) {
+                                    return bt.money.format(data);
+                                } else {
+                                    return "-";
+                                }
+                            }},
+                        {data: "sellEnglishCode", bSortable: true,className: 'center'},
+                        {data: "sellMoney", bSortable: true,className: 'textRight',
+                            render: function (data, type, full, meta) {
+                                if (data != null) {
+                                    return bt.money.format(data);
+                                } else {
+                                    return "-";
+                                }
+                            }},
+                        {data: "tranDate", bSortable: true,className: 'center'},
+                        {data: "settleDate", bSortable: true,className: 'center'},
+                        {data: "contractRate", bSortable: true,className: 'center',
+                            render: function (data, type, full, meta) {
+                                var opt = {
+                                    separator: ",",
+                                    decimal: 6
+                                }
+                                return moneyFun.format(full.contractRate, opt);
+                            }},
+                        {data: "recordRate", bSortable: false,className: 'center',
+                            render: function (data, type, full, meta) {
+                                if(!data){
+                                    return '-';
+                                }
+                                var decimalPlaces = $("#recordDecimalPlaces").val();
+                                var opt = {
+                                    separator: ",",
+                                    decimal: decimalPlaces
+                                }
+                                return moneyFun.format(full.recordRate, opt);
+                            }},
+                        {data: "recordProfit", bSortable: false, className: 'textRight',
+                            render: function (data, type, full, meta) {
+                                if(!data){
+                                    return '-';
+                                }
+                                return bt.money.format(data);
+                            }},
+                    ],
+                    btDrawCallback:function (setting) {
+                        var tableData = setting.json.data;
+                        if(tableData && tableData.length>0){
+                            var temp= {}
+                            var msg=bt.lang('alert.please.maintain')+' ';
+                            var flag=false;
+                            var curName = select.get('standardCur').getData().text;
+                            for(var i=0;i<tableData.length;i++){
+                                if(tableData[i].id === '1'){
+                                    flag=true;
+                                    if(!temp[tableData[i].buyEnglishCode+curName]){
+                                        msg += tableData[i].buyEnglishCode+'-'+curName+' ';
+                                        temp[tableData[i].buyEnglishCode+curName] = tableData[i].buyEnglishCode+curName;
+                                    }
+                                }
+                                if(tableData[i].id === '2'){
+                                    flag=true;
+                                    if(!temp[tableData[i].sellEnglishCode+tableData[i].buyEnglishCode]){
+                                        msg += tableData[i].sellEnglishCode+'-'+tableData[i].buyEnglishCode+' ';
+                                        temp[tableData[i].sellEnglishCode+tableData[i].buyEnglishCode] = tableData[i].sellEnglishCode+tableData[i].buyEnglishCode;
+                                    }
+                                }
+                            }
+                            msg += bt.lang('table.btCurrency.curExrate');
+                            if(flag){
+                                layer.msg(msg)
+                            }
+                        }
+                    },
+                    summary: {
+                        pageSum: false,
+                        allSum: true,
+                        selectSum: true,
+                        format: {
+                            decimal: 2
+                        },
+                        sumList: [
+                          {
+                                colNum: '13',
+                                dataName: 'recordProfit'
+                            }
+                        ]
+                    },
+                });
+        #end
+        /** 数据列表，组件：datatable end*/
+
+        /** 单位 begin*/
+        bt.corp.init();
+        /** 单位 end*/
+        bt.dicts.init();
+
+    });
+</script>
+</html>
+
+
+
+
+
+
+

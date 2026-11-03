@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" action="">
+    <input id="accCorpId" name="accCorpId" type="hidden" value="$!{ruleVO.corpId}">
+    <input id="accCurId" name="accCurId" type="hidden" value="$!{ruleVO.curId}">
+    <input id="accId" name="accId" type = "hidden" value="$!{ruleVO.accId}">
+    <input type="hidden" id="id" name="id" value="$!{ruleVO.id}">
+    <input type="hidden" id="addSize" value="$!{addSize}">
+    <div class="layui-fluid" style="padding: 0">
+        <div class="layui-row">
+            <div class="layui-col-xs12">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <td colspan="4">#springMessage('table.foreign.ruleCondition')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                    ##单位
+                        <td class="textRight" >#springMessage('table.nisBillhead.corpId')</td>
+                        <td >
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-name="corpId"
+                                     data-biz-name="corpId"
+                                     data-scope="all"
+                                     data-callback="bt.corpCallback"
+                                     data-defaultvalue="$!{ruleVO.corpId}"
+                                     data-resource="foreign:fex:settleFill:rule:apply"
+                                ></div>
+                            </div>
+                        </td>
+                    ##现金流形式
+                        <td class="textRight">#springMessage('table.foreign.cashFlowType')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="cashFlow.type" data-name="cashFlowMethod" data-value="$!{ruleVO.cashFlowMethod}"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##交易类型
+                        <td class="textRight">#springMessage('ttpay.tradeType')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="foreign.tranGroupRule.tranType"
+                                     data-displayData="7,8,9,2,3,4"
+                                     data-name="tranType" data-callback="changeTranType" data-value="$!{ruleVO.tranType}"></div>
+                            </div>
+                        </td>
+                    ##产品
+                        <td class="textRight">#springMessage('table.foreign.product')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType" data-biz-name="proId" data-url="${basePath}/foreign/fexproduct/listProduct/$!{ruleVO.tranType}"
+                                     data-name="proId" data-valueField="id" data-textField="proName"
+                                     data-defaultvalue="$!{ruleVO.proId}"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##币种
+                        <td class="textRight">#springMessage('table.foreign.currency')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="curId" data-biz-name ="curId"
+                                     data-valueField="id" data-defaultvalue="$!{ruleVO.curId}" data-textField="englishCode"  data-callback="bt.curIdCallback"></div>
+                            </div>
+                        </td>
+                    ##支付方式
+                        <td class="textRight">#springMessage('table.foreign.voucherType')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexsettlefillrule/getVoucherType" data-name ="voucherTypeId" data-biz-name ="voucherTypeId"
+                                     data-valueField="id" data-textField="voucherName" data-defaultvalue="$!{ruleVO.voucherTypeId}"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##交易对手
+                        <td class="textRight" >#springMessage('table.foreign.counterparty')</td>
+                        <td >
+                            <input type="hidden" name="oppId" id="oppId" value="$!{ruleVO.oppId}">##数据源id
+                            <input type="hidden" id="cotpName" name="cotpName" value="$!{ruleVO.cotpName}">##对手名称
+                            <input type="hidden" id="cotpId" name="cotpId" value="$!{ruleVO.cotpId}">
+                            <input type="hidden" id="cotpNameEn" name="cotpNameEn" value="$!{ruleVO.cotpNameEn}">##对手英文名称
+
+                            <div class="layui-inline" id="oppCorpNameDiv" #if($!{ruleVO.tranType}) style="display: none" #end>##无选择时候展示
+                                <input class="layui-input"  onclick="oppCorpNameClick()" readonly="readonly" type="text"/>
+                            </div>
+
+                            <div class="layui-inline" id="externalDiv" #if($!{ruleVO.tranType}!="4") style="display: none" #end>##客商组件
+                                <input class="layui-input" id="eOppCorpName" readonly="readonly" type="text" #if($!{ruleVO.tranType}=="4") value="$!{ruleVO.cotpName}" #end/>
+                                <div class="bt-div-search">
+                                    ## 客商组件
+                                    <button type="button" class="bt-biz-allExternalCorp" data-beforeClick="bt.cotpExternalBeforeClick"  data-callback="cotpExternalCallback">
+                                        <i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="layui-inline" id="corpDiv" #if($!{ruleVO.tranType}!="3") style="display: none" #end>##单位下拉树
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-name="cOppCorpName"
+                                     data-biz-name="cOppCorpName"
+                                     data-scope="all"
+                                    #if($!{ruleVO.tranType}=="3") data-defaultvalue="$!{ruleVO.oppId}" #end
+                                     data-callbackData="oppCorpTreeCallback"
+                                ></div>
+                            </div>
+                            <div class="layui-inline" id="bankDiv" #if($!{ruleVO.tranType}!="1" && $!{ruleVO.tranType}!="2") style="display: none" #end>##银行组件
+                                <input class="layui-input" id="bOppCorpName" readonly="readonly" type="text" #if($!{ruleVO.tranType}=="1" || $!{ruleVO.tranType}=="2") value="$!{ruleVO.cotpName}" #end />
+                                <div class="bt-div-search">
+                                    ## 客商组件
+                                    <button type="button" class="bt-biz-allBankInfo"  data-callback="bankCallback">
+                                        <i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    ##交易对手国家/地区
+                        <td class="textRight" >#springMessage('table.foreign.counterparty')#springMessage('table.foreign.countryOrArea')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType"  data-url="${basePath}/basic/business/syscountrycust/listSysCountryCust" data-name ="countryId" data-valueField="id" data-textField="nameZh" data-defaultvalue="$!{ruleVO.countryId}"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##收付方向
+                        <td class="textRight">#springMessage('table.foreign.cdSign')</td>
+                        <td >
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="receiptAndPayment.direction" data-name="cdSign" data-value="$!{ruleVO.cdSign}"></div>
+                            </div>
+                        </td>
+                    ##银行账号
+                        <td class="textRight">#springMessage('table.foreign.bankAcc')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="bankAcc" name="bankAcc" lay-verify="tableData" data-biz-name="bankAcc" value="$!{ruleVO.bankCode}"
+                                       autocomplete="off" class="layui-input text" placeholder="#springMessage('table.foreign.bankAcc')">
+                                <table id="bankAccTable" class="hide">
+                                    <thead>
+                                    <tr>
+                                        <th>#springMessage('table.nisBillhead.bankAcc')</th>##银行账号
+                                        <th>#springMessage('table.btBankAcc.accName')</th>##账户名称
+                                        <th>#springMessage('table.btBankAcc.bankName')</th>##开户行名称
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                    ##有效标志
+                        <td class="textRight">#springMessage('fcVoucherType.validSign')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-group="valid_sign" data-name="validSign" data-type="radio" data-required="true"
+                                 data-value="$!{ruleVO.validSign}"></div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="layui-col-xs12">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <th colspan="4" style="text-align:left">#springMessage('table.foreign.fieldsAdd')</th>
+                    </tr>
+                    </thead>
+                </table>
+                <table id="ruleDtl" >
+                    <thead>
+                    <tr>
+                        <th>#springMessage('table.foreign.orderNumber')</th>##序号
+                        <th><font color="red">*</font>#springMessage('table.foreign.fieldName')</th>
+                        <th>#springMessage('table.foreign.fieldVal')</th>
+                        <th>#springMessage('common.table.thead.operation')</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" type="button"  lay-filter="submit">#springMessage('common.button.submit')</button>
+            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/foreign/fexSettleFillRule.add.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+#if($!billInfoList && $billInfoList.size()>0)
+<div style="overflow: auto;">
+<table class="layui-table layui-form" style="width:100%;" >
+
+    <thead>
+    <tr>
+        <th>#springMessage('bill.accebill.origNo')</th>
+		#if($!sysVoucherCode eq '50')
+			<th>#springMessage('bill.accebill.sti')</th>
+			<th>#springMessage('table.abVoucherinfo.blStdAmt')</th>
+		#end
+        <th>#springMessage('bill.accebill.billType')</th>
+        <th>#springMessage('table.abVoucherinfo.billFlag')</th>
+		<th>#springMessage('bill.accebill.billSendSign')</th>
+        <th>#springMessage('bill.accebill.billMoney')</th>
+		<th>#springMessage('table.abVoucherinfoVice.transMoney')</th>
+        <th>#springMessage('table.abVoucherinfo.startDate')</th>
+        <th>#springMessage('table.abVoucherinfo.endDate')</th>
+		<th>#springMessage('bill.accebill.rearAccrecords')</th>
+		<th>#springMessage('bill.accebill.bustype')</th>
+        <th>#springMessage('bill.accebill.busStatus')</th>
+        <th>#springMessage('bill.accebill.inoptStatus')</th>
+		<th>#springMessage('table.abVoucherinfo.newStmIssuofpprInd')</th>
+		#*<th>#springMessage('table.abVoucherinfo.blgrdbagcrclPrmtInd')</th>*#
+		<th>#springMessage('table.abVoucherinfo.banendrsmtmk')</th>
+    </tr>
+    </thead>
+	<tbody >
+		#foreach($info in $billInfoList)
+		<tr>
+			<td><a class="" href="#" data-row="2" onclick="viewAcceBillInfo($!{info.type},'$!{info.id}',
+					'$!{info.vvid}','$!{nisBillheadPage.id}', '$!{info.poolStatus}')">$!{info.origNo}</a></td>
+			#if($!sysVoucherCode == '50')
+				<td>
+					#if($!{info.sbbllRngEndSn} && $!{info.blgrdbagcrclPrmtInd} == 1)
+						$!{info.sbbllRngStrtSn},$!{info.sbbllRngEndSn}
+					#else
+						0
+					#end
+				</td>
+				<td align="right">$number.formatNumeric($!{info.blStdAmt})</td>
+			#end
+			<td>$!{info.billTypeName}</td>
+			<td>$!{info.billFlagName}</td>
+			<td>$!{info.sendSignName}</td>
+			<td align="right">$number.formatNumeric($!{info.billMoney})</td>
+			#if($!{info.payMoney})
+				<td align="right">$number.formatNumeric($!{info.payMoney})</td>
+			#else
+				<td align="right">$number.formatNumeric($!{info.billMoney})</td>
+			#end
+			<td>$!date.format('yyyy-MM-dd',$!info.startDate)</td>
+			<td>$!date.format('yyyy-MM-dd',$!info.endDate)</td>
+			#if($!{info.busTypeBriefId}!="6001")
+				<td>$!{info.recNm}</td>
+			#else
+				<td></td>
+			#end
+			#if($!{info.busTypeBriefId}=="6001")
+				<td>$!{info.briefIdName}</td>
+				<td>#springMessage('bill.accebill.receiveNextEndrose')</td>
+				<td></td>
+			##应收票据背书状态设置
+			#elseif($!{info.briefId}=="010")
+    			<td>$!{info.briefIdName}</td>
+    			<td>$!{info.busStatusName}</td>
+				<td>
+				#if($!{info.sendSign}=="1"&&$!{info.busStatus}==95)
+        			$!{info.instructStatusName}
+				#end
+				</td>
+			##线下电票设置显示状态信息
+			#elseif($!{info.billFlag}==11&&$!{info.sendSign}=="0")
+				##开票最终完成设置：应付开票业务完成
+				#if($!{info.busStatus}==95)
+        			<td>#springMessage('bill.accebill.emitOpenOK')</td>
+        			<td></td>
+				#else
+        			<td>$!{info.briefIdName}</td>
+        			<td>$!{info.busStatusName}</td>
+				#end
+				<td></td>
+			##纸票电票设置显示状态信息
+			#elseif($!{info.billFlag}==10||!$!{info.billFlag})
+				##退票设置状态信息
+				#if($!{info.tpBriefId})
+        			<td>$!{info.tpBriefIdName}</td>
+        			<td>$!{info.tpBusStatusName}</td>
+				#else
+					##开票最终完成设置：应付开票业务完成
+					#if($!{info.busStatus}==95)
+            			<td>#springMessage('bill.accebill.emitOpenOK')</td>
+            			<td></td>
+					#else
+        			<td>$!{info.briefIdName}</td>
+        			<td>$!{info.busStatusName}</td>
+					#end
+				#end
+				<td></td>
+			##线上电票设置显示状态信息
+			#else
+				##退票设置状态信息
+				#if($!{info.tpBriefId})
+        			<td>$!{info.tpBriefIdName}</td>
+        			<td>$!{info.tpBusStatusName}</td>
+        			<td>
+        				#if($!{info.tpBusStatus}==95)
+							$!{info.tpInstructStatusName}
+        				#end
+        			</td>
+				##提示收票设置状态信息
+				#elseif($!{info.tsBriefId})
+					##提示收票最终完成状态：应付开票业务完成
+					#if($!{info.tsInoptStatus}=="19")
+            			<td>#springMessage('bill.accebill.emitOpenOK')</td>
+            			<td></td>
+            			<td></td>
+					#else
+            			<td>$!{info.tsBriefIdName}</td>
+            			<td>$!{info.tsBusStatusName}</td>
+            			<td>
+            				#if($!{info.tsBusStatus}==95)
+								$!{info.tsInstructStatusName}
+            				#end
+            			</td>
+					#end
+				##提示承兑设置状态信息
+				#elseif($!{info.tcBriefId})
+					##提示承兑完成设置：应付承兑完成待提示收票
+					#if($!{info.tcInoptStatus}=="19")
+            			<td>#springMessage('bill.accebill.emitOpenNextTp')</td>
+            			<td></td>
+            			<td></td>
+					#else
+            			<td>$!{info.tcBriefIdName}</td>
+            			<td>$!{info.tcBusStatusName}</td>
+            			<td>
+            				#if($!{info.tcBusStatus}==95)
+								$!{info.tcInstructStatusName}
+            				#end
+            			</td>
+					#end
+				##开票登记设置状态信息
+				#else
+					##开票登记完成设置：应付开票登记完成待提示承兑
+					#if($!{info.inoptStatus}=="19" && $!{info.isEmitBill}=="1")
+            			<td>#springMessage('bill.accebill.emitOpenNextTc')</td>
+            			<td></td>
+            			<td></td>
+					#else
+            			<td>$!{info.briefIdName}</td>
+            			<td>$!{info.busStatusName}</td>
+            			<td>
+            				#if($!{info.busStatus}==95)
+            					$!{info.instructStatusName}
+            				#end
+            			</td>
+					#end
+				#end
+			#end
+			<td>$!{info.newStmIssuofpprIndName}</td>
+			#*<td>$!{info.blgrdbagcrclPrmtIndName}</td>*#
+
+			<td>$!{info.banendrsmtmkName}</td>
+		</tr>
+        #end
+    </tbody>
+</table>
+</div>
+#end

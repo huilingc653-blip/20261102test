@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="curIdHidden" name="eqs_curId" data-name="eqs_curId" value="$!{curId}"/>
+    <input type="hidden" id="natureIdHidden" value=""/>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight">#springMessage("table.btBankAcc.corpId")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-name="ins_corpId" data-biz-type="corp" data-type="selectTree" data-biz-name="ins_corpId"
+                         data-tree-type="check"
+                         data-checkkboxtype='{"Y":"s","N":"s"}'
+                         data-resource="cms:report:bankratstatistics:query"
+                         data-callback="callbackCorp"
+                         data-afterInit="bt.initValue"
+                    ></div>
+                </div>
+            </td>
+            ##银行类别
+            <td class="textRight">#springMessage("table.btBankAcc.bankTypeId")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-mulselectType" data-name="ins_bankTypeId" data-url="${basePath}/basic/business/btbanktype/json" data-biz-name="ins_bankTypeId"
+                         data-valuefield="id" data-textfield="typeName"  data-method="get"></div>
+                </div>
+            </td>
+        </tr>
+        
+        <tr>
+            ##授信模式
+            <td class="textRight">#springMessage("table.ratBkration.ratMode")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="select" data-biz-name="eqs_ratMode" data-name="eqs_ratMode" data-group="RatBkration.RatMode"></div>
+                </div>
+            </td>
+            ##币别
+            <td class="textRight">#springMessage("table.btBankAccCur.cur")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-biz-name="eqs_curId"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="eqs_curId"
+                     data-biz-name="eqs_curId"
+                     data-search="true"
+                     data-callback="callbackCurId"
+                     data-defaultvalue="$!{curId}"
+                     data-initcallback="bt.initSelectValue"
+                ></div>
+            </td>
+        </tr>
+        
+        <tr>
+            ##查询时间
+            <td class="textRight">#springMessage("netbanck.reporter.checktime")</td>
+            <td>
+                <div class="layui-input-inline">
+                   <input type="text" name="ged_regDate" data-biz-name="ged_regDate" class="layui-input bt-input-inline  bt-biz-dateType" data-today="true" data-endid="endDate" placeholder="#springMessage('bpm.delegation.starttime')">
+                   #* <span class="date-mid">~</span>
+                   <input type="text" name="led_regDate" data-biz-name="led_regDate" class="layui-input bt-input-inline  bt-biz-dateType" data-today="true" id="endDate"  placeholder="结束时间">
+                *#
+                </div>
+            </td>
+            
+            <td></td>
+            <td></td>
+        
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" data-callback="callbackReset">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage("table.btBankAcc.corpId")</th>
+        <th>#springMessage("table.btBankAcc.bankTypeId")</th>
+        <th>#springMessage("table.ratBkration.ratMode")</th>
+        <th>#springMessage("table.capitalStock.bankTypeName")</th>
+        <th>#springMessage("table.fbsBudgetDetail.curId")</th>
+        <th>#springMessage("table.ratBkration.money")</th>
+        <th>#springMessage("table.ratBkrationDisDetail.superProcessMoney")</th>
+    </tr>
+    </thead>
+</table>
+<div id="chartSum" style="width:75%;height:500px; float:left;"></div>
+    #parse("views/common/footer.vm")
+</body>
+</body><script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    var corp;
+    var selectType;
+    bt.use(['form', 'datatable', 'dateType', 'selectType',  'dicts', 'corp','mulselect','moneyType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.mulselect.init();
+        bt.dicts.init();
+        bt.dateType.init();
+        var moneyType = bt.moneyType.init();
+        var moneyFun = moneyType.getFun();
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            checkbox: true,
+            isInitData:true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/cms/report/bankratstatistics/datatable"
+            },
+            btInitComplete: function (settings, data) {
+                $(".count").removeAttr("data-money");
+                initBar();
+            },
+            btDrawCallback:function(setting){
+                initBar();
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns: [
+                {data: "corpName", bSortable: false,className:"center"},
+                {data: "bankTypeName", bSortable: false,className:"center"},
+                {data: "ratMode", bSortable: false,className:"center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("RatBkration.RatMode", full.ratMode);
+                    }
+                },
+                {data: "bankName", bSortable: false,className:"center"},
+                {data: "curName", bSortable: false,className:"center"},
+                {data: "money", bSortable: false,className:"textRight",
+                    render:function (data,type,full,meta) {
+                        return moneyFun.format(full.money,{separator: ",",decimal: 2});
+                    }
+                },
+                {data: "useMoney", bSortable: false,className:"textRight",
+                    render:function (data,type,full,meta) {
+                        return moneyFun.format(full.useMoney,{separator: ",",decimal: 2});
+                    }
+                },
+               
+            ],
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: true,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        money: true,
+                        colNum: '6',
+                        dataName: 'money'
+                    },
+                    {
+                        money: true,
+                        colNum: '7',
+                        dataName: 'useMoney'
+                    }
+                ]
+            }
+        });
+        selectType = bt.selectType.init();
+        corp = bt.corp.init();
+
+        var myChartSum = echarts.init(document.getElementById('chartSum'));
+      //  var myChartSum2 = echarts.init(document.getElementById('chartSum2'));
+        function initBar(){
+            var bankTypeIdStr;
+            if (bt.mulselect.get("ins_bankTypeId").val()){
+                bankTypeIdStr = formatBankTypeId(bt.mulselect.get("ins_bankTypeId").val());
+            }
+            var data = {
+                curCode: $("#curIdHidden").val(),
+                beginDate: bt.dateType.init().get("ged_regDate").val(),
+                bankCode: bankTypeIdStr,
+                ratMode:bt.dicts.init().get("eqs_ratMode").val(),
+                corpId: bt.corp.init().get("ins_corpId").val()
+            };
+            var url = basePath + "/cms/report/bankratstatistics/getBankBal";
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: url,
+                data: data,
+                dataType: "json", //返回数据形式为json
+                success: function (result) {
+                    result = $.parseJSON(result);
+                    var option = initChartSum(result);
+                    myChartSum.hideLoading();
+                    myChartSum.setOption(option, true);
+                    window.onresize = myChartSum.resize;
+
+                }
+            });
+        }
+
+        function initChartSum(result) {
+            var option = result;
+            return option;
+        }
+
+        function formatBankTypeId(typeIdList) {
+            var typeIdStr = '';
+            for (var i=0;i<typeIdList.length;i++){
+                if (typeIdList[i].bankprefix) {
+                    if (typeIdStr == '') {
+                        typeIdStr = typeIdStr + typeIdList[i].bankprefix;
+                    } else {
+                        typeIdStr = typeIdStr + "," + typeIdList[i].bankprefix;
+                    }
+                }
+            }
+            return typeIdStr;
+        }
+    });
+
+    bt.initValue = function () {
+        $("#corpIdHidden").removeAttr('name');
+    };
+    callbackCurId = function(){
+        $("#curIdHidden").val(selectType.get("eqs_curId").val());
+    };
+    callbackCorp = function(){
+        $("#corpIdHidden").val(corp.get("ins_corpId").val());
+    };
+   
+    bt.initSelectValue = function () {
+        $("#curIdHidden").removeAttr('name');
+    };
+    callbackReset = function () {
+        corp.get("ins_corpId").val("");
+        $("#corpIdHidden").val(corp.get("ins_corpId").val());
+        $("#curIdHidden").val(selectType.get("eqs_curId").val())
+        bt.dateType.init().get("ged_regDate").val("");
+    };
+</script>
+</html>

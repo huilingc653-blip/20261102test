@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+</head>
+<body>
+<!-- 借款展期补录页面 -->
+<form class="layui-form" method="post">
+	<input id="id" name="id" type="hidden" value="$!{provideLoanDeferred.id}">
+	<input name="matureDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!deferredvo.repayDate)">
+	<input id="billCode" name="billCode" type="hidden" value="$!{deferredvo.billCode}">
+	##发放编号
+	<input type="hidden" name="liCode" value="$!{deferredvo.provideCode}">
+	##申请单位
+	<input type="hidden" value="$!{deferredvo.corpId}" name="corpId" />
+	##借款账号
+	<input type="hidden" name="loanAcc" value="$!{deferredvo.loanAcc}">
+	##借款利率
+	<input type="hidden" name="plRate" id="plRate" value="$!{plRate}">
+	<iframe src="${basePath}/cms/provide/loansend/viewSend/$!{deferredvo.provideCode}" id="sendIframe" frameborder="0" scrolling="no" style="width: 100%;"></iframe>
+	<script src="${basePath}/static/modules/cms/iframeAutoHeight.js?_btv=${resourceVersion}"></script>
+	<table class="layui-table">
+	<tbody>
+		<!-- <tr>
+			##到期处理类型
+			<td class="textRight" width="14%">#springMessage('cms.provide.deferred.expiryhandletype')</td>
+			<td width="36%">
+				<DIV class=layui-form>
+					<DIV class=bt-biz-dict data-type="select" data-name="expiryHandleType"
+						 data-defaultvalue="1" value="$!{provideLoanDeferred.expiryHandleType}" data-group="provide.deferredHandleType" data-required="true"></DIV>
+				</DIV>
+			</td>
+			<td colspan="2"></td>
+		</tr> -->
+		<tr>
+			##展期到期日期
+			<td class="textRight" width="14%">#springMessage('table.fcAcc.delayDeadlineDate')</td>
+			<td width="36%">
+				<div class=layui-input-inline>
+					<input id="deferredRepayDate"  type="text" data-type="date" lay-verify="required" readonly="true"
+						   name="deferredRepayDate"
+						   data-biz-name="deferredRepayDate"
+						   data-callback="computeplTerm"
+						   class="layui-input bt-biz-dateType"
+						   data-defaultvalue="$!date.format('yyyy-MM-dd',$!provideLoanDeferred.deferredRepayDate)"
+						   value="$!date.format('yyyy-MM-dd',$!provideLoanDeferred.deferredRepayDate)"/>
+				</div>
+			</td>
+
+			##展期期限
+			<td class="textRight" width="14%">#springMessage('table.cmsProvideLoanDeferred.deferredLimt')</td>
+			<td width="36%">
+				<div class=layui-input-inline>
+					<input type="text" id="deferredLimt" name="deferredLimt" decimal="0" autocomplete="off" class="layui-input"
+							readonly="true" value="$!{provideLoanDeferred.deferredLimt}" lay-verify="required">
+				</div>
+			##期限单位
+				<div class=layui-input-inline>
+					<DIV class=layui-form>
+						<DIV class=bt-biz-dict data-type="select" data-name="ternUnit" data-biz-name="ternUnit" data-callback="computeplTerm"
+							 data-defaultvalue="$!{provideLoanDeferred.ternUnit}"  value="$!{provideLoanDeferred.ternUnit}" data-group="PrecativeLoanInfo.ternUnit" data-disabled="true"></DIV>
+					</DIV>
+				</div>
+			</td>
+		</tr>
+
+		<tr>
+			##展期利率
+			<td class="textRight" width="14%">#springMessage('table.fcAcc.delayRate')</td>
+			<td width="36%">
+				#if($!{isBankBaseRate} != "1")
+					<div id="deferred" class="layui-inline">
+						#springMessage('cms.loanInfo.deferredPoints')
+						<div class="pl rateWrap layui-inline" style="width:104px;margin-right: 5px">
+							<input class="layui-input bt-biz-moneyType input-inline textRight" id="deferredPoints"
+								   name="deferredPoints" data-callback="setDeferredRate"
+								   data-max="100"
+								   data-min="0"
+								   value="$!{provideLoanDeferred.deferredPoints}"
+								   data-biz-name="deferredPoints"
+								   data-decimal="2" data-minus="true"
+								   style="border: none; width: 80px;"
+							>
+							<span name="percentsymbol" class="inputMark">BP</span>
+						</div>
+					</div>
+				#else
+				#end
+				<div class="layui-inline">
+					<input type="text" data-name="deferredRate" value="$!{provideLoanDeferred.deferredRate}" data-biz-name="deferredRate" class="layui-input bt-biz-rateType" placeholder="#springMessage('table.fcAcc.delayRate')" lay-verify="required">
+				</div>
+			</td>
+
+			##备注
+			<td class="textRight">#springMessage('table.bvStorageBox.rmk')</td>
+			<td width="36%">
+				<input type="text" id="" name="rmk" autocomplete="off" class="layui-input"  value="$!{provideLoanDeferred.rmk}">
+			</td>
+		</tr>
+
+		##展期合同号
+		<tr>
+			<td class="textRight">
+				#if($provideLoanDeferred.expiryHandleType=='1')
+					##展期合同号
+					#springMessage('table.cmsPrecativeLoanDeferred.contractCode')
+				#else
+					##合同号
+					#springMessage('table.cgsBill.pactCode')
+				#end
+			</td>
+			<td>
+				<input type="text" name="contractCode" class="layui-input" lay-verify="required" value="$!{provideLoanDeferred.contractCode}">
+			</td>
+			<td colspan="2"></td>
+		</tr>
+
+		<tr>
+			<td colspan="6" style="text-align: center;">#springMessage('cms.provide.deferred. success')</td>
+		</tr>
+		<tr>
+			<td colspan="6" style="text-align: center;">
+				<button class="layui-btn" value="21" lay-submit=""  lay-filter="submit">#springMessage('common.button.submit')</button>
+				<button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage('common.button.close')</button>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+</form>
+
+
+<!-- <from class="layui-form">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+					##办理失败
+					<td colspan="6" style="text-align: center;">#springMessage('cms.provide.deferred.failure')</td>
+			</tr>
+			<tr>
+				##打回原因没有字段保存
+				<td class="textRight">#springMessage('table.fcFreeze.refuseWhy')</td>
+				<td colspan="3">
+					<div class="layui-form-item layui-form-text" style="margin-bottom:0px;padding-right:600px;"  >
+   					    	<textarea name="refuseWhy" placeholder="请输入内容" class="layui-textarea" style="min-height:50px" lay-verity="required"></textarea>
+    				</div>
+				</td>
+			</tr>
+
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="back" value="-1">#springMessage('common.button.back')</button>
+				</td>
+			</tr>
+
+		</tbody>
+	</table>
+</from> -->
+
+<form class="layui-form">
+  <table class="layui-table">
+        <tbody>
+          <tr>
+            ##补录信息(办理失败)
+        <td colspan="6" style="text-align: center;">#springMessage('cms.provide.deferred.failure')</td>
+      </tr>
+          <tr>
+            ##打回原因
+              <td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.refuseWhy')</td>
+              <td colspan="3">
+                    <textarea id="refuseWhy"  style="min-height:70px" lay-verify="required"
+                  class="layui-textarea"></textarea>
+              </td>
+            </tr>
+      <tr>
+        	 <td colspan="6" style="text-align: center;">
+              	<button class="layui-btn" lay-submit="" lay-filter="back" value="-1">#springMessage('common.button.back')</button>
+       		</td>
+      </tr>
+    </tbody>
+    </table>
+
+</form>
+
+	#parse("views/common/footer.vm")
+</body>
+
+<script
+	src="${basePath}/static/modules/cms/provide/porvideLoanAdditional.add.js?_btv=${resourceVersion}"></script>
+</html>

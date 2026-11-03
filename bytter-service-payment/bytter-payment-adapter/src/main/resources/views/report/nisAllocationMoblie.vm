@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <script>var basePath = "${basePath}"</script>
+    <meta charset="utf-8">
+    <title>资金调拔明细表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css" media="all"/>
+    <link rel="stylesheet" href="${basePath}/static/css/mobile/index.css" media="all"/>
+    <style>
+        .cho-body {
+            background-color: #F5F5F5;
+        }
+
+        #tab {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .popup-block * {
+            font-size: 0.14rem;
+        }
+
+        .ui-tab-content li {
+            display: none;
+        }
+
+        .ui-tab-content li.bt-show {
+            display: list-item;
+        }
+
+        /* 弹框选择 */
+        .bt-select-popup {
+            position: relative;
+            margin-right: 10px;
+        }
+
+        .ui-actionsheet {
+            display: none
+        }
+
+        .ui-actionsheet.show {
+            display: block;
+        }
+
+        .ui-actionsheet.show .ui-actionsheet-cnt {
+            transition: none;
+        }
+
+        .ui-actionsheet .ui-actionsheet-cnt {
+            transition: none;
+        }
+
+        .bt-select-popup input {
+            border: none;
+            width: 0.58rem;
+            height: 0.32rem;
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 600;
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-select-popup.active input {
+            color: #2988FF;
+            background-color: #E9F1FF;
+        }
+
+        .bt-select-popup.active:after {
+            color: #2988FF;
+        }
+
+        .ui-btn-wrap {
+            font-size: 14px;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 500;
+            color: rgba(51, 51, 51, 1);
+            margin-left: 0;
+            padding-left: 0.12rem;
+        }
+
+        .ui-row-flex .ui-col {
+            text-align: center;
+        }
+
+        .ui-btn-date input {
+            border: none;
+            width: 0.64rem;
+            height: 0.12rem;
+            background-color: #F5F5F5;
+            font-size: 0.12rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(51, 51, 51, 1);
+            line-height: 0.14rem;
+            text-align: center;
+        }
+
+        .ui-searchbar {
+            overflow: hidden;
+        }
+
+        #tab1 {
+            background-color: #F5F5F5;
+            margin-top: 0.04rem;
+        }
+
+        .nis-tab-title {
+            height: 0.44rem;
+            padding-left: 0.15rem;
+        }
+
+        .nis-tab-title span {
+            display: inline-block;
+            height: 0.24rem;
+            border-radius: 0.12rem;
+            margin: 0.06rem;
+            margin-top: 0.1rem;
+            color: #333;
+            padding: 0 0.1rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            margin-left: 0;
+        }
+
+        .nis-tab-title span:nth-child(3) {
+            margin-right: 0;
+        }
+
+        .nis-tab-title .active {
+            background-color: #2988FF;
+            color: #fff !important;
+        }
+
+        .cho-date-item-bottom > div > div {
+            font-size: 0.12rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            line-height: 0.22rem;
+            height: 0.22rem;
+        }
+            ##调拨数据样式
+        #tab1 .cho-content-item {
+            height: 70px;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 0.06rem;
+            margin: 0.1rem 0.15rem;
+            margin-top: 0;
+        }
+
+        .cho-content-item .cho-content-item-money-left {
+            width: 108px;
+            height: 18px;
+            font-size: 18px;
+            font-family: DINAlternate-Bold, DINAlternate;
+            font-weight: bold;
+            color: rgba(51, 51, 51, 1);
+            line-height: 18px;
+            padding: 0.14rem 0.14rem;
+        }
+
+        .cho-content-item-font-left {
+            font-size: 12px;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            line-height: 12px;
+            padding: 0rem 0.18rem;
+        }
+
+        .cho-content-item .cho-content-item-date-right {
+            font-size: 12px;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(153, 153, 153, 1);
+            line-height: 12px;
+            padding-top: 0.18rem;
+            padding-right: 0.18rem;
+            text-align: right;
+        }
+
+        .cho-content-item-font-right {
+            font-size: 12px;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(153, 153, 153, 1);
+            line-height: 12px;
+            text-align: right;
+            padding-right: 0.18rem;
+            padding-top: 0.14rem;
+        }
+
+
+        /*网格一排三个选择*/
+        .bt-card {
+            background-color: #fff;
+        }
+
+        .bt-card .active {
+            color: #2988FF;
+            font-weight: 700;
+        }
+
+        .bt-card-header {
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 700;
+            color: rgba(51, 51, 51, 1);
+            line-height: 0.35rem;
+            height: 0.35rem;
+            padding-left: 0.1rem;
+            text-align: left;
+        }
+
+        .bt-card-body {
+            padding-bottom: 0.15rem;
+        }
+
+        .bt-card-item {
+            height: 0.34rem;
+            background: rgba(240, 240, 240, 1);
+            border-radius: 0.18rem;
+            line-height: 0.34rem;
+            text-align: center;
+            margin: 0.05rem 0.1rem 0.05rem 0;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-card-body .ui-col:nth-last-child(1) .bt-card-item {
+            margin-right: 0;
+        }
+
+        .ui-border-radius:before {
+            border:none;
+        }
+        .ui-sp-btn{
+            background: #f3f3f3;
+            border-radius: 0.16rem;
+            width: 1.11rem;
+            height: 0.3rem;
+            line-height: 0.3rem;
+        }
+        .ui-sp-btn > input{
+            /*margin-left: 0.01rem;*/
+            font-size: 0.12rem;
+            font-family:苹方-简 常规体;
+            font-weight:400;
+            color:#333333;
+            width: 1.11rem;
+        }
+        .ui-sp-boder{
+            width:30px;
+            height:1px;
+            background:rgba(211,211,211,1);
+            margin: 0.15rem 0.1rem
+        }
+
+        .ui-form-item input{
+            padding-left: 0.16rem;
+        }
+
+        .ui-tab-nav li {
+            text-align: left;
+        }
+        .checkTab{
+            display: none;
+        }
+    </style>
+
+</head>
+<body>
+<input type="hidden" id="corpType" name="corpType" value="$!{corpType}">
+<section class="cho-body ui-container">
+    <section id="tab">
+        <div class="ui-tab ">
+            <ul class="ui-tab-content" style="width:100%">
+                <li class="bt-show">
+                    <div class="ui-row-flex">
+                        <!-- 搜索框 -->
+                        <div class="ui-col ui-col">
+                            <div class="ui-searchbar-wrap ui-border-b">
+                                <div class="ui-searchbar ui-border-radius" id="corpDiv">
+                                    <i class="ui-icon-search"></i>
+                                    <div class="ui-searchbar-text">请选择单位</div>
+                                    <div class="ui-searchbar-input">
+                                        <input value="" id="corpId" name="corpId" type="text" placeholder="请选择单位"
+                                               autocapitalize="off" readonly="readonly">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui-btn-wrap">
+                        ##业务类型
+                        <div class="bt-select-popup">
+                            <input type="text" id="btn1" readonly="readonly" placeholder="业务类型" value="业务类型"
+                                   style="width: 0.8rem">
+                        </div>
+                        ##币别
+                        <div class="bt-select-popup" style="margin: 0 0.25rem;">
+                            <input type="text" id="btn2" readonly="readonly" placeholder="币别" value="币别"
+                                   style="width: 0.6rem;">
+                        </div>
+                        ##日期
+                        <div class="bt-select-popup">
+                            <input type="text" id="btn3" readonly="readonly" placeholder="日期" value="日期"
+                                   style="width: 0.6rem;">
+                        </div>
+                        ##业务类型控制
+                        <div class="popup-block">
+                            <div class="ui-actionsheet" id="actionsheet1" style="height:calc(100% - 0.9rem);top:0.9rem;" data-link="btn1">
+                                <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 0.9rem;">
+                                    <section class="bt-popup-container">
+                                        <div class="bt-card" id="voucherFrom">
+                                            <div class="bt-card-header">
+                                                业务类别
+                                                <input type="hidden" id="voucherFromCode" name="voucherFrom" value="">
+                                            </div>
+                                            <div class="bt-card-body">
+                                                #if($!{corpType} == "1")
+                                                    <div class="ui-row-flex ui-whitespace">
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="3" >请款</div></div>
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="4">头寸调拨</div></div>
+                                                        <div class="ui-col ui-col" ><div class="bt-card-item" data-value="6">上缴</div></div>
+                                                    </div>
+                                                #else
+                                                    <div class="ui-row-flex ui-whitespace">
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="2">下拨</div></div>
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="3">请款</div></div>
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="4">头寸调拨</div></div>
+                                                    </div>
+                                                    <div class="ui-row-flex ui-whitespace">
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="5">上划</div></div>
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="6">上缴</div></div>
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="7">自动下拨</div></div>
+                                                    </div>
+                                                    <div class="ui-row-flex ui-whitespace">
+                                                        <div class="ui-col ui-col"><div class="bt-card-item" data-value="8">自动归集</div></div>
+                                                        <div class="ui-col ui-col"></div>
+                                                        <div class="ui-col ui-col"></div>
+                                                    </div>
+                                                #end
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <div class="bt-popup-bottom">
+                                        <button type="button" id="clearValue1" class="bt-popup-reset resetBtn">重置</button>
+                                        <button type="button" id="submitValue1" class="bt-popup-submit submitBtn">确定</button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        ##币别控制
+
+                        <div class="popup-block">
+                            <div class="ui-actionsheet" id="actionsheet2"
+                                 style="height:calc(100% - 0.9rem);top:0.9rem;" data-link="btn3">
+                                <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 0.9rem;">
+                                    <section class="bt-popup-container">
+                                    <div class="bt-card" id="currency">
+                                        <div class="bt-card-header">
+                                            币别选择
+                                            <input type="hidden" id="curId" name="currency" value="">
+                                        </div>
+                                        ##vcount 下标   velocityCount length
+                                    <div class="bt-card-body">
+                                        #foreach($cur in $curList)
+                                            #set($vcount = $velocityCount - 1)
+                                            #if($!{vcount}%3 == 0)
+                                            <div class="ui-row-flex ui-whitespace">
+                                            #end
+                                            <div class="ui-col ui-col">
+                                                <div class="bt-card-item"
+                                                     data-value="$!{cur.id}">$!{cur.curName}</div>
+                                            </div>
+                                            #if($!{foreach.last})
+                                                #if($velocityCount % 3 == 1)
+                                                    <div class="ui-col ui-col"></div>
+                                                    <div class="ui-col ui-col"></div>
+                                                </div>
+                                                #elseif($velocityCount % 3 == 2)
+                                                    <div class="ui-col ui-col"></div>
+                                                </div>
+                                                #else
+                                                </div>
+                                                #end
+                                            #else
+                                                #if($velocityCount % 3 == 0)
+                                                </div>
+                                                #end
+                                            #end
+                                        #end
+                                    </section>
+                                    <div class="bt-popup-bottom">
+                                        <button type="button" id="clearValue2" class="bt-popup-reset resetBtn">重置</button>
+                                        <button type="button" id="submitValue2" class="bt-popup-submit submitBtn">确定</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ##日期控制
+                        <div class="popup-block">
+                            <div class="ui-actionsheet" id="actionsheet3" style="height:calc(100% - 0.9rem);top:0.9rem;" data-link="btn3">
+                                <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 0.9rem;">
+                                    <section class="bt-popup-container">
+                                        <div class="bt-card" id="checkDate">
+                                            <div class="bt-card-header">
+                                                日期
+                                            </div>
+                                            <div class="bt-card-body">
+                                                <div class="ui-row-flex ui-whitespace">
+                                                    <div style="width: 30%;color:#bbb;" class="bt-card-item date" data-begin="" id="beginDate">开始时间</div>
+                                                    <span style="border-bottom: 1px #D3D3D3 solid; width: 0.25rem;display: block;height: 0.23rem;margin-right: 0.1rem;margin-left: 0.1rem"></span>
+                                                    <div style="width: 30%;color:#bbb;" class="bt-card-item date" data-end="" id="endDate">结束时间</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <div class="bt-popup-bottom">
+                                        <button type="button" id="clearValue3" class="bt-popup-reset resetBtn">重置</button>
+                                        <button type="button" id="submitValue3" class="bt-popup-submit submitBtn">确定</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+    <div class="ui-row-flex ui-whitespace nis-tab-title" id="nisTab">
+        <input type="hidden" id="signVal" name="signVal" value="$!{sign}">
+        <div class="ui-col ui-col"><span id="deal1" class="deal active" data-value="1">7天内</span></div>
+        <div class="ui-col ui-col"><span id="deal2" class="deal" data-value="2">15天内</span></div>
+        <div class="ui-col ui-col"><span id="deal3" class="deal" data-value="3">30天内</span></div>
+    </div>
+    <section id="tab1" style="height: calc(100vh - 1.5rem); overflow-y: auto;">
+    </section>
+</section>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js"></script>
+<script src="${basePath}/static/plugins/f2/f2.min.js"></script>
+<script src="${basePath}/static/js/mobile/date.js"></script>
+<script src="${basePath}/static/mobile/js/popup.js?_btv=${resourceVersion}" id="tableJS"></script>
+<script src="${basePath}/static/plugins/web-view/webView.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/webViewScriptBridage.js?_btv=${resourceVersion}"></script>
+<script>
+
+    // 用于记录页面的查询参数
+    const searchParams = {
+        corpIds: [],
+        corpNames: [],
+        datePickData: {
+            startDate: null,
+            endDate: null,
+        },
+        startDateStr: null,
+        endDateStr: null,
+        curId: null,
+        sign: null,
+        voucherFrom: null,
+        corpId: null,
+        corpType: $("#corpType").val()
+    };
+
+    var seachType = ""
+    var timer = null
+
+    window.getMobileAllocation = (data)=>{
+        clearTimeout(timer);
+        timer = setTimeout( function() {
+            if(seachType && seachType != "seach"){
+                return
+            }
+            console.log('获取'+data)
+            postData(data)
+        }, 500);
+
+    }
+    window.getMobileAllocationDate = (data)=>{
+        console.log('搜索'+data)
+        seachType = "seach"
+        searchActionCallback(data)
+    }
+    /**
+     * 搜索回调方法
+     * @param data
+     */
+    window.searchActionCallback = function (data) {
+        // 根据data参数，查询数据
+        if (data.corpNames && data.corpNames.length > 0) {
+            /* let msg = "选择的成员单位名称：" + JSON.stringify(data.corpNames);
+             msg = msg + ", 成员单位ID：" + JSON.stringify(data.corpIds)*/
+            searchParams.corpNames = data.corpNames;
+            $("#corpId").val(data.corpNames);
+        } else {
+            $("#corpId").val('');
+        }
+        if (data.corpIds) {
+            searchParams.corpIds = data.corpIds;
+            searchParams.corpId = data.corpIds;
+            setTimeout(function () {
+              var data =  BTAppBridge.post("/report/allocation/getAllocationMoblieList", searchParams, 'postData');
+              uni.postMessage({
+                  data:data
+              })
+            }, 100);
+        }
+        if (data.datePickData) {
+            var dateObj = data.datePickData;
+            var startDate = dateObj.startDate;
+            var endDate = dateObj.endDate;
+            var startTemp = bt.date.format(parseInt(startDate), "yyyy-MM-dd");
+            // $("#startDateBegin").val(startTemp);
+            var endTemp = bt.date.format(parseInt(endDate), "yyyy-MM-dd");
+            // $("#startDateEnd").val(endTemp);
+            $(".deal").removeClass('active');
+            $("#signVal").val('');
+            $("#beginDate").html(startTemp);
+            $("#endDate").html(endTemp);
+            $("#beginDate").attr("data-begin",startTemp);
+            $("#endDate").attr("data-end",endTemp);
+            searchParams.sign = null;
+            addSheetBtn($(this),'#actionsheet3')
+        }
+    }
+
+    //单位搜索组件
+    function openCorpSelectionPage() {
+        setTimeout(function () {
+           var data = BTAppBridge.openCorpSelectionPage && BTAppBridge.openCorpSelectionPage('searchActionCallback',{
+                resource:"netbank:allocation:typeAsk:query"
+            });
+            uni.postMessage({
+                data:data
+            })
+        }, 100);
+
+    }
+
+    //时间组件
+    function openDatePickerPage() {
+       var data = BTAppBridge.openDatePickerPage && BTAppBridge.openDatePickerPage('searchActionCallback');
+        uni.postMessage({
+            data:data
+        })
+    }
+
+    (function (doc, win) {
+        //初始化数据
+        submiteData(true);
+        console.log(seachType+"seachType")
+        if(seachType){
+            addSheet($(this),'#actionsheet3')
+        }
+        $('.ui-tab-nav > li').on('click', function () {
+            $(this).addClass('current').siblings('li').removeClass('current');
+            $('.ui-tab-content>li').removeClass('bt-show');
+            $('.ui-tab-content li').eq($(this).index()).addClass('bt-show');
+            initChart('pieChart' + $(this).index());
+        })
+
+        //搜索框点击
+        $('.ui-searchbar').on('click', function () {
+            $('.ui-searchbar-wrap').addClass('focus');
+            $('.ui-searchbar-input input').focus();
+        });
+        $('.ui-searchbar-cancel').on('click', function () {
+            $('.ui-searchbar-wrap').removeClass('focus');
+        });
+        addSheetBtn = function ($this,id) {
+            addSheet($this,id);
+        }
+        //弹框选择
+        function addSheet($this,id){
+            if( $this.parent().hasClass('active')){
+                hideSheet($this);
+                return
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+                $this.parent().addClass('active');
+            $(id).addClass('show');
+        }
+        //弹框选择
+        function hideSheet($this){
+            $('.ui-actionsheet').removeClass('show');
+                $this.parent().removeClass('active');
+        }
+
+        //业务类别控制
+        $("#btn1").click(function () {
+            addSheet($(this),'#actionsheet1')
+        });
+        //币别控制
+        $("#btn2").click(function () {
+            addSheet($(this),'#actionsheet2')
+        });
+        //日期控制
+        $("#btn3").click(function () {
+            addSheet($(this),'#actionsheet3')
+        });
+        //时间选择
+        $('.date').on('click', function () {
+            openDatePickerPage();
+        });
+
+        //单位选择
+        $("#corpDiv").click(function () {
+            openCorpSelectionPage();
+        });
+
+        //数据列表
+        postData = function (result) {
+            setDataDiv(result);
+        }
+
+        //拼装数据列表
+        function setDataDiv(data) {
+            var showHtml = '';
+            for (var i = 0; i < data.length; i++) {
+                showHtml += '<div class="cho-content-item">';
+                showHtml += '<ul class="ui-row" onclick="view(\'' + data[i].id + '\')">';
+                showHtml += '<li class="ui-col ui-col-50">';
+                showHtml += '<div><div class="cho-content-item-money-left">';
+                showHtml += (data[i].curSign) + data[i].payMoneyStr;
+                showHtml += '</div>';
+                showHtml += '<div class="cho-content-item-font-left">';
+                showHtml += data[i].voucherFromName;
+                showHtml += '</div></div></li>';
+                showHtml += '<li class="ui-col ui-col-50">';
+                showHtml += '<div><div class="cho-content-item-date-right">';
+                showHtml += bt.date.format(data[i].reqDate);
+                showHtml += '</div>';
+                showHtml += '<div class="cho-content-item-font-right">';
+                showHtml += data[i].corpName;
+                showHtml += '</div></div></li></ul></div>';
+            }
+            var balDiv = document.getElementById("tab1");
+            balDiv.innerHTML = showHtml;
+
+        }
+
+        var ACTIVE = 'active';
+
+        function initCard(id,value,clickCallback,isNotInit){
+            if(!id){
+                return
+            }
+            var $card = $(id);
+            var hiddenInput = $card.find('.bt-card-header input');
+            var items = $card.find('.bt-card-item');
+            items.removeClass(ACTIVE);
+            hiddenInput.val('');
+            //设置选中值
+            if(value){
+                for( var i=0;i < items.length; i++ ){
+                    if(value === $(items[i]).data('value')){
+                        $(items[i]).addClass(ACTIVE);
+                        hiddenInput.val(value);
+                        break
+                    }
+                }
+            }
+            if(isNotInit){
+                return;
+            }
+
+            $(id).on('click','.bt-card-item',function(){
+                var value = '';
+                if($(this).hasClass(ACTIVE)){ //如果当前被选中时，点击会取消选中
+                    $(this).removeClass(ACTIVE);
+                } else {
+                        $card.find('.bt-card-item').removeClass(ACTIVE);
+                    $(this).addClass(ACTIVE);
+                    value = $(this).data('value');
+                }
+                hiddenInput.val(value);
+                if(clickCallback){
+                    clickCallback(value);
+                }
+            })
+        }
+
+        //初始化
+        initCard('#voucherFrom','');
+        initCard('#currency','');
+
+        //点击确定
+        $('.submitBtn').on('click',function(){
+            $("#nisTab").addClass("checkTab");
+            $("#tab1").css("height","calc(100vh - 1.1rem);");
+            var btn = $(this).parents('.ui-actionsheet').removeClass('show')
+                    .data('link');
+            $('#'+btn).removeClass('active');
+            //确认提交
+            submiteData(false);
+        })
+        //点击重置
+        $('#clearValue1').on('click',function(){
+            initCard('#voucherFrom','','',true);
+        })
+        $('#clearValue2').on('click',function(){
+            initCard('#currency','','',true);
+        })
+        $('#clearValue3').on('click',function(){
+            searchParams.datePickData.startDate = null;
+            searchParams.datePickData.endDate = null;
+            $("#beginDate").html("开始时间");
+            $("#endDate").html("结束时间");
+            $("#beginDate").attr("data-begin","");
+            $("#endDate").attr("data-end","");
+        })
+
+        //数据提交
+        function submiteData(isInit) {
+            searchParams.startDateStr = $("#beginDate").data("begin");
+            searchParams.endDateStr =  $("#endDate").data("end");
+            // searchParams.startDateStr = "2020-01-01";
+            // searchParams.endDateStr = "2020-06-30";
+            if(isInit){
+                searchParams.sign = "1";
+                $("#signVal").val("1");
+            }else{
+                searchParams.sign = $("#signVal").val();
+            }
+            searchParams.voucherFrom = $("#voucherFromCode").val();
+            searchParams.curId = $("#curId").val();
+            setTimeout(function () {
+              var data =  BTAppBridge.post("/report/allocation/getAllocationMoblieList", searchParams, 'postData');
+                uni.postMessage({
+                    data:data
+                })
+            }, 100);
+            /*$.ajax({
+                type: "post",
+                url: basePath + "/report/allocation/getAllocationMoblieList",
+                async: true,
+                data: searchParams,
+                dataType: "json",
+                success: function (res) {
+                    setDataDiv(res);
+                },
+                error: function (jqXHQ) {
+                    alert("发生错误:" + jqXHQ.status);
+                }
+            });*/
+        }
+
+    })(document, window);
+
+    //监控时间刻度
+    $('.nis-tab-title .ui-col > span').on('click', function () {
+        $(".deal").removeClass('active');
+        $(this).addClass('active');
+        var signTemp = $(this).data('value');
+        $("#signVal").val(signTemp);
+        searchParams.sign = $("#signVal").val();
+        $("#startDateBegin").val('');
+        $("#startDateEnd").val('');
+        searchParams.startDateStr = null;
+        searchParams.endDateStr = null;
+        setTimeout(function () {
+           var data = BTAppBridge.post("/report/allocation/getAllocationMoblieList", searchParams, 'postData');
+            uni.postMessage({
+                data:data
+            })
+        }, 100);
+    })
+
+    //查看详情页面
+    function view(id) {
+        var typeTemp = $("#corpType").val();
+        setTimeout(function () {
+           var data = BTAppBridge.jump({url: "/report/allocation/mobileViewAllocation", id: id, corpType: typeTemp});
+            uni.postMessage({
+                data:data
+            })
+        }, 100);
+    }
+
+    /**判断字符串是否为空*/
+    function isEmpty(ms) {
+        if (typeof (ms) == "undefined" || ms == null || ms == "" || ms == " ") {
+            return true;
+        }
+        return false;
+    }
+
+</script>
+
+</body>
+</html>

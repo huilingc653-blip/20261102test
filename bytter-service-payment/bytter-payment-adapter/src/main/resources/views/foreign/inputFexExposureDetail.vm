@@ -1,0 +1,185 @@
+<input type="hidden" name="inputCurIds" id="inputCurIds" value="$!{inputCurIds}">
+#foreach($curData in $dataMap.entrySet())
+<div class="layui-input-inline" style="margin-top: 5px; margin-bottom: 5px;">
+    #springMessage('table.nisBillhead.curId')：$curData.key.englishCode
+</div>
+<div style="display:inline-block;width:100%;">
+    <div id="maingrid_$curData.key.id"></div>
+</div>
+<div style="width: 100%;margin-bottom: 10px;display: none">
+<table id="appTable_$curData.key.id" class="layui-table" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fbsBudgetYear.number')</th>
+        <th>#springMessage('table.fbsBudgetYear.itemCode')</th>
+        <th>#springMessage('table.fbsBudgetYear.itemName')</th>
+        #foreach($period in $periodMap.entrySet())
+        <th>$period.key</th>
+        #end
+    </tr>
+    </thead>
+    <tbody>
+        #foreach($data in $curData.value)
+            <tr data-tt-id="$!{data.itemCode}" data-tt-parent-id="$!{data.superItemCode}" data-tt-subject-sort="$!{data.itemCode}">
+                <td>$!{velocityCount}</td>
+                <td>
+                    $!{data.itemCode}
+                    <input type="hidden" id="itemId_$!{data.itemCode}_$curData.key.id" name="itemId_$curData.key.id" value="$!{data.itemId}">
+                    <input type="hidden" id="itemCode_$!{data.itemCode}_$curData.key.id" name="itemCode_$curData.key.id" value="$!{data.itemCode}">
+                    <input type="hidden" id="itemName_$!{data.itemCode}_$curData.key.id" name="itemName_$curData.key.id" value="$!{data.itemName}">
+                    <input type="hidden" id="sign_$!{data.itemCode}_$curData.key.id" name="sign_$curData.key.id" value="$!{data.sign}">
+                    <input type="hidden" id="isNaturalHedge_$!{data.itemCode}_$curData.key.id" name="isNaturalHedge_$curData.key.id" value="$!{data.isNaturalHedge}">
+                </td>
+                <td>$!{data.itemName}</td>
+                #foreach($period in $periodMap.entrySet())
+                <td align="right" >
+                    <input type="text" id="fillMoney$!{velocityCount}_$!{data.itemCode}_$curData.key.id"  lay-verify="required" data-name="fillMoney$!{velocityCount}_$curData.key.id"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="0" data-curId="$curData.key.id" data-key="$velocityCount"
+                           data-itemCode="$!{data.itemCode}" data-superItemCode="$!{data.superItemCode}" data-biz-name="fillMoney$!{velocityCount}_$!{data.itemCode}_$curData.key.id">
+                </td>
+                #end
+            </tr>
+        #end
+        <tr data-tt-parent-id="">
+            <td></td>
+            <td></td>
+            <td align="right"><b>#springMessage('common.button.collect')</b></td>
+            #foreach($period in $periodMap.entrySet())
+                <td align="right" >
+                    <div id="collectMoney$!{velocityCount}_$curData.key.id">0.00</div>
+                </td>
+            #end
+        </tr>
+    </tbody>
+</table>
+</div>
+#end
+<div style="text-align: center; padding-top: 10px;">
+    <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('common.button.submit')</button>
+    <button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage('common.button.temp')</button>
+    #*<button class="layui-btn" lay-submit="" type="button" onclick="importExcel()">#springMessage('common.button.imports')</button>*#
+    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+</div>
+<script>
+    var moneyType,moneyFun,selectType,corp;
+    bt.use(['form', 'layedit', 'btdate', 'moneyType', 'toLigerTree', 'btUpload', 'btImport', 'selectType','corp'], function () {
+        var $ = bt.jquery, form = bt.form();
+        var curIds = $("#inputCurIds").val().split(',');
+        for(var i = 0; i < curIds.length; i++) {
+            var curId = curIds[i];
+            bt.toLigerTree.init({
+                elem: '#appTable_'+curId,
+                newElem: '#maingrid_'+curId,
+                rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+                isDoubleHeader: false,//是否有双表头
+                allowHideColumn: false,
+                resize: false,
+                height: "80%",
+                fixedLeftColumns: 2,
+            }, true);
+        }
+        moneyType = bt.moneyType.init();
+        moneyFun = bt.moneyType.getFun();
+        selectType = bt.selectType.init();
+        corp = bt.corp.init();
+    });
+
+    /**
+     * 计划科目上报金额计算
+     * @param data
+     * @param obj
+     */
+    function calItemMoney(data, obj) {
+        var $ = bt.jquery, form = bt.form();
+        var fillMoney = obj.data();
+        calSuperItemMoney(fillMoney.itemcode, fillMoney.superitemcode, fillMoney.curid, fillMoney.key);
+        //汇总计算
+        calCollectMoney(fillMoney.curid, fillMoney.key);
+    }
+
+    /**
+     * 汇总计算
+     * @param curId
+     * @param key
+     */
+    function calCollectMoney(curId, key) {
+        //获取一级科目
+        var superItemcode = "";
+        var fillMoneyDataName = "fillMoney"+key+"_"+curId;
+        var collectMoney = 0;
+        $('form').find('input[data-superItemCode="' + superItemcode + '"][data-name="'+fillMoneyDataName+'"][data-curId="' + curId + '"]').each(function () {
+            //获取科目的流向标志
+            var sign = $("#sign_" + $(this).attr("data-itemCode")+"_"+curId).val();
+            if(sign == 1) {
+                collectMoney = moneyFun.add(collectMoney, moneyFun.toNumber($(this).val()));
+            }else{
+                collectMoney = moneyFun.sub(collectMoney, moneyFun.toNumber($(this).val()));
+            }
+        });
+        var collectMoneyShow = moneyFun.format(collectMoney);
+        $("#collectMoney"+key+"_"+curId).text(collectMoneyShow);
+    }
+
+    /**
+     * 上级科目汇总计算
+     * @param itemCode
+     * @param superItemcode
+     * @param fillMoneyName
+     */
+    function calSuperItemMoney(itemCode, superItemcode, curId, key) {
+        var $ = bt.jquery, form = bt.form();
+        var fillMoneyTotal = 0;
+        var fillMoneyDataName = "fillMoney"+key+"_"+curId;
+        var fillMoneyName = "fillMoney"+key;
+        //判断是否有上级科目
+        if (superItemcode && superItemcode != "") {
+            //获取上级科目的流向标志
+            var signSuper = $("#sign_" + superItemcode + "_" + curId).val();
+            //获取上级科目的科目内是否自然对冲标志
+            var isNaturalHedge = $("#isNaturalHedge_" + superItemcode + "_" + curId).val();
+            $('form').find('input[data-superItemCode="' + superItemcode + '"][data-name="'+fillMoneyDataName+'"][data-curId="' + curId + '"]').each(function () {
+                //获取子科目的流向标志，计算上级科目金额（必须增加流向标志，客户存在同一个科目下子科目既有流入又有流出）
+                var sign = $("#sign_" + $(this).attr("data-itemCode")+"_"+curId).val();
+                if (isNaturalHedge == "1") {
+                    //科目内自然对冲为"是"：父科目上报总额根据子科目的资金流向计算
+                    if (signSuper == sign) {
+                        fillMoneyTotal = moneyFun.add(fillMoneyTotal, moneyFun.toNumber($(this).val()));
+                    } else {
+                        fillMoneyTotal = moneyFun.sub(fillMoneyTotal, moneyFun.toNumber($(this).val()));
+                    }
+                } else {
+                    //科目内自然对冲为"否"：父科目上报总额不考虑子科目的资金流向
+                    fillMoneyTotal = moneyFun.add(fillMoneyTotal, moneyFun.toNumber($(this).val()));
+                }
+            });
+            //上级科目金额
+            var fillMoneySuper = moneyFun.format(fillMoneyTotal);
+            moneyType.get(fillMoneyName + "_" + superItemcode + "_" + curId).val(fillMoneySuper);
+        }
+        //判断上级科目是否存在上级科目
+        var superItemcodeNew = $("[data-id='" + fillMoneyName + "_" + superItemcode +"_"+curId + "']").attr("data-superItemCode");
+        if (superItemcodeNew && superItemcodeNew != "") {
+            calSuperItemMoney(superItemcode, superItemcodeNew, curId, key);
+        }
+    }
+
+    /**
+     * 导入功能
+     */
+    importExcel = function () {
+        var corpId = corp.get("corpId").val();
+        var templateId = selectType.get("templateId").val();
+        var curId = $("#inputCurIds").val().split(',');
+        bt.btImport.init({
+            code: "1000000016",
+            titleRows: 0,
+            width: "100%",
+            height: "100%",
+            headRows: 2,
+            downUrl: basePath + "/foreign/fexExposureDownloadAndImport/downloadExposure?corpId=" + corpId + "&templateId=" + templateId + "&curId=" + curId,
+            success: function (head, data, select) { //点击确认后回调方法，这里导入组件写了success方法这里可以不用此方法
+
+            }
+        });
+    }
+</script>

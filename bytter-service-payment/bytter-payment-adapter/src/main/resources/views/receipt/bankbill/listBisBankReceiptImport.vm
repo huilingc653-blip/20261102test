@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        table .table-ellipsis {
+            max-width: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody >
+        <tr>
+            ##银行类型
+            <td class="textRight">#springMessage('table.eBankBill.bankType')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/bisbifinit/json" data-callback="bifCodeCallback"
+                     data-search="true" data-valuefield="id" data-textfield="name" data-name="eqs_bifCodeId" data-biz-name="eqs_bifCodeId"></div>
+            </td>
+            ##本方账号
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.bankAcc')</td>
+            <td width="30%">
+                <input type="text" id="likes_bankAcc" name="likes_bankAcc" lay-verify="strlength" data-maxlength="30"
+                       autocomplete="off" accountType="2,3"
+                       data-biz-name="likes_bankAcc"  data-name="likes_bankAcc" permission="B"
+                       class="layui-input bt-biz-accountTable" data-resource="netbank:bankAcc:bisAccBal:query"
+                       data-callback="accountCallBack" data-valuefromtable="true" >
+            </td>
+            ##是否关联流水
+            <td class="textRight">#springMessage('table.eBankBill.isRelDtl')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="sf_yn" data-name="eqs_validSign" data-biz-name="eqs_validSign"></div>
+            </td>
+        </tr>
+        <tr>
+            ##导入时间
+            <td class="textRight" width="13%">#springMessage('table.received.importTime')</td>
+            <td width="25%">
+                <input type="text" name="ged_importDate" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="led_importDate" value="">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_importDate" class="layui-input bt-input-inline bt-biz-dateType"
+                       id="led_importDate" value="">
+            </td>
+            ##单位ID
+            <td class="textRight">#springMessage('table.btBankAcc.corpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="ins_corpId"
+                         data-scope="all"
+                         data-resource="netbank:receipt:bisbankreceiptImport:query"></div>
+                </div>
+            </td>
+            ##金额
+            <td class="textRight">#springMessage('table.btBankAccDtl.amt')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" name="geg_amt" autocomplete="off" data-minus="true" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" data-moneyendid="t20" placeholder="#springMessage('table.bisExc.payMoney')">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="leg_amt" autocomplete="off" data-minus="true" class="layui-input bt-biz-moneyType bt-input-inline"
+                           data-moneyendid="t20" style="text-align:right" id="t20" placeholder="#springMessage('table.bisExc.payMoney')">
+                </div>
+            </td>
+        </tr>
+            ##查询
+        <tr>
+            <td colspan="6" class="center">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" onclick="clearAll()">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight" width="10%">#springMessage('table.bvPrintMatchRule.matchRule')</td>
+            <td colspan="5">
+                <div class="bt-biz-dict" data-type="checkbox" data-group="paymentblending_matching_rule" data-name="eqs_matchingRule" data-biz-name="matchingRule"
+                     data-defaultvalue="1,2,3,4,5"  onclick="getReceipt();" ></div>
+
+            </td>
+        </tr>
+        <tr>
+            ##交易日期
+        <td class="textRight" width="10%"><span class="pl"><span class="required-icon">*</span></span>#springMessage('tp.ds.tradeTime')</td>
+        <td colspan="5">
+            <input type="text" name="ged_tradeTime" class="layui-input bt-input-inline bt-biz-dateType"
+                   data-endid="ged_tradeTime" value="${ged_tradeTime}">
+            <span class="date-mid">~</span>
+            <input type="text" name="led_tradeTime" class="layui-input bt-input-inline bt-biz-dateType"
+                   id="led_tradeTime" value="${led_tradeTime}">
+        </td>
+        </tr>
+        <tr id="transTimeRuleTr">
+            ##交易日期规则
+            <td class="textRight">#springMessage('table.revenue.transTime')#springMessage('table.bvPrintMatchRule.matchRule')</td>
+            <td colspan="3">
+                <div class="layui-inline">
+                    <div class="bt-biz-dict "
+                         data-required="true"
+                         data-type="radio"
+                         data-group="bisBankExecutionStrategy.transTimeRule"
+                         data-name="transTimeRule"
+                         data-biz-name="transTimeRule"
+                         data-callback="transTimeRuleCallback"
+                         data-defaultvalue="0">
+                    </div>
+                </div>
+                <div class="layui-inline" id="tranDaysDiv" #if(!$!{bisBankExecutionStrategy.transDays})style="display: none"#end>
+                    <div class="layui-inline">
+                        #springMessage('table.bisBankExecutionStrategy.transDays')<font color="red">(<=)</font>
+                    </div>
+                    <div class="layui-inline">
+                        <input type="text" name="transDays" data-name="transDays" data-biz-name="transDays" autocomplete="off" class="layui-input bt-biz-moneyType"
+                               data-decimal="0" data-separator="" data-min="0" value="0">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;" >
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBond.orderNo')</th>
+        <th>#springMessage('table.eBankBill.bankType')</th>
+        <th>#springMessage('table.btBankAccDtl.corp')</th>
+        <th>#springMessage('table.btBankAcc.bankAcc')</th>
+        <th>#springMessage('table.received.importTime')</th>
+        <th>#springMessage('receipt.file.name')</th>
+        <th>#springMessage('receipt.file.text')</th>
+##        <th>#springMessage('common.button.targetFlow')</th>
+        <th>#springMessage('table.bisAccDtl.amt')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/receipt/bankbill/bisBankReceiptImport.list.js?_btv=${resourceVersion}"></script>
+</html>

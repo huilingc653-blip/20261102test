@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+			<input id="id" name="id" type="hidden" value="$!{cmsLoanRepayPage.id}">
+        	<input id="tallySign" type="hidden" value="$!{isAccounting}">
+        <table class="layui-table">
+        	<colgroup>
+        		<col width="15%">
+        		<col width="35%">
+        		<col width="15%">
+        		<col width="35%">
+        	</colgroup>
+            <tbody>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<label>#springMessage('table.cmsLoanInfo.createDate')</label>&nbsp;&nbsp;
+					<div class="layui-input-inline">
+					$!date.format('yyyy-MM-dd',$!cmsLoanRepayPage.createDate)
+					</div>
+				</td>
+			</tr>
+			<tr>
+        	##申请单位
+				<td class="textRight">#springMessage('table.cmsLoanInfo.corp')</td>
+				<td colspan="3">
+				<span>$!{cmsLoanInfoPage.corpName}</span>
+				</td>
+			</tr>
+			<tr>
+			##所属资金中心
+				<td class="textRight">#springMessage('table.cmsLoanInfo.net')</td>
+				<td>
+					<span>$!{cmsLoanInfoPage.netName}</span>
+				</td>
+			##贷款类型
+				<td class="textRight">#springMessage('table.cmsLoanInfo.loanGenre')</td>
+				<td >
+					<span>$!{cmsLoanInfoPage.loanGenreName}</span>
+				</td>
+			</tr>
+			<tr>
+			##贷款单号
+				<td class="textRight">#springMessage('table.cmsLoanInfo.billCode')</td>
+				<td >
+					<span>$!{cmsLoanInfoPage.billCode}</span>
+				</td>
+			##合同号
+				<td class="textRight">#springMessage('table.cmsLoanInfo.contractCode')</td>
+				<td >
+					<span>$!{cmsLoanInfoPage.contractCode}</span>
+				</td>
+			</tr>
+			<tr>
+			##贷款发放编号
+				<td class="textRight" >#springMessage('table.cmsLoanSend.billCode')</td>
+				<td colspan="3">
+				<span>$!{cmsLoanSendPage.billCode}</span>
+				</td>
+			</tr>
+			#if($isAccounting)
+			<tr>
+			##贷款账号
+				<td class="textRight">#springMessage('table.cmsLoanInfo.provideLoanAcc')</td>
+				<td >
+					<span>$!{cmsLoanSendPage.loanAcc}</span>
+				</td>
+			##还款账号
+				<td class="textRight">#springMessage('table.cmsLoanRepay.repayAcc')</td>
+				<td >
+					<span>$!{cmsLoanSendPage.provideLoanAcc}</span>
+				</td>
+			</tr>
+			#end
+			<tr>
+			##放款币别
+				<td class="textRight">#springMessage('table.cmsLoanInfo.curCode')</td>
+				<td >
+					<div class="layui-input-inline">
+					$!{cmsLoanInfoPage.curName}
+					</div>
+				</td>
+			##放款金额
+				<td class="textRight">#springMessage('table.cmsLoanSend.loanMoney')</td>
+				<td >
+				$number.formatNumeric($!{cmsLoanSendPage.loanMoney})
+				</td>
+			</tr>
+			<tr>
+			##还款在途金额
+				<td class="textRight">#springMessage('table.cmsLoanRepay.inwayMoney')</td>
+				<td >
+				$number.formatNumeric($!{inwayMoney})
+				</td>
+			##已还金额
+				<td class="textRight">#springMessage('table.cmsLoanRepay.processMoney')</td>
+				<td >
+				$number.formatNumeric($!{rpayedMoney})
+				</td>
+			</tr>
+			<tr>
+			##贷款发放日期
+				<td class="textRight">#springMessage('table.cmsLoanSend.loanDate')</td>
+				<td>$!date.format('yyyy-MM-dd',$!cmsLoanSendPage.loanDate)</td>
+			##到期日期
+				<td class="textRight">#springMessage('cms.common.deadlineDate')</td>
+				<td>$!date.format('yyyy-MM-dd',$!cmsLoanSendPage.repayDate)</td>
+			</tr>
+			<tr>
+			<td class="textRight">#springMessage('table.fcAcc.delayDeadlineDate')</td>
+				<td>$!date.format('yyyy-MM-dd',$!deferredRepayDate)</td>
+					##还款类型
+					<td class="textRight">#springMessage('table.cmsLoanRepay.repayType')</td>
+					<td>
+					<div class="bt-biz-dict" data-type="select" data-group="cms.repayType" data-defaultvalue="$!{cmsLoanRepayPage.repayType}" data-name="repayType" data-biz-name="repayType" data-callback="changeRepayType"></div>
+					<input type="hidden" id="initRepayType" value="$!{cmsLoanRepayPage.repayType}">
+					</td>
+			</tr>
+			<tr>
+			##还款日期
+				<td class="textRight">#springMessage('table.cmsLoanRepay.repayDate')</td>
+				<td>
+					<input type="text" name="repayDate" class="layui-input bt-biz-dateType" value="$!date.format('yyyy-MM-dd',$!cmsLoanRepayPage.repayDate)" data-type="date" id="repayDate" data-biz-name="repayDate" data-min="$!date.format('yyyy-MM-dd',$!cmsLoanSendPage.loanDate)" lay-verify="required" data-callback="changeRepayDate" #if($isHaveRepayMent) readonly #end>
+				</td>
+			##还款金额
+				<td class="textRight">#springMessage('table.cmsLoanRepay.repayMoney')</td>
+				<td>
+					<div class="layui-inline" id="repayMoneyShow">
+					#if($isHaveRepayMent)
+					<input type="text" data-name="repayMoney" class="layui-input bt-biz-moneyType" lay-verify="required" data-biz-name="repayMoney" value="$!{cmsLoanRepayPage.repayMoney}"  data-max="$!{remainMoney}" placeholder="#springMessage('cms.loan.repay.principal')" data-min="1"  readonly="readonly"  data-callback="changeRepayMoney">
+					#else
+					<input type="text" data-name="repayMoney" class="layui-input bt-biz-moneyType" lay-verify="required" data-biz-name="repayMoney" value="$!{cmsLoanRepayPage.repayMoney}" data-max="$!{remainMoney}" placeholder="#springMessage('cms.loan.repay.principal')" data-callback="changeRepayMoney">
+					#end
+					</div>
+					<input type="hidden" id="repaymentScheduleId" name="repaymentScheduleId"  value="$!{cmsLoanRepayPage.repaymentScheduleId}">
+					<button type="button" class="layui-btn layui-btn-small" id="repayPlanButton" onClick="repayPlan()" >#springMessage('cms.button.repayPlan')</button>
+					<input type="hidden" id="isHaveRepayMent" #if($isHaveRepayMent) value="1" #else value="0" #end>
+				</td>
+			</tr>
+			<tr>
+			##还款利息
+				<td class="textRight">#springMessage('table.cmsLoanRepay.repayAccrual')</td>
+				<td>
+				#if($isAccounting)
+					<input type="text" data-name="repayAccrual" class="layui-input bt-biz-moneyType" data-biz-name="repayAccrual" value="$!{cmsLoanRepayPage.repayAccrual}" placeholder="#springMessage('table.fcInterestDtlTemp.interest')" readonly="readonly"/>
+				#else
+                    <input type="text" data-name="repayAccrual" class="layui-input bt-biz-moneyType" data-biz-name="repayAccrual" value="$!{cmsLoanRepayPage.repayAccrual}" placeholder="#springMessage('table.fcInterestDtlTemp.interest')" />
+				#end
+				</td>
+				##还款方式
+				<td class="textRight">#springMessage('table.cmsLoanSend.repayType')</td>
+				<td id="repayway">
+					$!{repayTypeName}
+				</td>
+			</tr>
+			<tr>
+			##备注
+				<td class="textRight">#springMessage('table.cmsLoanRepay.rmk')</td>
+				<td colspan="3">
+						<textarea id="rmk" name="rmk" style="min-height:70px" maxlength="100"
+							    class="layui-textarea" placeholder="#springMessage('table.cmsLoanInfo.rmk')">$!{cmsLoanRepayPage.rmk}</textarea>
+										</td>
+			</tr>
+			<tr>
+			##附件
+				<td class="textRight">#springMessage('cms.loan.attachment')</td>
+				<td colspan="3">
+					<div id="uploader" style="width:100%" class="layui-input-inline"></div>
+					<input type="hidden" id="attachmentgid" value="$!{cmsLoanRepayPage.attachmentId}">
+				</td>
+			</tr>
+			<tr>
+					<td colspan="4" style="text-align: center;">
+						<button class="layui-btn" lay-submit="" value="1" lay-filter="submit">#springMessage('common.button.submit')</button>
+						<button class="layui-btn" lay-submit="" value="0" lay-filter="submit">#springMessage('common.button.temp')</button>
+						<button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+					</td>
+			</tr>
+        	</tbody>
+		</table>
+		<input type="hidden" id ="sendCode" name="sendCode" value="$!{cmsLoanSendPage.billCode}"><!-- 发放编号 -->
+		<input type="hidden" id ="sendId" name="sendId" value="$!{cmsLoanSendPage.id}"><!-- 发放编号 -->
+		<input type="hidden" id="loanAcc" name="loanAcc" value="$!{cmsLoanSendPage.loanAcc}"><!-- 贷款账号 -->
+		<input type="hidden" id="sendMoney" value="$!{cmsLoanSendPage.loanMoney}"><!-- 发放金额-->
+		<input type="hidden" id="repayMoneyOld" value="$!{cmsLoanRepayPage.repayMoney}"><!-- 申请还款金额 -->
+		<input type="hidden" id="repayDateOld" value="$!date.format('yyyy-MM-dd',$!cmsLoanRepayPage.repayDate)"><!-- 发放日期 -->
+		<input type="hidden" id="isSelectRepayment" value="$!{cmsLoanRepayPage.repaymentScheduleId}"><!-- 是否已选还款计划 -->
+		<input type="hidden" id="orderNo" value=""><!-- 利息流水号-->
+        <input type="hidden" id="calcInterest" value="1"><!-- 是否需要计息 -->
+        <input type="hidden" id="oriRepayType" name="oriRepayType" value="$!{cmsLoanRepayPage.repayType}"><!-- 是否需要计息 -->
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/loan/cmsLoanRepay.edit.js?_btv=${resourceVersion}"></script>
+</html>

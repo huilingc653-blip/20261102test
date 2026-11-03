@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input id="opType" name="opType" type="hidden" value="list">
+    <input id="moneySumName" name="moneySumName" type="hidden" value="1">
+    <div class="layui-collapse" lay-filter="collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title"></h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td class="textRight">#springMessage('单据编号')</td>
+                        <td>
+                            <input type="text"name="likes_code" autocomplete="off"
+                                   class="layui-input" placeholder="#springMessage('单据编号')">
+                        </td>
+                        <td class="textRight">#springMessage('业务类型')</td>
+                        <td>
+                            <div class="bt-biz-selectType" data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=0&corpId"
+                                 data-name="eqs_batchBusType" data-biz-name="eqs_busType"
+                                 data-valuefield="busId" data-textfield="busTypeName" data-search="true" data-beforeinit="busBefore"></div>
+                        </td>
+                        <td class="textRight">#springMessage('单据日期')</td>
+                        <td>
+                            <input type="text" name="ged_receiptDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                   data-endid="led_receiptDate">
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_receiptDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                   id="led_receiptDate">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('table.nisBillhead.corpId')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-tree-type="check"
+                                     data-name="ins_corpId"
+                                     data-resource="accountReceivable:queryDocManage:query"
+                                     data-scope="all"
+                                     data-callback="bt.corpCallback"></div>
+                            </div>
+                        </td>
+                        ##应收币种
+                        <td class="textRight" width="10%">#springMessage('应收币种')</td>
+                        <td width="30%">
+                            <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-value="$!{curIdRMB}"
+                                 data-name ="eqs_curIdShow" data-biz-name ="eqs_curIdShow"  data-valueField="id" data-textField="curName"
+                                 data-callBack="changeCurShowCallback"></div>
+                            <input id="eqs_curId" type="hidden" name="eqs_curId" value="$!{curIdRMB}">
+                        </td>
+
+                        <td class="textRight">#springMessage('到期日期')</td>
+                        <td>
+                            <input type="text" name="ged_endDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                   data-endid="led_endDate">
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_endDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                   id="led_endDate" value="">
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tbody id="hide-search">
+                    <tr>
+                        <td class="textRight">#springMessage('客商名称')</td>
+                        <td>
+                            <input type="text"name="likes_externalName" autocomplete="off"
+                                   class="layui-input" placeholder="#springMessage('客商名称')">
+                        </td>
+                        <td class="textRight">#springMessage('结算方式')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-biz-name="eqs_voucherType"
+                                 data-group="account.receivable.doc.voucherType" data-name="eqs_voucherType"></div>
+                        </td>
+                        <td class="textRight">#springMessage('账龄起算日')</td>
+                        <td>
+                            <input type="text" name="ged_agingDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                   data-endid="led_agingDate">
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_agingDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                   id="led_agingDate">
+                        </td>
+                    </tr>
+                        <tr>
+                            ##核销类型
+                            <td class="textRight">#springMessage('核销类型')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select" data-group="writeOff.type" data-name="eqs_writeOffType" name="eqs_writeOffType"
+                                     data-biz-name="doc_eqs_writeOffType"
+                                ></div>
+                            </td>
+                            ##单据来源
+                            <td class="textRight" colspan="1">#springMessage('table.nisBillhead.billFrom')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select" data-group="writeOff.docSource"
+                                     class = "layui-input-inline" data-name="eqs_source"></div>
+                            </td>
+                            ##核销状态
+                            <td class="textRight" width="10%">#springMessage('核销状态')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select" data-group="writeOff.status" data-name="eqs_writeOffStatus" name="eqs_writeOffStatus"
+                                     data-biz-name="eqs_writeOffStatus"
+                                ></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+                            #if($shiro.hasPermission("netbank:netBank:nisReceivable:query"))
+                            <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                                'common.button.search')</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">#springMessage(
+                                'common.button.reset')</button>
+                            <span class="ui-more-btn" onclick="showMoreBtn()">更多筛选</span><img src="${basePath}/static/images/table/icon_arrow_down.svg" class="ui-arrow-down">
+                            #end
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('单据编号')</th>
+        <th>#springMessage('单位')</th>
+        <th>#springMessage('业务类型')</th>
+        <th>#springMessage('单据来源')</th>
+        <th>#springMessage('结算方式')</th>
+        <th>#springMessage('单据日期')</th>
+        <th>#springMessage('到期日期')</th>
+        <th>#springMessage('账龄起算日')</th>
+        <th>#springMessage('应收金额')</th>
+        <th>#springMessage('应收余额')</th>
+        <th>#springMessage('应收币种')</th>
+        <th>#springMessage('客商名称')</th>
+        <th>#springMessage('客商类型')</th>
+        <th>#springMessage('核销状态')</th>
+        <th>#springMessage('核销类型')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/query/queryDocManage.list.js?_btv=${resourceVersion}"></script>

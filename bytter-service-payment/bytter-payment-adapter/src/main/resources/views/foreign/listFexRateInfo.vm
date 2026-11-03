@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input id="rateInterfaceType" name="rateInterfaceType" type="hidden" value="$!{rateInterfaceType}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##外汇牌价类型
+            <td class="textRight">#springMessage('table.fexRateInfo.rateType')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexratetype/listFexRateType/$!{rateInterfaceType}" data-name ="eqs_rateTypeId" data-biz-name ="eqs_rateTypeId"
+                     data-valueField="id" data-textField="typeName"></div>
+            </td>
+            ##标准币种
+            <td class="textRight">#springMessage('table.fcExcrateAdjust.cur')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input id="eqs_cur" name="eqs_cur" type="text" hidden="hidden">
+                    <input type="text" id="eqs_curName" name="eqs_curName" lay-verify="tableData" data-biz-name="eqs_curName"
+                           autocomplete="off" class="layui-input text" placeholder="#springMessage('table.btCurrency.sysCurName')">
+                    <table id="sysCurTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.btCurrency.englishCode')</th>
+                            <th>#springMessage('table.btCurrency.curName')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##报价币种
+            <td class="textRight">#springMessage('table.fexRateInfo.referCur')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input id="eqs_referCur" name="eqs_referCur" type="text" hidden="hidden">
+                    <input type="text" id="eqs_referCurName" name="eqs_referCurName" lay-verify="tableData" data-biz-name="eqs_referCurName"
+                           autocomplete="off" class="layui-input text" placeholder="#springMessage('table.btCurrency.sysCurName')">
+                    <table id="sysCurTable1" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.btCurrency.englishCode')</th>
+                            <th>#springMessage('table.btCurrency.curName')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+            ##银行返回时间/发布时间
+            <td class="textRight">
+                #if($!{rateInterfaceType} == "1")
+                            #springMessage('table.bisGatherCmd.returnTime')
+                        #else
+                    #springMessage('bpm.model.releaseTime')
+                #end
+            </td>
+            <td>
+                <input type="text" name="ged_returnTime" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="led_returnTime">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_returnTime" class="layui-input bt-input-inline bt-biz-dateType"
+                       id="led_returnTime">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fexRateInfo.rateType')</th>
+        <th>#springMessage('table.fcExcrateAdjust.cur')</th>
+        <th>#springMessage('table.fexRateInfo.referCur')</th>
+        #if($!{rateInterfaceType} == "1")
+            <th>#springMessage('table.bisGatherCmd.returnTime')</th>
+        #else
+            <th>#springMessage('bpm.model.releaseTime')</th>
+        #end
+        <th>#springMessage('table.fcExcrateAdjust.foreignExchangePurchase')</th>
+        <th>#springMessage('table.fcExcrateAdjust.foreignExchangeSell')</th>
+        <th>#springMessage('table.fcExcrateAdjust.foreignExchangeMiddle')</th>
+        <th>#springMessage('btPayType.rmk')</th>
+    </tr>
+    </thead>
+</table>
+<div class="layui-input-inline" style="color: red">
+    #springMessage('table.fexRateInfo.desc')
+</div>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    var datatable;
+    var moneyType;
+    var moneyFun;
+    bt.use(['form', 'datatable', 'select', 'dateType', 'corp', 'money', 'moneyType', 'dicts', 'btImport', 'bank', 'selectType','element', 'selectTable'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.corp.init();
+        moneyType = bt.moneyType.init();
+        moneyFun = bt.moneyType.getFun();
+        bt.dateType.init();
+        bt.selectType.init();
+        bt.dicts.init();
+
+        bt.selectTable.init({
+            elem: "#sysCurTable",
+            url: basePath + "/basic/business/btcurrency/listSysCur",
+            searchInput: "#eqs_curName",
+            scrollX: "500px",
+            scrollY: "200px",
+            columns: [
+                {data: "englishCode",},
+                {data: "curName",},
+            ],
+            clickCallback: function (data, $tr) {
+                $("#eqs_cur").val(data.id);
+                $("#eqs_curName").val(data.curName);
+            },
+        });
+
+        bt.selectTable.init({
+            elem: "#sysCurTable1",
+            url: basePath + "/basic/business/btcurrency/listSysCur",
+            searchInput: "#eqs_referCurName",
+            scrollX: "500px",
+            scrollY: "200px",
+            columns: [
+                {data: "englishCode",},
+                {data: "curName",},
+            ],
+            clickCallback: function (data, $tr) {
+                $("#eqs_referCur").val(data.id);
+                $("#eqs_referCurName").val(data.curName);
+            },
+        });
+
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            checkbox: false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/foreign/fexrateinfo/datatable"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {data: "rateTypeName", bSortable: true, className: 'center'},
+                {data: "curName", bSortable: true, className: 'center',},
+                {data: "referCurName", bSortable: true, className: 'center',},
+                // {data: "returnTime", bSortable: true, className: 'center',},
+                {data: "effectDate", bSortable: true, className: 'center',},
+
+                {
+                    data: "purchaseRate", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if(!full.purchaseRate){
+                            return "";
+                        }
+                        var opt = {
+                            separator: ",",
+                            decimal: 4
+                        }
+                        return moneyFun.format(full.purchaseRate, opt);
+                    }
+                },
+                {
+                    data: "sellRate", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if(!full.sellRate){
+                            return "";
+                        }
+                        var opt = {
+                            separator: ",",
+                            decimal: 4
+                        }
+                        return moneyFun.format(full.sellRate, opt);
+                    }
+                },
+                {
+                    data: "middleRate", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if(!full.middleRate){
+                            return "";
+                        }
+                        var opt = {
+                            separator: ",",
+                            decimal: 4
+                        }
+                        return moneyFun.format(full.middleRate, opt);
+                    }
+                },
+                {data: "rmk", bSortable: true, className: 'center',}
+            ],
+        });
+    });
+
+</script>

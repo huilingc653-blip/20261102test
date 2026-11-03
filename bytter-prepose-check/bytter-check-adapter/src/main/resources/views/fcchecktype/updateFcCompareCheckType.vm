@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+			<input id="id" name="id" type="hidden" value="$!{fcCompareCheckTypePage.id}">
+        <table class="layui-table">
+            <tbody>
+				<tr>
+					##核对标准名称
+					<td class="textRight">#springMessage('table.fcCompareCheckType.checkTypeName')</td>
+    				<td width="40%">
+						<!--number-->
+						<input type="text" id="checkTypeName" name="checkTypeName" 
+							   lay-verify="required|strlength" data-maxlength="50"
+							    autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcCompareCheckType.checkTypeName')" value="$!{fcCompareCheckTypePage.checkTypeName}">
+											</td>
+					##排序
+					<td class="textRight">#springMessage('table.fcCompareCheckType.sort')</td>
+    				<td width="40%">
+						<input type="text" data-name="sort" class="layui-input bt-biz-moneyType" lay-verify="required" data-decimal="0" data-minus="false" placeholder="#springMessage('table.fcCompareCheckType.sort')" value="$!{fcCompareCheckTypePage.sort}">
+					</td>
+        		</tr>
+				<tr>
+        		##启用标志
+				<td class="textRight">#springMessage('table.fcCompareCheckType.validSign')</td>
+				<td colspan="3">
+						<!--number-->
+						<input type="checkbox" id="validSign" name="validSign" lay-skin="switch" #if($fcCompareCheckTypePage.validSign==1) checked #end lay-text="#springMessage('common.button.enable')|#springMessage('common.button.stop')">
+										</td>
+			</tr>
+			<tr>
+        		##核对标准
+				<td class="textRight" id="checkboxMsg">#springMessage('table.fcCompare.Check_the_standard')</td>
+				<td colspan="3">
+				<div class=bt-biz-dict data-type="checkbox" data-biz-name="checkTypes" data-name="checkTypes" data-group="check.checkType" data-required="true" data-defaultvalue="${checkTypes}"></div>
+				</td>
+			</tr>
+				<tr>
+					<td colspan="6" style="text-align: center;">
+						<button type="button" class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+						<button class="layui-btn" onClick="doClose()">#springMessage('common.button.close')</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+bt.use(['form','layedit','moneyType','dicts'], function(){
+    var $ = bt.jquery,form = bt.form();
+    bt.dicts.init();
+    bt.moneyType.init();
+    
+    //监听提交
+    form.on('submit(submit)', function(data){
+        var action = "/finacial/paramconfig/fccomparechecktype/modify";
+        if(data.field.checkTypes == null || data.field.checkTypes.length==0 ){
+        	layer.tips(bt.lang("finacial.check.checktype.selectIsNull"), '#checkboxMsg');
+        	return false;
+        }
+        if($("#validSign").is(':checked')){
+        	data.field.validSign = 1;
+        }else{
+        	data.field.validSign = 0;
+        }
+        var checkTypes = "";
+        $.each(data.field.checkTypes,function(i,val){
+        	checkTypes += val + ","
+        });
+        if(checkTypes=="02,"){
+        	layer.tips(bt.lang("finacial.check.checktype.onlyTime"), '#checkboxMsg');
+        	return false;
+        }
+        data.field.checkTypes = checkTypes;
+        $.post(basePath + action,data.field,function(result){
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            if(result.success){
+            	if(!bt.navtab){
+                    parent.layer?parent.layer.closeAll():layer.closeAll();
+                } else {
+                	bt.navtab.refreshParent();
+                	bt.navtab.closeCurrent();
+                }
+            }
+        },'JSON');
+        return false;
+    });
+    
+    doClose = function(){
+    	if(bt.navtab){
+			bt.navtab.closeCurrent();
+		}
+    }
+});
+
+</script>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" method="post" id="searchForm">
+    <table class="layui-table">
+        <tr>
+            <td class="textRight">#springMessage('international.credit.lcInter')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                         data-name="eqs_lcInter" data-biz-name="lcInter" >
+                    </div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('international.credit.creditNo')</td>
+            <td>
+                <input type="text" class="layui-input" name="likes_creditNo" />
+                <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center">
+                <button class="layui-btn" type="button" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="datatable" class="layui-table" style="width:100%">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcPredrawDtlTemp.orderNo')</th>##流水号
+        <th>#springMessage('international.credit.lcInter')</th>##信用证类型
+        <th>#springMessage('international.credit.creditNo')</th>##信用证号
+        <th>#springMessage('international.credit.contractNo')</th>##合同号
+        <th>#springMessage('international.credit.issuingDate')</th>##开证日期
+        <th>#springMessage('international.credit.expiryDate')</th>##有效期
+        <th>#springMessage('international.credit.creditMoney')</th>##开证金额
+        <th>#springMessage('international.credit.issuingCurId')</th>##开证币别
+        <th>#springMessage('international.credit.beneficiary')</th>##受益人
+        <th>#springMessage('international.credit.purpose')</th>##用途
+        <th>#springMessage('common.table.thead.operation')</th>##操作
+    </tr>
+    </thead>
+</table>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(['jquery','datatable','form','dicts'], function(){
+        var url = basePath+"/international/credit/createCredit/queryCreditApprove"
+        $ = bt.jquery;
+        bt.dicts.init();
+        var datatable = bt.datatable.init({
+            elem : "#datatable",
+            checkbox : true,
+            order: [[1,'desc']],
+            ajax : {
+                url : url,
+                dataSrc : "data"
+            },
+            colReorder : true,
+            columns : [
+                {data: "lcNo", bSortable: true, className: "center"},
+                {
+                    data : "lcInter",
+                    className : "center",
+                    render : function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter",full.lcInter);
+                    }
+                },{
+                    data : "creditNo",
+                    className : "center"
+                },{
+                    data : "contractNo",
+                    className : "center"
+                },{
+                    data : "issuingDate",
+                    className : "center"
+                },{
+                    data : "expiryDate",
+                    className : "center"
+                },{
+                    data : "creditMoney",
+                    className : "textRight",
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.creditMoney)
+                    }
+                },{
+                    data : "curName",
+                    className : "center"
+                },{
+                    data : "beneficiary",
+                    className : "center"
+                },{
+                    data : "purpose",
+                    className : "center"
+                },{
+                    data : null,
+                    className : "center",
+                    render : function (data, type, full, meta) {
+                        var  explode = "<span class=\"text-explode\">|</span>"
+                        var id = full.id;
+                        var taskId = full.taskId;
+                        var html = "";
+                        if ($("#flowStatus").val()=="todo") {
+                            html += "<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"viewCreditApprove('" + id + "','" + taskId + "')\">" + bt.lang("common.button.approve") + "</a>" + explode;
+                        }
+                        html += "<a class=\"\" href=\"#\" data-row=\""+meta.row+"\" onclick=\"bt.workFlow.trackFlow('"+ full.processInstanceId +"')\">"+bt.lang("common.button.trackFlow")+"</a>";
+                        return html;
+                    }
+                }
+            ],
+            summary:{
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '6',//汇总列序号
+                        dataName: 'creditMoney',//汇总列数据
+                    }
+                ]
+            },
+            searchForm : {
+                formElem : "#searchForm",
+                formFilter : "search"
+            }
+        });
+    });
+
+    function viewCreditApprove(id,taskId) {
+        var url = basePath + "/international/credit/createCredit/viewCreditApprove?id="+id+"&taskId="+taskId
+        bt.navtab.addNavtab(bt.lang("common.button.approve"),url);
+    }
+
+    //这里填写新的js代码，请参考前端文档
+</script>
+</body>
+</html>

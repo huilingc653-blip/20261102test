@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        #rateInfo input {
+            text-align: right;
+        }
+        #rateInfo .bt-biz-rateType {
+            width: 128px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" method="post" id="inputForm">
+    <input type="hidden" id="guaWays" name="guaWays" value="$!{guaWays}">
+    <input type="hidden" id="moneys0" name="moneys0" value="$!{vo.money0}">
+    <input type="hidden" id="moneys1" name="moneys1" value="$!{vo.money1}">
+    <input type="hidden" id="moneys2" name="moneys2" value="$!{vo.money2}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ## 融资主体
+            <td class="textRight" width="14%">#springMessage('table.guaContract.corpId')</td>
+            <td width="36%">$!{vo.corpName}</td>
+        ##担保编号
+            <td class="textRight">#springMessage('table.guaContract.guaNo')</td>
+            <td>$!{vo.guaNo}</td>
+        </tr>
+        <tr>
+        ##币别
+            <td class="textRight">#springMessage('table.guaContract.curId')</td>
+            <td>$!{vo.curName}</td>
+        ##担保日期
+            <td class="textRight">#springMessage('table.guaContractInfo.date')</td>
+            <td>$!date.format('yyyy-MM-dd',$!{vo.startDate})
+                <span class="date-mid">#springMessage('table.guaContract.range')</span>
+                $!date.format('yyyy-MM-dd',$!{vo.endDate})
+            </td>
+        </tr>
+        <tr>
+        ##债务人
+            <td class="textRight">#springMessage('table.guaContract.debtorPersonName')</td>
+            <td>$!{vo.debtorPerson}</td>
+        ##债权人
+            <td class="textRight">#springMessage('table.guaContract.creditorPerson')</td>
+            <td>$!{vo.creditorPerson}</td>
+        </tr>
+        <tr>
+            ## 是否集团内担保单位
+            <td class="textRight">#springMessage('table.guaContract.innerGua')</td>
+            <td>
+                $dictTag.get("sf_yn",$!{vo.innerGua})
+            </td>
+        ##担保单位
+            <td class="textRight">#springMessage('table.guaContract.guaPerson')</td>
+            <td>$!{vo.guaPerson}</td>
+        </tr>
+        <tr>
+        ##合同编号
+            <td class="textRight">#springMessage('table.guaContract.contractCode')</td>
+            <td>$!{vo.contractCode}</td>
+        ##担保方式
+            <td class="textRight">#springMessage('table.guaContract.guaType')</td>
+            <td>$!{guaWayNames}</td>
+            #foreach($guaWayMsg in $vo.guaDtls)
+                <input type="hidden" id="money$!{guaWayMsg.guaWayCode}" value="$!{guaWayMsg.money}">
+            #end
+        </tr>
+        <tr>
+        ##担保范围
+            <td class="textRight">#springMessage('table.guaContract.warr')</td>
+            <td>$!{vo.warr}</td>
+        ##担保额度
+            <td class="textRight">#springMessage('table.guaContract.guaMoney')</td>
+            <td id="guaMoney"></td>
+        </tr>
+        <tr>
+        ##备注
+            <td class="textRight">#springMessage("table.guaContract.rmk")</td>
+            <td>$!{vo.rmk}</td>
+##            创建人
+            <td class="textRight">#springMessage("table.sysAttachment.createBy")</td>
+            <td>$!{vo.operator}</td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('cms.loan.attachment')</td>
+            <td style="text-align: center;" colspan="3">
+                <!-- 附件上传 -->
+                <input id="annexNameInfo" name="annexNameInfo" type="hidden" value="$!{vo.attachmentId}">
+                <div id="uploaderInfo" class="layui-input-inline" style="width:100%"></div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    #if(!$taskId)
+        <div style="width: 100%;text-align: center;">
+            <button class="layui-btn" type="button" onClick="closecurrent()">#springMessage('common.button.close')</button>
+        </div>
+    #end
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form', 'datatable', 'corp', 'moneyType', 'btUpload', 'dicts', 'jquery', 'checkboxs'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.moneyType.init();
+        var gInfoId = $("#annexNameInfo").val();
+        var gSendId = $("#annexNameSend").val();
+        bt.btUpload.init({
+            elem: "#uploaderInfo",
+            hasUpload: false,
+            hasDelete: false,
+            isExpand: true,
+            gid: gInfoId
+        });
+
+        bt.btUpload.init({
+            elem: "#uploaderSend",
+            hasUpload: false,
+            hasDelete: false,
+            isExpand: true,
+            gid: gSendId
+        });
+
+        // 担保方式
+        initGuaWayDiv();
+    });
+
+    function closecurrent() {
+        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+        return false;
+    }
+
+    function initGuaWayDiv() {
+        var guaWaysValue = $("#guaWays").val();
+        if (guaWaysValue.length) {
+            var arr = new Array();
+            arr = guaWaysValue.split(",");
+            // 外币
+            $.ajax({
+                url: basePath + "/cms/guarantee/guaContractInfo/json",
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    $.each(data, function (i) {
+                        for (var j = 0; j < arr.length; j++) {
+                            var str1 = data[i].id;
+                            var str2 = arr[j];
+                            if (str1 == str2) {
+                                createHtml(data[i]);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    function createHtml(data) {
+        var html = '<div id="div' + data.id + '">';
+        html += '<label>' + data.name + '</label>';
+        html += '<div class="layui-inline">';
+        html += bt.money.format($("#money" + data.code).val());
+        html += '</div>';
+        $("#guaMoney").append(html);
+        bt.moneyType.init();//金额
+    }
+</script>
+</html>

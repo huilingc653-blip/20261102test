@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+    	#rateInfo input {
+    		text-align:right;
+    	}
+    	#rateInfo .bt-biz-rateType {
+    		width:128px;
+    	}
+    
+    </style>
+</head>
+<body>
+	<form class="layui-form" method="post" id="inputForm">
+		<!-- 保存状态 -->
+		<!--<input id="saveType" name="saveType" type="hidden" value="0">-->
+		<input id="accCorpId" name="accCorpId" type="hidden" value="">
+		<input id="bankAccId" name="bankAccId" type = "hidden" value="">
+		<input id = "status" name="status" type="hidden">
+		<input type="hidden" name="isPayed" value="1"/>
+		<input id="defaultDayLimit" name="defaultDayLimit" type="hidden" value="3">
+		<input id="dateUnit" name="dateUnit" type="hidden" value="M">
+		<input id="isOnline" type="hidden" value="">
+		<input id="rate"  type="hidden">
+		<table class="layui-table">
+		<tbody>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<label><b>#springMessage('table.fcBond.inputdate')</b></label>
+					<div class="layui-input-inline"> 
+						<input id="inputDate" name="createDate" value="$!date.format('yyyy-MM-dd',$!inputDate)" readonly="readonly" autocomplete="off" class="layui-input">
+					</div>
+				</td>
+			</tr>
+        	<tr>
+        		##单位名称
+				<td class="textRight" width="14%">#springMessage('table.fcBond.corpName')</td>
+				<td width="36%">
+					<div class="layui-input-inline">
+						<div class="bt-biz-corp" 
+							data-biz-type="corp"
+							data-type="selectTree"
+							data-name="corpId"
+							data-biz-name="corpId"
+							data-scope="all"
+							data-required="true"
+							data-resource="netbank:fcBond:depositOut:apply"
+							data-callback="bt.corpCallback">
+						</div>
+					</div>
+				</td>
+	
+        		##存入银行
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.bankName')</td>
+				<td colspan="3">
+					<div class="layui-inline">
+						##        				<input class="layui-input" id="bankName" name="bankName" readonly="readonly" type="text" lay-verify="required"
+						##							style="width: 280px" placeholder="#springMessage('table.fcBond.bankName')"/>
+						<span id="bankName"></span>
+					</div>
+				</td>
+			</tr>
+           <tr>
+		  ##存入账号
+           	<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.depositaccount')</td>
+			<td>
+				<div class="layui-input-inline">
+					<input type="text" id="bankAcc" name="bankAcc" lay-verify="required|tableData" data-biz-name="bankAcc" lay-verify="required"
+						 autocomplete="off" class="layui-input text">
+					<table id="bankAccTable" class="hide">
+						<thead>
+							<tr>
+								<th>#springMessage('table.fcBond.depositaccount')</th>
+								<th>#springMessage('table.fcBond.depositaccountName')</th>
+								<th>#springMessage('table.fcBond.depositBank')</th>
+								<th>#springMessage('table.fcBond.curCode')</th>
+								</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</td>
+			##账户名称
+			 <td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.accountname')</td>
+                    <td>
+						<div class="layui-input-inline">
+							#* <input type="text" id="accName" name="accName" lay-verify="required" readonly="readonly" style="width: 280px" lay-verify="required"
+                                    autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.accountname')">*#
+							<span id="accName"></span>
+						</div>
+                    </td>
+		   </tr>
+
+            <tr>
+			##币别
+                <td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.curCode')</td>
+                <td >
+                    <input id="curId" name="curId" type="hidden" value="" />
+                    <input id="curName" name="curName"  type="text" readonly="readonly"  class="layui-input" value="" />
+				</td>
+			##存入日期
+				<td class="textRight"><font color="red">*</font>#springMessage('table.fcBond.depositdate')</td>
+				<td >
+					<input id="startDate" name="startDate"  data-biz-name="repayDate"  lay-verify="required" data-type="date"
+						   class="layui-input bt-biz-dateType" data-endid="endDate" data-callback="endDateCallback"></input>
+				</td>
+            </tr>
+
+			<tr>
+			##存出账号
+				<td class="textRight">#springMessage('table.eAccrualBill.saveAcc')</td>
+				<td>
+					<div class="layui-input-inline">
+						<input type="text" id="outBankAcc" name="outBankAcc" lay-verify="tableData" data-biz-name="outBankAcc"
+							   autocomplete="off" class="layui-input">
+						<table id="outBankAccTable" class="hide">
+							<thead>
+								<tr>
+									<th>#springMessage('table.nisBillhead.payerAcc')</th>
+									<th>#springMessage('table.nisBillhead.payerAccName')</th>
+									<th>#springMessage('table.nisBillhead.payerBank')</th>
+									<th>#springMessage('table.fcBond.curCode')</th>
+									<th>#springMessage('table.btBankAcc.isOnline')</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</td>
+
+				##账户余额
+				<td class="textRight">#springMessage('table.nisBillhead.balance')</td>
+				<td>
+					<input type="hidden" id="outBankAccMoney">
+					<span id="accBalance"></span>
+				</td>
+			</tr>
+
+			<tr>
+				##保证金类型
+				<td class="textRight">#springMessage('fcbond.type')</td>
+				<td>
+					<div class="bt-biz-selectType layui-inline"
+						 data-biz-name="bondTypeId"
+						 data-url="${basePath}/bond/fcbondtype/getBondType"
+						 data-valuefield="id"
+						 data-textfield="bondTypeName"
+						 data-name="bondTypeId"
+						 data-search="true"></div>
+				</td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+			##保证金金额
+				<td class="textRight">#springMessage('table.fcBond.bondmoney')</td>
+				<td >
+					<input type="text" id="bondMoney" name="bondMoney"  lay-verify="required" data-decimal="2" class="layui-input bt-biz-moneyType" data-biz-name="bailmoney"  data-toUp="payMoneyUp">
+				</td>
+
+			##保证金金额(大写)
+				<td class="textRight">#springMessage('table.fcBond.bondmoney.big')</td>
+				<td>
+					<div id="payMoneyUp"></div>
+				</td>
+			</tr>
+
+			<tr>
+				###是否存入定期
+				<td class="textRight"><span style="color: red">*</span>#springMessage('fcbond.is.to.regular')</td>
+				<td>
+					<div class="bt-biz-dict"
+						 data-type="radio"
+						 data-group="sf_yn"
+						 data-defaultvalue="0"
+						 data-name="isRegular"
+						 data-biz-name="isRegular"
+						 data-callback="toRegular"></div>
+				</td>
+
+			##利率
+				<td class="textRight">#springMessage('table.choBankFinance.interestRate')</td>
+				<td >
+					<input type="text" id="interestRate" name="interestRate" data-biz-name="interestRate" autocomplete="off" class="layui-input bt-biz-rateType">
+				</td>
+			</tr>
+
+			<tr class="toRegular" style="display: none">
+			##到期日期
+				<div>
+					<td class="textRight">#springMessage('table.choBankFinance.deadlineDate')</td>
+					<td>
+						<div class="layui-input-inline">
+							<input type="text"
+								   id="endDate"
+								   name="endDate"
+								   data-name="endDate"
+								   data-biz-name="endDate"
+								   class="layui-input bt-biz-dateType"
+								   data-type="date"
+								   data-callback="endDateCallback">
+						</div>
+					</td>
+				</div>
+			##期限：3个月、6个月、1年、2年、3年、5年
+				<td class="textRight">#springMessage('table.choBankFinance.dayLimit')</td>
+				<td>
+					<div class="layui-input-inline">
+						<input type="text" name="dayLimit" data-biz-name="dayLimit" autocomplete="off" class="layui-input bt-biz-moneyType"
+							   data-decimal="0" data-separator="" readonly="readonly" >
+					</div>
+					<div class="layui-input-inline">#springMessage('config.nis.day')</div>
+				</td>
+			</tr>
+
+            <tr>
+			##是否已付款
+				<td class="textRight">
+					<div class="isPay" style="display: none">
+						<span style="color: red">*</span>#springMessage('table.fcBond.ispayed')
+					</div>
+				</td>
+				<td>
+					<div class="bt-biz-dict isPay" data-type="radio" data-group="sf_yn" data-defaultvalue="1"
+					data-name="isPayed" data-biz-name="isPayed" style="display: none"></div>
+				</td>
+
+			##用途
+				<td class="textRight">#springMessage('table.choBankFinance.purpose')</td>
+				<td>
+					<div class="layui-input-inline">
+						<select name="purpose" id="purpose" lay-verify="required" lay-search="" data-inputvalue="true">
+							<option value=" "></option>
+							<option value="inputText"></option>
+						</select>
+					</div>
+				</td>
+			</tr>
+
+			<tr>
+			##备注
+				<td class="textRight">#springMessage('table.fcBond.rmk')</td>
+				<td colspan="3">
+                	<textarea lay-verify="strlength" type="text" id="remark" name="remark" data-maxlength="100" class="layui-textarea" placeholder="#springMessage('table.cmsProvideLoanInfo.rmk')"></textarea>
+				</td>
+			</tr>
+
+			<tr>
+				<td class="textRight">#springMessage('cms.loan.attachment')</td>
+				<td style="text-align: center;" colspan="3">
+					<!-- 附件上传 -->
+					<input id="annexName" name="uploadId" type="hidden" value="">
+			        <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;" colspan="4">
+					<button class="layui-btn" lay-submit="" id="submit" value="11">#springMessage('common.button.submit')</button>
+					<button class="layui-btn" lay-submit="" id="temp" value="0">#springMessage('common.button.temp')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/fcbond/fcBond.add.js?_btv=${resourceVersion}"></script>
+</html>

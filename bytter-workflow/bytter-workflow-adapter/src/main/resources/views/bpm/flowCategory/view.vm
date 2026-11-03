@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" action="">
+    <table class="layui-table">
+        <tbody>
+        </div>
+        <tr>
+            <td class="textRight" width="20%">#springMessage('sys.notification.menuBelong')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="menu-menuId"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="20%">#springMessage('table.flowCategory.parentId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="flowCategory-parentId"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.name')</td>
+            <td>
+                <input type="hidden" name="id" value="$!{flowCategory.id}">
+                <input type="text" name="name" lay-verify="name" autocomplete="off"
+                       placeholder="#springMessage('table.flowCategory.name')"
+                       class="layui-input" value="$!{flowCategory.name}">
+                <span data-toggle="i18n" data-key-id="$!{flowCategory.id}"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.notification')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="notification"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">Key</td>
+            <td>
+                <input type="text" name="cateKey" autocomplete="off" placeholder="key" class="layui-input"
+                       value="$!{flowCategory.cateKey}">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">URL</td>
+            <td>
+                <input type="text" name="url" autocomplete="off" placeholder="url" class="layui-input"
+                       style="width: 80%"
+                       value="$!{flowCategory.url}">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.mobileUrl')</td>
+            <td>
+                <input type="text" name="mobileUrl" autocomplete="off"
+                       placeholder="#springMessage('table.flowCategory.mobileUrl')" class="layui-input"
+                       style="width: 80%"
+                       value="$!{flowCategory.mobileUrl}">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.mustApprove')</td>
+            <td>
+                <div class="bt-biz-dict" data-group="sf_yn" data-name="mustApprove" data-type="radio"
+                     data-defaultvalue="0" data-value="$!{flowCategory.mustApproveStr}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.batchRevokable')</td>
+            <td>
+                <div class="bt-biz-dict" data-group="sf_yn" data-name="batchRevokeAble" data-type="radio"
+                     data-defaultvalue="1" data-value="$!{flowCategory.batchRevokeAbleStr}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.mobileApprovalFlag')</td>
+            <td>
+                <div class="bt-biz-dict" data-group="sf_yn" data-name="mobileAveAble" data-type="radio"
+                     data-defaultvalue="1" data-value="$!{flowCategory.mobileApprovalFlag}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.flowCategory.sort')</td>
+            <td>
+                <input type="text" name="sort" autocomplete="off"
+                       placeholder="#springMessage('table.flowCategory.sort')" class="layui-input"
+                       value="$!{flowCategory.sort}">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="flowCategorySubmit">#springMessage(
+                    'common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</form>
+
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['form', 'layedit', 'laydate', 'jquery', 'selectTree', 'dicts'], function () {
+        var form = bt.form(), layer = bt.layer, $ = bt.jquery;
+        bt.dicts.init();
+        bt.selectTree.init({
+            url: basePath + "/bpm/flowCategory/tree",
+            elem: ".flowCategory-parentId",
+            name: 'parentId',
+            selected: '$!{flowCategory.parentId}',
+            currentNode: '$!{flowCategory.id}'
+        });
+
+        bt.selectTree.init({
+            url: basePath + "/sys/notification/categoryTree",
+            elem: ".notification",
+            name: 'notificationId',
+            selected: '$!{flowCategory.notificationId}'
+        });
+
+        bt.selectTree.init({
+            url: basePath + "/sys/menu/treeAuth",
+            elem: ".menu-menuId",
+            name: 'menuId',
+            selected: '$!{flowCategory.menuId}',
+            placeholder: bt.lang('sys.notification.category.menuBelong')
+        });
+
+        //监听提交
+        form.on('submit(flowCategorySubmit)', function (data) {
+            console.log(data.field);
+            if (typeof (data.field.status) == "undefined") {
+                data.field.status = 0;
+            } else {
+                data.field.status = 1;
+            }
+            var action = $('input[name="id"]').val() ? "update" : "save";
+            $.post(basePath + "/bpm/flowCategory/" + action, data.field, function (result) {
+                if (result.success) {
+                    parent.layer.closeAll();
+                    window.top.refreshParentFlag = true; // 刷新父页面标识
+                }
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, 'JSON');
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

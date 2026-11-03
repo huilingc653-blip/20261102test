@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.btBankAccDtl.transTime')</th>
+        <th>#springMessage('table.btBankAccDtl.corp')</th>
+        <th>#springMessage('table.btBankAccDtl.bankAcc')</th>
+        <th>#springMessage('table.btBankAccDtl.accName')</th>
+        <th>#springMessage('table.btBankAccDtl.bankName')</th>
+        <th>#springMessage('table.btBankAccDtl.cdSign')</th>
+        <th>#springMessage('table.btBankAccDtl.curName')</th>
+        <th>#springMessage('table.btBankAccDtl.amt')</th>
+        <th>#springMessage('table.btBankAccDtl.bal')</th>
+        <th>#springMessage('table.btBankAccDtl.oppAccNo')</th>
+        <th>#springMessage('table.btBankAccDtl.oppAccName')</th>
+        <th>#springMessage('table.btBankAccDtl.oppAccBank')</th>
+        <th>#springMessage('table.btBankAccDtl.remark')</th>
+        <th>#springMessage('table.nisBillhead.addWord')</th>
+        <th>#springMessage('table.btBankAccDtl.uses')</th>
+
+    </tr>
+    </thead>
+    <tbody>
+        #foreach($msg in $list)
+        <tr>
+            #if("$!{msg.billId}"=="")
+                <td><a class="" href="#" id="xview"  xid="$!{msg.dtlId}" >#springMessage('common.button.checkPayment')</a></td>
+                #else
+                    <td><a class="" href="#" id="aview" vfrom="$!{msg.isFrom}" vid="$!{msg.billId}" >#springMessage('common.button.viewPayment')</a></td>
+            #end
+            <td>$!date.format('yyyy-MM-dd HH:mm:ss',$!{msg.transTime})</td>
+            <td>$!{msg.corpName}</td>
+            <td>$!{msg.bankAcc}</td>
+            <td>$!{msg.accName}</td>
+            <td>$!{msg.bankName}</td>
+            <td>$!{msg.cdSignName}</td>
+            <td>$!{msg.curName}</td>
+            <td style="text-align:right; padding: 10px">$!number.formatNumeric($!{msg.amt},'#,##0.00')</td>
+            <td style="text-align:right; padding: 10px">$!number.formatNumeric($!{msg.bal},'#,##0.00')</td>
+            <td>$!{msg.oppAccNo}</td>
+            <td>$!{msg.oppAccName}</td>
+            <td>$!{msg.oppAccBank}</td>
+            <td>$!{msg.remark}</td>
+            <td>$!{msg.postscript}</td>
+            <td>$!{msg.uses}</td>
+
+        </tr>
+        #end
+    </tbody>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    $(document).on('click','#aview',function(){
+       view($(this).attr("vid"),$(this).attr("vfrom"))
+    })
+    $(document).on('click','#xview',function(){
+        check($(this).attr("xid"));
+        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+    })
+    function view(billId,billFrom) {
+        var size=billId.split("/").length;
+        if(size==1){
+            console.log(billFrom);
+            if(billFrom=="nis_billhead") {
+                parent.layer.open({
+                    type: 2,
+                    area: ['850px', '530px'],
+                    maxmin: true,
+                    content: basePath + "/netbank/nisbillhead/view/" + billId
+                });
+            }else if(billFrom=="nis_wage"){
+                parent.layer.open({
+                    type: 2,
+                    area: ['950px', '530px'],
+                    maxmin: true,
+                    content: basePath + "/wage/niswage/view/" + billId
+                });
+            }else if(billFrom=="fex_cash_flow") {
+                parent.layer.open({
+                    type: 2,
+                    area: ['950px', '530px'],
+                    maxmin: true,
+                    content: basePath + "/foreign/fexcashflow/view/" + billId
+                });
+            }
+        }else {
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/receipt/bisbankreceiptdtl/bill?id=" + billId
+            });
+        }
+    }
+
+    function check(dtlId) {
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.pay.check'), basePath + "/bankacc/paymentblending/list/" + dtlId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/bankacc/paymentblending/list/" + dtlId
+
+        })
+
+    }
+
+</script>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+
+<form  class="layui-form tt" id="searchForm">
+<table class="layui-table">
+	<tbody>
+	
+		<tr>
+			##网点
+			<td class="textRight">#springMessage('table.fcAcc.netId')</td>
+            <td width="25%">
+				<div class="layui-inline">
+					<div class="bt-biz-corp"
+						 data-biz-type="net"
+						 data-type="selectTree"
+						 data-biz-name="netId"
+						 data-name="netId"
+						 data-required="true"
+						 data-defaultValue="$!{netId}"
+						 data-group="corpGroup"
+						 data-change="corpId"
+						 data-resource="netbank:bankAcc:btBankAccRelation:query"
+						 data-scope="net">
+					</div>
+				</div>
+            </td>
+            
+            ##单位
+            <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+            <td width="25%">
+				<div class="layui-inline">
+					<div class="bt-biz-corp"
+						 data-tree-type="check"
+						 data-biz-type="corp"
+						 data-type="selectTree"
+						 data-biz-name="corpId"
+						 data-name="corpId"
+						 data-defaultValue="$!{corpId}"
+						 data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"
+						 data-group="corpGroup"
+						 data-resource="netbank:bankAcc:btBankAccRelation:query"
+						 data-scope="all"></div>
+				</div>
+            </td>
+	
+		
+			##日期范围
+			<td class="textRight">#springMessage('table.accountSummary.date_scope')</td>
+			<td>	
+				<div class=layui-inline>
+					<input class="layui-input bt-input-inline bt-biz-dateType" type=text data-biz-name="ged_accOpenTime" name="ged_accOpenTime"  data-endid="t2" lay-verify="required"> 
+					<span class=date-mid>~</span>
+					<input id=t2 class="layui-input bt-input-inline bt-biz-dateType" type=text data-biz-name="led_accOpenTime" name="led_accOpenTime"  lay-verify="required"> ##data-callback="formatDate"
+					#*<input id="date" type="hidden" name="led_accOpenTime">*#
+				</div>
+	   		</td>
+		</tr>
+
+		
+	   	
+		##按钮组
+		<tr>
+	  		<td style="text-align: center;" colSpan="6">
+	 			<button class="layui-btn" lay-submit=""lay-filter="search"type="button">#springMessage('common.button.search')</button>
+            	 <button type="reset" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+				<button class="layui-btn " lay-submit lay-filter="excel">#springMessage('common.button.exports')</button>
+				<button class="layui-btn bt-biz-printType" type="button" data-printareaid="print">打印</button>
+	  	 	</td>
+		</tr>
+	
+</tbody>
+</table>
+</form>
+
+<div id="print">
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	  <thead>
+		<tr>
+			<th rowspan="2">#springMessage('table.fbsBudget.net')</th>##网点
+			<th rowspan="2">#springMessage('table.fbsBudget.corpId')</th>##单位
+			<th colspan="5">#springMessage('table.innerAcc.changing')</th>##内部账户增减变动
+		</tr>
+		<tr>
+			<th>#springMessage('table.innerAcc.acc')</th>##开户
+			<th>#springMessage('table.innerAcc.history')</th>##变更
+			<th>#springMessage('table.innerAcc.writeoff')</th>##注销
+			<th>#springMessage('table.innerAcc.freeze')</th>##冻结
+			<th>#springMessage('table.innerAcc.freeze.thaw')</th>##解冻
+		</tr>
+	  </thead>
+	</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/modules/finacial/report/export.js?_btv=${resourceVersion}"></script>
+<script>
+bt.use(['form','dateType','corp','datatable','bttable','printType'], function(){
+	var corp =  bt.corp.init();
+	var dateType = bt.dateType.init();
+	var form = bt.form();
+	bt.printType.init();
+
+	corpId = corp.get('corpId').val();
+	netId =  corp.get('netId').val();
+	startTime = dateType.get('ged_accOpenTime').val();
+	endTime = dateType.get('led_accOpenTime').val();
+		 
+	form.on('submit(search)', function(data){
+		var corpId = corp.get('corpId').val();
+		var netId =  corp.get('netId').val();
+		var startTime = dateType.get('ged_accOpenTime').val();
+		var endTime = dateType.get('led_accOpenTime').val();
+		var param = "corpId="+corpId+"&netId="+netId+"&startTime="+startTime+"&endTime="+endTime;
+		//var action =basePath + "/finacial/outaccbook/queryoutaccbook/dividedAccountList?"+param
+		// $("#searchForm").attr("action",action);
+		// $("#searchForm").submit();
+		btTable = bt.bttable.init({
+			elem:"#appTable",
+			type:"post",
+			url:basePath+"/netbank/report/innerAccChanging/datatable",
+			urldata:param,
+			columns: [
+				{data:"netName",bSortable:true,className:"center"},
+				{data:"corpName",bSortable:true,className:"center"},
+				{data:"acc",bSortable:true,className:"center",
+					render: function ( data, type, full, meta ) {
+						if(data.acc > 0){
+							return "<a href='javascript:void(0)' onclick='accList(\""+data.corpId+"\",\""+'acc'+"\")' ><u>"+data.acc+"</u></a>";
+						}else{
+							return data.acc;
+						}
+					}
+				},
+				{data:"history",bSortable:true,className:"center",
+					render: function ( data, type, full, meta ) {
+						if(data.history > 0){
+							return "<a href='javascript:void(0)' onclick='accList(\""+data.corpId+"\",\""+'history'+"\")' ><u>"+data.history+"</u></a>";
+						}else{
+							return data.history;
+						}
+					}
+				},
+				{data:"writeoff",bSortable:true,className:"center",
+					render: function ( data, type, full, meta ) {
+						if(data.writeoff > 0){
+							return "<a href='javascript:void(0)' onclick='accList(\""+data.corpId+"\",\""+'writeoff'+"\")' ><u>"+data.writeoff+"</u></a>";
+						}else{
+							return data.writeoff;
+						}
+					}
+				},
+
+				{data:"freeze",bSortable:true,className:"center",
+					render: function ( data, type, full, meta ) {
+						if(data.freeze > 0){
+							return "<a href='javascript:void(0)' onclick='accList(\""+data.corpId+"\",\""+'freeze'+"\")' ><u>"+data.freeze+"</u></a>";
+						}else{
+							return data.freeze;
+						}
+					}
+				},
+
+				{data:"thaw",bSortable:true,className:"center",
+					render: function ( data, type, full, meta ) {
+						if(data.thaw > 0){
+							return "<a href='javascript:void(0)' onclick='accList(\""+data.corpId+"\",\""+'thaw'+"\")' ><u>"+data.thaw+"</u></a>";
+						}else{
+							return data.thaw;
+						}
+					}
+				},
+			]
+		});
+	});
+
+	form.on('submit(excel)', function(data) {
+		var url = basePath+"/netbank/report/innerAccChanging/exportExcel";
+		DownLoadFile({url:url,data:data.field,method:'post'});
+		return false;
+	});
+});
+	
+function netChange(obj) {
+
+}	
+	
+	
+function accList(corpId,type){
+	if(corpId){
+		if(bt.navtab){
+			var startTime = bt.dateType.init().get('ged_accOpenTime').val();
+			var endTime = bt.dateType.init().get('led_accOpenTime').val();
+			var url = basePath+"/netbank/report/innerAccChanging/accList?corpId="+corpId+"&startTime="+startTime+"&endTime="+endTime+"&type="+type;
+            bt.navtab.addNavtab(bt.lang('common.view.data'),url);
+            return;
+        }
+	}
+}
+	
+function formatDate(data,input){
+	var date = addDate(data);
+	$("#date").val(date);
+}
+
+function addDate(date,days){
+	if(days == undefined || days == ''){
+		days = 1;
+	}
+	var date = new Date(date);
+	date.setDate(date.getDate() + days);
+	var month = date.getMonth() +1;
+	var day = date.getDate();
+	return date.getFullYear() + '-' + month + '-' + day;
+	
+}
+
+
+</script>
+</html>
+

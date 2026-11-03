@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+		.layui-table > thead th, .layui-table td {
+			position: static;
+		}
+		#page .wrapper {
+			margin-right: 20px;
+		}
+	</style>
+</head>
+<body>
+    <form id="searchForm" class="layui-form input150-container"> 
+    <input type="hidden" name="optType" id="optType">
+        <table class="layui-table">
+                <tr> 
+                	##单位
+                    <td class="textRight">#springMessage('table.report.corpId')</td>
+	        		<td class="rCode">
+                        <div class="layui-input-inline" >
+                            <select name="corpId" id="corpId" lay-search="" style="width: 200px">
+                                <option value="">#springMessage('common.placeholder.all')</option>
+								#foreach($corp in $!{corpDTOS})
+									#if($!{corp.id} == $!{applyVO.corpId})
+                                        <option value="$!{corp.id}" selected="selected">$!{corp.name}</option>
+									#else
+                                        <option value="$!{corp.id}">$!{corp.name}</option>
+									#end
+								#end
+                            </select>
+                        </div>
+	           		</td>
+            		##银行
+                    <td class="textRight" width="12%">#springMessage('table.ratBkration.bankCode')</td>
+                    <td width="20%" class="rCode">
+                        <div class="layui-input-inline" >
+            				<select name="bankCode" id="bankCode" lay-search="" style="width: 200px">
+							<option value="">#springMessage('common.placeholder.all')</option>
+								#foreach($bank in $!{bankDTOs})
+									#if($!{bank.bankCode} == $!{applyVO.bankId})
+								<option value="$!{bank.bankCode}" selected="selected">$!{bank.bankName}</option>
+									#else
+								<option value="$!{bank.bankCode}">$!{bank.bankName}</option>
+									#end
+								#end
+							</select>
+                   		</div>
+                    </td>
+		            ##项目类型
+                    <td class="textRight" width="15%">#springMessage('table.fcBond.itemType')</td>
+                    <td class="rCode">
+                        <div class="bt-biz-dict" data-type="select" data-group="fcBond.itemType" data-filterData="0,4"
+                             data-name="itemType" data-biz-name="itemType" data-defaultvalue="$!{applyVO.itemType}"
+							</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+					</td>
+                </tr>
+        </table>
+    </form>
+<div id="tbl" style="overflow:auto" >
+<table id="appTable" class="layui-table layui-form dark-layui-table" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBond.corpCode')</th>##单位代码
+        <th>#springMessage('table.fcBond.corpName')</th>##单位名称
+        <th>#springMessage('table.fcBond.bankName')</th>##银行名称
+        <th>#springMessage('table.fcBond.curCode')</th>##币别
+        <th>#springMessage('table.fcBond.bondSumMoney')</th>##保证金存入总额
+        <th>#springMessage('table.fcBond.applySumMoney')</th>##占用总额
+        <th>#springMessage('table.fcBond.canUseSumMoney')</th>##可用总额
+        <th>#springMessage('table.fcBond.itemType')</th>##项目类型
+        <th>#springMessage('table.fcBond.occupyMoney')</th>##占用额度
+    </tr>
+    </thead>
+    <tbody>
+		#if($bondUseVOS)
+			#foreach($bond in $!{bondUseVOS})
+            <tr>
+                <td align="center" rowspan="$!{bond.dtlSize}">$!{bond.corpCode}</td>
+                <td align="center" rowspan="$!{bond.dtlSize}">$!{bond.corpName}</td>
+                <td align="center" rowspan="$!{bond.dtlSize}">$!{bond.bankName}</td>
+                <td align="center" rowspan="$!{bond.dtlSize}">$!{bond.curName}</td>
+                <td align="right" rowspan="$!{bond.dtlSize}">$number.formatNumeric($!{bond.bondSumMoney})</td>
+                <td align="right" rowspan="$!{bond.dtlSize}"><a href="javascript:viewUseDtl('$!{bond.curId}','$!{bond.corpId}','$!{bond.bankCode}')">$number.formatNumeric($!{bond.applySumMoney})</a></td>
+                <td align="right" rowspan="$!{bond.dtlSize}">$number.formatNumeric($!{bond.canUseSumMoney})</td>
+				#set($dtlCount=1)
+				#foreach($dtl in $!{bond.applyDtls})
+						#if($!dtlCount!=1)<!--第二条明细换行  -->
+                    <tr>
+					#end
+                    <td align="center" >$dictTag.get("fcBond.itemType", $!{dtl.itemType.trim()})</td>
+                    <td align="right">$number.formatNumeric($!{dtl.applyMoney})</td>
+					#if($!dtlCount!=1)
+                    </tr>
+					#end
+					#set($dtlCount = $dtlCount+1)
+				#end
+                </tr>
+				#end
+			#end
+	</tbody>
+</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/fcbond/bondUse.list.js?_btv=${resourceVersion}"></script>
+</html>

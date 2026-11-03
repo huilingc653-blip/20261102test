@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="showAllMonday" value="$!{showAllMonday}"/>
+    <input type="hidden" name="queryFlag" value="query"/>
+    <table class="layui-table layui-table-border">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.btBankAcc.corpId')</td>
+            <td width="25%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="corpId"
+                         data-biz-name="corpId"
+                         data-scope="all"
+                         data-defaultvalue="$!{form.corpId}"
+                         data-resource="cms:report:creditbalance:query"></div>
+                </div>
+            </td>
+            <td class="textRight">周开始日</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" class="layui-input" name="weekStartDay" id="weekStartDayId" lay-verify="required"
+                           value="$!date.format('yyyy-MM-dd',$!{form.weekStartDay})">
+                </div>
+            </td>
+            <td class="textRight">周结束日</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" class="layui-input" name="weekEndDay" id="weekEndDayId" lay-verify="required"
+                           value="$!date.format('yyyy-MM-dd',$!{form.weekEndDay})" readonly="readonly">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center" colspan="6">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="search">#springMessage(
+                    'common.button.search')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onClick="resetCreditBalance()">#springMessage('common.button.reset')</button>
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="excel">#springMessage(
+                    'common.button.exports')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form layui-table-border" style="width:100%;">
+    <thead>
+    <tr>
+        <th>序号</th>
+        <th>区域</th>
+        <th>银行名称</th>
+        <th>授信品种</th>
+        <th>银行授信额度</th>
+        <th>保证金比率</th>
+        <th>开票手续费</th>
+        <th>保证金利率</th>
+        <th>是否能正常使用</th>
+        <th>已使用银承额度</th>
+        <th>流贷金额</th>
+        <th>并购贷金额</th>
+        <th>剩余额度</th>
+        <th>可使用额度</th>
+        <th>本周计划开票金额</th>
+        <th>下周计划开票金额</th>
+        <th>备注</th>
+    </tr>
+    </thead>
+    <tbody>
+        #if($!{resultList})
+            #foreach($result in $!resultList)
+                #if($!{result.corpId} == '-1')
+                <tr style="font-weight: 700">
+                    <td></td>
+                    ##区域：二级单位
+                    <td align="center">$!{result.secondLevCorpName}</td>
+                    <td></td>
+                    <td></td>
+                    <td align="right">$number.formatNumeric($!{result.bankCreditBal})</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td align="right">$number.formatNumeric($!{result.usedBillBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.ldzjLoanBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.bgLoanBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.surplusBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.availBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.currWeekBillMoney})</td>
+                    <td align="right">$number.formatNumeric($!{result.nextWeekBillMoney})</td>
+                    <td></td>
+                </tr>
+                #else
+                <tr>
+                    ##序号
+                    <td align="center">$!{result.serialNum}</td>
+                    ##区域：单位名称
+                    <td align="center">$!{result.corpName}</td>
+                    ##银行类型
+                    <td align="center">$!{result.bankTypeName}</td>
+                    ##授信品种
+                    <td align="center">$!{result.itemName}</td>
+                    ##银行授信额度
+                    <td align="right">$number.formatNumeric($!{result.bankCreditBal})</td>
+                    ##保证金比率
+                    <td align="right">
+                        #if($!{result.bondRatio})
+                            $rateTag.show($!{result.bondRatio}, 2)
+                        #end
+                    </td>
+                    ##开票手续费
+                    <td align="right">
+                        #if($!{result.openBillRate})
+                            $rateTag.show($!{result.openBillRate}, 2)
+                        #end
+                    </td>
+                    ##保证金利率
+                    <td align="center">$!{result.bondRate}</td>
+                    <td align="center">$dictTag.get("sf_yn", $!{result.isUsed}) </td>
+                    <td align="right">$number.formatNumeric($!{result.usedBillBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.ldzjLoanBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.bgLoanBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.surplusBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.availBal})</td>
+                    <td align="right">$number.formatNumeric($!{result.currWeekBillMoney})</td>
+                    <td align="right">$number.formatNumeric($!{result.nextWeekBillMoney})</td>
+                    <td align="center">$!{result.rmk}</td>
+                </tr>
+                #end
+            #end
+        #end
+    </tbody>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bankCreditBalance/bankCreditBalance.list.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" style="height:100%; ">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 12px;
+	text-align: center;
+	border-left: 0px;
+	border-right: 0px;
+	background-color: #d2d2d2;
+}
+</style>
+</head>
+<body style="height:100%; padding: 0">
+<input type="hidden" id="precativeId" value="${precativeInfoPage.precativeId}"/><!--委托方ID-->
+<input type="hidden" name="corpId" id="corpId" value="$!{precativeInfoPage.loanOpp}"><!--借款方ID-->
+<input type="hidden" name="billCode" id="billCode" value="$!{billCode}">
+<input id="endorseItem" name="endorseItem" type="hidden" value="$!{endorseItem}">
+<input id="defItemCode" name="defItemCode" type="hidden" value="">
+<input id="curId" name="curId" type="hidden" value="$!{precativeInfoPage.curId}">
+<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+<input id="createDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{opDate})"/>
+<input id="repayDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{precativeRepayPage.repayDate})"/>
+
+<iframe src="${basePath}/cms/precative/loaninfo/view?billCode=$!{precativeSendPage.fatherCode}" id="sendIframe" frameborder="0" scrolling="no" style="width: 100%;height:500px;"></iframe>
+<form class="layui-form">
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <tbody>
+        	<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">
+					#springMessage('common.precative.loan.message')(#springMessage('cms.loan.the')$!{precativeSendPage.sendTime} #springMessage('cms.load.count'))
+				</td>
+			</tr>
+        	<tr>
+	        	##合同编号
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanSend.contractCode')</td>
+	            <td width="30%">
+                	$!{precativeSendPage.contractCode}
+	            </td>
+	            <td class="textRight">#springMessage('table.precativeLoneRepay.remainMoney')</td>
+				<td>
+					$number.formatNumeric($!{loanMoney})
+            	</td>
+            </tr>
+            <tr>
+	        	##贷款发放方式
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.loanSendOutType')</td>
+				<td>
+					$dictTag.get("cms.loan.loanSendOutType", $!{precativeInfoPage.loanSendOutType})
+				</td>
+				<td></td>
+				<td></td>
+            </tr>
+            <tr>
+	        	##发放金额
+                <td class="textRight">#springMessage('table.cmsPrecativeLoanSend.money')</td>
+                <td >
+                     $number.formatNumeric($!{precativeSendPage.money})
+					<!-- <div style="display: none;">
+	                   	 	<input type="text" data-name="money" class="layui-input bt-biz-moneyType" data-toup="dxSend" data-decimal="2" data-minus="true" value="$!{precativeSendPage.money}" readonly="readonly">
+                    </div> -->
+                </td>
+             	##贷款金额大写
+                <td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.money.upper')</td>
+                <td >
+                    <div class="layui-input-inline">
+                       ##<input type="text" name="money"  id="money" class="layui-input">
+                       ##<div class="layui-input-inline layui-input" id="dxSend"></div>
+                       $!{sendMoneyUpper}
+                    </div>
+                </td>
+
+            </tr>
+            <tr>
+            	 ##开始日期
+                <td class="textRight">#springMessage('table.cmsPrecativeLoanSend.sendDate')</td>
+                <td >
+                	$!date.format('yyyy-MM-dd',$!{precativeSendPage.sendDate})
+                </td>
+                ##结束日期
+                <td class="textRight">#springMessage('table.cmsPrecativeLoanSend.deadlineDate')</td>
+                <td >
+                   	$!date.format('yyyy-MM-dd',$!{precativeSendPage.deadlineDate})
+                </td>
+
+            </tr>
+            <tr>
+	        	##还款方式
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.repayType')</td>
+				<td id="repayType">
+					$!{precativeSendPage.repayTypes}
+				</td>
+				##计息方式
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.interestWay')</td>
+				<td >
+					$dictTag.get("Admin.PredrawSign",$!{precativeSendPage.interestWay})
+				</td>
+            </tr>
+            <tr>
+        		##浮动方式
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.floatWay')</td>
+				<td >
+					<div class="layui-inline">
+						$dictTag.get("Cms.FloatWay",$!{precativeSendPage.floatWay})
+						<input type="hidden"  id="floatWay" value="$!{precativeSendPage.floatWay}">
+					</div>
+					<div class="layui-inline" id="nextDetail">
+						#set($postfix = "")
+						#if($!{precativeSendPage.floatWay} == '03')
+							#set($postfix = "Month")
+						#elseif($!{precativeSendPage.floatWay} == '04')
+							#set($postfix = "Season")
+						#elseif($!{precativeSendPage.floatWay} == '05')
+							#set($postfix = "HY")
+						#elseif($!{precativeSendPage.floatWay} == '06')
+							#set($postfix = "Year")
+						#end
+						#if($postfix != "")
+							<span>$dictTag.get("Cms.FloatWay$postfix",$!{precativeSendPage.floatWayNext})</span>
+							<input type="hidden"  id="floatWayNext" value="$!{precativeSendPage.floatWayNext}">
+						#end
+					</div>
+				</td>
+        		##利率调整生效日期
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.rateEntriesEffectDate')</td>
+				<td >
+					 ##<input type="text" name="rateEntriesEffectDate" value="$!{precativeSendPage.rateEntriesEffectDate}" class="layui-input bt-biz-dateType" data-type="date" data-biz-name="rateEntriesEffectDate" readonly="readonly">
+					$!date.format('yyyy-MM-dd',$!{precativeSendPage.rateEntriesEffectDate})
+				</td>
+			</tr>
+            <tr>
+        		##浮动利率
+				<td class="textRight" rowspan="2">#springMessage('table.cmsProvideLoanInfo.floatRate')</td>
+				<td rowspan="2">
+##					#if($!{precativeSendPage.floatWay} != '01')
+					<div class="layui-inline" >
+						##基准利率类型
+						<div style="padding-bottom: 10px;padding-top: 10px;" id="referenceRateTypeDiv">
+							$!{precativeSendPage.baseTypeName}
+						</div>
+						##贷款周期
+						<div style="padding-bottom: 10px;padding-top: 10px;" id="repayCycleDiv">
+							$!{precativeSendPage.periodName}
+						</div>
+						<div style="padding-bottom: 10px;padding-top: 10px;">
+							##点数或者浮动比例选择与文本
+							<div class="layui-inline" id="pointsSelectDiv">
+								$!{precativeSendPage.pointsProportionName}
+							</div>
+							<div class="layui-inline" >
+								#if($!{precativeSendPage.pointsProportionSelect} == '01')
+									#if($!{precativeSendPage.pointsProportionText})
+										$number.formatNumeric($!{precativeSendPage.pointsProportionText})BP
+									#else
+										0.00BP
+									#end
+								#elseif($!{precativeSendPage.pointsProportionSelect} == '02')
+									#if($!{precativeSendPage.pointsProportionText})
+										$number.formatNumeric($!{precativeSendPage.pointsProportionText})%
+									#else
+										0.00%
+									#end
+								#end
+							</div>
+						</div>
+					</div>
+##					#end
+				</td>
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.rate')</td>
+				<td>
+					##取贷款利率
+					<div>
+		    			$rateTag.show($!{precativeSendPage.rate})
+					</div>
+				</td>
+			</tr>
+			<tr>
+				##逾期利率
+				<td class="textRight">
+					#springMessage('table.cmsLoanSend.overdueRate')
+				</td>
+				<td>
+					<div class="layui-input-inline">
+		    			$rateTag.show($!{precativeSendPage.overdueRate})
+					</div>
+				</td>
+			</tr>
+
+			<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">#springMessage('cms.loan.OtherInfo')</td>
+			</tr>
+        	<tr>
+	        	##在途金额
+	            <td class="textRight">#springMessage('table.cmsLoanRepay.inwayMoney')</td>
+	            <td width="36%">
+	                	##$!{PassageMoney}
+                		$number.formatNumeric($!{PassageMoney})
+	            </td>
+	            ##已还金额
+	            <td class="textRight">#springMessage('table.cmsLoanRepay.processMoney')</td>
+				<td width="36%">
+					$number.formatNumeric($!{repayMoney})
+            	</td>
+            </tr>
+            #if($!{type} == "repay")
+            <tr>
+	        	##归还日期
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanRepay.repayDate')</td>
+	            <td width="36%">
+                		$!date.format('yyyy-MM-dd',$!{precativeRepayPage.repayDate})
+	            </td>
+	            ##还款金额
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanRepay.repayMoney')</td>
+				<td width="36%">
+					$number.formatNumeric($!{precativeRepayPage.repayMoney})
+            	</td>
+            </tr>
+
+            <tr>
+	        	##备注
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.rmk')</td>
+	            <td width="36%">
+					$!{precativeRepayPage.rmk}
+	            </td>
+	            ##还款利息
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanRepay.repayAccrual')</td>
+				<td width="36%">
+					$!number.formatNumeric($!{precativeRepayPage.repayAccrual})
+            	</td>
+            </tr>
+
+            <tr>
+	        	##还款类型
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanRepay.repayType')</td>
+	            <td width="36%">
+               		$dictTag.get("cms.repayType",$!{precativeRepayPage.repayType})
+	            </td>
+	            ##还款方式
+	            <td class="textRight">#springMessage('table.cmsPrecativeLoanRepay.repayway')</td>
+				<td width="36%">
+					$!{precativeRepayPage.repaywayName}
+            	</td>
+            </tr>
+            #end
+			<!-- <tr>
+	        	##记账凭证号（贷）
+	            <td class="textRight">记账凭证号(贷)</td>
+	            <td width="36%">
+
+	            </td>
+	            ##记账凭证号(手续费):
+	            <td class="textRight">记账凭证号(手续费)</td>
+				<td width="36%">
+
+            	</td>
+            </tr>
+            <tr>
+	        	##记账凭证号(存):
+	            <td class="textRight">记账凭证号(存)</td>
+	            <td width="36%">
+
+	            </td>
+	            ##补录员:
+	            <td class="textRight">补录员</td>
+				<td width="36%">
+            	</td>
+            </tr>
+             <tr>
+	        	##审批人
+	            <td class="textRight">审批人</td>
+	            <td width="36%" colspan="3">
+
+	            </td>
+            </tr> -->
+            #if($!{type} != "repay" && $!{type} != "tally")
+            <tr>
+       			<td colspan="4" align="center">
+       				<button class="layui-btn" type="button" onClick="doClose()">#springMessage('common.button.close')</button>
+       			</td>
+       		</tr>
+       		#end
+	</table>
+	 #if($!{billCode})
+	<!-- 资金计划 -->
+		<div id="tagItemDetail"></div>
+	#end
+</form>
+#parse("views/common/footer.vm")
+</body>
+
+<script>
+bt.use(['form','datatable','btdate','corp','moneyType','rateType','dateType','selectType','date','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    moneyType = bt.moneyType.init();
+    tt = bt.selectType.init();
+    rateTye = bt.rateType.init();
+    dateType = bt.dateType.init();
+    bt.dicts.init();
+  	//关闭窗口
+    doClose = function(){
+    	if(bt.navtab){
+			bt.navtab.closeCurrent();
+		}
+		parent.layer.closeAll();
+		return false;
+    }
+});
+
+
+
+//根据单位ID和业务类型判断是否挂预算
+ $(document).ready(function(){
+ var corpId=$("#corpId").val();
+ var briefId="3000";
+    $.ajax({
+	    type:"POST",
+	    url:basePath+"/cms/precative/loaninfo/isBudget",
+		data:{'corpId':corpId,'briefId':briefId},
+		async:false,
+		dataType:'json',
+		success:function(result){
+		   if(result.success){
+		     if(result.attributes.isBudget){
+			    $genOtherHtml(corpId);
+				return true;
+			 }else{
+			   $("#tagItemDetail").html("");
+			   return false;
+			 }
+		   }else{
+		      parent.layer?parent.layer.alert(result.msg,{icon:result.success?1:2}):layer.alert(result.msg,{icon:result.success?1:2});
+		   }
+		}
+
+	});
+
+ });
+
+ $genOtherHtml=function(corpId){
+    var itemCode=$("#endorseItem").val();
+	var defItemCode=$("#defItemCode").val();
+	var processDate=$("#repayDate").val();
+	var url=basePath+"/budget/fbsBudgetProcess/getViewItemDetail";
+	var param={
+	    corpId:corpId,
+        itemCode:itemCode,
+        defItemCode:defItemCode,
+        processDate:processDate,
+		billNo:$("#billCode").val(),
+		businessName: $("#businessName").val(),
+        processSysname: $("#processSysname").val(),
+        curId:$("#curId").val(),
+        type:'select',
+        date:(new Date()).getTime()
+	  };
+	 $.ajax({url:url,method:'POST',data:param,async:true,success:function(json){
+	    $("#tagItemDetail").html("");
+		$("#tagItemDetail").html(json);
+	  }
+
+	 });
+ };
+</script>
+</html>

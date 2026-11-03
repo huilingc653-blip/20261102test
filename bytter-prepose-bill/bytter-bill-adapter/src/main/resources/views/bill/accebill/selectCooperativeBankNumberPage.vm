@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" id="searchForm">
+    #*<input type="hidden" name="ins_brnnbr" value="$!{brnnb}">*#
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##收票银行
+            <td class="textRight">银承分行名称</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_orgname"
+                           autocomplete="off" class="layui-input" placeholder="银承分行名称">
+                </div>
+            </td>
+            <td class="textRight">银承协议编号</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_textno"
+                           autocomplete="off" class="layui-input" placeholder="银承协议编号">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <div class="layui-inline">
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="cooperativeBankNumber" class="layui-table">
+    <thead>
+    <tr>
+		<th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>银承分行行号</th>
+        <th>银承分行名称</th>
+        <th>银承协议编号</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery','dicts'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        bt.dicts.init();
+        var table = bt.datatable.init({
+            elem: "#cooperativeBankNumber",
+            selectCss: false,
+            order: [[1, 'asc']],
+            ignoreButtons:['colvis','output','print','state'],// 忽略的表单默认按钮 state取消状态保存按钮
+            ajax: {
+                url: basePath + "/bill/accebill/abemitbill/dataTableCooperativeBankNumber",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+            	formFilter: "search"
+            },
+            columns: [
+				{
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="data-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "brnnbr", orderable: true},
+                {data: "orgname", orderable: true},
+                {data: "textno", orderable: true},
+            ]
+        });
+
+
+        /*table.on('click', '.data-select', function (event) {
+            bt.navtab.getCurrentDom().setCooperativeBankNumberData(table.row($(this).data('row')).data());
+            parent.layer.closeAll();
+        });*/
+
+        //生成列表
+        table.on('click', '.data-select', function (event) {
+            var parentsIndex = $('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-bankInfo']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-cmbBnkbilneg']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

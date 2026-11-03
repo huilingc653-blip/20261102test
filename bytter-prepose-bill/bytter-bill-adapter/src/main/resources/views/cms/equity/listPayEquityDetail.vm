@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    #set ($selectableSignRepayDate = "" )  ##所选计划的还款日期
+<div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('table.cmsEquity.equityCode')</th>##融资编号
+            <th>#springMessage('table.cmsEquity.financingWay')</th>##融资方式
+            <th>#springMessage('table.cmsEquity.investor')</th>##出资人
+            <th>#springMessage('table.cmsEquity.invWay')</th>##出资方式
+            <th>#springMessage('table.cmsEquity.invMoney')</th>##出资金额
+            <th>#springMessage('table.cmsEquity.equityProUn')</th>##持股比例
+            <th>#springMessage('table.cmsEquity.assetName')</th>##资产名称
+            <th>#springMessage('table.cmsEquity.rmk')</th>##备注
+            <th>#springMessage('table.fcFreeze.status')</th>##状态
+            <th>#springMessage('common.table.thead.operation')</th>
+
+        </tr>
+        </thead>
+        <tbody>
+            #foreach($detail in $list)
+            <tr>
+                <td align="center">$!{detail.equityCode}</td>
+                <td align="center">$dictTag.get("cms.equity.financingWay",$!{detail.financingWay})</td>
+                <td align="center">$!{detail.investor}</td>
+                <td align="center">$dictTag.get("cms.equity.invWay",$!{detail.invWay})</td>
+                <td align="right">
+                    $number.formatNumeric($!{detail.invMoney})
+                </td >
+                <td align="right">  <span class="mui-badge mui-badge-inverted">
+                    #if($!{detail.equityPro})
+                        $number.formatNumeric($math.mul($!{detail.equityPro},100))%
+                    #end
+
+                        </span>
+                </td>
+                <td align="center">$!{detail.assetName}</td>
+                <td align="center">$!{detail.rmk}</td>
+                <td align="center">$dictTag.get("cms.equity.detail.bizStatus",$!{detail.bizStatus})</td>
+                <td align="center">
+                    #if($!{detail.bizStatus}!='25')
+                    #if($!{detail.invWay}=='1')
+                        <a class="" href="#" data-row="'+meta.row+'" onclick="chose('$!{detail.equityCode}','$!{detail.bizStatus}','1')">#springMessage('table.cmsEquity.pay')</a>
+                    #else
+                        <a class="" href="#" data-row="'+meta.row+'" onclick="chose('$!{detail.equityCode}','$!{detail.bizStatus}','2')">#springMessage('table.cmsEquity.move')</a>
+                    #end
+                        #else
+                            <a class="" href="#" data-row="'+meta.row+'" onclick="view('$!{detail.equityCode}','$!{detail.invWay}')">#springMessage('common.button.view')</a>
+                    #end
+                </td>
+            </tr>
+            #end
+        </tbody>
+    </table>
+
+</div>
+<div style="text-align: center;">
+    <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage('common.button.close')</button>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['jquery',"form",'bttable','moneyType'], function() {
+        var $ = bt.jquery;
+        moneyFun = bt.moneyType.getFun();
+    });
+function chose(equityCode,bizStatus,type) {
+        if(bt.navtab){
+            if(type=='1') {
+                bt.navtab.addNavtab(bt.lang('table.cmsEquity.pay'), basePath + "/cms/equity/payThe/payEquity?equityCode=" + equityCode + "&bizStatus=" + bizStatus + "&type=" + type);
+            }else {
+                bt.navtab.addNavtab(bt.lang('table.cmsEquity.move'), basePath + "/cms/equity/payThe/payEquity?equityCode=" + equityCode + "&bizStatus=" + bizStatus + "&type=" + type);
+            }
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/equity/payThe/payEquity?equityCode="+equityCode+"&bizStatus="+bizStatus,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+}
+function view(equityCode,invWay){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/equity/payThe/viewPay?equityCode=" + equityCode+"&invWay="+invWay);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/equity/payThe/viewPay?equityCode=" + equityCode+"&invWay="+invWay
+        });
+    }
+
+</script>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form">
+		<input id="id" name="id" type="hidden" value="$!{bisExcPage.id}">
+        <input id="voucherStat" name="voucherStat" type="hidden" value="$!{voucherStat}">
+        <input id="hasExpenseDetail" name="hasExpenseDetail" type="hidden" value="$!{hasExpenseDetail}">
+        <input id="excFrom" name="excFrom" type="hidden" value="$!{excFrom}">
+		<table class="layui-table">
+			<thead>
+            <tr>
+                <th colspan="4" style="text-align:center">
+                    #if($!{voucherStat} == '2')
+                        #springMessage('table.bisExc.viewPayFailureTitle')
+                    #else
+                        #springMessage('table.bisExc.viewPaySuccessTitle')
+                    #end
+                </th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+        		##指令编号
+				<td class="textRight" width="20%">#springMessage('table.bisExc.voucherNo')</td>
+				<td width="30%">$!{bisExcPage.voucherNo}</td>
+                ##交易状态
+                <td class="textRight" width="20%">#springMessage('table.bisExc.voucherStat')</td>
+                <td width="30%">$dictTag.get("bisExc.voucherStat",$!{bisExcPage.voucherStat})</td>
+        	</tr>
+            <tr>
+                ##交易时间
+                <td class="textRight" width="20%">#springMessage('table.bisExc.transTime')</td>
+                <td width="30%">$!date.format('yyyy-MM-dd',$!{bisExcPage.transTime})</td>
+                ##银行返回时间
+                <td class="textRight" width="20%">#springMessage('table.bisExc.returnTime')</td>
+                <td width="30%">$!date.format('yyyy-MM-dd',$!{bisExcPage.returnTime})</td>
+            </tr>
+                ##返回信息
+            <td class="textRight" width="20%">#springMessage('table.bisExc.firstReturnMsg')</td>
+            <td colspan="3">$!{bisExcPage.firstReturnMsg}</td>
+            </tr>
+            <tr>
+                ##返回信息
+                <td class="textRight" width="20%">#springMessage('table.bisExc.nextReturnMsg')</td>
+                <td colspan="3">$!{bisExcPage.nextReturnMsg}</td>
+            </tr>
+            ##确认信息
+            <tr>
+                <td class="textRight" width="20%">#springMessage('table.bisExc.confirmCheck')</td>
+                <td colspan="3">
+                    <div style="color: red">
+                        #if($!{voucherStat} == '2')
+                            #springMessage('table.bisExc.confirmCheckFailureDec')
+                        #else
+                            #springMessage('table.bisExc.confirmCheckSuccessDec')
+                        #end
+                    </div>
+                    <input type="checkbox" name="confirmCheck" value="2" lay-skin="primary" lay-verify="required">
+                    #if($!{voucherStat} == '2')
+                        #springMessage('table.bisExc.confirmFailureDec')
+                    #else
+                        #springMessage('table.bisExc.confirmSuccessDec')
+                    #end
+                </td>
+            </tr>
+            ##校验密码
+            <tr>
+                <td class="textRight" width="20%">#springMessage('table.bisExc.validPassword')</td>
+                <td colspan="3">
+                    <div style="color: red">#springMessage('table.bisExc.validPasswordDec')</div>
+                    <input type="text" class="layui-input" lay-verify="required" name="validPassword" onfocus="this.type='password'" />
+                </td>
+            </tr>
+            ##处理意见
+			<tr>
+				<td class="textRight" width="20%">#springMessage('table.bisExc.handleOpinion')</td>
+				<td colspan="3">
+                    <input type="text" id="handleOpinion" name="handleOpinion" value="$!{bisExcPage.handleOpinion}"  lay-verify="required|strlength" data-maxlength="100"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.bisExc.handleOpinion')">
+				</td>
+        	</tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+			</tbody>
+        </table>
+        #if($!{hasExpenseDetail} == "1")
+            #if($!{voucherStat} == '2')
+                <div class="layui-input-inline" style="color:red">
+                    <div class="layui-input-inline">#springMessage('table.bisExc.viewPayFailure.desc')</div>
+                    <div class="layui-input-inline" id="checkInfo"></div>
+                </div>
+            #end
+            #if($!{bisExcPage.voucherFrom} == '1')
+                <table id="appTable" class="layui-table layui-form" style="width:100%;">
+                    <thead>
+                    <tr>
+                        #if($!{voucherStat} == '2')
+                            <th><input type="checkbox" name="checkAll" lay-skin="primary" lay-filter="checkAll"></th>
+                        #end
+                        <th>#springMessage('table.nisExpenseDetail.expenseId')</th>
+                        <th>#springMessage('table.nisExpenseDetail.expenseDate')</th>
+                        <th>#springMessage('table.nisExpenseDetail.expenseMoney')</th>
+                        <th>#springMessage('table.nisExpenseDetail.accName')</th>
+                        <th>#springMessage('table.nisExpenseDetail.bankAcc')</th>
+                        <th>#springMessage('table.nisExpenseDetail.bankName')</th>
+                        <th>#springMessage('table.nisExpenseDetail.bankCode')</th>
+                        <th>#springMessage('table.nisExpenseDetail.prov')</th>
+                        <th>#springMessage('table.nisExpenseDetail.city')</th>
+                        #if($!{nisBillheadPage.isAccount} == "0")
+                            <th>#springMessage('table.nisExpenseDetail.difBank')</th>
+                            <th>#springMessage('table.nisExpenseDetail.areaSign')</th>
+                        #end
+                        <th>#springMessage('table.nisExpenseDetail.busType')</th>
+                        <th>#springMessage('table.nisExpenseDetail.opType')</th>
+                        <th>#springMessage('table.nisExpenseDetail.purpose')</th>
+                        <th>#springMessage('table.bisExc.voucherStat')</th>
+                        <th>#springMessage('table.bisExc.returnTime')</th>
+                        <th>#springMessage('table.bisExc.firstReturnMsg')</th>
+                        <th>#springMessage('table.bisExc.nextReturnMsg')</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        #foreach($nisExpenseDetail in $listNisExpenseDetail)
+                        <tr>
+                            #if($!{voucherStat} == '2')
+                                <td align="center">
+                                    <input lay-skin="primary" type="checkbox" lay-filter="check" name="checkDetailId" value="$!{nisExpenseDetail.id}">
+                                    <input type="hidden" name="expenseMoney" id="expenseMoney$!{nisExpenseDetail.id}" value="$!{nisExpenseDetail.expenseMoney}">
+                                </td>
+                            #end
+                            <td>$!{nisExpenseDetail.expenseId}</td>
+                            <td>$!date.format('yyyy-MM-dd',$!{nisExpenseDetail.expenseDate})</td>
+                            #if($!{nisExpenseDetail.busType} == "04")
+                                <td name="expenseMoneyTd" class="textRight">****</td>
+                            #else
+                                <td name="expenseMoneyTd" class="textRight">$!number.formatNumeric($!{nisExpenseDetail.expenseMoney})</td>
+                            #end
+                            <td>$!{nisExpenseDetail.accName}</td>
+                            <td>$!{nisExpenseDetail.bankAcc}</td>
+                            <td>$!{nisExpenseDetail.bankName}</td>
+                            <td>$!{nisExpenseDetail.bankCode}</td>
+                            <td>$!{nisExpenseDetail.provName}</td>
+                            <td>$!{nisExpenseDetail.cityName}</td>
+                            #if($!{nisBillheadPage.isAccount} == "0")
+                                <td>$dictTag.get("nisBillhead.difBank",$!{nisExpenseDetail.difBank})</td>
+                                <td>$dictTag.get("nisBillhead.areaSign",$!{nisExpenseDetail.areaSign})</td>
+                            #end
+                            <td>$!{nisExpenseDetail.busTypeName}</td>
+                            <td>$!{nisExpenseDetail.opTypeName}</td>
+                            <td>$!{nisExpenseDetail.purpose}</td>
+                            <td>$dictTag.get("bisExc.voucherStat",$!{nisExpenseDetail.voucherStat})</td>
+                            <td>$!date.format('yyyy-MM-dd',$!{nisExpenseDetail.returnTime})</td>
+                            <td>$!{nisExpenseDetail.firstReturnMsg}</td>
+                            <td>$!{nisExpenseDetail.nextReturnMsg}</td>
+                        </tr>
+                        #end
+                    </tbody>
+                </table>
+            #elseif($!{bisExcPage.voucherFrom} == '10')
+                <table id="appTable" class="layui-table layui-form" style="width:100%;">
+                    <thead>
+                    <tr>
+                        #if($!{voucherStat} == '2')
+                            <th><input type="checkbox" name="checkAll" lay-skin="primary" lay-filter="checkAll"></th>
+                        #end
+                        <th>#springMessage('table.nisWageDetail.wageDtlNo')</th>
+                        #*<th>#springMessage('table.nisWageDetail.userName')</th>*#
+                        <th>#springMessage('table.nisWageDetail.workNo')</th>
+                        <th>#springMessage('table.nisPersonnelDetail.idcard')</th>
+                        <th>#springMessage('table.nisWageDetail.bankAcc')</th>
+                        <th>#springMessage('table.nisWageDetail.accName')</th>
+                        <th>#springMessage('table.nisWageDetail.bankCode')</th>
+                        <th>#springMessage('table.nisWageDetail.bankName')</th>
+                        <th>#springMessage('table.nisWageDetail.wagesVerify')</th>
+                        #*<th>#springMessage('table.nisWageDetail.prov')</th>
+                        <th>#springMessage('table.nisWageDetail.city')</th>*#
+                        <th>#springMessage('table.nisBillhead.difBank')</th>
+                        <th>#springMessage('table.nisBillhead.areaSign')</th>
+                        <th>#springMessage('table.nisWageDetail.purpose')</th>
+                        <th>#springMessage('table.bisExc.voucherStat')</th>
+                        <th>#springMessage('table.bisExc.returnTime')</th>
+                        <th>#springMessage('table.bisExc.firstReturnMsg')</th>
+                        <th>#springMessage('table.bisExc.nextReturnMsg')</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    #foreach($nisWageDetail in $listNisWageDetail)
+                    <tr>
+                        #if($!{voucherStat} == '2')
+                            <td align="center">
+                                <input lay-skin="primary" type="checkbox" lay-filter="check" name="checkDetailId" value="$!{nisWageDetail.id}">
+                                <input type="hidden" name="wages" id="wages$!{nisWageDetail.id}" value="$!{nisWageDetail.wages}">
+                            </td>
+                        #end
+                        <td>$!{nisWageDetail.wageDtlNo}</td>
+                        <td>$!{nisWageDetail.workNo}</td>
+                        <td>$!{nisWageDetail.idNo}</td>
+                        <td>$!{nisWageDetail.bankAcc}</td>
+                        <td>$!{nisWageDetail.accName}</td>
+                        <td>$!{nisWageDetail.bankCode}</td>
+                        <td>$!{nisWageDetail.bankName}</td>
+                        <td>$!number.formatNumeric($!{nisWageDetail.wages})</td>
+                        <td>$!{nisWageDetail.difBankName}</td>
+                        <td>$!{nisWageDetail.areaSignName}</td>
+                        <td>$!{nisWageDetail.purpose}</td>
+                        <td>$!{nisWageDetail.voucherStatName}</td>
+                        <td>$!date.format('yyyy-MM-dd',$!{nisWageDetail.returnTime})</td>
+                        <td>$!{nisWageDetail.firstReturnMsg}</td>
+                        <td>$!{nisWageDetail.nextReturnMsg}</td>
+                    </tr>
+                    #end
+                    </tbody>
+                </table>
+            #end
+        #end
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script >
+bt.use(['form','layedit','moneyType'], function(){
+    var $ = bt.jquery,form = bt.form();
+    var moneyType = bt.moneyType.init();
+    var moneyFun = bt.moneyType.getFun();
+    //全选
+    form.on('checkbox(checkAll)', function (data) {
+        var child = $('input[name="checkDetailId"]');
+        child.each(function (index, item) {
+            if(!item.disabled){
+                item.checked = data.elem.checked;
+                // 对选中的数据添加背景颜色
+                var trObj = $('tr[data-tt-id="' + item.value + '"]');
+                if(data.elem.checked){
+                    trObj.attr("style", "background-color:#d2efd3");
+                }else {
+                    trObj.removeAttr("style");
+                }
+            }
+        });
+        form.render('checkbox');
+        setCheckInfo();
+    });
+
+    form.on('checkbox(check)', function (data) {
+        var checkboxes = $('[lay-filter="check"]'),checkboxsQty = checkboxes.length;
+        bt.each($('[lay-filter="check"]'),function(){
+            if(this.checked ){
+                checkboxsQty= checkboxsQty-1
+            }
+        })
+        $('[lay-filter="checkAll"]')[0].checked = !checkboxsQty;
+        form.render('checkbox');
+        setCheckInfo();
+    });
+
+    //设置已选信息
+    function setCheckInfo(){
+        var payMoneyTotal = 0;
+        var count = 0;
+        bt.each($('[lay-filter="check"]'),function(){
+            if(this.checked ){
+                count = count+1;
+                payMoneyTotal = payMoneyTotal + moneyFun.toNumber($("#expenseMoney"+this.value).val());
+            }
+        })
+        var isSelectSize = bt.lang('sys.common.isSelectSize', [count]);
+        var isSelectMoney = bt.lang('sys.common.isSelectMoney', [moneyFun.format(moneyFun.toNumber(payMoneyTotal))]);
+        var checkInfo = isSelectSize + "  " + isSelectMoney;
+        $("#checkInfo").text(checkInfo);
+    }
+    //监听提交
+    form.on('submit(submit)', function (data) {
+        bt.loading.show();
+        var hasExpenseDetail = $("#hasExpenseDetail").val();
+        var voucherStat = $("#voucherStat").val();
+        if(voucherStat == "2" && hasExpenseDetail=="1") {
+            if (!$('input[name="checkDetailId"]:checked').length) {
+                bt.loading.hide();
+                layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+                return false;
+            }
+        }
+        var expenseDtlIds = "";
+        bt.each($('[lay-filter="check"]'),function(){
+            if(this.checked ){
+                expenseDtlIds += this.value+',';
+            }
+        })
+        data.field.expenseDtlIds = expenseDtlIds;
+        data.field.excFrom = $("#excFrom").val();
+        var action = "/bdlink/bisexc/savePayResult";
+        $.post(basePath + action, data.field, function (result) {
+            bt.loading.hide();
+          var index = parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+                if (result.success) {
+                    if (bt.navtab) {
+                        if(parent.datatable){
+                            parent.datatable.draw();
+                        }else{
+                            bt.navtab.refreshParent();
+                            bt.navtab.refreshCurrent();
+                        }
+                        parent.layer.closeAll();
+                    } else {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                    }
+                }
+              parent.layer.close(index);
+            })
+        }, 'JSON');
+        return false;
+    });
+});
+</script>
+</html>

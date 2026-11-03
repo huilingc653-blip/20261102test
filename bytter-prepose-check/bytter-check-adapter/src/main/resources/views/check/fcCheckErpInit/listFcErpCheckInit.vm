@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <!--银行账号 -->
+            <td class="textRight">#springMessage("table.fcCheckInit.bankAcc")</td>
+            <td width="40%">
+                <input type="text" name="likes_bankAccount" id="bankAcc" class="layui-input bank" placeholder="#springMessage('table.fcCheckInit.bankAcc')">
+            </td>
+
+            <!--银行账号名称 -->
+            <td class="textRight">#springMessage("table.fcCheckInit.bankAccName")</td>
+            <td width="40%">
+                <input type="text" name="likes_bankAccountName" class="layui-input" placeholder="#springMessage('table.fcCheckInit.bankName')">
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="8" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset"  class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisBillhead.bankAcc')</th>##银行账号
+        <th>#springMessage('table.nisBillhead.curId')</th>##币别
+        <th>#springMessage('table.fcCheckInit.bankAccName')</th>##银行账户名称
+        <th>#springMessage('table.fcCheckInit.bankName')</th>##银行账户开户行 
+        <th>#springMessage('table.erp.basic.erpid')</th>##企业科目
+        <th>#springMessage('table.erp.basic.sapErpname')</th>##企业名称
+        <th>#springMessage('table.erp.init.check.date')</th>##初始对账日期 
+        <th>#springMessage('table.bankacc.init.balance')</th>##银行账户初始余额 
+        <th>#springMessage('table.fcCheckInit.blnBalance')</th>##企业科目初始余额
+        <th>#springMessage('table.createRepayPlan.operation')</th>##操作
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form','datatable','corp','bank','money'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.corp.init();
+        //生成列表
+        bt.bank.init({
+            elem:'.bank',
+        });
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'rtlip',
+            colReorder: true,
+            ordering: false,
+            ajax: {
+                'url': basePath+"/finacial/check/fccheckinit/queryCheckInitList?checkType=2"
+            },
+            searchForm:{
+                formFilter:"search",
+                formElem:"#searchForm"
+            },
+            columns: [
+                {data:"bankAcc",bSortable:true,className:"center"},
+                {data:"curName",bSortable:true,className:"center"},
+                {data:"accName",bSortable:true,className:"center"},
+                {data:"bankName",bSortable:true,className:"center"},
+                {data:"erpCode",bSortable:true,className:"center"},
+                {data:"erpName",bSortable:true,className:"center"},
+                {data:"checkDate",bSortable:true,className:"center"},
+                {data:"bankBalance",bSortable:true,className:"textRight",
+                    render : function( data, type, full, meta ){
+                        var bankBalance = null;
+                        if(full.bankBalance){
+                            bankBalance = bt.money.format(full.bankBalance);
+                        }
+                        return bankBalance;
+                    }
+                },
+                {data:"blnBalance",bSortable:true,className:"textRight",
+                    render : function( data, type, full, meta ){
+                        var blnBalance = null;
+                        if(full.blnBalance){
+                            blnBalance = bt.money.format(full.blnBalance);
+                        }
+                        return blnBalance;
+                    }
+                },
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                    /* if(full.getCompareSign == 1){//已对账则不能再调整初始化
+                        return "";
+                    }else if(full.getCompareSign == 3){//TODO 进行了余额调节表编制以及结转的账号不能修改初始化日期和余额
+                        return "";
+                    }else{
+                        
+                    } */
+                    var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="init(this)">#springMessage("common.button.init")</a>';
+                    return html;
+                }}
+            ]
+        });
+    });
+
+    function init(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(data){
+            if(bt.navtab){
+                bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/finacial/check/fccheckinit/adderp?bankAcc="
+                        + data.bankAcc + "&curId="+data.curId + "&checkType=2");
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath +"/finacial/check/fccheckinit/adderp?bankAcc=" + data.bankAcc+"&checkType=2",
+                end:function(){
+                    location.reload();
+                }
+            });
+        }
+    }
+</script>
+</html>

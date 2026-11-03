@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form layui-form-pane">
+		<input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+		<input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetPage.timeType}">
+		<div id="print">
+            <table class="layui-table">
+                <tbody>
+                <tr>
+                ##单位
+                    <td class="textRight">#springMessage('table.fbsBudget.corpId')</td>
+                    <td>$!{fbsBudgetPage.corpName}</td>
+                ##周期类型
+                    <td class="textRight">#springMessage('table.fbsBudget.timeType')</td>
+                    <td>$dictTag.get("fbs.timeType",$!{fbsBudgetPage.timeType})</td>
+                </tr>
+                <tr>
+                ##开始日期
+                    <td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+                    <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})</td>
+                ##结束日期
+                    <td class="textRight">#springMessage('table.fbsBudget.endDate')</td>
+                    <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})</td>
+                </tr>
+                <tr>
+                ##币种
+                    <td class="textRight">#springMessage('table.fbsBudgetDetail.curId')</td>
+                    <td>$!{fbsBudgetPage.curName}</td>
+                ##科目显示级别
+                    <td class="textRight"><div class="noprint">#springMessage('fbs.item.level.show')</div></td>
+                    <td>
+                        <div class="noprint">
+                            <div class="bt-biz-dict" data-type="select" data-group="fbs.item.level"
+                                 data-defaultvalue="$!{level}" data-name="level" data-biz-name="level"
+                                 data-callback="chooseLevel"></div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div style="display:inline-block;width:100%;">
+                <div id="maingrid1" data-biz-name="chooseLevel"></div>
+            </div>
+            <div style="width: 100%;overflow-x: scroll;margin-bottom: 10px;">
+                <table id="appTable" class="layui-table layui-form" style="width:100%;">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('table.fbsBudgetYear.number')</th>
+                        <th>#springMessage('table.fbsBudgetYear.itemCode')</th>
+                        <th>#springMessage('table.fbsBudgetYear.itemName')</th>
+                        <th>#springMessage('table.fbsBudgetYear.bMoney')</th>
+                        #foreach($titel in $titleList)
+                            <th>$titel</th>
+                        #end
+                    </tr>
+                    </thead>
+                    <tbody>
+                        #foreach($date in $dltList)
+                            <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}" data-tt-subject-sort="$!{date.itemCode}">
+                                <td>$!{velocityCount}</td>
+                                <td data-name="itemCode">$!{date.itemCode}</td>
+                                <td data-name="itemName">$!{date.itemName}</td>
+                                <td align="right" data-name="bMoney">
+                                    $!number.formatNumeric($!{date.bMoney})
+                                </td>
+                                #foreach($addDate in $addList)
+                                    <td align="right" data-name="superMoney$!{velocityCount}"> $!number.formatNumeric($addDate.get($!{date.itemCode}))</td>
+                                #end
+                            </tr>
+                        #end
+                    </tbody>
+                </table>
+            </div>
+		</div>
+		<p>
+        <div class="layui-form-item layui-form-submit" id="buttonDiv">
+			<div class="layui-input-block">
+                <button type="button" class="layui-btn"
+                        onclick="bt.trackFlowByBusinessId('$!{fbsBudgetPage.id}')">#springMessage(
+                'common.button.trackFlow')</button>
+				<button type="button" class="layui-btn" onclick="doClose()">#springMessage('common.button.close')</button>
+			</div>
+        </div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script >
+    var dicts, tree;
+    bt.use(['form', 'layedit', 'toLigerTree', 'btUpload', 'printType','dicts'], function () {
+        var $ = bt.jquery, form = bt.form();
+        bt.printType.init();
+        dicts = bt.dicts.init();
+        tree = bt.toLigerTree.init2({
+            elem: '#appTable',
+            newElem: '#maingrid1',
+            rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+            isDoubleHeader: false,//是否有双表头
+            allowHideColumn: true,
+            resize: false,
+            height: "70%",
+            fixedLeftColumns: 0,
+            columnName:'itemCode',
+            onAfterShowData:function(currentData){
+                var level = dicts.get('level').val();
+                for(var i=0;i<currentData.Rows.length;i++){
+                    var row=currentData.Rows[i];
+                    if(row.children && row.children.length>0){
+                        if(level == 0 || level == ""){
+
+                        }else if(level == 1){
+                            this.collapse(row);
+                            collapseChild(row.children,this);
+                        }else if(level == 2 || level == 3){
+                            var row2 = row.children;
+                            for(var j = 0,len2 = row2.length;j< len2;j++){
+                                if(row2[j].children && row2[j].children.length){
+                                    if(level == 2){
+                                        this.collapse(row2[j]);
+                                        collapseChild(row2[j].children,this);
+                                    }else if(level == 3){
+                                        var row3 = row2[j].children;
+                                        for(var k = 0,len3 = row3.length;k< len3;k++){
+                                            if(row3[k].children && row3[k].children.length){
+                                                this.collapse(row3[k]);
+                                                collapseChild(row3[k].children,this);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        function collapseChild(node,treeObj){
+            for(var j = 0,len2 = node.length;j< len2;j++){
+                if(node[j].children && node[j].children.length){
+                    treeObj.collapse(node[j]);
+                    var child = node[j].children;
+                    collapseChild(node[j].children,treeObj);
+                }
+            }
+        }
+    });
+    //关闭窗口
+    doClose = function(){
+        if(bt.navtab){
+            bt.navtab.closeCurrent();
+        }
+    }
+    var data;
+    chooseLevel = function () {
+        var level = dicts.get('level').val();
+        if(data == null) {
+            data = tree.get('chooseLevel').getData();//获取数据的方法；
+        }
+        tree.get('chooseLevel').loadData();
+    }
+</script>

@@ -1,0 +1,1517 @@
+#*
+*票据正面信息
+*#
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/bill/accebill/billCommonFunction.vm")
+	<style>
+		.bg{
+			#if($!info&&$!{info.billType} eq '10')
+    		background-image: url(${basePath}/static/images/ecds_img/bg1.jpg);
+			#end
+			#if($!info&&$!{info.billType} eq '11')
+    		background-image: url(${basePath}/static/images/ecds_img/bg2.jpg);
+			#end
+        	background-repeat: repeat-y;
+        	background-position: center;
+        	color: #1f2531;
+        	font-size: 12px;
+        }
+        table{font-size: 12px;}
+        .line {
+        	border-left: #1f2531 solid 1px;
+        	border-top: #1f2531 solid 1px;
+        	text-align: left;
+        }
+        .line td {
+        	padding: 5px;
+        }
+		.extInfoline{ border-top: #1f2531 solid 1px; text-align:left;}
+		.extInfoline td{ padding:5px;}
+        .date {
+        	padding-bottom: 70px;
+        	width: 1024px;
+        	margin-left: auto;
+        	margin-right: auto;
+        	text-align: left;
+        	background-image: url(${basePath}/static/images/ecds_img/logo.gif);
+        	background-repeat: no-repeat;
+        }
+        .leftline {
+        	border-left: #1f2531 solid 1px;
+        }
+        .rightline {
+        	border-right: #1f2531 solid 1px;
+        }
+        .bottomline {
+        	border-bottom: #1f2531 solid 1px;
+        }
+        .topline {
+        	border-top: #1f2531 solid 1px;
+        }
+		body{
+        	background-color: #fff;
+        }
+
+    </style>
+</head>
+<body  onload="doubleToString()">
+<div class="bg" >
+<div align="center" id="front">
+#*<table width="800" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td >#springMessage('bill.accebill.showdate')：<span id="showCurrDate">$!date.format('yyyy-MM-dd',$!{today})&nbsp;</span></td>
+    </tr>
+</table>*#
+<div class="date" id="dateDivfront">#springMessage('bill.accebill.showdate')：<span id="showCurrDate">$!date.format('yyyy-MM-dd',$!{today})&nbsp;</span></div>
+<table width="800" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td colspan="2" align="center" style="font-size:24px; font-weight:bold; height:40px;">
+		#getBillInfoTitle($!info)
+   </td>
+  </tr>
+  <tr>
+    <td width="50%" height="30" align="left">出票日期：$!date.format('yyyy-MM-dd',$!{info.startDate})&nbsp;</td>
+    <td width="50%" height="30" align="left">
+		#if($!info&&$!{info.newStmIssuofpprInd} eq '0')
+			票据状态：$!{info.billStatusName}&nbsp;
+		#elseif($!info&&$!{info.newStmIssuofpprInd} eq '1')
+			票据状态：$!dictTag.get("AB_BILL_STATUS",$!{info.billStatus})-$!dictTag.get("AB_BILL_CRCL_INDCD",$!{info.ebillBlCrclIndc})
+		#end
+	</td>
+  </tr>
+  <tr>
+    <td height="30" align="left">汇票到期日：$!date.format('yyyy-MM-dd',$!{info.endDate})&nbsp;</td>
+    <td height="30" align="left">
+		票据（包）号码：$!{info.origNo}&nbsp;
+		#if($!info&&$!{info.newStmIssuofpprInd} eq '1')
+		<br/>子票区间：$!{info.sbbllRngStrtSn},$!{info.sbbllRngEndSn}
+		#end
+	</td>
+  </tr>
+</table>
+
+<table width="800" border="0" cellpadding="0" cellspacing="0" class="line breakRow" >
+  <tr>
+    <td width="23" rowspan="3" align="center" nowrap="nowrap" class="bottomline rightline">出<br>票<br>人</td>
+    <td width="61" align="center" nowrap="nowrap" class="rightline bottomline">全称</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">$!{info.payer}&nbsp;</td>
+    <td width="23" rowspan="3" align="center" nowrap="nowrap" class="rightline bottomline">收<br>款<br>人</td>
+    <td width="59" align="center" nowrap="nowrap" class="rightline bottomline">全称</td>
+    <td width="322" nowrap="nowrap" class="rightline bottomline">$!{info.payee}&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">账号</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">$!{info.payeracc}&nbsp;</td>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">账号</td>
+    <td nowrap="nowrap" class="rightline bottomline">$!{info.payeeacc}&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">开户银行</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">$!{info.payerBankName}&nbsp;</td>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">开户银行</td>
+    <td nowrap="nowrap" class="rightline bottomline">$!{info.payeeBankName}&nbsp;</td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">出票保证信息</td>
+    <td colspan="5" nowrap="nowrap" class="rightline bottomline">
+    	<table width="100%">
+    		<tr>
+    			<td width="9%" class="textRight">保证人名称：</td>
+    			<td width="15%">$!{info.payerBail.recNm}&nbsp;</td>
+    			<td width="9%" class="textRight">保证人地址：</td>
+    			<td width="15%">$!{info.payerBail.adr}&nbsp;</td>
+    			<td width="9%" class="textRight">保证日期：</td>
+    			<td width="15%">$!date.format('yyyy-MM-dd',$!{info.payerBail.bussdt})&nbsp;</td>
+    		</tr>
+    	</table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">票据金额</td>
+    <td colspan="5" nowrap="nowrap" class="rightline" style="padding:0">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td rowspan="2" class="rightline bottomline">人&nbsp;民&nbsp;币<br />（大写）</td>
+        <td rowspan="2" valign="middle" class="rightline bottomline" >$!{info.billMoneyCNY}&nbsp;</td>
+        <td width="12" class="rightline bottomline">十</td>
+        <td width="12" class="rightline bottomline">亿</td>
+        <td width="12" class="rightline bottomline">千</td>
+        <td width="12" class="rightline bottomline">百</td>
+        <td width="12" class="rightline bottomline">十</td>
+        <td width="12" class="rightline bottomline">万</td>
+        <td width="12" class="rightline bottomline">千</td>
+        <td width="12" class="rightline bottomline">百</td>
+        <td width="12" class="rightline bottomline">十</td>
+        <td width="12" class="rightline bottomline">元</td>
+        <td width="12" class="rightline bottomline">角</td>
+        <td width="12" class="bottomline">分</td>
+      </tr>
+      <tr>
+        <td class="rightline bottomline" id="b1">&nbsp;</td>
+        <td class="rightline bottomline" id="b2">&nbsp;</td>
+        <td class="rightline bottomline" id="b3">&nbsp;</td>
+        <td class="rightline bottomline" id="b4">&nbsp;</td>
+        <td class="rightline bottomline" id="b5">&nbsp;</td>
+        <td class="rightline bottomline" id="b6">&nbsp;</td>
+        <td class="rightline bottomline" id="b7">&nbsp;</td>
+        <td class="rightline bottomline" id="b8">&nbsp;</td>
+        <td class="rightline bottomline" id="b9">&nbsp;</td>
+        <td class="rightline bottomline" id="b10">&nbsp;</td>
+        <td class="rightline bottomline" id="b11">&nbsp;</td>
+        <td class="bottomline" id="b12">&nbsp;</td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td colspan="2" rowspan="2" align="center" nowrap="nowrap" class="rightline bottomline">承兑人信息</td>
+    <td width="47" align="center" nowrap="nowrap" class="rightline bottomline">全称</td>
+    <td width="264" nowrap="nowrap" class="rightline bottomline">$!{info.acceptor}&nbsp;</td>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">开户行行号</td>
+    <td nowrap="nowrap" class="rightline bottomline">$!{info.acceptorbankno}&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">账号</td>
+    <td nowrap="nowrap" class="rightline bottomline">$!{info.acceptoracc}&nbsp;</td>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">开户行名称</td>
+    <td nowrap="nowrap" class="rightline bottomline">$!{info.acceptorBankName}&nbsp;</td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">交易合同号</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">$!{info.acontractNo}&nbsp;</td>
+    <td rowspan="2" align="center" nowrap="nowrap" class="rightline bottomline">承<br>兑<br>信<br>息</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">出票人承诺：本汇票请予以承兑，到期无条件付款。</td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">能否转让</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">
+		#if($!info&&$!{info.newStmIssuofpprInd} eq '1')
+			$!{info.banendrsmtmkName}-$!dictTag.get("AB_BILL_BLGRDBAGCRCL_PRMTIND_IF",$!{info.blgrdbagcrclPrmtInd})
+		#else
+			$!{info.banendrsmtmkName}
+		#end
+	</td>
+    <td colspan="2" nowrap="nowrap" class="rightline bottomline">
+    <div>承兑人承诺：本汇票已经承兑，到期无条件付款。</div>
+    <div style="padding-top:8px; padding-left:180px;">承兑日期：$!date.format('yyyy-MM-dd',$!{info.acceptorInfo.bussdt})&nbsp;</div></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">承兑保证信息</td>
+    <td colspan="5" nowrap="nowrap" class="rightline bottomline">
+    	<table width="100%">
+    		<tr>
+    			<td width="9%" class="textRight">保证人名称：</td>
+    			<td width="15%">$!{info.acceptorBail.recNm}&nbsp;</td>
+    			<td width="9%" class="textRight">保证人地址：</td>
+    			<td width="15%">$!{info.acceptorBail.adr}&nbsp;</td>
+    			<td width="9%" class="textRight">保证日期：</td>
+    			<td width="15%">$!date.format('yyyy-MM-dd',$!{info.acceptorBail.bussdt})&nbsp;</td>
+    		</tr>
+    	</table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" rowspan="2" align="center" class="rightline bottomline">评级信息（由出<br/>票人、承兑人自<br/>己记载，仅供参<br/>考）</td>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">出票人</td>
+    <td colspan="4" nowrap="nowrap" class="rightline bottomline">
+    	<table width="100%">
+    		<tr>
+    			<td width="9%" class="textRight">评级主体：</td>
+    			<td width="25%">$!{info.payerCdtRatgs}&nbsp;</td>
+    			<td width="9%" class="textRight">信用等级：</td>
+				<td width="15%">$!{info.payerCdtRatgGgcy}&nbsp;</td>
+    			<td width="9%" class="textRight">评级到期日：</td>
+				<td width="15%">$!date.format('yyyy-MM-dd',$!{info.payerCdtRatgDuedt})&nbsp;</td>
+    		</tr>
+    	</table>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" nowrap="nowrap" class="rightline bottomline">承兑人</td>
+    <td colspan="4" nowrap="nowrap" class="rightline bottomline">
+    	<table width="100%">
+    		<tr>
+    			<td width="9%" class="textRight">评级主体：</td>
+    			<td width="25%">$!{info.acceptorInfo.cdtratgs}&nbsp;</td>
+				<td width="9%" class="textRight">信用等级：</td>
+				<td width="15%">$!{info.acceptorInfo.cdtratgagcy}&nbsp;</td>
+				<td width="9%" class="textRight">评级到期日：</td>
+				<td width="15%">$!date.format('yyyy-MM-dd',$!{info.acceptorInfo.cdtratgduedt})&nbsp;</td>
+			</tr>
+		</table>
+	</td>
+  </tr>
+    <tr>
+        <td align="center" colspan="2" nowrap="nowrap" class="rightline bottomline">备注</td>
+        <td colspan="5" nowrap="nowrap" class="rightline bottomline">
+            $!{info.rmk}
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="pageDiv" style="display:none">
+	<table><tr><td style='page-break-after:always;'>&nbsp;</td></tr></table>
+</div>
+
+	##	附加信息 begin
+
+	<div align="center" id="additional$!{velocityCount}" style="display:none">
+		<input type="hidden" id="billMoney$!{velocityCount}" value="$number.formatNumeric($!{info.billMoney})" />
+
+		<table width="800" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px">
+			<tr>
+				<td >#springMessage('bill.accebill.showdate')：<span id="showCurrDate">$!date.format('yyyy-MM-dd',$!{today})&nbsp;</span></td>
+			</tr>
+		</table>
+		<table width="800" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td colspan="2" align="center" style="font-size:24px; font-weight:bold; height:40px;">
+					#getBillInfoTitle($!info)
+				</td>
+			</tr>
+		</table>
+		<table width="800" border="0" cellpadding="0" cellspacing="0" class="extInfoline breakRow">
+			<tr>
+				<td colspan="10" nowrap="nowrap" class="rightline bottomline leftline" style="font-size:18px; font-weight:bold;" >票据相关信息</td>
+			</tr>
+			<tr>
+				<td colspan="10" align="left"  class="rightline bottomline leftline" >
+					票据类型:&nbsp;&nbsp;
+					#getBillInfoTitle($!info)
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" width="180" rowspan="1" nowrap="nowrap" class="rightline bottomline leftline" align="center" >风险票据类型</td>
+				<td colspan="8" nowrap="nowrap" class="rightline bottomline ">$!{info.riskBillType}</td>
+			</tr>
+			<tr>
+				<td colspan="2" width="180" rowspan="1" nowrap="nowrap" class="rightline bottomline leftline" align="center" >票据标注信息</td>
+				<td colspan="1" width="180" nowrap="nowrap" class="rightline bottomline " align="center">是否已保贴</td>
+				<td colspan="1" width="30" nowrap="nowrap" class="rightline bottomline ">$!{info.disountIncIf}</td>
+				<td colspan="2" width="150" nowrap="nowrap" class="rightline bottomline " align="center">是否已保兑</td>
+				<td colspan="1" width="60" nowrap="nowrap" class="rightline bottomline ">$!{info.cashIncIf}</td>
+				<td colspan="2" width="150" nowrap="nowrap" class="rightline bottomline " align="center">是否免追索票据</td>
+				<td colspan="1" width="60" nowrap="nowrap" class="rightline bottomline ">$!{info.avoidClaimDebtsIf}</td>
+			</tr>
+			##			<tr>
+			##				<td colspan="2" width="215" nowrap="nowrap" class="rightline bottomline ">&nbsp;</td>
+			##				<td colspan="2" width="215" nowrap="nowrap" class="rightline bottomline ">&nbsp;</td>
+			##				<td colspan="3" width="260" nowrap="nowrap" class="rightline bottomline ">&nbsp;</td>
+			##			</tr>
+			<tr>
+				<td colspan="2" width="180" rowspan="1" nowrap="nowrap" width="100" class="rightline bottomline leftline" align="center" >标注信息对应业务信息</td>
+				##				<td colspan="2" nowrap="nowrap" class="rightline bottomline " align="center">保贴信息</td>
+				##				<td colspan="2" nowrap="nowrap" class="rightline bottomline " align="center">保兑信息</td>
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline " align="left">&nbsp;</td>
+				<td colspan="3" nowrap="nowrap" class="rightline bottomline " align="left">&nbsp;</td>
+				<td colspan="3" nowrap="nowrap" class="rightline bottomline " align="left">&nbsp;</td>
+				##				<td colspan="3" nowrap="nowrap" class="rightline bottomline ">&nbsp;</td>
+			</tr>
+			##			<tr>
+			##				<td colspan="2" nowrap="nowrap" class="rightline bottomline " align="left">&nbsp;</td>
+			##				<td colspan="2" nowrap="nowrap" class="rightline bottomline " align="left">&nbsp;</td>
+			##				<td colspan="3" nowrap="nowrap" class="rightline bottomline " align="left">&nbsp;</td>
+			##			</tr>
+			<tr>
+				<td colspan="10" ></td>
+			</tr>
+			<tr>
+				<td colspan="10" ></td>
+			</tr>
+			<table  width="800" border="0" cellpadding="0" cellspacing="0" class="extInfoline breakRow">
+				<tr>
+					<td colspan="10" nowrap="nowrap" class="rightline bottomline topline leftline" style="font-size:18px; font-weight:bold;">票据行为人详细信息</td>
+				</tr>
+				<tr>
+					<td width="30" rowspan="8" nowrap="nowrap" class="rightline bottomline leftline" align="center">出<br><br>票<br><br>人<br><br>信<br><br>息</td>
+					<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">全称</td>
+					<td width="140" nowrap="nowrap" class="rightline bottomline">$!{info.payer}</td>
+					<td width="30" rowspan="8" nowrap="nowrap" class="rightline bottomline" align="center" >收<br><br>款<br><br>人<br><br>信<br><br>息</td>
+					<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">全称</td>
+					<td width="140" nowrap="nowrap" class="rightline bottomline">$!{info.payee}</td>
+					<td width="30" rowspan="8" nowrap="nowrap" class="rightline bottomline"align="center">承<br><br>兑<br><br>人<br><br>信<br><br>息</td>
+					<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">全称</td>
+					<td width="140" nowrap="nowrap" class="rightline bottomline">$!{info.acceptor}</td>
+				</tr>
+				<tr >
+					<td width="95"  nowrap="nowrap" class="rightline bottomline" align="center">社会统一信用代码</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.blRmtrUnnIdNo}</td>
+					<td width="95"  nowrap="nowrap" class="rightline bottomline" align="center">社会统一信用代码</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.blRcvpymtpsUnnIdNo}</td>
+					<td width="95"  nowrap="nowrap" class="rightline bottomline" align="center">社会统一信用代码</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.blAcptrUnnIdNo}</td>
+				</tr>
+				<tr>
+					<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">账户名称</td>
+					<td width="140" nowrap="nowrap" class="rightline bottomline">$!{info.payer}</td>
+					<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">账户名称</td>
+					<td width="140" nowrap="nowrap" class="rightline bottomline">$!{info.payee}</td>
+					<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">账户名称</td>
+					<td width="140" nowrap="nowrap" class="rightline bottomline">$!{info.acceptor}</td>
+				</tr>
+				<tr>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">办理渠道名称</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">办理渠道名称</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">办理渠道名称</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+				</tr>
+				<tr>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">票据账户号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">-</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">票据账户号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">-</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">票据账户号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">-</td>
+				</tr>
+				<tr>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行名</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.payerBankName}</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行名</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.payeeBankName}</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行名</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.acceptorBankName}</td>
+				</tr>
+				<tr>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行行号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.payerbankno}</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行行号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.payeebankno}</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行行号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.acceptorbankno}</td>
+				</tr>
+				<tr>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行帐号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.payeracc}</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行帐号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{info.payeeacc}</td>
+					<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行帐号</td>
+					<td width="140"  nowrap="nowrap" class="rightline bottomline ">$!{info.acceptoracc}</td>
+				</tr>
+				<tr>
+					<td colspan="10" >$!{null}</td>
+				</tr>
+				<tr>
+					<td colspan="10" >$!{null}</td>
+				</tr>
+				<tr>
+					<td colspan="10" nowrap="nowrap" class="rightline bottomline topline leftline" style="font-size:18px; font-weight:bold;">增信信息</td>
+				</tr>
+
+				#set($batchSize = 3)
+				#set($batchCount = $info.billAddCreditInfoList.size() / $batchSize)
+				#foreach($batchIndex in [0..$batchCount])
+					#set($billecreditIndex = $batchIndex * $batchSize)
+					#if($billecreditIndex < $info.billAddCreditInfoList.size())
+						#set($acceptecreditIndex = $billecreditIndex + 1)
+						#set($endorsecreditIndex = $billecreditIndex + 2)
+						#set($billecredit = $info.billAddCreditInfoList.get($billecreditIndex))
+						#if($acceptecreditIndex < $info.billAddCreditInfoList.size())
+							#set($acceptecredit = $info.billAddCreditInfoList.get($acceptecreditIndex))
+						#else
+							#set($acceptecredit="")
+						#end
+						#if($endorsecreditIndex < $info.billAddCreditInfoList.size())
+							#set($endorsecredit = $info.billAddCreditInfoList.get($endorsecreditIndex))
+						#else
+							#set($endorsecredit="")
+						#end
+						<tr>
+							<td width="30" rowspan="9" nowrap="nowrap" class="rightline bottomline leftline" align="center">
+								#if($!{billecredit.typeName} eq '出票保证人')
+									出<br><br>票<br><br>保<br><br>证<br><br>人
+								#elseif($!{billecredit.typeName} eq '承兑保证人')
+									承<br><br>兑<br><br>保<br><br>证<br><br>人
+								#elseif($!{billecredit.typeName} eq '背书保证人')
+									背<br><br>书<br><br>保<br><br>证<br><br>人
+								#end
+							</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">全称</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{billecredit.name}</td>
+							<td width="30" rowspan="9" nowrap="nowrap" class="rightline bottomline" align="center" >
+								#if($!{acceptecredit.typeName} eq '出票保证人')
+									出<br><br>票<br><br>保<br><br>证<br><br>人
+								#elseif($!{acceptecredit.typeName} eq '承兑保证人')
+									承<br><br>兑<br><br>保<br><br>证<br><br>人
+								#elseif($!{acceptecredit.typeName} eq '背书保证人')
+									背<br><br>书<br><br>保<br><br>证<br><br>人
+								#end
+							</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">全称</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.name}</td>
+							<td width="30" rowspan="9" nowrap="nowrap" class="rightline bottomline"align="center">
+								#if($!{endorsecredit.typeName} eq '出票保证人')
+									出<br><br>票<br><br>保<br><br>证<br><br>人
+								#elseif($!{endorsecredit.typeName} eq '承兑保证人')
+									承<br><br>兑<br><br>保<br><br>证<br><br>人
+								#elseif($!{endorsecredit.typeName} eq '背书保证人')
+									背<br><br>书<br><br>保<br><br>证<br><br>人
+								#end
+							</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">全称</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.name}</td>
+						</tr>
+						<tr >
+							<td width="95"  nowrap="nowrap" class="rightline bottomline" align="center">社会统一信用代码</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{billecredit.blUnnIdNo}</td>
+							<td width="95"  nowrap="nowrap" class="rightline bottomline" align="center">社会统一信用代码</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.blUnnIdNo}</td>
+							<td width="95"  nowrap="nowrap" class="rightline bottomline" align="center">社会统一信用代码</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.blUnnIdNo}</td>
+						</tr>
+						<tr>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">保证人地址</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{billecredit.graAddress}</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">保证人地址</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.graAddress}</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">保证人地址</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.graAddress}</td>
+						</tr>
+						<tr>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">账户名称</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{billecredit.billAccName}</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">账户名称</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.billAccName}</td>
+							<td width="95" nowrap="nowrap" class="rightline bottomline" align="center">账户名称</td>
+							<td width="140" nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.billAccName}</td>
+						</tr>
+						<tr>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">办理渠道名称</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{billecredit.channelName}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">办理渠道名称</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.channelName}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">办理渠道名称</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.channelName}</td>
+						</tr>
+						<tr>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">票据账户号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{billecredit.billAccNo}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">票据账户号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.billAccNo}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">票据账户号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.billAccNo}</td>
+						</tr>
+						<tr>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行名</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{billecredit.bankName}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行名</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.bankName}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行名</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.bankName}</td>
+						</tr>
+						<tr>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行行号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{billecredit.bankNo}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行行号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.bankNo}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行行号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{endorsecredit.bankNo}</td>
+						</tr>
+						<tr>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行帐号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{billecredit.bankAccNo}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行帐号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline">$!{acceptecredit.bankAccNo}</td>
+							<td width="95"   nowrap="nowrap" class="rightline bottomline" align="center">开户银行帐号</td>
+							<td width="140"  nowrap="nowrap" class="rightline bottomline ">$!{endorsecredit.bankAccNo}</td>
+						</tr>
+					#end
+				#end
+
+			</table>
+			<table><tr><td style='page-break-after:always;'> &nbsp; </td></tr></table>
+		</table>
+	</div>
+
+	##	附加信息	end
+
+
+<!-- 背面信息 -->
+<div align="center" id="back" style="display:none">
+<br>
+<table width="800" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td >#springMessage('bill.accebill.showdate')：<span id="showCurrDate">$!date.format('yyyy-MM-dd',$!{today})&nbsp;</span></td>
+    </tr>
+</table>
+##<div class="date" id="dateDivback">#springMessage('bill.accebill.showdate')：<span id="showCurrDate">$!date.format('yyyy-MM-dd',$!{today})&nbsp;</span></div>
+<table width="800" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td colspan="2" align="center" style="font-size:24px; font-weight:bold; height:40px;">
+		#getBillInfoTitle($!info)
+    </td>
+  </tr>
+  <tr>
+    <td width="10%" height="30">#springMessage('table.abVoucherinfo.origNo')：<br/>子票区间：</td>
+	  <td height="30" align='left'>$!{info.origNo} <br/>$!{info.sbbllRngStrtSn},$!{info.sbbllRngEndSn}</td>
+  </tr>
+</table>
+<table width="800" border="0" cellpadding="0" cellspacing="0" class="line">
+#foreach($billBackInfo in ${info.backbillinfoList})
+  		#if($!{billBackInfo.bustype} eq '010' || $!{billBackInfo.bustype} eq 'ET05' )
+  			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorse')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+			   <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			   <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+			  <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			  <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+			  <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			  <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+			  <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+  		#elseif($!{billBackInfo.bustype} eq '017' || $!{billBackInfo.bustype} eq 'ET02' )
+  			<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.guarantee')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.warrantorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.warranteeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.adr')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.adr}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.guaranteeDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+  		#elseif($!{billBackInfo.bustype} eq '018' || $!{billBackInfo.bustype} eq 'ET03' )
+  			  <tr isNull="$!{billBackInfo.isNull}">
+  			  	<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeEndorse')</td>
+  			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			  	<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td></tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+  		#elseif($!{billBackInfo.bustype} eq '019' || $!{billBackInfo.bustype} eq 'ET04' )
+  			  <tr isNull="$!{billBackInfo.isNull}">
+  			  	<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeRemove')</td>
+  			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			  	<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td></tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+  			<tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeRemoveDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '011RM00')
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM00discountEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '011RM01' || $!{billBackInfo.bustype} eq 'ET14' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM01discountEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.rpdopendt')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.rpdopendt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.rpdduedt')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.rpdduedt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '012' || $!{billBackInfo.bustype} eq 'ET15' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM01discountRedeemEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '013RM00')
+ 	    	 <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM00TurnDiscountEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '013RM01')
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM01TurnDiscountEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.rpdopendt')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.rpdopendt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.rpdduedt')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.rpdduedt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '014' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM01TurnDiscountRedeemEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '015RM00' )
+			<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM00AgainDiscountEndorse')</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			 </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '015RM01' )
+ 	    	 <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM01AgainDiscountEndorse')</td>
+			  </tr>
+			   <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.rpdopendt')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.rpdopendt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abBackbillinfo.rpdduedt')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.rpdduedt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '016' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.RM01AgainDiscountRedeemEndorse')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			 </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '025' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('央行卖出商业汇票')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorsorName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseeName')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			 </tr>
+			 <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.endorseDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})&nbsp;</td>
+			 </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '020' || $!{billBackInfo.bustype} eq 'ET09' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.hintpay')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.hintpayPersonName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.hintpayDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.sgnupmkInfo')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">
+					#if($billBackInfo.sgnupmkName&&$billBackInfo.sgnupmkName!="")
+						$!{billBackInfo.sgnupmkName}
+					#else
+						$!{billBackInfo.sgnupmk}
+					#end
+				</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.sgnupmkInfoDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.dshnr')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.dshnrcdName}$!{billBackInfo.dshnrrsn}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '021' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.overHintpay')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.hintpayPersonName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.hintpayDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.sgnupmkInfo')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.sgnupmk}
+					#if($billBackInfo.sgnupmkName&&$billBackInfo.sgnupmkName!="")
+						$!{billBackInfo.sgnupmkName}
+					#else
+						$!{billBackInfo.sgnupmk}
+					#end
+					&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.sgnupmkInfoDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.dshnr')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.dshnrcdName}$!{billBackInfo.dshnrrsn}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.overHintpayRsnInfo')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.rsn}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+ 	    #elseif($!{billBackInfo.bustype} eq '022' || $!{billBackInfo.bustype} eq 'ET10' )
+ 	    	<tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.rcrsPay')</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.searchForPersonName')</td>
+			    <td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.rcrsDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">
+			    	$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+			    </td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.rcrsType')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.rcrsTpName}&nbsp;</td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.rcrsPayDate')</td>
+			    <td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+			    </td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+			##		#elseif($!{billBackInfo.bustype} eq 'ET06' )
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.stopPaymentAndFreeze')</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.stopPaymentAndFreeze.bussDate')</td>
+			##				<td nowrap="nowrap" class="rightline bottomline">
+			##					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+			##				</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.stopPaymentAndFreeze.type')</td>
+			##				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.stopPaymentAndFreeze.reason')</td>
+			##				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			##			</tr>
+			##
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			##			</tr>
+			##		#elseif($!{billBackInfo.bustype} eq 'ET07' )
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.remove.stopPaymentAndFreeze')</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.remove.stopPaymentAndFreeze.bussDate')</td>
+			##				<td nowrap="nowrap" class="rightline bottomline">
+			##					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+			##				</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.remove.stopPaymentAndFreeze.type')</td>
+			##				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.remove.stopPaymentAndFreeze.resason')</td>
+			##				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			##			</tr>
+			##			<tr isNull="$!{billBackInfo.isNull}">
+			##				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			##			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET08' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.creditEnhancementByGuarantee')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.creditEnhancementByGuarantee.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET11' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.electricityBillTransfer')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.electricityBillTransfer.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET12' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.billOwnAccountTransfer')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.billOwnAccountTransfer.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET13' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.buy-out.repurchase')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.buy-out.repurchase.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET17' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.buy-out.redemption')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.buy-out.redemption.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET18' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.InitialRegistrationOfOwnership')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.InitialRegistrationOfOwnership.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.regInstitutionCode')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.blReqUnnIdNo}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.regInstitutionName')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.remark')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.rmrkbysgnr}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET19' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeTypeRepurchase')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeTypeRepurchase.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET20' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeTypeRepurchaseRedemption')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.pledgeTypeRepurchaseRedemption.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET21' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.rediscountPledgeRepurchase')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.rediscountPledgeRepurchase.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			</tr>
+		#elseif($!{billBackInfo.bustype} eq 'ET22' )
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td colspan="2" align="center" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.rediscountPledgeRepurchaseRedemption')</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td width="181" nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.reqNm')</td>
+				<td width="618" nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.reqNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abAccrecords.applyDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.appldt})&nbsp;
+				</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.business.recNm')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.recNm}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+				<td nowrap="nowrap" class="rightline bottomline">$!{billBackInfo.bankendrsmtmkName}&nbsp;</td>
+			</tr>
+			<tr isNull="$!{billBackInfo.isNull}">
+				<td nowrap="nowrap" class="rightline bottomline">#springMessage('bill.accebill.rediscountPledgeRepurchaseRedemption.bussDate')</td>
+				<td nowrap="nowrap" class="rightline bottomline">
+					$!date.format('yyyy-MM-dd',$!{billBackInfo.bussdt})
+			    </td>
+			  </tr>
+			  <tr isNull="$!{billBackInfo.isNull}">
+			    <td colspan="2" nowrap="nowrap" class="rightline bottomline">&nbsp;</td>
+			  </tr>
+		#end
+		#end
+</table>
+</div>
+</div>
+</div>
+<object id='LODOP_OB' classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0>
+       <embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0></embed>
+</object>
+<br />
+<br />
+<div id="buttonDiv" class="layui-form-item layui-form-submit">
+	<div class="layui-input-block">
+	##是否线上
+	#if($!{isSendSign} eq '1' )
+	<button type="button" class="layui-btn" onclick="bankSyncro()">#springMessage('common.btn.bank.synchro')</button>
+	#end
+	<button type="button" class="layui-btn" onclick="showinfo('front')" >#springMessage('common.button.billfront')</button>
+	<button type="button" class="layui-btn" onclick="showinfo('back')" >#springMessage('common.button.billback')</button>
+	#if($!info&&$!{info.newStmIssuofpprInd} eq '1')
+		<button type="button" class="layui-btn" onclick="showinfo('additional')" >附加</button>
+	#end
+	<button type="button" class="layui-btn" onclick="print()">#springMessage('common.button.print')</button>
+	<button type="button" class="layui-btn" id="printNoNullBack" style="display:none" onclick="printNoNullBack()">#springMessage('common.button.printNoNullBack')</button>
+	<button type="button" class="layui-btn" onclick="printFrontBack()">#springMessage('common.button.printFrontBack')</button>
+	<button type="button" class="layui-btn" onclick="printFrontNoNullBack()">#springMessage('common.button.printFrontNoNullBack')</button>
+	<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+	<script type="text/javascript">
+	var printId='front';
+	function getBillInfoPrintHtml(){
+		printHtml=document.documentElement.innerHTML;
+		printHtml=printHtml.substring(0,printHtml.indexOf("<object id='LODOP_OB'"))+"</body></html>";
+		$("#asdf").text(printHtml);
+		return printHtml;
+	}
+	function doubleToString(){
+		var v_money = '$number.formatNumeric($!{info.billMoney})';
+		v_money=deleDot(v_money);
+		if(v_money.indexOf('.') == -1){
+			v_money += '.00';
+		}else{
+			while(v_money.length - v_money.indexOf('.') < 3){
+				v_money += '0';
+			}
+		}
+		v_money = v_money.replace('.','');
+		for(i=1;i<=v_money.length;i++){
+			var v_temp = v_money.substr(i-1,1);
+			document.getElementById("b"+(12-v_money.length+i)).innerText = v_temp;
+		}
+		document.getElementById("b"+(12-v_money.length)).innerText = '￥';
+	}
+	function deleDot(str){
+	     var newStr = "";
+	     for(var i=0; i <str.length; i++){
+	         if(str.charAt(i) != ","){
+	           	newStr += str.charAt(i);
+	         }
+	     }
+	     return newStr;
+	}
+	function showinfo( v ) {
+    	if(v == 'front') {
+    		document.getElementById('front').style.display = '';
+    		document.getElementById('back').style.display = 'none';
+    		document.getElementById('printNoNullBack').style.display = 'none';
+			document.getElementById('additional').style.display = 'none';
+    	} else if(v == 'back') {
+    		document.getElementById('front').style.display = 'none';
+    		document.getElementById('back').style.display = '';
+    		document.getElementById('printNoNullBack').style.display = '';
+			document.getElementById('additional').style.display = 'none';
+    	}else if(v == 'additional') {
+			document.getElementById('front').style.display = 'none';
+			document.getElementById('back').style.display = 'none';
+			document.getElementById('printNoNullBack').style.display = 'none';
+			document.getElementById('additional').style.display = '';
+		}
+		printId=v;
+    }
+
+    //正反面查询信息查询
+	function bankSyncro(){
+
+		var isFront ='03';
+		if( document.getElementById('front').style.display=='none') {
+			isFront='02';
+		}
+		$.ajax({
+			url:basePath+'/bill/accebill/abbillreceivebiz/fastCredit?recId=$!{recId}&billCode=$!{info.origNo}&acId=$!{acId}&acctId=$!{reqAccId}&msgType='+isFront,
+			dataType: 'json',
+			type: "post",
+			success:function(result){
+				if(result.success==true){
+					parent.layer.alert(bt.lang(result.attributes.MSG_INFO), {icon: 6});
+				}else{
+					parent.layer.alert(bt.lang(result.attributes.MSG_INFO), {icon: 2});
+				}
+		}});
+	}
+
+
+
+	function printNoNullBack() {
+        bt.loading.show();
+		var LODOP=getLodop();
+		//document.getElementById('dateDiv'+printId).style.display = 'none';
+		document.getElementById('buttonDiv').style.display = 'none';
+		var trs = $("#back tr[isNull='1']");
+        for(i = 0; i < trs.length; i++){
+            trs[i].style.display = "none";
+        }
+		LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Full-Width");
+		LODOP.ADD_PRINT_HTML(0,0,"100%","100%",getBillInfoPrintHtml());
+		//document.getElementById('dateDiv'+printId).style.display = '';
+		document.getElementById('buttonDiv').style.display = '';
+		for(i = 0; i < trs.length; i++){
+            trs[i].style.display = "";
+        }
+		printView(LODOP);
+    }
+
+	function print() {
+        bt.loading.show();
+		var LODOP=getLodop();
+		//document.getElementById('dateDiv'+printId).style.display = 'none';
+		document.getElementById('buttonDiv').style.display = 'none';
+		LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Full-Width");
+		LODOP.ADD_PRINT_HTML(0,0,"100%","100%",getBillInfoPrintHtml());
+		//document.getElementById('dateDiv'+printId).style.display = '';
+		document.getElementById('buttonDiv').style.display = '';
+		printView(LODOP);
+    }
+	function printFrontBack() {
+        bt.loading.show();
+		var LODOP=getLodop();
+		//document.getElementById('dateDivfront').style.display = 'none';
+		//document.getElementById('dateDivback').style.display = 'none';
+		document.getElementById('buttonDiv').style.display = 'none';
+		document.getElementById('pageDiv').style.display = '';
+		document.getElementById('front').style.display = '';
+		document.getElementById('back').style.display = '';
+		LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Full-Width");
+		LODOP.ADD_PRINT_HTML(0,0,"100%","100%",getBillInfoPrintHtml());
+
+		document.getElementById('pageDiv').style.display = 'none';
+		//document.getElementById('dateDivfront').style.display = '';
+		//document.getElementById('dateDivback').style.display = '';
+		document.getElementById('front').style.display = 'none';
+		document.getElementById('back').style.display = 'none';
+		document.getElementById(printId).style.display = '';
+		document.getElementById('buttonDiv').style.display = '';
+		printView(LODOP);
+    }
+
+
+	function printFrontNoNullBack() {
+        bt.loading.show();
+		var LODOP=getLodop();
+		document.getElementById('buttonDiv').style.display = 'none';
+		document.getElementById('pageDiv').style.display = '';
+		document.getElementById('front').style.display = '';
+		document.getElementById('back').style.display = '';
+		var trs = $("#back tr[isNull='1']");
+        for(i = 0; i < trs.length; i++){
+            trs[i].style.display = "none";
+        }
+		//LODOP.SET_PRINT_PAGESIZE(2);
+		LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Full-Width");
+		LODOP.ADD_PRINT_HTML(0,0,"100%","100%",getBillInfoPrintHtml());
+		//LODOP.ADD_PRINT_HTM(40,0,"100%","100%",getBillInfoPrintHtml());
+		document.getElementById('pageDiv').style.display = 'none';
+		document.getElementById('front').style.display = 'none';
+		document.getElementById('back').style.display = 'none';
+		document.getElementById(printId).style.display = '';
+		document.getElementById('buttonDiv').style.display = '';
+		var trs = $("#back tr[isNull='1']");
+        for(i = 0; i < trs.length; i++){
+            trs[i].style.display = "";
+        }
+		printView(LODOP);
+    }
+
+	function printView(LODOP){
+		if (LODOP.CVERSION){
+			CLODOP.On_Return=function(TaskID,Value){
+				if(Value>0){
+				}
+                bt.loading.hide();
+			};
+            LODOP.SET_PREVIEW_WINDOW(1,0,0,900,600,"");
+        	bt.loading.show();
+            LODOP.PREVIEW();
+		}else{
+            LODOP.SET_PREVIEW_WINDOW(1,0,0,900,600,"");
+        	bt.loading.show();
+			var Value=LODOP.PREVIEW();
+            bt.loading.hide();
+			if(Value>0){
+			}
+		}
+	}
+	</script>
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+</html>

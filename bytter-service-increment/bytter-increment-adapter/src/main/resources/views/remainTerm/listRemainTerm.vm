@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+                    ##期限名称
+                    <td class="textRight">#springMessage("table.remainTerm.termName")</td>
+                    <td width="30%">
+                   		 <div class=layui-inline>
+                             <input type="text" class="layui-input" name="likes_termName" autocomplete="off"/>
+                         </div>
+                    </td>
+                    ##有效标志
+                    <td class="textRight">#springMessage("table.remainTerm.validSign")</td>
+                    <td width="30%">
+                        <div class="layui-inline">
+                            <div class="bt-biz-dict" data-type="select"
+                                 data-biz-name="eqs_isValid" data-name="eqs_isValid" data-group="sf_yn"></div>
+                        </div>
+                    </td>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage("table.remainTerm.termName")</th>
+        <th>#springMessage("table.remainTerm.formula")</th>
+        <th>#springMessage("table.remainTerm.validSign")</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','btdate','dateType','dicts'], function(){
+	var dateType = bt.dateType.init();
+    $ = bt.jquery,form = bt.form();
+    dicts = bt.dicts.init();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        
+       // checkbox:true,order: [1,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/report/remainTerm/dataTables"
+        },
+        buttons: [
+            {
+                text: bt.lang('common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            },{
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ],
+        fixedColumns: {
+            rightColumns:1//代表冻结右边一列
+        }
+        ,columns: [
+            {data:"termName",bSortable:true,className: 'center'},
+            {data:"formulas",bSortable:true,className: 'center'},
+            {data:"isValid",bSortable:true,className: 'center',
+                render:function (data,type,full,meta) {
+                    bt.dict("guaGuarantee.isValid",full.isValid);
+                    return bt.dict("sf_yn",full.isValid)
+                }
+            },
+            {data:null,bSortable:false,className:'center',
+                render: function (data, type, full, meta) {
+                    var html = '';
+                    html += '<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a> ';
+                    if(full.isBankBaseRate != 1){
+                	    html +='<a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                    }
+                    return html;
+                }
+            }
+        ]
+    });
+});
+
+/**
+ * 新增
+ */
+function add(){
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/report/remainTerm/add");
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/report/remainTerm/add",
+        end:function(){
+            datatable && datatable.draw();
+        }
+    });
+}
+
+/**
+ * 编辑
+ * @param el
+ */
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/report/remainTerm/edit?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/report/remainTerm/edit?id=" + data.id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+
+/**
+ * 删除
+ * @param el
+ */
+function deleteColumn(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+        $.post(basePath + "/report/remainTerm/delete/" + data.id, function(result){
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        	bt.navtab.refreshCurrentTable();
+        },'JSON');
+    });
+}
+</script>
+</html>

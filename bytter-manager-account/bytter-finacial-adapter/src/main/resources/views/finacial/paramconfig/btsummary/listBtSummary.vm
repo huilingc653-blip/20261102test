@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				<!-- <td class="textRight">#springMessage("finacial.paramconfig.btsummary.summaryCode")</td>
+				<td width="20%"> 
+					<input type="text" name="eqs_summaryCode"
+							autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.btsummary.summaryCode')">
+				</td> -->
+				<td class="textRight">#springMessage("finacial.paramconfig.btsummary.summaryContent")</td>
+				<td width="20%"> 
+					<input type="text" name="likes_summaryContent"
+							autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.btsummary.summaryContent')">
+				</td>
+				<td class="textRight">#springMessage("finacial.paramconfig.btsummary.usingtype")</td>
+				<td width="20%">   
+					<input type="text" name="likes_usingtype"
+							autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.btsummary.usingtype')">
+				</td>
+				##<td class="textRight">#springMessage("finacial.paramconfig.btsummary.validSign")</td>
+				##<td width="20%">   
+					##<div class="bt-biz-dict" data-type="select" data-group="sf_yn"  data-name="eqs_validSign" data-biz-name="validSign" >
+            	##</td>
+            </tr>
+       		<tr>
+				<td colspan="8" style="text-align: center;">
+            		<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+           	 		<button type="reset"  class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+       			</td>
+       		</tr>
+   		 </tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+<!--  		<th>#springMessage('finacial.paramconfig.btsummary.summaryCode')</th> -->
+        <th>#springMessage('finacial.paramconfig.btsummary.summaryContent')</th>
+        <th>#springMessage('finacial.paramconfig.btsummary.rmk')</th>
+        <th>#springMessage('table.fbsItem.validSign')</th>
+        <th>#springMessage('finacial.paramconfig.btsummary.usingtype')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','datatable','corp','dicts'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.corp.init();
+        bt.dicts.init();
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:true,order: [1,'desc'],
+            ajax: {
+            	 'url': basePath+"/finacial/paramconfig/btsummary/datatable"
+            },searchForm:{
+                formFilter:"search",
+                formElem:"#searchForm"
+            },
+            buttons: [
+                      {
+                          text: '#springMessage('common.button.add')',
+                          action: function ( e, dt, node, config ) {
+                              add();
+                          }
+                      },{
+                      	text: bt.lang("common.button.batchDelete"),
+                          action: function ( e, dt, node, config ) {
+                        	  bt.loading.show();//显示加载中
+                              var data = dt.rows('.selected').data()
+                              var len = data.length;
+                              if(len<1){
+                              	layer.msg(bt.lang('common.message.confirm.selectData'));
+                              	return;
+                              }
+                              var ids="";
+                           	var rowData = data.splice(0,len);
+                           	for(var i=0;i<rowData.length;i++){
+                           		if (ids == "") {
+              						ids += rowData[i].id;
+              					} else {
+              						ids += "," + rowData[i].id;
+              					}
+                           	}
+                           	parent.layer.confirm(bt.lang('finacial.paramConfig.fcSubject.msg.del'),function(){
+                           	 $.post(basePath + "/finacial/paramconfig/btsummary/batchDelete/",{ids:ids}, function(result){
+									bt.loading.hide(); //关闭加载中
+									location.reload();
+									parent.layer.alert(result.msg, {icon: result.success?1:2});
+                               },'JSON');
+                           	});
+                          }
+                      }
+                  ]
+            ,columns: [
+           		//{data:"summaryCode",bSortable:true},
+                {data:"summaryContent",bSortable:true},
+                {data:"rmk",bSortable:true},
+                {data:"validSign",bSortable:true,
+                	render: function ( data, type, full, meta ) {
+            		var validSign = bt.dict("sf_yn",full.validSign);
+                    return validSign;
+                }},
+                {data:"usingtype",bSortable:true},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                	var html ="";
+                	if(full.validSign==1){
+                		html += '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>\
+                        <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>\
+                        <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+                	}else{
+                		var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>\
+                        <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>';
+                	}
+                    return html;
+                }}
+            ]
+        });
+    });
+    function add(){
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/btsummary/add",
+            end:function(){
+            	bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/btsummary/view/" + data.id
+        });
+    }
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/btsummary/update?id=" + data.id,
+            end:function(){
+            	bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+    function del(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            $.post(basePath + "/finacial/paramconfig/btsummary/delete/" + data.id, function(result){
+            	bt.navtab.refreshCurrentTable();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+
+</script>

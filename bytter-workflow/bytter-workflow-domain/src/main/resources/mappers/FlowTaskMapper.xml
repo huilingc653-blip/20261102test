@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bytter.workflow.domain.mapper.FlowTaskMapper">
+
+    <resultMap id="countMap" type="com.bytter.workflow.domain.vo.TodoNumberVo">
+        <result property="cateKey" column="definitionKey" jdbcType="VARCHAR" />
+        <result property="num" column="num" />
+    </resultMap>
+
+    <select id="countTotal" parameterType="string"  resultType="long">
+        select count(pd.KEY_ )
+        <include refid="querySql"/>
+    </select>
+
+    <select id="countTodoNumberList" parameterType="string" resultMap="countMap">
+        select
+        pd.KEY_ as definitionKey,
+        count(pd.KEY_) as num
+        <include refid="querySql"/>
+        GROUP BY pd.KEY_
+    </select>
+
+
+    <resultMap id="businessMap" type="com.bytter.workflow.dto.BusinessTaskDTO">
+        <result property="taskId" column="taskId" jdbcType="VARCHAR" />
+        <result property="taskName" column="modelName" jdbcType="VARCHAR" />
+        <result property="category" column="category" jdbcType="VARCHAR" />
+        <result property="processInstanceId" column="processInstanceId" jdbcType="VARCHAR" />
+        <result property="businessKey" column="businessKey" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+    <select id="listBusinessTask" resultMap="businessMap">
+        select
+        pd.KEY_ as category,
+        exe.BUSINESS_KEY_ as businessKey,
+        task.ID_ as taskId,
+        task.NAME_ as taskName,
+        task.PROC_INST_ID_ as processInstanceId
+        <include refid="querySql"/>
+    </select>
+
+    <select id="listTrackTask" resultMap="businessMap">
+        select
+        inst.BUSINESS_KEY_ as businessKey,
+        max(task.ID_)  as taskId,
+        inst.PROC_DEF_KEY_ as category,
+        max(task.NAME_) as taskName,
+        task.PROC_INST_ID_ as processInstanceId
+        FROM act_hi_taskinst task join act_hi_procinst inst on task.PROC_INST_ID_=inst.ID_
+        join act_ru_identitylink link on task.ID_ = link.TASK_ID_
+        <where>
+            inst.END_TIME_ is null
+            <if test="userId != null">
+                AND (inst.START_USER_ID_=#{userId} or task.ASSIGNEE_=#{userId})
+            </if>
+            <if test="category != null">
+                AND inst.PROC_DEF_KEY_ = #{category}
+            </if>
+        </where>
+        group by inst.BUSINESS_KEY_,inst.PROC_DEF_KEY_,task.PROC_INST_ID_;
+    </select>
+
+    <select id="countTrackTotal" parameterType="string" resultType="long">
+        select count(distinct inst.BUSINESS_KEY_)
+        <include refid="trackSql"/>
+    </select>
+
+    <select id="countTrackNumberGpCateKey" parameterType="string" resultMap="countMap">
+        select
+        inst.PROC_DEF_KEY_ as definitionKey,
+        count(distinct inst.BUSINESS_KEY_) as num
+        <include refid="trackSql"/>
+        GROUP BY inst.PROC_DEF_KEY_
+    </select>
+
+    <select id="countFinishGpCateKey" resultType="com.bytter.workflow.domain.vo.TodoNumberVo">
+        SELECT pro.PROC_DEF_KEY_ as cateKey,count(distinct pro.BUSINESS_KEY_) as num
+        FROM ACT_HI_TASKINST task
+        inner join act_hi_procinst pro on pro.PROC_INST_ID_ =task.PROC_INST_ID_
+        WHERE task.DELETE_REASON_ = 'completed'  AND task.END_TIME_ is not null
+        AND task.ASSIGNEE_ = #{assignee}
+        <if test="startTime!=null">
+            AND task.START_TIME_>= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND task.END_TIME_<![CDATA[<=]]> #{endTime}
+        </if>
+        GROUP BY pro.PROC_DEF_KEY_
+    </select>
+
+    <!--
+      「已审批」业务ID明细，与 countFinishGpCateKey 同口径（同一个人、同一个流程、同一个时间窗），
+      两处必须保持一致，列表条数才能和角标对得上。
+      这里按 ACT_HI_PROCINST 自身的 PROC_DEF_KEY_ 过滤：流程定义重新部署或删除后，历史数据上的
+      PROC_DEF_ID_ 在 ACT_RE_PROCDEF 里已无对应记录，Camunda 的 processDefinitionKey()
+      （内部 join ACT_RE_PROCDEF）会把老单据全部漏掉。
+    -->
+    <select id="listFinishedBusinessKeys" resultType="java.lang.String">
+        SELECT DISTINCT pro.BUSINESS_KEY_
+        FROM ACT_HI_TASKINST task
+        INNER JOIN ACT_HI_PROCINST pro ON pro.PROC_INST_ID_ = task.PROC_INST_ID_
+        WHERE task.DELETE_REASON_ = 'completed' AND task.END_TIME_ is not null
+        AND task.ASSIGNEE_ = #{assignee}
+        AND pro.PROC_DEF_KEY_ = #{category}
+        <if test="startTime!=null">
+            AND task.START_TIME_ >= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND task.END_TIME_ <![CDATA[<=]]> #{endTime}
+        </if>
+    </select>
+
+    <sql id="querySql">
+        from ACT_RU_TASK task INNER JOIN ACT_RE_PROCDEF pd ON task.PROC_DEF_ID_ = pd.ID_
+        INNER JOIN ACT_RU_EXECUTION exe ON  exe.PROC_DEF_ID_ = pd.ID_
+        AND exe.PARENT_ID_ is null
+        AND exe.ID_=task.PROC_INST_ID_
+        AND exe.PROC_INST_ID_=task.PROC_INST_ID_
+        <where>
+            task.SUSPENSION_STATE_ = 1
+            <if test="assignee != null">
+                AND task.ASSIGNEE_ = #{assignee}
+            </if>
+            <if test="category != null">
+                AND pd.KEY_ = #{category}
+            </if>
+        </where>
+    </sql>
+	<!-- 流程跟踪不行就替换陈这样
+	select
+		DEF.KEY_ as definitionKey,
+		count(DEF.KEY_) as num
+		 FROM
+		ACT_HI_PROCINST RES left outer join ACT_RE_PROCDEF DEF ON RES.PROC_DEF_ID_ = DEF.ID_
+		where
+		    RES.END_TIME_ IS NULL
+		    AND (
+		    (
+		    EXISTS ( SELECT LINK.USER_ID_ FROM  ACT_HI_IDENTITYLINK LINK WHERE USER_ID_ = 'b93e65d27bf44132a26e39c70c98d281' AND LINK.ROOT_PROC_INST_ID_ = RES.ID_ ) )
+		    		OR RES.START_USER_ID_ = 'b93e65d27bf44132a26e39c70c98d281'
+		    )
+		GROUP BY DEF.KEY_
+	 -->
+    <sql id="trackSql">
+        FROM act_hi_taskinst task join act_hi_procinst inst on task.PROC_INST_ID_=inst.ID_
+        join act_ru_identitylink link on task.ID_ = link.TASK_ID_
+        <where>
+            inst.END_TIME_ is null
+            <if test="userId != null">
+                AND (inst.START_USER_ID_=#{userId} or task.ASSIGNEE_=#{userId})
+            </if>
+            <if test="category != null">
+                AND inst.PROC_DEF_KEY_ = #{category}
+            </if>
+        </where>
+    </sql>
+</mapper>

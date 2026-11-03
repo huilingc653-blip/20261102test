@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" id="myform">
+    <input type="hidden" name="sourceUserId" id="sourceUserId" value="$!{id}">
+    <table class="layui-table">
+        <tr>
+##            权限类别
+            <td class="textRight" style="width: 20%">#springMessage('table.user.permissionsType')</td>
+            <td style="width: 80%">
+                <div class="bt-biz-dict" data-type="checkbox" data-group="table.user.permissionsType"
+                     data-name="permissionsType" data-biz-name="permissionsType">
+                </div>
+            </td>
+        </tr>
+        <tr>
+##            复制方式
+            <td class="textRight">#springMessage('table.user.copyType')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="radio" name="copyType" value="1" title="#springMessage('common.button.add')">
+                    <input type="radio" name="copyType" value="2" title="#springMessage('common.button.replace')">
+                    <label style="display: block;color: red;padding-top: 3px;font-size: 12px;">#springMessage('table.copyPermissions.tips1')</label>
+#*                    <div class="bt-biz-dict" data-type="radio" data-group="table.user.copyType"
+                         data-defaultvalue="1" data-name="copyType" data-biz-name="copyType">
+                    </div>*#
+                </div>
+            </td>
+        </tr>
+        <tr>
+##            选择用户
+            <td class="textRight">#springMessage('table.copyPermissions.selectUsers')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input class="layui-input" style="display: inline" name="userNames" id="userNames" readonly="readonly"><button class="layui-btn" lay-submit="" lay-filter="choseUsers" type="button" style="margin-left: 3px">#springMessage('common.placeholder.select')</button>
+                    <input type="hidden" name="userIds" id="userIds">
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div style="width: 100%;text-align: center">
+        <button class="layui-btn" lay-submit="" lay-filter="submit" type="button">#springMessage('common.button.confirm')</button>
+        <button class="layui-btn" lay-submit="" lay-filter="cancel" type="button">#springMessage('common.button.cancel')</button>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery','dicts','form','element'], function(){
+        $ = bt.jquery;
+        form = bt.form();
+        dicts = bt.dicts.init();
+        element = layui.element;
+
+        form.on('submit(submit)', function(data){
+            if (checkFormData()) {
+                return false;
+            }
+            bt.loading.show();
+            var url = basePath + "/sys/user/submitCoypPermissions"
+            $.ajax({
+                url: url,
+                data: $("#myform").serialize(),
+                dataType: "json",
+                type: "POST",
+                success: function (data) {
+                    parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                    if (data.success) {
+                        if (!bt.navtab) {
+                            bt.navtab.refreshParentTable();
+                        } else {
+                            bt.navtab.closeCurrent();
+                        }
+                    } else {
+                        bt.loading.hide();
+                    }
+                }
+            })
+            return false;
+        });
+
+        form.on('submit(choseUsers)', function(data){
+            choseUsers();
+            return false;
+        });
+
+        form.on('submit(cancel)', function(data){
+            if (!bt.navtab) {
+                bt.navtab.refreshParentTable();
+            } else {
+                bt.navtab.closeCurrent();
+            }
+            return false;
+        });
+
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    /**
+     * 选择用户弹出框
+     */
+    function choseUsers(){
+        var sourceUserId = $("#sourceUserId").val();
+        var windowHeight = $(document).height();
+        //新增弹框高度自适功能，解决小屏时关闭按钮不可见的问题
+        var height = 0;
+        if (windowHeight > 750){
+            height = '650px'
+        } else {
+            height = (windowHeight - 50) +'px';
+        }
+
+        layer.open({
+            type: 2,
+            area: ['850px', height],
+            content: basePath + "/sys/user/selectUsers?sourceUser=" + sourceUserId + "&selectedUserIds=" + $("#userIds").val()
+        });
+        /*$.get(basePath + "/sys/user/checkUserHasRoles", {userId: userId}, function (result) {
+            if (result.success) {
+                layer.open({
+                    type: 2,
+                    area: ['850px', '650px'],
+                    content: basePath + "/sys/user/copyRoles?sourceUser=" + userId
+                });
+            } else {
+                layer.alert(result.msg,{icon:2});
+            }
+        }, 'JSON');*/
+    }
+
+    /**
+     * 回调函数
+     * @param users
+     */
+    function setUsers(users){
+        var userNames = null;
+        var userIds = null;
+        $.each(users, function (index,item) {
+            if (userNames == null) {
+                userNames = item.loginName;
+                userIds = item.id;
+            } else {
+                userNames += "," + item.loginName;
+                userIds += "," + item.id;
+            }
+        });
+        $("#userNames").val(userNames);
+        $("#userIds").val(userIds);
+    }
+
+    /**
+     * 提交校验
+     * @returns {boolean}
+     */
+    function checkFormData() {
+        var permissionsType = dicts.get("permissionsType").val();
+        var userIds = $("#userIds").val();
+        var copyType = $("input[name='copyType']:checked").val();
+        if (permissionsType.length <= 0 || permissionsType == null || permissionsType == undefined) {
+            parent.layer?parent.layer.alert(bt.lang("table.copyPermissions.selectPermissionsType"), {icon: 2}):layer.alert(bt.lang("international.credit.alert.info5"), {icon: 2});
+            return true;
+        }
+        if (isEmpty(copyType)) {
+            parent.layer?parent.layer.alert(bt.lang("table.copyPermissions.selectCopyType"), {icon: 2}):layer.alert(bt.lang("international.credit.alert.info5"), {icon: 2});
+            return true;
+        }
+        if (isEmpty(userIds)) {
+            parent.layer?parent.layer.alert(bt.lang("sys.user.please.selectUser"), {icon: 2}):layer.alert(bt.lang("international.credit.alert.info5"), {icon: 2});
+            return true;
+        }
+        return false;
+    }
+
+    function isEmpty(value) {
+        if (value == null || value == "" || value == undefined || value == " ") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<div id="print-list">
+    <div class="print-list">
+	##凭证头部
+	<div class="print-header">
+		<div style="text-align:center;">
+			<div class="print-header-name">$!{listInfo.get(1).getNetName()}</div>
+			<div class="print-header-title">#springMessage('summons.billhead')<span></span><span></span>（#springMessage('summons.f')）</div>##付款通知单(付)
+		</div>
+	</div>
+	##凭证内容
+	<div class="print-body">
+		<table style="width: 100%; " class="print-body-header">
+			<tr>
+				##记账日期
+				<td width="50%">#springMessage('table.nisBillhead.tallyDate')：$!date.format('yyyy-MM-dd',$!{listInfo.get(0).getTallyDate()})</td>
+				##附件张数
+				<td width="50%">#springMessage('table.fcAccbook.affixAmount')：$!{listInfo.get(0).getAffixAmount()} &nbsp;&nbsp;#springMessage('summons.paper')</td>
+			</tr>
+			<tr>
+				##流水号
+				<td>#springMessage('table.fcAccbook.orderNo')：$!{listInfo.get(0).getOrderNo()}</td>
+				##凭证号
+				<td>#springMessage('fcAccSummons.voucherNo')：$!{listInfo.get(0).getVoucherNo()}</td>
+			</tr>
+		</table>
+		<table id="dataTable" style="width: 100%; " class="layui-table" >
+			<tr>
+				<td rowspan="3" width="5%" align="center">#springMessage('summons.s')<br>#springMessage('summons.k')<br>#springMessage('summons.d')<br>#springMessage('summons.w')</td>##收款单位
+				<td width="10%" align="center">#springMessage('summons.fullName')</td>##全称
+				<td colspan="2" width="35%" class="small">
+					#if($!{isTra})
+					$!{listInfo.get(1).getAccName()}
+				#else
+						$!{listInfo.get(1).getExternalName()}
+					#end
+				</td>
+				<td rowspan="3" width="5%" align="center">#springMessage('summons.f')<br>#springMessage('summons.k')<br>#springMessage('summons.d')<br>#springMessage('summons.w')</td>##付款单位
+				<td width="10%" align="center">#springMessage('summons.fullName')</td>##全称
+				<td colspan="2" width="35%" class="small"><!-- 借方户名 -->
+					#if($!{isAllocation})
+						$!{listInfo.get(1).getAccName()}
+					#else
+						$!{listInfo.get(0).getAccName()}
+					#end
+				</td>
+			</tr>
+			<tr>##账号
+				<td align="center">#springMessage('table.fcAcc.account')</td>
+				<td colspan="2" class="small">
+					#if($!{isTra})
+					$!{listInfo.get(1).getAccount()}
+				#else
+						$!{listInfo.get(1).getExternalAcc()}
+					#end
+				</td>
+				<td align="center">#springMessage('table.fcAcc.account')</td>
+				<td colspan="2" class="small">
+					#if($!{isAllocation})
+						$!{listInfo.get(1).getAccount()}
+					#else
+						$!{listInfo.get(0).getAccount()}
+					#end
+				</td>
+			</tr>
+			<tr>##开户行
+				<td align="center">#springMessage('table.bisAccBal.bankName')</td>
+				<td colspan="2" class="small">
+					#if($!{isTra})
+						$!{listInfo.get(1).getNetName()}
+					#else
+						$!{listInfo.get(1).getBank()}
+					#end
+				</td>
+				<td align="center">#springMessage('table.bisAccBal.bankName')</td>
+				<td colspan="2" class="small">$!{listInfo.get(1).getNetName()}</td>
+			</tr>
+			<tr>##币别
+				<td align="center" colspan="2">#springMessage('table.bisAccBal.curId')</td>
+				<td colspan="2" class="small">$!{listInfo.get(0).getCurName()}&nbsp;</td>
+				##利率
+				<td align="center" colspan="2">#springMessage('table.eTransBill.rate')（%）</td>
+				<td colspan="2" class="small"></td>
+			</tr>
+			<tr>##金额(大写)
+				<td colspan="2" align="center">#springMessage('table.cgsBill.money.upper')</td>
+				<td colspan="6" class="small">
+					<span id="upper"></span>&nbsp;&nbsp;
+				</td>
+			</tr>
+			<tr>##金额(小写)
+				<td colspan="2" align="center">#springMessage('table.cgsBill.money.lower')</td>
+				<td colspan="6" class="small">
+					<span id="lower" >￥$!number.formatNumeric($!{listInfo.get(0).getDebitMoney()})</span>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center">#springMessage('summons.voucherName')</td>##原凭证名称
+				<td width="18%">$!{listInfo.get(0).getVoucherName()}</td>
+				<td width="17%" align="center">#springMessage('summons.origVoucherNo')</td>##原凭证号码
+				<td colspan="2">$!{listInfo.get(0).getOrigVoucherNo()}</td>
+				<td width="18%" align="center">#springMessage('summons.voucherMoney')</td>##原凭证金额
+				<td width="17%">￥$!number.formatNumeric($!{listInfo.get(0).getDebitMoney()})</td>
+			</tr>
+			<tr>##备注
+				<td colspan="2" align="center">#springMessage('table.btBankAcc.rmk')</td>
+				<td colspan="2" class="small">
+					#springMessage('summons.payBank')：$!{listInfo.get(1).getBankName()}<br>
+					$!{listInfo.get(0).getRmk()}
+				</td>
+				<td rowspan="2" colspan="4" class="normal">
+					#springMessage('table.fcVoucherEntryDefine.debit'):&nbsp;&nbsp;$!{listInfo.get(0).getSubjectName()}_$!{listInfo.get(0).getAccount()}<br>##借方
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#springMessage('table.fcVoucherEntryDefine.credit'):&nbsp;&nbsp;$!{listInfo.get(1).getSubjectName()}_$!{listInfo.get(1).getAccount()}<br>##贷方
+					#springMessage('table.cgsBill.tallier'):&nbsp;&nbsp;$!{listInfo.get(0).getOpName()}##记账员名称
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					#springMessage('summons.checkName'):&nbsp;&nbsp;$!{listInfo.get(0).getCheckName()}##复核
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center">#springMessage('table.nisBillhead.purpose')</td>##用途
+				<td colspan="2" class="small">$!{listInfo.get(0).getSummaryContent()}</td>##转账原因
+			</tr>
+			<tr>
+				<td colspan="2" align="center">#springMessage('table.fcFreeze.operator')</td>##经办人
+				<td class="small">
+					$!{listInfo.get(0).getCreateName()}
+				</td>
+				<td align="center">#springMessage('bpm.model.assign')</td>##审批人
+				<td colspan="2" class="small">
+					$!{listInfo.get(0).getApproveName()}
+				</td>
+				#if($!{listInfo.get(0).getManageName()} != "" && $!{listInfo.get(0).getManageName()} != "null")
+					<td align="center">#springMessage('summons.director')</td>##主管
+					<td class="small">$!{listInfo.get(0).getManageName()}</td>
+				#else
+					<td align="center"></td>
+					<td class="small"></td>
+				#end
+			</tr>
+		</table>
+	</div>
+	##凭证底部
+	<div class="print-footer">
+		<table style="width: 100%; ">
+			<tr>
+				<td>#springMessage('fcAccDetail.interestStartDate')：$!date.format('yyyy-MM-dd',$!{listInfo.get(0).getInterestStartDate()})</td>
+			</tr>
+		</table>
+	</div>
+</div>
+</div>
+<div class="layui-form-item layui-form-submit" id="buttonDiv">
+	<div class="layui-input-block">
+		#if($!{viewSign} == "1")
+            ## voucher打印类型为凭证时,printType中会调用凭证打印模式
+			<button type="button" class="layui-btn bt-biz-printType" data-printareaid="print-list" data-printtype="voucher">#springMessage('common.button.print')</button>
+		#end
+		<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+	</div>
+</div>
+	#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+	bt.use(['moneyType','printType'], function() {
+		$ = bt.jquery;
+		bt.printType.init();
+		var moneyType = bt.moneyType.init();
+		var num = $("#lower").text()
+		var toUp = moneyType.getFun().toChinese(num);
+		$("#upper").text(toUp);
+	});
+	//返回
+	var closeForms = function () {
+		parent.layer ? parent.layer.closeAll() : layer.closeAll();
+	};
+</script>

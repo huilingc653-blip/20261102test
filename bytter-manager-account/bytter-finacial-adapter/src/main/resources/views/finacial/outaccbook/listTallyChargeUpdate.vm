@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+	<table class="layui-table">
+		<tbody>
+		   	<tr>
+		   		<!-- 网点 -->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.netId')</td>
+		   		<td width="25%">
+		   			<div class="bt-biz-corp" data-name="eqs_netId" data-biz-type="net" data-type="selectTree" data-scope="net" data-resource="finacial:outaccbook:TallyChargeUpdate:query"></div>
+		   		</td>
+		   		<!-- 账号 -->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.acc')</td>
+		   		<td width="25%">
+		   			<input name="likes_acc" class="layui-input" placeholder="#springMessage('table.fcOutAccbook.acc')">
+		   		</td>
+		   		<!-- 流水号 -->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.orderNo')</td>
+		   		<td width="25%">
+					<input name="likes_orderNo" class="layui-input" placeholder="#springMessage('table.fcOutAccbook.orderNo')">
+		   		</td>
+		   	</tr>
+		   	<tr>
+		   		<!-- 记账日期区间 -->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.tallyDate')</td>
+		   		<td width="25%">
+		   			 <div class="date-interval"></div>
+		   		</td>
+		   		<!-- 方向 -->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.direction')</td>
+		   		<td width="25%">
+			   		<div class="layui-input-inline"> 
+			   			#set ($directionMap = {"field":"eqs_direction","type":"select","typeGroupCode":"Tally.Direction","defaultVal":"$!{fcSubjectPage.balanceWay}"})
+			            #set ($formDirection = $dictSelect.instance($directionMap))
+			         	${formDirection.html()}
+		         	</div>
+		   		</td>
+		   		<!-- 金额区间 -->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.money')</td>
+		   		<td width="25%" nowrap="nowrap">
+		   			<div class="layui-inline">
+		   				<input class="layui-input bt-biz-moneyType" data-name="eqs_startMoney" data-moneyendid="endMoney" data-decimal="2" />
+		   			</div>
+		   			<div class="layui-inline">
+		   				 ~ 
+		   			</div>
+		   			<div class="layui-inline">
+		   				<input id="endMoney" class="layui-input bt-biz-moneyType" data-name="eqs_endMoney"  data-decimal="2"/>
+		   			</div>
+		   		</td>
+		   	</tr>
+		   	<tr>
+		   		<!-- 凭证状态-->
+		   		<td class="textRight">#springMessage('table.fcOutAccbook.status')</td>
+		   		<td width="25%">
+			   		<div class="layui-input-inline"> 
+		         		<div class="bt-biz-dict" data-type="select" data-name="eqi_status" data-biz-name="eqi_status" 
+                                data-group="Outer.Status" data-displayData="30,31"></div>
+		         	</div>
+		   		</td>
+		   		<td colspan="4"></td>
+		   	</tr>
+		   	<tr>
+		   		<td colspan="6" style="text-align: center;">
+		   			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+		           	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+		   		</td>
+		   	</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcOutAccbook.tallyDate')</th>
+        <th>#springMessage('table.fcOutAccbook.orderNo')</th>
+        <th>#springMessage('table.fcOutAccbook.acc')</th>
+        <th>#springMessage('table.fcOutAccbook.accName')</th>
+        <th>#springMessage('table.fcOutAccbook.income')</th>
+        <th>#springMessage('table.fcOutAccbook.expend')</th>
+        <th>#springMessage('table.fcOutAccbook.unit')</th>
+        <th>#springMessage('table.fcOutAccbook.summaryContent')</th>
+        <th>#springMessage('table.fcOutAccbook.subject')</th>
+        <th>#springMessage('table.fcOutAccbook.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<!-- <script src="${basePath}/static/modules/finacial/outaccbook/fcOutAccbook.list.js?_btv=${resourceVersion}"></script> -->
+<script type="text/javascript">
+bt.use(['form','datatable','corp','btdate','moneyType','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.moneyType.init();
+    bt.corp.init();
+    bt.dicts.init();
+    bt.btdate.init({
+        elem:".date-interval",
+        startname:"ged_tallyDate",
+        endname:"led_tallyDate"
+    });
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:false,order: [1,'desc'],
+        ajax: {
+            'url': basePath+"/finacial/outaccbook/tallyCharge/dataTableTallyChargeUpdate"
+        },
+        searchForm:{
+            formElem:"#searchForm",
+            formFilter:"search"
+        },
+        buttons: [
+            {
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ]
+        ,columns: [
+            {data:"tallyDate",bSortable:true,className:'center'},
+            {data:"orderNo",bSortable:true,className:'center'},
+            {data:"acc",bSortable:true,className:'center'},
+            {data:"accName",bSortable:false,className:'center'},
+            {data:"debitMoney",bSortable:false,className:'textRight',render: function (data, type, full, meta) {
+                return bt.money.format(data);
+            }},
+            {data:"creditMoney",bSortable:false,className:'textRight',render: function (data, type, full, meta) {
+                return bt.money.format(data);
+            }},
+            {data:"unit",bSortable:false,className:'center',render: function (data, type, full, meta) {
+                return bt.dict("fcSubject.measureUnit", data);
+            }},
+            {data:"summaryContent",bSortable:false,className:'center'},
+            {data:"subjectName",bSortable:false,className:'center'},
+            {data:"status",bSortable:true,className:'center',render: function (data, type, full, meta) {
+                return bt.dict("Outer.Status", data);
+            }},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("Finacial.accbook.rush.button.edit")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+                return html;
+            }}
+        ]
+    });
+});
+
+//删除
+function del(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+   	layer.confirm("#springMessage('common.message.confirm.batchDelete')",function(){
+        $.post(basePath + "/finacial/outaccbook/tallyCharge/tallyChargeDelete",{id:data.id}, function(result){
+            datatable && datatable.draw();
+            layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+
+
+
+function update(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/outaccbook/tallyCharge/toTallyCharge/" + data.id + "/null",
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+</script>
+</html>

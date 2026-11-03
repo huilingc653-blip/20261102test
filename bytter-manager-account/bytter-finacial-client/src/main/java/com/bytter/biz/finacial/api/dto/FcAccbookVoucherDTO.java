@@ -1,0 +1,176 @@
+package com.bytter.biz.finacial.api.dto;
+import com.bytter.biz.finacial.api.enums.accbook.OperateType;
+import com.bytter.biz.finacial.api.enums.accbook.ProcessType;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+/**
+ * 凭证传输对象，用于其他业务调用记账接口中数据存储
+ * @author liyh
+ *
+ */
+public class FcAccbookVoucherDTO implements Serializable {
+
+	/** 账务凭证主档表记录 **/
+	private FcAccbookDTO accbook;
+
+	/**
+	 * 账务凭证分录明细记录
+	 */
+	private List<FcAccbookDtlDTO> bookDtls;
+
+	/**
+	 * 账务凭证扩展属性
+	 */
+	private FcAccbookExtDTO bookExt;
+
+
+	/**
+	 * 操作类型
+	 */
+	protected OperateType opType;
+
+	/**
+	 * 是否冲账凭证
+	 */
+	private boolean isRush = false;
+
+	/**
+	 * 是否冲账录入凭证
+	 */
+	private boolean isNewRush = false;
+
+	/**
+	 * 记账网点
+	 */
+	private String netCode;
+
+	/** 借方汇总 */
+	private BigDecimal debitSum;
+	/** 贷方汇总 */
+	private BigDecimal creditSum;
+	/**联行号*/
+	private String bankCode;
+
+	/**原凭证流水*/
+	private String oriOrderNo;
+	/**合并标识*/
+	private String mergeFlag;
+
+	public String getMergeFlag() {
+		return mergeFlag;
+	}
+
+	public void setMergeFlag(String mergeFlag) {
+		this.mergeFlag = mergeFlag;
+	}
+
+	public FcAccbookDTO getAccbook() {
+		if (null == accbook) {
+			accbook = new FcAccbookDTO();
+		}
+		return accbook;
+	}
+
+	public void setAccbook(FcAccbookDTO accbook) {
+		this.accbook = accbook;
+	}
+
+	public List<FcAccbookDtlDTO> getBookDtls() {
+		return bookDtls;
+	}
+
+	public void setBookDtls(List<FcAccbookDtlDTO> bookDtls) {
+		this.bookDtls = bookDtls;
+	}
+
+	public FcAccbookExtDTO getBookExt() {
+		return bookExt;
+	}
+
+	public void setBookExt(FcAccbookExtDTO bookExt) {
+		this.bookExt = bookExt;
+	}
+
+	public OperateType getOpType() {
+		return opType;
+	}
+
+	public void setOpType(OperateType opType) {
+		this.opType = opType;
+	}
+
+	public boolean isRush() {
+		return isRush;
+	}
+
+	public void setRush(boolean isRush) {
+		this.isRush = isRush;
+	}
+
+	public boolean isNewRush() {
+		return isNewRush;
+	}
+
+	public void setNewRush(boolean isNewRush) {
+		this.isNewRush = isNewRush;
+	}
+
+	public String getNetCode() {
+		return netCode;
+	}
+
+	public void setNetCode(String netCode) {
+		this.netCode = netCode;
+	}
+
+	public BigDecimal getDebitSum() {
+		return debitSum;
+	}
+
+	public void setDebitSum(BigDecimal debitSum) {
+		this.debitSum = debitSum;
+	}
+
+	public BigDecimal getCreditSum() {
+		return creditSum;
+	}
+
+	public void setCreditSum(BigDecimal creditSum) {
+		this.creditSum = creditSum;
+	}
+
+	public String getBankCode() {
+		return bankCode;
+	}
+
+	public void setBankCode(String bankCode) {
+		this.bankCode = bankCode;
+	}
+
+	public String getOriOrderNo() {
+		return oriOrderNo;
+	}
+
+	public void setOriOrderNo(String oriOrderNo) {
+		this.oriOrderNo = oriOrderNo;
+	}
+
+	@Override
+	public String toString() {
+		return "FcAccbookVoucherVO{" +
+				"accbook=" + accbook +
+				", bookDtls=" + bookDtls +
+				", bookExt=" + bookExt +
+				", opType=" + opType +
+				", isRush=" + isRush +
+				", isNewRush=" + isNewRush +
+				", netCode='" + netCode + '\'' +
+				", debitSum=" + debitSum +
+				", creditSum=" + creditSum +
+				", bankCode='" + bankCode + '\'' +
+				", oriOrderNo='" + oriOrderNo + '\'' +
+				'}';
+	}
+}

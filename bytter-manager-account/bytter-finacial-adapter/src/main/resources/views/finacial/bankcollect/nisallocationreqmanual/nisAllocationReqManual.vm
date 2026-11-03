@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+#parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="opType" name="opType" value="$!{opType}">
+	<input type="hidden" id="menuType" name="menuType" value="$!{menuType}">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+	            <td class="textRight">#springMessage('table.nisAllocationReq.payerAcc')</td>
+	            <td>
+	                <div class="layui-input-inline">
+	                    <input type="text" id="likes_payerAcc" name="likes_payerAcc" data-name="likes_payerAcc"
+	                           data-resource="netbank:allocation:typePos:query"  class="layui-input bt-biz-accountTable acc" data-callback="accountPayerCallBack"/>
+	                </div>
+	            </td>
+	            <td class="textRight">#springMessage('table.nisAllocationReq.payeeAcc')</td>
+	            <td>
+	                <div class="layui-input-inline">
+	                    <input type="text" id="likes_payeeAcc" name="likes_payeeAcc" data-name="likes_payeeAcc" accountType="2,3"
+	                           data-resource="netbank:allocation:typePos:query"  class="layui-input bt-biz-accountTable acc" data-callback="accountPayeeCallBack"/>
+	                </div>
+	            </td>
+	           
+	            
+	        </tr>
+	        <tr>
+        		<td class="textRight">#springMessage('table.btNetChalk.curId')</td>
+				<td>
+		         	<div class="layui-input-inline">
+		         		<div class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json" 
+		         				data-valuefield="id" data-textfield="curName" data-name="eqs_curId" data-search="true"></div>
+                   	</div>
+				</td>	
+				 <td class="textRight">#springMessage('table.nisAllocationReq.money')</td>
+				<td>
+	                <div class="layui-inline">
+	                    <input type="text" data-name="geg_money" class="layui-input bt-biz-moneyType textRight"
+	                           data-moneyendid="leg_money" autocomplete="off" placeholder="#springMessage('table.nisAllocationReq.money')">
+	                </div>
+	                <span class="date-mid">~</span>
+	                <div class="layui-inline">
+	                    <input type="text" id="leg_money" data-name="leg_money" class="layui-input bt-biz-moneyType textRight"
+	                           autocomplete="off" placeholder="#springMessage('table.nisAllocationReq.money')">
+	                </div>
+	            </td>
+	        </tr>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	<thead>
+    <tr class="title">
+		<th rowspan="2" >#springMessage('table.fcAccbook.orderNo')</th>
+        <th rowspan="2" >#springMessage('table.nisAllocationReq.billNo')</th>
+        <th colspan="4">#springMessage('table.nisAllocationReq.payerAcc')</th>
+        <th colspan="4">#springMessage('table.nisAllocationReq.payeeAcc')</th>
+        <th rowspan="2">#springMessage('table.nisAllocationReq.curId')</th>
+        <th rowspan="2">#springMessage('table.nisAllocationReq.wishPayday')</th>
+        <th rowspan="2">#springMessage('table.btNetChalk.transTime')</th>
+        <th rowspan="2">#springMessage('table.nisAllocationReq.purpose')</th>
+        <th rowspan="2">#springMessage('table.nisAllocationReq.money')</th>
+        <th rowspan="2">#springMessage('table.nisAllocationReq.billFrom')</th>
+        <th rowspan="2">#springMessage('table.cmsPrecativeLoanInfo.tallySign')</th>
+		<th rowspan="2">#springMessage('fcVoucherType.rmk')</th>
+	</tr>
+    <tr class="title">
+        <th>#springMessage('table.nisAllocationReq.acc')</th>
+		<th>#springMessage('table.nisAllocationReq.corp')</th>
+        <th>#springMessage('table.nisAllocationReq.accName')</th>
+        <th>#springMessage('table.nisAllocationReq.bankName')</th>
+        <th>#springMessage('table.nisAllocationReq.acc')</th>
+		<th>#springMessage('table.nisAllocationReq.corp')</th>
+        <th>#springMessage('table.nisAllocationReq.accName')</th>
+        <th style="border-right: none;">#springMessage('table.nisAllocationReq.bankName')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','selectTable','btdate','bank','select','moneyType','dicts','bttable','element','datatable','mulselect','corp','dateType','selectType','region'], function(){
+	var tableData ;
+	element = layui.element();
+    $ = bt.jquery;
+    form = bt.form();
+    tt = bt.mulselect.init();
+    bt.bank.init({ elem:'.bank',})
+    region = bt.region.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+    dataType = bt.dateType.init();
+    bt.corp.init();
+    selectType = bt.selectType.init();
+    bt.dicts.init();
+    bt.bank.init({
+        elem:'.acc',
+	});
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        colReorder:true,
+        dom: 'Brtlip',
+        checkbox:false,
+        mulselect:false,
+        selectCss:true,
+        ajax: {
+            'url': basePath+"/finacial/bankCollect/manualFinacial/datatable"
+        },searchForm:{
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+      /*   buttons: [{
+            text: bt.lang("Finacial.accbook.common.button.add"),
+            action: function ( e, dt, node, config ) {
+            	var length = $("#printMRTable tbody>tr").length;
+            	var data = dt.rows('.selected').data();
+            	var len = data.length;
+                if(len<1){
+                	layer.msg("#springMessage('table.fcBankBill.msg.chooseLeastOne')");
+                	return;
+                }
+                var rowData = data.splice(0,len);
+             	var id = rowData[0].billNo;
+             	var type = $("#opType").val();
+             	var menuType = $("#menuType").val();
+             	parent.parent.$("#key").val(id);
+             	parent.parent.$("#curCode").val(rowData[0].curId);
+             	parent.parent.$("#netId").val(rowData[0].corpId);
+             	$.post(basePath + "/finacial/bankCollect/manualFinacial/processAccbook/",{key:id,type:type,menuType:menuType}, function(result){
+             		if(typeof result.success == "boolean" && result.success == false){
+             			layer.alert(result.msg);
+                    	return;
+             		}
+             		parent.parent.bt.setDate(result);
+             	},'JSON');
+            }
+        }
+        ], */
+        exportFile:{
+            customPrint:{
+                header:function(){
+                    var printHtml = '<tr class="title">\n' +
+                            '        <th rowspan="2" >#springMessage("table.nisAllocationReq.billNo")</th>\n' +
+                            '        <th colspan="4">#springMessage("table.nisAllocationReq.payerAcc")</th>\n' +
+                            '        <th colspan="4">#springMessage("table.nisAllocationReq.payeeAcc")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.nisAllocationReq.curId")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.nisAllocationReq.wishPayday")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.btNetChalk.transTime")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.nisAllocationReq.purpose")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.nisAllocationReq.money")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.nisAllocationReq.billFrom")</th>\n' +
+                            '        <th rowspan="2">#springMessage("table.cmsPrecativeLoanInfo.tallySign")</th> \n' +
+							'        <th rowspan="2">#springMessage("fcVoucherType.rmk")</th> \n' +
+                            '    </tr>\n' +
+                            '    <tr class="title">\n' +
+                            '        <th>#springMessage("table.nisAllocationReq.acc")</th>\n' +
+							'        <th>#springMessage("table.nisAllocationReq.corp")</th>\n' +
+                            '        <th>#springMessage("table.nisAllocationReq.accName")</th>\n' +
+                            '        <th>#springMessage("table.nisAllocationReq.bankName")</th>\n' +
+                            '        <th>#springMessage("table.nisAllocationReq.acc")</th>\n' +
+							'        <th>#springMessage("table.nisAllocationReq.corp")</th>\n' +
+                            '        <th>#springMessage("table.nisAllocationReq.accName")</th>\n' +
+                            '        <th style="border-right: none;">#springMessage("table.nisAllocationReq.bankName")</th>\n' +
+                            '    </tr>';
+                    return printHtml;
+                },
+            },
+        },
+        columns: [
+			{data: "orderNo", bSortable: false},
+			{data: "billNo", bSortable: false},
+			{data: "payerAcc", bSortable: false},
+			{data: "payerCorpName", bSortable: true},
+			{data: "payerAccName", bSortable: false},
+			{data: "payerBankName", bSortable: false},
+			{data: "payeeAcc", bSortable: false},
+			{data: "payeeCorpName", bSortable: true},
+			{data: "payeeAccName", bSortable: false},
+			{data: "payeeBankName", bSortable: false},
+			{data: "curName", bSortable: false},
+			{data: "wishPayday", bSortable: false},
+			{data: "transTime", bSortable: false},
+			{data: "purpose", bSortable: false},
+			{
+			    data: "money", bSortable: false, className: "textRight",
+			    render: function (data, type, full, meta) {
+			        return bt.money.format(full.money);
+			    }
+			},
+
+			{
+			    data: "billFrom", bSortable: false,
+			    render: function (data, type, full, meta) {
+			        return bt.dict("nisAllocationReq.billFrom", full.billFrom);
+			    }
+			},
+			{data:"tallySign",bSortable:false,className:"center",
+			    render:function(data,type,full,meta){
+					if(full.tallySign == null || full.tallySign == ""){
+						full.tallySign = 0;
+					}
+				   return bt.dict("cms.tallySign",full.tallySign == null ? 0 : full.tallySign );
+				}
+			},
+			{data: "rmk", bSortable: false},
+        ]
+        ,
+        btInitComplete:function(setting,json){
+        	tableData = json.data;
+        },
+		btDrawCallback:function(setting){
+        	tableData = setting.json.data;
+        }
+    });
+    
+    $('#appTable tbody').on('dblclick','tr',function(data){  
+        var dataIndex = $(this).context.rowIndex - 2;
+        //var data = tableData.rows('.selected').data();
+        rowData = tableData[dataIndex];
+        var id = rowData.billNo;
+     	var type = $("#opType").val();
+     	var menuType = $("#menuType").val();
+     	parent.parent.$("#key").val(id);
+     	parent.parent.$("#curCode").val(rowData.curId);
+     	parent.parent.$("#netId").val(rowData.corpId);
+     	$.post(basePath + "/finacial/bankCollect/manualFinacial/processAccbook/",{key:id,type:type,menuType:menuType}, function(result){
+     		if(typeof result.success == "boolean" && result.success == false){
+     			layer.alert(result.msg);
+            	return;
+     		}
+     		//增加背景色
+			var row = datatable.row(dataIndex).node();
+     		$(".row_bg").removeClass("row_bg");
+			$(row).addClass("row_bg");
+			parent.parent.uploaderRender(type,result);
+			result.interestStartDate = (rowData.transTime == null || rowData.transTime == undefined || rowData.transTime == "") ? rowData.wishPayday : bt.date.format(rowData.transTime);
+     		parent.parent.bt.setDate(result);
+     	},'JSON');
+	});  
+});
+</script>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 22px; 
+	text-decoration: underline;
+	text-align: center;
+	/*color: blue;*/
+	/*color: #00CC33;*/
+}
+</style>    
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="opType" name="opType" value="$!{opType}">
+	<input type="hidden" id="menuType" name="menuType" value="$!{menuType}">
+	<table class="layui-table">
+		<tbody>
+       		<tr>
+				##交易日期
+				<td class="textRight">#springMessage('table.btNetChalk.transTime')</td>
+				<td width="40%">
+                    <input name="ged_transTime" class="layui-input bt-input-inline bt-biz-dateType" type="text" data-endid="t2">
+                    <span class="date-mid">~</span>
+                    <input name="led_transTime" class="layui-input bt-input-inline bt-biz-dateType" id="t2" type="text">
+				</td>
+
+				##所属资金池
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusracepool.poolId")</td>
+				<td>
+					<div class="layui-input-inline">
+						<div class="bt-biz-selectType" data-name="eqs_poolId" data-biz-name="poolId"
+							 data-url="${basePath}/paramconfig/fcbusracepool/getCorpPools"
+							 data-valuefield="id" data-textfield="showName" data-search="true" ></div>
+					</div>
+				</td>
+			</tr>
+
+        	<tr>
+				##本方账号 BANK_ACC	
+				<td class="textRight">#springMessage('table.btNetChalk.bankAcc')</td>
+				<td >
+					<input type="text" name="likes_bankAcc" id="bankAcc"
+						   autocomplete="off" class="layui-input" placeholder="#springMessage('table.btNetChalk.bankAcc')">
+				</td>
+	
+				##币别代码
+				<td class="textRight">#springMessage('table.btNetChalk.curId')</td>
+				<td >
+					<div class="layui-input-inline">
+						<div class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json"
+							 data-valuefield="id" data-textfield="curName" data-name="eqs_curId" data-search="true"></div>
+					</div>
+				</td>
+       		</tr>
+
+			<tr>
+				##摘要
+				<td class="textRight">#springMessage('table.btNetChalk.purpose')</td>
+				<td >
+                    <div class="layui-input-inline">
+						<div class="bt-biz-mulselectType purpose" data-url="${basePath}/finacial/paramconfig/btsummary/jsonPost" data-valuefield="summaryContent" data-textfield="summaryContent" data-name="ins_remark"></div>
+					</div>
+					## <div class="bt-biz-mulselectType purpose" data-url="/finacial/paramconfig/btsummary/json" data-valuefield="summaryContent" data-textfield="summaryContent" data-name="ins_purpose"></div>
+				</td>
+	
+				##金额
+				<td class="textRight">#springMessage('table.btNetChalk.money')</td>
+				<td >
+					<input type="text" data-name="geg_amt" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="money" >
+					<span class="date-mid">~</span>
+					<input type="text" data-name="leg_amt" class="layui-input bt-input-inline  bt-biz-moneyType" id="money" >
+				</td>
+			</tr>
+			
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+			<thead>
+			<tr>
+                <th>#springMessage('table.btNetChalk.transTime')</th>
+                <th>#springMessage('finacial.paramconfig.fcbusracepool.poolId')</th>
+                <th>#springMessage('table.btNetChalk.bankAcc')</th>
+                <th>#springMessage('table.btNetChalk.accName')</th>
+                <th>#springMessage('table.btNetChalk.bankName')</th>
+                <th>#springMessage('table.btNetChalk.curId')</th>
+                <th>#springMessage('table.btNetChalk.money')</th>
+                <th>#springMessage('table.btNetChalk.purpose')</th>
+                <th>#springMessage('table.btNetChalk.oppAccNo')</th>
+                <th>#springMessage('table.btNetChalk.oppBankName')</th>
+                <th>#springMessage('table.choBankFinance.billNo')</th>
+                <th>#springMessage('table.cmsPrecativeLoanInfo.tallySign')</th>
+  			</tr>
+	</thead>
+</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','selectTable','btdate','bank','select','moneyType','dicts','bttable','element','datatable','mulselect','corp','dateType','selectType','region'], function(){
+	var tableData ;
+	element = layui.element();
+    $ = bt.jquery;
+    form = bt.form();
+    tt = bt.mulselect.init();
+    bt.bank.init({ elem:'.bank',})
+    region = bt.region.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+    dataType = bt.dateType.init();
+    bt.corp.init();
+    selectType = bt.selectType.init();
+    
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:false,
+        mulselect:false,
+        selectCss:true,
+        order: [1,'desc'],
+        fixedColumns:{
+        	leftColumns:0
+        },
+        ajax: {
+            'url': basePath+"/finacial/bankCollect/fcbankaccdtl/datatable?type="+$("#opType").val()+"&menuType="+$("#menuType").val()
+        },searchForm:{
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+      
+        columns: [
+            {data:"transTime",bSortable:false,className:"center"},
+            {data:"corpName",bSortable:false,className:"center"},
+            {data:"bankAcc",bSortable:false,className:"center"},
+            {data:"accName",bSortable:false,className:'center'},
+            {data:"bankName",bSortable:false,className:"center"},
+            {data:"curName",bSortable:false,className:'center'},
+            {data:"amt",bSortable:false,className:"textRight",
+                render: function (data, type, full, meta) {
+                    return moneyFun.format(full.amt);
+                }
+            },
+            {data:"remark",bSortable:false,className:"center"},
+            {data:"oppAccNo",bSortable:false,className:"center"},
+            {data:"oppAccBank",bSortable:false,className:"center"},
+            {data:"accNo",bSortable:false,className:"center"},
+			{data:"tallySign",bSortable:false,className:"center",
+			    render:function(data,type,full,meta){
+					return bt.dict("cms.tallySign",full.tallySign == null ? 0 : full.tallySign );
+				}
+			}
+        ],
+        btInitComplete:function(setting,json){
+        	tableData = json.data;
+        },
+		btDrawCallback:function(setting){
+        	tableData = setting.json.data;
+        }
+    });
+    
+    $('#appTable tbody').on('dblclick','tr',function(data){  
+        var dataIndex = $(this).context.rowIndex - 1;
+        //var data = tableData.rows('.selected').data();
+        rowData = tableData[dataIndex];
+        var id = rowData.id;
+     	var type = $("#opType").val();
+     	var menuType = $("#menuType").val();
+        var poolId = rowData.poolId;
+        var curId = rowData.curId;
+     	parent.parent.$("#menuType").val(menuType);
+     	parent.parent.$("#key").val(id);
+     	parent.parent.$("#curCode").val(rowData.curId);
+     	parent.parent.$("#poolId").val(rowData.poolId);
+        parent.parent.$("#corpId").val(rowData.corpId);
+        parent.parent.$("#bankAcc").val(rowData.bankAcc);
+        parent.parent.$("#oppAccNo").val(rowData.oppAccNo);
+        
+        parent.parent.$("#accDtlId").val(rowData.accDtlId);
+     	$.post(basePath + "/finacial/bankCollect/fcbankaccdtl/processAccbook",{key:id,poolId:poolId,curId:curId,type:type,menuType:menuType}, function(result){
+     		if(typeof result.success == "boolean" && result.success == false){
+     			layer.alert(result.msg);
+            	return;
+     		}
+			parent.parent.uploaderRender(type,result);//双击行上传控件渲染事件
+     		parent.parent.bt.setDate(result);
+     	},'JSON');
+	});  
+});
+
+</script>
+</html>

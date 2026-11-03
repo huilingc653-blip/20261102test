@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <table id="dataTable"></table>
+    #parse("views/common/footer.vm")
+    <script>
+        bt.use(['jquery','treeGrid'], function(){
+            $ = bt.jquery;
+            var addFunc = function(rowData) {
+                var id = (rowData&&rowData.id) ? rowData.id:'';
+                parent.layer.open({
+                    type: 2,
+                    area: ['850px', '530px'],
+                    maxmin: true,
+                    content: basePath + "/bpm/flowCategory/view/?parentId=" + id,
+                    end: function () {
+                        if(window.top.refreshParentFlag){
+                            treeGrid.trigger("reloadGrid");
+                        }
+                        window.top.refreshParentFlag = false
+                    }
+                });
+            }
+            var editFunc = function(rowData){
+                var id = rowData.id ? rowData.id:'';
+                parent.layer.open({
+                    type: 2,
+                    area: ['850px', '530px'],
+                    maxmin: true,
+                    content: basePath + "/bpm/flowCategory/view/?id=" + id,
+                    end:function(){
+                        if(window.top.refreshParentFlag){
+                            treeGrid.trigger("reloadGrid");
+                        }
+                        window.top.refreshParentFlag = false
+                    }
+                });
+            }
+            var delFunc = function(rowData){
+                var id = rowData.id ? rowData.id:'';
+                //删除后将不可恢复是否继续？
+                parent.layer.confirm(bt.lang("sys.notification.deleteShow"),function(){
+                    $.get(basePath + "/bpm/flowCategory/delete/" + id, function(result){
+                        treeGrid.trigger("reloadGrid");
+                        if(result.success){
+                            parent.layer.alert(result.msg, {icon: 1});
+                        }else{
+                            //"删除异常，该分类还有流程正在使用"
+                            parent.layer.alert(bt.lang("sys.notification.deleteError"), {icon: 2});
+                        }
+                    },'JSON').error(function (data) {
+                        parent.layer.alert("network anomaly", {icon: 2});
+                    });
+                });
+            }
+            var treeGrid = bt.treeGrid.init({
+                elem:"#dataTable",
+                url:basePath+"/bpm/flowCategory/allList.json",
+                ExpandColumn:"name",
+                colModel:[
+                    //分类名称
+                    { name: "name",label:bt.lang("sys.notification.categoryName")},
+                    { name: "cateKey",label:"KEY",editable:false },
+                    { name: "url",label:"URL",editable:false },
+                        //手机审批URL
+                    { name: "mobileUrl",label:bt.lang("table.flowCategory.mobileUrl"),editable:false },
+                        //是否支持批量撤回
+                    { name: "batchRevokable",label:bt.lang("table.flowCategory.batchRevokable"),editable:false,
+                        formatter:function(cellvalue, options, rowObject) {
+                            return rowObject.batchRevokeAble ? '是' : '否';
+                        }
+                    },
+                    { name: "menuName",width:50,label:bt.lang("sys.notification.menuBelong"),editable:false },
+                        //排序
+                    { name: "sort",width:50,label:bt.lang("common.message.sort"),editable:true,editoptions:{maxlength:3} },
+                        //"操作"
+                    { label:bt.lang("common.table.thead.operation"),width:80,formatter:function(cellvalue, options, rowObject){
+                        if(rowObject.level==3){
+                            return '';
+                        }
+                        var html = '';
+                        html+='<a href="javascript:void(0)" row="'+rowObject.id+'" class="edit">'+bt.lang("common.button.edit")+'</a>';
+                        html += '<span class="text-explode">|</span>';
+                        html+='<a href="javascript:void(0)" row="'+rowObject.id+'" class="add-sub">'+bt.lang("sys.module.addSub")+'</a>';
+                        return html;
+                    } },
+                ],
+                cellurl : basePath + '/bpm/flowCategory/updateFiled',
+                navPosition:"top",
+                addFunc:addFunc,
+                editFunc:editFunc,
+                delFunc:delFunc
+            });
+
+            treeGrid.on("click",".add-sub",function() {
+                var data = treeGrid.getOriginalData($(this).attr("row"));
+                addFunc(data);
+            });
+            treeGrid.on("click",".edit",function() {
+                var data = treeGrid.getOriginalData($(this).attr("row"));
+                editFunc(data);
+            });
+        });
+    </script>
+</body>
+</html>

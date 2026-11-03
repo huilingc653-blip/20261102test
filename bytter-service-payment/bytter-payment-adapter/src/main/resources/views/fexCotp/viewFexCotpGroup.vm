@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post" id="myform">
+    <input type="hidden" id="id" name="id" value="$!{fexCotpVO.id}">
+    <input id="busType" name="busType" type="hidden" value="$!{busType}">
+    <input type="hidden" name="cotpLevel" value="0">
+    <table class="layui-table layui-form">
+        <tr>
+        ##名称
+            <td class="textRight" style="width: 20%">#springMessage('table.tbCreditPeriod.designation')</td>
+            <td style="width: 50%">
+                <div class="layui-input-inline">
+                    $!{fexCotpVO.cotpName}
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##所属组
+            <td class="textRight">#springMessage('fex.cotp.subordinateGroup')</td>
+            <td>
+                <div class="layui-input-inline">
+                    $!{fexCotpVO.parentName}
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##备注
+            <td class="textRight">#springMessage('table.fbsBudgetPeriod.rmk')</td>
+            <td>
+                $!{fexCotpVO.rmk}
+            </td>
+        </tr>
+    </table>
+
+    <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+        <ul class="layui-tab-title">
+        ##                        组成员
+            <li class="layui-this">#springMessage('fex.cotp.groupMembers')</li>
+        ##                          自定义信息
+            <li>#springMessage("fex.cotp.customInformation")</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <input type="hidden" name="eqs_parentId" value="$!{fexCotpVO.id}">
+                <table id="appTable" class="layui-table layui-form">
+                    <thead>
+                    <tr>
+                    ##                                    名称
+                        <th>#springMessage('table.tbCreditPeriod.designation')</th>
+                    ##                                  层级
+                        <th>#springMessage('fex.cotp.hierarchy')</th>
+                    ##                                  短名称
+                        <th>#springMessage('fex.cotp.shortName')</th>
+                    ##                                  正式名称
+                        <th>#springMessage('fex.cotp.officialName')</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-table layui-form">
+                    #foreach($element in $custFieldS)
+                        #if($velocityCount % 2 == 0)
+                            <td class="textRight" style="width: 10%">
+                                $!{element.fieldName}
+                            </td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    $!{element.fieldVal}
+                                </div>
+                            </td>
+                            </tr>
+                        #else
+                        <tr>
+                            <td class="textRight" style="width: 10%">
+                                $!{element.fieldName}
+                            </td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    $!{element.fieldVal}
+                                </div>
+                            </td>
+                            #if($foreach.last)
+                                <td style="width: 10%"></td>
+                                <td></td>
+                            </tr>
+                            #end
+                        #end
+                    #end
+                </table>
+            </div>
+        </div>
+    </div>
+    <div style="width: 100%;text-align: center">
+        #if($!{showClosBtn} == 1)
+            <tr>
+                <td colspan="2"style="text-align: center">
+                    #if($!{fexCotpVO.status} == "-1")
+                        <button class="layui-btn" type="button" onClick="bt.trackFlowByBusinessId('$!{fexCotpVO.id}')">#springMessage('common.button.trackFlow')</button>
+                    #end
+                    <button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+                </td>
+            </tr>
+        #end
+    </div>
+</form>
+<!-- 日志 -->
+<div id="tagMsg"></div>
+</body>
+    #parse("views/common/footer.vm")
+<script>
+    var form, element;
+    bt.use(["jquery", "element", "form","datatable"], function () {
+        var $ = bt.jquery;
+        form = bt.form();
+        element = layui.element;
+
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            paging: false,
+            ignoreButtons: ['colvis', 'output', 'print'],
+            ajax: {
+                "url": basePath + "/foreign/fexCotp/getChireddataTable"
+            },
+            searchForm: {
+                formElem: "#myform",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: "cotpName",
+                    className: "center"
+                },
+                {
+                    data: "cotpLevel",
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("fex.cotp.level", data);
+                    }
+                },
+                {
+                    data: "shortName",
+                    className: "center"
+                },
+                {
+                    data: "officialName",
+                    className: "center"
+                }
+            ]
+        });
+
+        //这里填写新的js代码，请参考前端文档
+        /**
+         * 生成日志列表
+         * @return
+         */
+            $genMsgHtml = function () {
+            var url = basePath + "/foreign/fexmessage/list/" + $('#id').val() + "/" + $("#busType").val() + "?timestamp=" + new Date().getTime();
+            $.ajax({
+                url: url,
+                method: 'GET',
+                async: false,
+                success: function (json) {
+                    $("#tagMsg").html("");
+                    $("#tagMsg").html(json);
+                    form.render();
+                }
+            });
+        }
+            $genMsgHtml();
+    });
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+</script>
+</html>

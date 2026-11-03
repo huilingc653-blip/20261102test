@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="processInstanceId" value="$!{processInstanceId}">
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.processDefinitions.id')</th>
+        <th>#springMessage('table.processDefinitions.deploymentId')</th>
+        <th>#springMessage('table.actDeModel.name')</th>
+        <th>#springMessage('table.actDeModel.modelKey')</th>
+        <th>#springMessage('table.actDeModel.version')</th>
+        <th>#springMessage('table.processDefinitions.xml')</th>
+        <th>#springMessage('table.processDefinitions.image')</th>
+        <th>#springMessage('table.processDefinitions.deploymentTime')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            ajax: {
+                url: basePath + "/bpm/processDefinitions/settingDataTable",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {data: "taskVO.id", orderable: false},
+                {data: "startUserId", orderable: false},
+                {data: "taskVO.name", orderable: false},
+                {data: "startTime"},
+                {data: null, orderable: false, render: function (data, type, full, meta) {
+                    var html = '';
+                    if(full.taskVO.assignee){
+                        html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="complete-task">办理</a>'
+
+                    }else{
+                        html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="claim-task">签收</a>';
+                    }
+
+                    html += '<span class="text-explode">|</span>';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="watch-task">查看节点</a>';
+
+                    html += '<span class="text-explode">|</span>';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="watch-detail">查看明细</a>';
+                    return html;
+                }},
+
+            ]
+        });
+
+        //签收任务
+        table.on('click', '.claim-task', function (event) {
+            var data = table.row($(this).data('row')).data();
+            $.get(basePath + "/bpm/task/claim/" + data.taskVO.id, function (result) {
+                table.draw();
+
+            }, 'JSON');
+            event.stopPropagation();
+        });
+
+        //反签收
+        table.on('click', '.claim-task', function (event) {
+            var data = table.row($(this).data('row')).data();
+            $.get(basePath + "/bpm/task/claim/" + data.taskVO.id, function (result) {
+                table.draw();
+
+            }, 'JSON');
+            event.stopPropagation();
+        });
+
+        //处理任务
+        table.on('click', '.complete-task', function (event) {
+            var data = table.row($(this).data('row')).data();
+            $.get(basePath + "/bpm/task/complete/" + data.taskVO.id, function (result) {
+                table.draw();
+                layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, 'JSON');
+            event.stopPropagation();
+        });
+        table.on('click', '.watch-task', function (event) {
+            var data = table.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '330px'],
+                content: basePath + "/bpm/processInstance/trace/" + data.id,
+            });
+            event.stopPropagation();
+        });
+
+        table.on('click', '.watch-detail', function (event) {
+            var data = table.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '330px'],
+                content: basePath + "/bpm/processInstance/detail/" + data.id,
+            });
+            event.stopPropagation();
+        });
+
+
+    });
+</script>
+</body>
+</html>

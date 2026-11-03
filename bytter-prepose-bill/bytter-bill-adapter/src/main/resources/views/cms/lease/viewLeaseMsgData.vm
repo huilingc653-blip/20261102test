@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/flow/flow.vm")
+</head>
+<body>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <input id="leaseId" name="leaseId" type="hidden" value="$!{leaseId}">
+    <thead>
+    <tr>
+        <th>#springMessage('cms.lease.extend.expendedCode')</th>
+        <th>#springMessage('cms.lease.extend.lastExpendedDate')</th>
+        <th>#springMessage('table.fcAcc.delayDeadlineDate')</th>
+        <th>#springMessage('table.cmsPrecativeLoanDeferred.deferredLimt')</th>
+        <th>#springMessage('cms.lease.extend.pointsProportionSelect')</th>
+        <th>#springMessage('table.cmsLoanSend.deferredRate')</th>
+        <th>#springMessage('btAccNature.rmk')</th>
+        <th>#springMessage('table.fcFreeze.status')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(["jquery", "datatable", "form", "moneyType", "selectType", "dicts", "corp","dateType", 'rateType'], function () {
+        $ = bt.jquery;
+        form = bt.form()
+        dicts = bt.dicts.init();
+        selectType = bt.selectType.init();
+        bt.dateType.init();//日期时间
+        bt.moneyType.init();
+        corp = bt.corp.init();//单位
+        //初始化利率
+        bt.rateType.init();
+        var rateType= bt.rateType.getFun();
+
+        /**
+         * 生成列表
+         */
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                isInitData:"false"
+            },
+            ajax: {
+                'url': basePath + "/cms/LeaseExtend/listMsgData?leaseId="+$("#leaseId").val()
+            },
+            // ignoreButtons: ['print'],
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 2//代表冻结右边一列
+            },
+            columns: [
+                {data:"expendedCode", bSortable:true,className:'center'},
+                {data: "lastExpendedDate", bSortable: true},
+                {data: "expendedDate", bSortable: true},
+                {data: "expendedLimit", bSortable: true,render: function (data, type, full, meta) {
+                        return full.expendedLimit+bt.dict("PrecativeLoanInfo.ternUnit", full.ternUnit);
+                    }},
+                {data: "pointsProportionSelect", bSortable: true,render: function (data, type, full, meta) {
+                        return bt.dict("Cms.PointsProportion", data);
+                    }
+                    },
+                {data:"rate",bSortable:true,render: function (data, type, full, meta) {
+                        return rateType.format(full.rate);
+                    }
+                },
+                {data:"rmk",bSortable:true},
+                {data: "status", bSortable: true,render: function (data, type, full, meta) {
+                        return bt.dict("lease.status", data);
+                    }
+                }
+            ]
+        });
+    });
+</script>
+</body>
+</html>

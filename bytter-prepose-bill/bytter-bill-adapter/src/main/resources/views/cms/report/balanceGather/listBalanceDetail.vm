@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<div id="chartLine" style="width:100%;height:50%;text-align: center;"></div>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+    	<th>#springMessage('table.report.corpId')</th>
+    	<th>#springMessage('cms.report.loanType')</th>
+    	<th>#springMessage('cms.report.cur')</th>
+    	<th>#springMessage('cms.report.loanContract')</th>
+    	<th>#springMessage('cms.report.loanMoney')</th>
+    	<th>#springMessage('cms.report.loanStartDate')</th>
+    	<th>#springMessage('cms.report.loanEndDate')</th>
+    	<th>#springMessage('cms.report.sendMoney')</th>
+    	<th>#springMessage('cms.report.sendDate')</th>
+    	<th>#springMessage('cms.report.repayMoney')</th>
+    	<th>#springMessage('cms.report.repayDate')</th>
+    	<th>#springMessage('cms.report.sendBalance')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+	bt.use(['form','datatable','moneyType'], function(){
+		//myChartLine = echarts.init(document.getElementById('chartLine'));
+		//initLine();
+	    //生成列表
+	    datatable = bt.datatable.init({
+	        elem: "#appTable",
+	        checkbox:false,
+            ordering:false,
+            type: "POST",
+            colReorder:true,
+            rowsGroup:[0,1,2,3,4,5,6,7,8,11],
+            ajax: {
+                'url': basePath+"/cms/report/cmsbalancegather/datatableUpdate",
+            }, 
+            fnServerParams : function(aoData){
+                aoData.formdata = {"corpId":"$!{vo.corpId}","loanSign":"$!{vo.loanSign}","curId":"$!{vo.curId}","startDate":"$!date.format('yyyy-MM-dd',$!vo.startDate)","endDate":"$!date.format('yyyy-MM-dd',$!vo.endDate)"}
+			},
+	        columns: [
+	            {data:"corpId",render: function ( data, type, full, meta ){
+	            	var htl = full.corpCode+" "+full.corpName;
+	            	return htl;
+	            }},
+	            {data:"loanSign",render: function ( data, type, full, meta ){
+	            	return full.loanSignName;
+	            }},
+	            {data:"curId",render: function ( data, type, full, meta ){
+	            	return full.curName;
+	            }},
+	            {data:"infoCode",render: function ( data, type, full, meta ){
+	            	return full.infoCode;
+	            }},
+	            {data:"infoCode",className:"textRight",render: function ( data, type, full, meta ){
+	            	return bt.money.format(full.plMoney);
+	            }},
+	            {data:"infoCode",render: function ( data, type, full, meta ){
+	            	return full.plStartDate;
+	            }},
+	            {data:"infoCode",render: function ( data, type, full, meta ){
+	            	return full.plEndDate;
+	            }},
+	            {data:"sendCode",className:"textRight",render: function ( data, type, full, meta ){
+	            	return bt.money.format(full.sendMoney);
+	            }},
+	            {data:"sendCode",render: function ( data, type, full, meta ){
+	            	return full.sendDate;
+	            }},
+	            {data:"repayMoney",className:"textRight",render: function ( data, type, full, meta ){
+	            	return bt.money.format(full.repayMoney);
+	            }},
+	            {data:"repayDate",render: function ( data, type, full, meta ){
+	            	return full.repayDate;
+	            }},
+	            {data:"sendCode",className:"textRight",render: function ( data, type, full, meta ){
+	            	return bt.money.format(full.sendBalance);
+	            }}
+	        ]
+	    });
+	    
+	    /**判断字符串是否为空*/
+	    bt.empty = function(ms){
+	    	if(typeof(ms) == "undefined" || ms == null || ms == "" || ms == "null"){
+	    		return true;
+	    	}
+	    	return false;
+	    }
+	});
+</script>
+</html>

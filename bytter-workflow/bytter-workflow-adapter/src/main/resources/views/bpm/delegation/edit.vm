@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<input type="hidden" id="flowCategoryIdList" value="$!flowCategoryIdList">
+<input type="hidden" id="delegationId" value="$!delegation.id">
+##已经选中的被授权人id
+<input type="hidden" id="principalId" value="$!delegation.principal">
+
+<form class="layui-form" method="post" id="inputForm">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td width="25%" class="textRight">#springMessage('bpm.delegation.principal')</td>
+            <td width="25%">
+                #if($currentUser.isAdmin==1)
+                    <div class="bt-biz-selectType" lay-verify="required" data-width="214px" data-biz-name="principal"
+                         data-url= "${basePath}/sys/user/listAllUserByUnDelete" data-valuefield="id"
+                         data-textfield="username"
+                         data-value="$!delegation.principal"
+                         data-name="principal" data-search="false"
+                         data-method="get"
+                         data-width="100px"
+                         data-callback="removePrincipal"
+                    ></div>
+                #else
+                    <div class="bt-biz-selectType" data-width="214px" lay-verify="required"
+                         data-value="$!delegation.principal"
+                         data-biz-name="principal" data-url= "${basePath}/sys/user/listByUserIds?ids=$currentUser.id"
+                         data-valuefield="id" data-textfield="username"
+                         data-name="principal" data-method="post" data-search="false" data-defaultvalue="first"
+                         data-width="100px"
+                         data-callback="removePrincipal"
+                    ></div>
+                #end
+
+            </td>
+
+            <td width="25%" class="textRight">#springMessage('bpm.delegation.proxy')</td>
+            <td width="25%">
+                <div class="bt-biz-selectType" data-width="214px" lay-verify="required" data-biz-name="proxy"
+                     data-url="${basePath}/sys/user/listByCorpId?corpId=$currentUser.corpId" data-valuefield="id"
+                     data-textfield="username"
+                     data-name="proxy" data-search="false"
+                     data-value="$!delegation.proxy"
+                     data-method="get"
+                     data-extraData = "false"
+                     data-width="100px"
+##                     data-initCallback = "initProxyChoose"
+                                     data-filterData="$!delegation.principal"
+                ></div>
+            </td>
+
+        </tr>
+        <td class="textRight">
+            #springMessage('bpm.delegation.starttime')
+        </td>
+        <td>
+            <div class="layui-input-inline">
+                <input type="text" data-biz-name="startTime" lay-verify="required" name="startTime"
+                       class="layui-input bt-biz-dateType" data-min="$!today" value="$!{date.format('yyyy-MM-dd', $!{delegation.startTime})}"
+                       data-today="false" data-type="date">
+            </div>
+
+        </td>
+        <td class="textRight">#springMessage('bpm.delegation.category')</td>
+        <td>
+            <button type="button" lay-verify="required" class="layui-btn choose">#springMessage(
+                'common.button.select')</button>
+        </td>
+        <tr>
+            <td colspan="8" style="text-align: center;">
+                <button class="layui-btn" type="button" id="storage" lay-filter="temp">#springMessage(
+                    'common.button.temp')</button>
+                <button class="layui-btn" type="button" id="submit" lay-filter="submit">#springMessage(
+                    'common.button.save')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    var select;
+    var currentDate;
+
+
+    bt.use(['layer', 'form', 'layedit', 'corp', 'bttable', 'moneyType', 'dateType', 'selectType', 'accountTable'], function () {
+        select = bt.selectType.init();
+        currentDate = bt.dateType.init();
+
+        $(".choose").on('click', function (event) {
+            layer.open({
+                type: 2,
+                area: ['40%', '80%'],
+                content: basePath + "/bpm/delegation/chooseCategory",
+                success: function (layero, index) {
+                    var body = layer.getChildFrame('body', index);
+                }
+            });
+        });
+    });
+
+    //选择授权人时，被授权人要过滤掉授权人的选项
+    var removePrincipal = function (data, elem, beforevalue, wrapObj) {
+/*        $("select[name='proxy']").next().find("dd").show();
+        $("select[name='proxy']").next().find("dd[lay-value=" + data.id + "]").hide();
+        if (data.id == select.get("proxy").getData().value) {
+            //重新选择
+            select.get("proxy").val(" ");
+        }
+        select.get("principal").val(data.id);
+        $("select[name='proxy']").next().find("dd[lay-value='" +$("#principalId").val() + "']").hide();*/
+
+        var beforeProxy = select.get("proxy").val();
+        //选项是请选择时，data.id=undefind
+        if(data.id && beforeProxy == data.id){
+            select.get("proxy").attr({
+                "data-filterData" : data.id,
+                "data-value" : ' '
+            });
+        } else {
+            //principal更改屏蔽的数据
+            select.get("proxy").attr({
+                "data-filterData" : data.id,
+                "data-value" : beforeProxy
+            });
+        }
+    }
+
+    var initProxyChoose = function(){
+/*       var item =  $("select[name='proxy']").next().find("dd[lay-value='" +$("#principalId").val() + "']");
+       console.log(item.length);
+       console.log(item);
+       item.hide();
+       item.css('display','none');*/
+    }
+    //保存
+    $("#submit").on('click', function (event) {
+        if (!(select.get("principal").val().trim()
+                && select.get("proxy").val().trim()
+                && $("#flowCategoryIdList").val()
+                && currentDate.get("startTime").val())) {
+            layer.alert(bt.lang("bill.bvVoucherType.fieldRequiredMsg"));
+            return false;
+        }
+        if(select.get("principal").val() == select.get("proxy").val()){
+            layer.alert(bt.lang("bpm.delegation.user.same.error"));
+            return false;
+        }
+
+        var flowDelegationVo = {};
+        flowDelegationVo.principal = select.get("principal").val();
+        flowDelegationVo.proxy = select.get("proxy").val();
+        flowDelegationVo.startTimeStr = currentDate.get("startTime").val();
+        flowDelegationVo.id = $("#delegationId").val();
+
+        if ($("#flowCategoryIdList").val() != "") {
+            flowDelegationVo.flowCategoryIdList = $("#flowCategoryIdList").val().split(",");
+        }
+        var json = JSON.stringify(flowDelegationVo);
+        $("#submit").attr("disabled","true");
+        $.ajax({
+            type: "POST",
+            url: basePath + "/bpm/delegation/save",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(flowDelegationVo),
+            success: function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+                    parent.layer.closeAll();
+                    if (result.success) {
+                        if (bt.navtab) {
+                            bt.navtab.refreshParent();
+                            bt.navtab.refreshCurrent()
+                        } else {
+                            parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                        }
+                    }
+                    $("#submit").removeAttr("disabled");
+                })
+
+            }
+        });
+    });
+    //暂存
+    $("#storage").on('click', function (event) {
+        if (!(select.get("principal").val().trim()
+                && select.get("proxy").val().trim()
+                && $("#flowCategoryIdList").val()
+                && currentDate.get("startTime").val())) {
+            layer.alert(bt.lang("bill.bvVoucherType.fieldRequiredMsg"));
+            return false;
+        }
+        if(select.get("principal").val() == select.get("proxy").val()){
+            layer.alert(bt.lang("bpm.delegation.user.same.error"));
+            return false;
+        }
+        var flowDelegationVo = {};
+        flowDelegationVo.principal = select.get("principal").val();
+        flowDelegationVo.proxy = select.get("proxy").val();
+        flowDelegationVo.startTimeStr = currentDate.get("startTime").val();
+        flowDelegationVo.id = $("#delegationId").val();
+
+        if ($("#flowCategoryIdList").val() != "") {
+            flowDelegationVo.flowCategoryIdList = $("#flowCategoryIdList").val().split(",");
+        }
+        var json = JSON.stringify(flowDelegationVo);
+        $.ajax({
+            type: "POST",
+            url: basePath + "/bpm/delegation/storage",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(flowDelegationVo),
+            success: function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+                    parent.layer.closeAll();
+                    if (result.success) {
+                        if (bt.navtab) {
+                            bt.navtab.refreshParent();
+                            bt.navtab.refreshCurrent()
+                        } else {
+                            parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                        }
+                    }
+                })
+
+            }
+        });
+    });
+
+</script>
+}

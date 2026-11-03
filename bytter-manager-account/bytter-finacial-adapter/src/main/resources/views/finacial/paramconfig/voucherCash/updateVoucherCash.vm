@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" name="id" value="$!{voucherCash.id}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight" style="width: 15%">#springMessage("table.eExchangeBill.debit")</td>
+            <td style="width: 35%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="debitSubject" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate"
+                         data-beforeInitResiveData="subjectNameInit" data-defaultvalue="$!{voucherCash.debitSubject}"
+                         data-callback="setDebitItemRequired"
+                         data-valuefield="id" data-textfield="subjectNameShow" data-biz-name="debitSubject">
+                    </div>
+                </div>
+            </td>
+            <td class="textRight" style="width: 15%">#springMessage("finacial.paramconfig.debit.CashFlow.Item")</td>
+            <td style="width: 35%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="debitItem" data-url="${basePath}/finacial/paramconfig/cashItem/listAllFcCashItem"
+                         data-method="post" data-defaultvalue="$!{voucherCash.debitItem}"
+                         data-valuefield="id" data-textfield="itemName" data-biz-name="debitItem">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage("table.eExchangeBill.credit")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="creditSubject" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate"
+                         data-beforeInitResiveData="subjectNameInit" data-defaultvalue="$!{voucherCash.creditSubject}"
+                         data-callback="setCreditSubjectRequired"
+                         data-valuefield="id" data-textfield="subjectNameShow" data-biz-name="creditSubject">
+                    </div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage("finacial.paramconfig.credit.CashFlow.Item")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="creditItem" data-url="${basePath}/finacial/paramconfig/cashItem/listAllFcCashItem"
+                         data-method="post" data-defaultvalue="$!{voucherCash.creditItem}"
+                         data-valuefield="id" data-textfield="itemName" data-biz-name="creditItem">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage("table.ratItemCustom.remark")</td>
+            <td colspan="3">
+                <input type="text" name="rmk" value="$!{voucherCash.rmk}" class="layui-input" style="width: 100%" maxlength="50" placeholder="#springMessage('finacial.paramconfig.fcCashItem.itemName')">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage("table.erpDataType.validSign")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="radio" data-group="valid_sign" data-defaultvalue="$!{voucherCash.validSign}" data-name="validSign"></div>
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage("common.button.submit")</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage("common.button.reset")</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    var selectType;
+    bt.use(['form','layedit','corp','selectType','dicts'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.dicts.init();
+        selectType = bt.selectType.init();
+        //监听提交
+        form.on('submit(submit)', function(data){
+            if (isEmpty(data.field.debitSubject) && isEmpty(data.field.creditSubject)) {
+                parent.layer.alert(bt.lang("finacial.paramconfig.select.subject"), {icon: 2})
+                return false
+            }
+            if (isEmpty(data.field.debitItem) && isEmpty(data.field.creditItem)) {
+                parent.layer.alert(bt.lang("finacial.paramconfig.select.cashflow.item"), {icon: 2})
+                return false
+            }
+            bt.loading.show();//显示加载中
+            //判断长度
+            var action = "/finacial/paramconfig/voucherCash/submit";
+            $.post(basePath + action,data.field,function(result){
+                if(result.success){
+                    parent.layer?parent.layer.closeAll():layer.closeAll();
+                }
+                bt.loading.hide(); //关闭加载中
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+            return false;
+        });
+
+    });
+
+    /**
+     * 重定义显示科目数据
+     * @param data
+     * @returns {*}
+     */
+    function subjectNameInit(data){
+        $.each(data, function (index, item) {
+            item.subjectNameShow = item.subjectCode + "-" + item.subjectName;
+        });
+        return data;
+    }
+
+    /**
+     * 判断为空
+     * @param value
+     * @returns {boolean}
+     */
+    function isEmpty(value) {
+        if (value === undefined || value === null || value === "" || value === " ") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 判断非空
+     * @param value
+     * @returns {boolean}
+     */
+    function isNotEmpty(value) {
+        return !isEmpty(value);
+    }
+
+    /**
+     * 设置现金流项目必填
+     */
+    function setDebitItemRequired() {
+        var debitSubject = selectType.get("debitSubject").getData();
+        if (null != debitSubject.obj && "1" == debitSubject.obj.isCashItem) {
+            selectType.get("debitItem").attr({"data-required": true,"data-defaultvalue": ""});
+        } else {
+            selectType.get("debitItem").attr({"data-required": false, "data-defaultvalue": ""});
+        }
+        form.renderIcon();
+    }
+
+    /**
+     * 设置现金流项目必填
+     */
+    function setCreditSubjectRequired() {
+        var creditSubject = selectType.get("creditSubject").getData();
+        if (null != creditSubject.obj && "1" == creditSubject.obj.isCashItem) {
+            selectType.get("creditItem").attr({"data-defaultvalue": "","data-required": true});
+        } else {
+            selectType.get("creditItem").attr({"data-defaultvalue": "","data-required": false});
+        }
+        form.renderIcon();
+    }
+</script>

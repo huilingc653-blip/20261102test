@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+                    ##生效日期
+                    <td class="textRight">#springMessage('table.tbBaseRate.timeoftakeeffect')</td>
+                    <td width="30%">
+                   		 <div class=layui-inline>
+                         	<input type="text" name="ged_timeOfTakeEffect" class="layui-input bt-input-inline bt-biz-dateType" data-endid="timeOfTakeEffect"  style="float: left">
+                       			<div class="date-mid"  style="float: left">~</div>
+                         	<input type="text" name="led_timeOfTakeEffect" class="layui-input bt-input-inline bt-biz-dateType" id="timeOfTakeEffect"  style="float: left">
+                   		</div>
+                    </td>
+                    ##基准类型名称
+                    <td class="textRight">#springMessage('table.tbBaseRate.Interest.rate.type.name')</td>
+                    <td width="30%">
+                        <div class="layui-input-inline">
+                            <input type="text" name="likes_baseTypeName"
+                                    autocomplete="off" class="layui-input" placeholder="#springMessage('table.tbBaseRate.Interest.rate.type.name')">
+                        </div>
+                    </td>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.tbBaseRate.code')</th>
+        <th>#springMessage('table.tbBaseRate.Interest.rate.type.name')</th>
+        <th>#springMessage('table.tbBaseRate.timeoftakeeffect')</th>
+        <th>#springMessage('table.tbBaseRate.isRmb')</th>
+        <th>#springMessage('table.tbBaseRate.rmk')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','btdate','dateType'], function(){
+	var dateType = bt.dateType.init();
+    $ = bt.jquery,form = bt.form();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+
+       // checkbox:true,order: [1,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/rate/tbbaserate/datatable"
+        },
+        buttons: [
+            {
+                text: bt.lang('common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            },/*{
+                text: bt.lang('common.button.edit'),
+                action: function ( e, dt, node, config ) {
+                    var data = dt.rows('.selected').data();
+                    var len = data.length;
+                    var rowData = data.splice(0,len);
+                    layer.msg(JSON.stringify(rowData));
+                }
+            },*/{
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ],
+        fixedColumns: {
+            rightColumns:1//代表冻结右边一列
+        }
+        ,columns: [
+            {data:"code",bSortable:true},
+            {data:"baseTypeName",bSortable:true},
+            {data:"timeOfTakeEffect",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+                    var isBankBaseRate = bt.date.format(full.timeOfTakeEffect.substr(0,10), "yyyy-MM-dd");
+                    return isBankBaseRate;
+       			}
+            },
+            {data:"isBankBaseRate",bSortable:true,
+       			render: function ( data, type, full, meta ) {
+            		var isBankBaseRate = bt.dict("sf_yn",full.isBankBaseRate);
+                    return isBankBaseRate;
+       			}
+            },
+            {data:"rmk",bSortable:true},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a> '
+                html += '<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a> ';
+                if(full.isBankBaseRate != 1 && full.code != "lpr"){
+                	html +='<a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                }
+                return html;
+            }}
+        ]
+    });
+    //时间
+    $.each($("div[type='date']"),function(i,item){
+        bt.btdate.init({
+            elem: "[field='"+$(item).attr("field")+"']",
+            name: $(item).attr("field"),
+            start: $(item).attr("defaultVal"),
+            format: "YYYY-MM-DD",
+            istime: false
+        });
+    });
+    $.each($("div[type='datetime']"),function(i,item){
+        bt.btdate.init({
+            elem: "[field='"+$(item).attr("field")+"']",
+            name: $(item).attr("field"),
+            start: $(item).attr("defaultVal"),
+            format: "YYYY-MM-DD hh:mm:ss",
+            istime: true
+        });
+    });
+});
+function add(){
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/rate/tbbaserate/add");
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/rate/tbbaserate/add",
+        end:function(){
+            datatable && datatable.draw();
+        }
+    });
+}
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/rate/tbbaserate/view/" + data.id
+    });
+}
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/rate/tbbaserate/update?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/rate/tbbaserate/update?id=" + data.id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+function deleteColumn(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+        $.post(basePath + "/rate/tbbaserate/delete/" + data.id, function(result){
+        	bt.navtab.refreshCurrentTable();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+</script>
+</html>

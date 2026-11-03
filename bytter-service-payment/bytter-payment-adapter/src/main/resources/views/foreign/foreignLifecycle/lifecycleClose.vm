@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<div class="web-body">
+    <form class="layui-form" method="post" id="inputForm">
+        <input type="hidden" name = "id" id = "id" value="$!{vo.id}"/>
+        <input type="hidden" name = "opType" value="6">
+        <input type="hidden" id ="status"  value="0">
+        <input type="hidden" id ="reqId" name = "reqId" value="$!{fexTranReq.id}">
+        <input type="hidden" id ="corpId" name = "corpId" value="$!{fexTranReq.corpId}">
+        ## 付款账号
+        <input type="hidden" id="srcBankAcc" value="$!{fexTranReq.srcBankAcc}">
+        ## 收款账号
+        <input type="hidden" id="corpBankAcc" value="$!{fexTranReq.corpBankAcc}">
+        ## 产品ID
+        <input type="hidden" id="proId"  value="$!{fexTranReq.proId}">
+        ##交易货币对
+        <input type="hidden" id = "tranCurPairIdName" value="$!{fexTranReq.tranCurPairIdName}"/>
+        ## 即期是否计算损益
+        <input type="hidden" id = "isProfitAndLoss" value="$!{isProfitAndLoss}"/>
+        ##报价方式
+        <input type="hidden" id = "quotationMethod" value="$!{fexTranReq.quotationMethod}"/>
+        <input type="hidden" id="isShowConvert" value="$!{isShowConvert}">
+        <input type="hidden" id ="buyCurId" name = "buyCurId" value="$!{vo.buyCurId}">
+        <input type="hidden" id ="sellCurId" name = "sellCurId" value="$!{vo.sellCurId}">
+        <input type="hidden" id ="contractRate" name = "contractRate" value="$!{vo.contractRate}">
+        <input type="hidden" id ="spotRate" name = "spotRate" value="$!{vo.spotRate}">
+        <input type="hidden" id ="fexTranType"  value="$!{fexTranReq.fexTranType}">
+        <input type="hidden" id ="tranType"  value="$!{fexTranReq.tranType}">
+        <input type="hidden" id="isSwapTran"  value="$!{fexTranReq.isSwapTran}">
+        <!-- 主体单位账户信息 -->
+        <input type="hidden" id="corpBank" value="$!{fexTranReq.corpBank}">
+        <input type="hidden" id="updownDirection" value="$!{fexTranReq.updownDirection}">
+
+        <div class="layui-collapse">
+            <div class="layui-colla-item">
+                ##合约信息
+                <h2 class="layui-colla-title">#springMessage('table.fexTranLifeCycle.contractInfo')</h2>
+                <div class="layui-colla-content layui-show">
+                    <table class="layui-table breakRow">
+                        <tbody>
+                        <tr>
+                            ##交易号码
+                            <td class="textRight" width="20%">#springMessage('table.fexTranReq.billNo')</td>
+                            <td width="30%">
+                                <a class="" href="#" onclick="viewBill('$!{fexTranReq.id}')">
+                                    $!{fexTranReq.billNo}
+                                </a>
+                            </td>
+
+                            #if($!{fexTranReq.tranType}=="1")
+                                ##结算日期
+                                <td class="textRight" width="20%">#springMessage('table.fcSubjectDay.optDate')</td>
+                                <td width="30%">
+                                    $!date.format('yyyy-MM-dd',$!{fexTranReq.settleDate})
+                                </td>
+                            #elseif($!{fexTranReq.tranType}=="2")
+                                ##到期日期
+                                <td class="textRight" width="20%">#springMessage('fex.tranApp.expirationDate')</td>
+                                <td width="30%">$!date.format('yyyy-MM-dd',$!{fexTranReq.expiresDate})</td>
+                            #end
+
+                        </tr>
+                        <tr>
+                            ##交割类型
+                            <td class="textRight">#springMessage('table.fexTranReq.deliveryType')</td>
+                            <td>
+                                $dictTag.get("fexProduct.deliveryType",${fexTranReq.deliveryType})
+                            </td>
+                            ##买卖方向
+                            <td class="textRight" width="20%">#springMessage('fex.tranApp2.businessDirection')</td>
+                            <td width="30%">
+                                $dictTag.get("fexTranDeal.deliverySign",$!{fexTranReq.busDirection})
+                                <input type="hidden" id = "busDirection" value="$!{fexTranReq.busDirection}">
+                            </td>
+                        </tr>
+                        #if($!{fexTranReq.tranType}=="2")
+                            <tr>
+                                ##外汇期权品种
+                                <td class="textRight">#springMessage('table.fexProduct.fexOption')</td>
+                                <td>
+                                    $dictTag.get("fexProduct.fexOption1",$!{fexTranReq.fexOption1})&nbsp;
+                                    $dictTag.get("fexProduct.fexOption2",$!{fexTranReq.fexOption2})&nbsp;
+                                    $dictTag.get("fexProduct.fexOption3",$!{fexTranReq.fexOption3})
+                                </td>
+                                ##外汇期权类型
+                                <td class="textRight">#springMessage('table.fexProduct.fexOptionType')</td>
+                                <td>$dictTag.get("fexProduct.fexOptionType",$!{fexTranReq.fexOptionType})</td>
+                            </tr>
+                        #end
+                        <tr>
+                            <td class="textRight" width="20%">#springMessage('fex.tranApp.currencyPairs')</td>
+                            <td width="30%">
+                                $!{fexTranReq.tranCurPairIdName}
+                                <input type="hidden" id="curr   encyPairName" name="currencyPairName" value="$!{fexTranReq.tranCurPairIdName}">
+                                <input id="tranCurPairBaseId" name="tranCurPairBaseId" type="hidden" value="$!{fexTranReq.tranCurPairBaseId}">
+                                <input id="tranCurPairReferId" name="tranCurPairReferId" type="hidden" value="$!{fexTranReq.tranCurPairReferId}">
+                            </td>
+                            ##报价方式
+                            <td class="textRight" width="20%">#springMessage('fex.tranApp.quotationMethod')</td>
+                            <td width="30%">
+                                <div class="layui-input-inline">
+                                    $!{fexTranReq.quotationMethod}
+                                    <input type="hidden" id="quotationMethod" name="quotationMethod" value="$!{fexTranReq.quotationMethod}" />
+                                    <input id="quotationCurId" name="quotationCurId" type="hidden" value="$!{fexTranReq.quotationCurId}">
+                                    <input id="quotationReferCurId" name="quotationReferCurId" type="hidden" value="$!{fexTranReq.quotationReferCurId}">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            #if($!{fexTranReq.tranType}=="1")
+                                <td class="textRight" width="20%">#springMessage('table.fexTranReq.contractRate')</td>
+                                <td width="30%">
+                                    $!number.formatNumeric($!{vo.contractRate},"#0.000000")
+                                </td>
+                            #elseif($!{fexTranReq.tranType}=="2")
+                                ##执行汇率
+                                <td class="textRight" width="20%">#springMessage('fex.tranApp.executeExchangeRate')</td>
+                                <td width="30%">$!number.formatDoubles($!{fexTranReq.contractRate},6)</td>
+                            #end
+
+                            #if($!{fexTranReq.tranType}=="1")
+                                <td class="textRight" width="20%">#springMessage('table.fexTranReq.positionMoney')</td>
+                                <td width="30%">
+                                    $!number.formatNumeric( $!{fexTranReq.positionMoney})
+                                    <input type="hidden" id="positionMoney" value="$!{fexTranReq.positionMoney}">
+                                </td>
+                            #elseif($!{fexTranReq.tranType}=="2")
+                                ##涨跌方向
+                                <td class="textRight">#springMessage('fex.tranApp2.upAndDownDirection')</td>
+                                <td>$dictTag.get("fex.tranApp2.updownDirection",$!{fexTranReq.updownDirection})</td>
+                            #end
+                        </tr>
+                        <tr>
+                            #if($!{fexTranReq.tranType}=="2")
+                                <td class="textRight" width="20%">#springMessage('table.fexTranReq.positionMoney')</td>
+                                <td width="30%">
+                                    $!number.formatNumeric( $!{fexTranReq.positionMoney})
+                                    <input type="hidden" id="positionMoney" value="$!{fexTranReq.positionMoney}">
+                                </td>
+                            #end
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">#springMessage('table.fexTranLifeCycle.info')</h2>
+                <div class="layui-colla-content layui-show">
+                    <table class="layui-table breakRow">
+                        <tbody>
+                        <tr>
+                            <td class="textRight" width="20%">#springMessage('table.fexTranLifeCycle.billNo')</td>
+                            <td width="30%">
+                                $!{vo.billNo}
+                            </td>
+                            <td class="textRight" width="20%">#springMessage('table.nisMessage.messageType')</td>
+                            <td width="30%">
+                                $dictTag.get("fexProduct.lifeCycle",${vo.opType})
+                                <div class="layui-input-inline">
+                                    <input type="hidden" id="opType" name="opType" value="$!{vo.opType}"/>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##操作日期
+                            <td class="textRight" width="20%">#springMessage('table.nisMessage.enrolDate')</td>
+                            <td width="30%">
+                                <div class="layui-input-inline">
+                                    <input type="text" name="opDate" lay-verify="required" class="layui-input bt-biz-dateType"
+                                           value="$!date.format('yyyy-MM-dd',$!{vo.opDate})"  data-type="date"
+                                           data-endid="settleDate"
+                                           data-name="opDate" data-biz-name="opDate" data-min="$!{fexTranReq.tranDate}" data-max="$!{fexTranReq.settleDate}">
+                                </div>
+                            </td>
+                            ##结算日期
+                            <td class="textRight" width="20%">#springMessage('table.fcSubjectDay.optDate')</td>
+                            <td width="30%">
+                                <div class="layui-input-inline">
+                                    <input type="text" id="settleDate" name="settleDate"  data-name="settleDate" data-biz-name="settleDate" value="$!date.format('yyyy-MM-dd',$!{fexTranReq.settleDate})"
+                                           data-type="date" lay-verify="required" class="layui-input bt-biz-dateType" data-callback="bt.settleDateCallback">
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">#springMessage('table.fexTranReq.amtDtl')</h2>
+                <div class="layui-colla-content layui-show">
+                    <table class="layui-table layui-table-border">
+                        <thead>
+                        <tr>
+                            <th width="15%">#springMessage('table.foreign.currency')</th>
+                            <th width="15%">#springMessage('table.fcOutAccbook.direction')<div class="layui-input-inline" style="margin-left: 6px;">
+                                <i id="direction-desc" class="layui-icon">&#xe60b;</i>
+                            </div></th>
+                            <th width="35%"><span class="pl"><span class="required-icon">*</span></span>#springMessage('billPool.Limit.opMoney')</th>
+                            <th width="35%">#springMessage('table.bisAccBal.bal')</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            #if($!{fexTranReq.tranType}=="1")
+                                #if($!{fexTranReq.busDirection}=="1")
+                                    <tr>
+                                        <td>$!{vo.buyCurCode}</td>
+                                        <td>#springMessage('table.fexTranReq.direction.buy')</td>
+                                        <td><input type="text" id="firstMoney" data-name="buyMoney" data-biz-name="buyMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.firstMoneyCallback"  value="$!{vo.buyMoney}" data-max="$!{fexTranReq.positionMoney}"></td>
+                                        <td>
+                                            <input type="text" id="firstBal" data-name="buyBal" data-biz-name="buyBal" autocomplete="off" value="0.0" class="layui-input bt-biz-moneyType" readonly>
+                                        </td>
+                                        <input type="hidden" id="opMoney" name="opMoney" value="$!{vo.buyMoney}">
+                                    </tr>
+                                    <tr>
+                                        <td>$!{vo.sellCurCode}</td>
+                                        <td >#springMessage('table.fexTranReq.direction.sell')</td>
+                                        <td>
+                                            <input type="text" id="secondMoney" data-name="sellMoney" data-biz-name="sellMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.secondMoneyCallback" value="$!{vo.sellMoney}" data-max="$!{maxOpMoney}">
+                                        </td>
+                                        <td width="42%">
+                                            <input type="text" id="secondBal" data-name="sellBal" data-biz-name="sellBal" autocomplete="off" class="layui-input bt-biz-moneyType" readonly>
+                                        </td>
+                                    </tr>
+                                #else
+                                    <tr>
+                                        <td >$!{vo.sellCurCode}</td>
+                                        <td >#springMessage('table.fexTranReq.direction.sell')</td>
+                                        <td>
+                                            <input type="text" id="firstMoney" data-name="sellMoney" data-biz-name="sellMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.firstMoneyCallback" value="$!{vo.sellMoney}" data-max="$!{fexTranReq.positionMoney}">
+                                        </td>
+                                        <td width="42%">
+                                            <input type="text" id="firstBal" data-name="sellBal" data-biz-name="sellBal" autocomplete="off" class="layui-input bt-biz-moneyType" value="0.0" readonly>
+                                        </td>
+                                        <input type="hidden" id="opMoney" name="opMoney" value="$!{vo.sellMoney}">
+                                    </tr>
+                                    <tr>
+                                        <td>$!{vo.buyCurCode}</td>
+                                        <td>#springMessage('table.fexTranReq.direction.buy')</td>
+                                        <td><input type="text" id="secondMoney" data-name="buyMoney" data-biz-name="buyMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.secondMoneyCallback" value="$!{vo.buyMoney}" data-max="$!{maxOpMoney}"></td>
+                                        <td>
+                                            <input type="text" id="secondBal" data-name="buyBal" data-biz-name="buyBal" autocomplete="off" class="layui-input bt-biz-moneyType" readonly>
+                                        </td>
+                                    </tr>
+                                #end
+                            #else
+                                #if(($!{fexTranReq.busDirection}=="1" && $!{fexTranReq.updownDirection}=="0") ||
+                                ($!{fexTranReq.busDirection}=="2" && $!{fexTranReq.updownDirection}=="1"))
+                                    <tr>
+                                        <td>$!{fexTranReq.tranCurPairBaseCode}</td>##交易货币对左侧币种
+                                        <td>#springMessage('table.fexTranReq.direction.buy')</td>
+                                        <td><input type="text" id="firstMoney" data-name="buyMoney" data-biz-name="buyMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.firstMoneyCallback"  value="$!{vo.buyMoney}" data-max="$!{fexTranReq.positionMoney}"></td>
+                                        <td>
+                                            <input type="text" id="firstBal" data-name="buyBal" data-biz-name="buyBal" autocomplete="off" value="0.0" class="layui-input bt-biz-moneyType" readonly>
+                                        </td>
+                                        <input type="hidden" id="opMoney" name="opMoney" value="$!{vo.buyMoney}">
+                                    </tr>
+                                    <tr>
+                                        <td>$!{fexTranReq.tranCurPairReferCode}</td>##交易货币对右侧币种
+                                        <td >#springMessage('table.fexTranReq.direction.sell')</td>
+                                        <td>
+                                            <input type="text" id="secondMoney" data-name="sellMoney" data-biz-name="sellMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.secondMoneyCallback" value="$!{vo.sellMoney}" data-max="$!{secondOpMoneyMax}">
+                                        </td>
+                                        <td width="42%">
+                                            <input type="text" id="secondBal" data-name="sellBal" data-biz-name="sellBal" autocomplete="off" class="layui-input bt-biz-moneyType" readonly>
+                                        </td>
+                                    </tr>
+                                #else
+                                    <tr>
+                                        <td >$!{fexTranReq.tranCurPairBaseCode}</td>##交易货币对左侧币种
+                                        <td >#springMessage('table.fexTranReq.direction.sell')</td>
+                                        <td>
+                                            <input type="text" id="firstMoney" data-name="sellMoney" data-biz-name="sellMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.firstMoneyCallback" value="$!{vo.sellMoney}" data-max="$!{fexTranReq.positionMoney}">
+                                        </td>
+                                        <td width="42%">
+                                            <input type="text" id="firstBal" data-name="sellBal" data-biz-name="sellBal" autocomplete="off" class="layui-input bt-biz-moneyType" value="0.0" readonly>
+                                        </td>
+                                        <input type="hidden" id="opMoney" name="opMoney" value="$!{vo.sellMoney}">
+                                    </tr>
+                                    <tr>
+                                        <td>$!{fexTranReq.tranCurPairReferCode}</td>##交易货币对右侧币种
+                                        <td>#springMessage('table.fexTranReq.direction.buy')</td>
+                                        <td><input type="text" id="secondMoney" data-name="buyMoney" data-biz-name="buyMoney" autocomplete="off" class="layui-input bt-biz-moneyType"
+                                                   data-callback="bt.secondMoneyCallback" value="$!{vo.buyMoney}" data-max="$!{secondOpMoneyMax}"></td>
+                                        <td>
+                                            <input type="text" id="secondBal" data-name="buyBal" data-biz-name="buyBal" autocomplete="off" class="layui-input bt-biz-moneyType" readonly>
+                                        </td>
+                                    </tr>
+                                #end
+                            #end
+                        </tbody>
+                    </table>
+                    <table class="layui-table breakRow">
+                        <tbody>
+                        <tr>
+                            ##平仓远期汇率
+                            <td class="textRight">#springMessage('table.fexTranReq.closeRate')</td>
+                            <td>
+                                <input type="text" name="closeRate" data-name="closeRate" data-biz-name="closeRate" class="layui-input bt-biz-moneyType" lay-verify="required" value="$!{vo.closeRate}"
+                                       data-callback="bt.closeRateCallback" data-decimal="6">
+                            </td>
+                            ##结算币种
+                            <td class="textRight">#springMessage('table.fexTranDeal.settleCurId')</td>
+                            <td>
+                                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                                     data-displayData="$!{fexTranReq.tranCurPairBaseId},$!{fexTranReq.tranCurPairReferId}" data-name ="curId" data-biz-name ="curId"
+                                     data-required="true" data-valueField="id" data-textField="englishCode" data-callback="bt.settleCurCallback"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##结算金额
+                            <td class="textRight">#springMessage('table.fexTranDeal.settleMoney')</td>
+                            <td>
+                                <input type="text" id = "settleMoney" data-minus="true" data-name="money" data-biz-name="money"
+                                       data-callback="bt.settleMoneyCallback" class="layui-input bt-biz-moneyType" lay-verify="required" value="$!{vo.money}">
+                            </td>
+                            ##结算账号
+                            <td class="textRight">#springMessage('table.fexTranDeal.settleBankAcc')</td>
+                            <td>
+                                <input type="text" id="bankAcc" name="bankAcc"
+                                       lay-verify="tableData|required" data-biz-name="bankAcc"
+                                       value=""
+                                       autocomplete="off" class="layui-input text"
+                                       placeholder="#springMessage('table.nisBillhead.payerAcc')"
+                                       data-swapType="">
+                                <table id="bankAccTable" class="hide">
+                                    <thead>
+                                    <tr>
+                                        <th>#springMessage('table.choBankFinance.acc')</th>
+                                        <th>#springMessage('table.btBankAccApp.accName')</th>
+                                        <th>#springMessage('table.btBankAcc.bankName')</th>
+                                        <th>#springMessage('table.nisBillhead.curId')</th>
+                                    </tr>
+                                    </thead>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr class="recordRateTd">
+                            ##操作日记账汇率
+                            <td class="textRight">#springMessage('table.fexTranDeal.recordRate')</td>
+                            <td>
+                                <input type="text" name="recordRate" data-name="recordRate" data-biz-name="recordRate" class="layui-input bt-biz-moneyType"
+                                       lay-verify="required" value="$!{vo.recordRate}" data-callback="bt.recordRateCallback" data-decimal="6">
+                            </td>
+                        </tr>
+                        <tr>
+                            ##损益币种
+                            <td class="textRight">#springMessage('table.fexTranReq.profitLossCur')</td>
+                            <td>
+                                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="profitLossCurCode" data-biz-name ="profitLossCurCode"
+                                     data-required="true" data-disabled="true"
+                                     data-valueField="id" data-textField="englishCode" data-defaultvalue="$!{vo.profitLossCur}"></div>
+                                <input type="hidden" id="profitLossCur" name="profitLossCur" value="$!{vo.profitLossCur}">
+                            </td>
+                            ##损益
+                            <td class="textRight">#springMessage('table.fexTranReq.profitAndLoss')</td>
+                            <td><input type="text" id = "profitLossMoney" data-minus="true" data-name="profitLossMoney" data-biz-name="profitLossMoney" class="layui-input bt-biz-moneyType"
+                                       lay-verify="required" value="0" data-callback="bt.profitLossMoneyCallback"></td>
+                        </tr>
+                        #if("Y" == $!{isShowConvert})
+                            <tr>
+                                ##折本位币报价方式
+                                <td class="textRight">#springMessage('table.fexTranReq.convertQuotationMethod')</td>
+                                <td><input type="text"  name="convertCurType" class="layui-input" lay-verify="required" value="$!{corpCurQuoMethod}" readonly></td>
+                                ##折本位币汇率
+                                <td class="textRight">#springMessage('table.fexTranReq.convertBaseCurRate')</td>
+                                <td><input type="text" data-name="convertRate" data-biz-name="convertRate" class="layui-input bt-biz-moneyType"
+                                           lay-verify="required" value="$!{convertRate}" data-callback="bt.convertRateCallback" data-decimal="6"></td>
+                            </tr>
+                            <tr>
+                                ##折本位币损益
+                                <td class="textRight">#springMessage('table.fexTranReq.convertBasePAndL')</td>
+                                <td><input type="text" id = "convertLossMoney" data-minus="true" data-name="convertLossMoney" data-biz-name="convertLossMoney" class="layui-input bt-biz-moneyType" lay-verify="required" value="0"></td>
+                            </tr>
+                        #end
+                        <tr>
+                            ##申请人
+                            <td class="textRight">#springMessage('table.fexTranReq.dealer')</td>
+                            <td>
+                                $!{dealer}
+                            </td>
+                            ##交易地点
+                            <td class="textRight" width="20%">#springMessage('table.fexTranReq.tranAddr')</td>
+                            <td width="30%">
+                                <div class="layui-input-inline">
+                                    <input id="tranAddrId" name="tranAddrId" type="hidden" value="$!{fexTranReq.tranAddrId}">
+                                    <input type="text" id="tranAddr" name="tranAddr" #*lay-verify="tableData"*# data-biz-name="tranAddr"
+                                           autocomplete="off" class="layui-input text" placeholder="#springMessage('table.fexTranReq.tranAddr')" value="$!{fexTranReq.tranAddr}">
+                                    <table id="tranAddrTable" class="hide">
+                                        <thead>
+                                        <tr>
+                                            <th>#springMessage('table.tbCreditPeriod.code')</th>
+                                            <th>#springMessage('table.btswiftinfo.namezh')</th>
+                                            <th>#springMessage('table.btswiftinfo.nameen')</th>
+                                        </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##备注
+                            <td class="textRight">#springMessage('fcVoucherType.rmk')</td>
+                            <td colspan="3">
+                                        <textarea placeholder="#springMessage('bisAccAttribute.rmk')"
+                                                  class="layui-textarea" lay-verify="strlength" data-maxlength="200"
+                                                  style="width:100%" id="rmk"
+                                                  name="rmk"></textarea>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; padding-top: 10px;">
+            <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('common.button.submit')</button>
+            <button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage('common.button.temp')</button>
+            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+        </div>
+    </form>
+</div>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/foreign/foreignLifecycle/foreignLifecycle.close.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/foreign/foreignLifecycle/viewBill.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

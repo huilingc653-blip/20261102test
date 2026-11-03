@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden"  id="rmbCur" value="$!{rmbCur.id}">
+    <table class="layui-table">
+            <tbody>
+            <tr>
+            ##单位名称
+                <td class="textRight">#springMessage('table.nisPersonnelDetail.corpId')</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-tree-type="check"
+                             data-type="selectTree"
+                             data-name="corpId"
+                             data-scope="all"
+                             data-biz-name="corpId"
+                             data-resource="netbank:report:fundsBalanceStatistics:query"
+                             data-defaultvalue="$!{corpId}"></div>
+                    </div>
+                </td>
+                ##查询时间
+                <td class="textRight">#springMessage('netbanck.reporter.checktime')</td>
+                <td>
+                    <input type="text" name="led_queryDate" data-type="date" data-biz-name="led_queryDate"
+                           class="layui-input bt-biz-dateType" id="led_queryDate" data-today="true">
+                </td>
+                <td class="textRight">#springMessage('table.btBankAccDtl.curName')</td>
+                <td>
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-name ="curId" data-biz-name ="curId"  data-valueField="id" data-textField="curName"></div>
+                </td>
+            </tr>
+            <tr>
+                ##是否折合币种
+                <td class="textRight">#springMessage("common.isConvert.currency")</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="changeCur"
+                         data-biz-name="changeCur" data-callback="callToCurr"
+                         data-defaultvalue="0"></div>
+                </td>
+                ##折合币种
+                <td class="textRight">#springMessage("commom.converted.into.currency")</td>
+                <td>
+                    <div class="bt-biz-selectType"
+                         data-biz-name="reducedCurId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id"
+                         data-textfield="curName"
+                         data-name="reducedCurId"
+                         data-search="true"
+                         data-disabled = "true"
+                         data-callback="checkConvertCurCallBack"
+                    ></div>
+                </td>
+                ##折算汇率类型
+                <td class="textRight">#springMessage('table.fexForeign.report.convert.rateType')</td>
+                <td>
+                    <div type="list" data-name="rateType" class="bt-biz-selectType" data-disabled = "true" data-name="rateType" data-biz-name="rateType"
+                         data-url="${basePath}/basic/business/btratetype/json" data-valueField="id" data-textField="typeName" data-callback="checkConvertCurCallBack"></div>
+                </td>
+            </tr>
+            <tr>
+                ##汇率日期
+                <td class="textRight">#springMessage('report.fcExcrateAdjust.preTime')</td>
+                <td>
+                    <input type="text" name="rateDate"  class="layui-input bt-input-inline bt-biz-dateType" data-callback="checkConvertCurCallBack"
+                           data-endid="rateDate" data-biz-name="rateDate" data-today="true" readonly="readonly">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6" style="text-align: center;">
+                    <button class="layui-btn" lay-submit="" lay-filter="search">#springMessage(
+                        'common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary" onclick="restCurr()">#springMessage(
+                        'common.button.reset')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+        <tr class="title">
+            <th rowspan="2">#springMessage('table.fbsBudget.corpId')</th>
+            <th rowspan="2">#springMessage('table.fbsBudgetDetail.curId')</th>
+            <th colspan="5">#springMessage('fundsBalanceStatistics.InternalDeposit')</th>##内部存款
+            <th colspan="$!{size}">#springMessage('fundsBalanceStatistics.banksDeposit')</th>##银行存款
+        </tr>
+        <tr class="title">
+            <th>#springMessage('common.subject.day.moeny')</th>##现金
+            <th>#springMessage('fundsBalanceStatistics.current')</th>##活期
+            <th>#springMessage('fundsBalanceStatistics.regular')</th>##定期
+            <th>#springMessage('sys.notification.notify')</th>##通知
+            <th>#springMessage('fundsBalanceStatistics.InternalDepositTotal')</th>##内部资金合计
+            #foreach($data in $dictList)
+                <th>$!{data.name}</th>
+            #end
+            <th>#springMessage('fundsBalanceStatistics.banksDepositTotal')</th>##银行存款合计
+        </tr>
+    </thead>
+</table>
+</body>
+    #parse("views/common/footer.vm")
+<script language="javascript" type="text/javascript">
+    var dateType;
+    var selectType,form;
+    bt.use(['form', 'datatable', 'dateType', 'selectType', 'moneyType', 'corp', 'dicts'], function () {
+        $ = bt.jquery, form = bt.form();
+        corpInit = bt.corp.init();
+        dateType=bt.dateType.init();
+        selectType=bt.selectType.init();
+        moneyType=bt.moneyType.init();
+        moneyFun = bt.moneyType.getFun();
+        dicts = bt.dicts.init();
+
+        //生成列表
+        var bankAccTypeHtml = '';
+        #foreach($data in $dictList)
+            bankAccTypeHtml += bankAccTypeHtml + '<th>$!data.name</th>';
+        #end
+        var htmlx=
+                '<tr class="title">'+
+                '<th rowspan="2">'+bt.lang('table.fbsBudget.corpId')+'</th>'+
+                '<th rowspan="2">'+bt.lang('table.fbsBudgetDetail.curId')+'</th>'+
+                '<th colspan="5">'+bt.lang('fundsBalanceStatistics.InternalDeposit')+'</th>'+
+                '<th colspan="$!{size}">'+bt.lang('fundsBalanceStatistics.banksDeposit')+'</th>'+
+                '<th rowspan="2">'+bt.lang('fundsBalanceStatistics.bill')+'</th>'+
+                '</tr>'+
+                '<tr class="title">'+
+                '<th>'+bt.lang('common.subject.day.moeny')+'</th>'+
+                '<th>'+bt.lang('fundsBalanceStatistics.current')+'</th>'+
+                '<th>'+bt.lang('fundsBalanceStatistics.regular')+'</th>'+
+                '<th>'+bt.lang('sys.notification.notify')+'</th>'+
+                '<th>'+bt.lang('fundsBalanceStatistics.InternalDepositTotal')+'</th>';
+        htmlx = bankAccTypeHtml + '<th>'+bt.lang('fundsBalanceStatistics.banksDepositTotal')+'</th>'+
+                '</tr>';
+
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: false,
+            query: "search",
+            checkbox:false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/report/fundsbalancestatistics/loadData"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            exportFile: {
+                customPrint: {
+                    header: function () {
+                        var printHtml = htmlx;
+                        return printHtml;
+                    },
+                },
+            },
+            columns: [
+                {data:"corpname",bSortable:false,className:'center'},
+                {data:"curname",bSortable:false,className:'center'},
+                {
+                    data: "acctype11", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.acctype11);
+                    }
+                },
+                {
+                    data: "acctype12", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.acctype12);
+                    }
+                },
+                {
+                    data: "acctype13", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.acctype13);
+                    }
+                },
+                {
+                    data: "acctype14", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.acctype14);
+                    }
+                },
+                {
+                    data: "fctotal", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.fctotal);
+                    }
+                },
+                #foreach($data in $dictList)
+                    {
+                        data: "bankacctype$!data.code", bSortable: false, className: "textRight",
+                        render: function (data, type, full, meta) {
+                            return bt.money.format(full.bankacctype$!data.code);
+                        }
+                    },
+                #end
+                {
+                    data: "banktotal", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.banktotal);
+                    }
+                },
+            ],
+            summary:{
+                pageSum:true,
+                groupColumn:'curname',
+                customSum:{
+                    text:function(){
+                        var changeCur = dicts.get("changeCur").val();
+                        if(changeCur=="1") {
+                            return bt.lang('table.fexForeign.report.convert.currency.total');
+                        }
+                        return '';
+                    },
+                    sumCallback:function(currentPageData,colName){ //汇总回调，必须要有返回值
+                        //currentPageData　当前页面数据 colName　当前列名称
+                        var result=0;
+                        if(currentPageData) {
+                            bt.each(currentPageData, function (index, item) {
+                                if (colName == "acctype11") {
+                                    result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.acctype11),moneyFun.toNumber(item.curexrate)));
+                                }
+                                if (colName == "acctype12") {
+                                    result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.acctype12),moneyFun.toNumber(item.curexrate)));
+                                }
+                                if (colName == "acctype13") {
+                                    result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.acctype13),moneyFun.toNumber(item.curexrate)));
+                                }
+                                if (colName == "acctype14") {
+                                    result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.acctype14),moneyFun.toNumber(item.curexrate)));
+                                }
+                                if (colName == "fctotal") {
+                                    result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.fctotal),moneyFun.toNumber(item.curexrate)));
+                                }
+                                #foreach($data in $dictList)
+                                    if (colName == "bankacctype$!{data.code}") {
+                                        result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.bankacctype$!{data.code}),moneyFun.toNumber(item.curexrate)));
+                                    }
+                                #end
+                                if (colName == "banktotal") {
+                                    result = result + moneyFun.toNumber(moneyFun.mul(moneyFun.toNumber(item.banktotal),moneyFun.toNumber(item.curexrate)));
+                                }
+                            });
+                        }
+                        return moneyFun.format(result);
+                    }
+                },
+                sumList:[
+                    {
+                        colNum:'2',
+                        dataName:'acctype11'
+                    },
+                    {
+                        colNum:'3',
+                        dataName:'acctype12'
+                    },
+                    {
+                        colNum:'4',
+                        dataName:'acctype13'
+                    },
+                    {
+                        colNum:'5',
+                        dataName:'acctype14'
+                    },
+                    {
+                        colNum:'6',
+                        dataName:'fctotal'
+                    },
+                    #set($length = 6+$dictList.size())
+                    #foreach($data in $dictList)
+                        #set($curSize = $!{velocityCount} + 6)
+                        {
+                            colNum:'$!{curSize}',
+                            dataName:'bankacctype$!{data.code}'
+                        },
+                    #end
+                    {
+                        colNum:'$length',
+                        dataName:'banktotal'
+                    },
+                ]
+            },
+        });
+    });
+
+    /**
+     * 去年的今天
+     * @returns {Date}
+     */
+        $setTime = function () {
+        var lastTime = new Date();
+        lastTime.setFullYear(lastTime.getFullYear()-1);
+        return lastTime;
+    }
+
+    function callToCurr(data){
+        if(data.value =="1"){
+            selectType.get("reducedCurId").attr({'data-disabled':false,'data-required':true,'data-value':$("#rmbCur").val()});
+            selectType.get("rateType").attr({'data-disabled':false,'data-required':true});
+            dateType.get("rateDate").attr({'readonly':false,'data-required':true});
+        }else {
+            selectType.get("reducedCurId").attr({'data-disabled':true,'data-required':false});
+            selectType.get("rateType").attr({'data-disabled':true,'data-required':false});
+            dateType.get("rateDate").attr({'readonly':true,'data-required':false});
+        }
+        form.render();
+        form.renderIcon();
+    }
+    function restCurr(){//重置
+        selectType.get("reducedCurId").attr({'data-disabled':true,'data-required':false,'data-value':''});
+        selectType.get("rateType").attr({'data-disabled':true,'data-required':false});
+        dateType.get("rateDate").attr({'readonly':true,'data-required':false});
+        form.render();
+        form.renderIcon();
+    }
+    /**
+     * 币种转换校验
+     */
+    function checkConvertCurCallBack() {
+        var curId = selectType.get("curId").val();
+        var reducedCurId = selectType.get("reducedCurId").val();
+        var rateType = selectType.get("rateType").val();
+        var rateDate = dateType.get('rateDate').val();
+        if (isNotEmpty(curId) && isNotEmpty(reducedCurId) && isNotEmpty(rateType) && isNotEmpty(rateDate)) {
+            $.ajax({
+                url: basePath + "/report/allocationsettlement/checkConvertCurId",
+                type:"post",
+                data:{
+                    "origCurId":curId,
+                    "convertCurId": reducedCurId,
+                    "rateType": rateType,
+                    "rateDate": rateDate,
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("reducedCurId").val("");
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " " || stringData == "null") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+</script>
+</html>

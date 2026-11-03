@@ -1,0 +1,924 @@
+#set($basePath=$springMacroRequestContext.contextPath)
+#set($resourceVersion=$resourceVersion.get())
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>$!{companyName}</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    ##<link rel="shortcut icon" href="${basePath}/static/images/favicon.ico" type="image/x-icon"/>
+    <link rel="stylesheet" href="${basePath}/static/fonts/font-awesome/css/font-awesome.min.css" media="all">
+##    <link rel="stylesheet" href="${basePath}/static/back3_4/plugins/layui/css/layui.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet" href="${basePath}/static/plugins/oldLayui/css/layui.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet" href="${basePath}/static/css/oldCss/newIndex.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet" href="${basePath}/static/css/main.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/plugins/scrollbar/jquery.mCustomScrollbar.min.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts2/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts1/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/plugins/jtree.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/css/scrollbar.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/plugins/dad/dad.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/css/home_page.css?_btv=${resourceVersion}"
+          media="all">
+    <script type="text/javascript">var basePath = "${basePath}", basePathAll = window.document.location.href.split(basePath)[0] + basePath;top.webLocale="${locale}"</script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/v3.2/modules/index/world.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/v3.2/modules/index/china.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.min.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/plugins/store/store.legacy.min.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery-ui/jquery-ui1.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/plugins/oldLayui/layui.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript" src="${basePath}/static/js/common1.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.ajax.extend.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript">
+        $.get(basePath + "/sys/corp/initCorpRouter", function (json) {
+        }, 'JSON');
+
+        var bytter_dict = store.get('bytter_dict')
+        if(!bytter_dict){
+            $.get(basePath + "/dict", function (json) {
+                console.log(basePath)
+                if (!json) {
+                    return;
+                }
+                var dict = {};
+                for (var i = 0; i < json.length; i++) {
+                    var temp = json[i];
+                    var tempGroupCode = temp.groupCode;
+                    if (!dict[tempGroupCode]) {
+                        dict[tempGroupCode] = {};
+                    }
+                    if (!dict[tempGroupCode][temp.code]) {
+                        dict[tempGroupCode][temp.code] = {name: temp.name, index: i, code: temp.code};
+                    }
+                }
+                store.remove('bytter_dict');//清除 liuyj 2018-06-05
+                //  store.set('bytter_dict', dict);
+                try{
+                    store.set('bytter_dict', dict);
+                }catch (e) {
+                    bt.dictContext = dict;
+                }
+                //store.set('bytter_dict', JSON.stringify(dict));
+            }, 'JSON');
+        }
+
+        $.post(basePath + "/sys/dict/allDictGroup", function (json) {
+            if (!json) {
+                return;
+            }
+            var dictGroup = new Array();
+            for (var i = 0; i < json.length; i++) {
+                var temp = json[i];
+                if(temp && temp.groupCode){
+                    dictGroup.push({"groupCode":temp.groupCode,"groupName":temp.groupName});
+                }
+            }
+            store.remove('bytter_dictGroup');
+            //store.set('bytter_dictGroup', dictGroup);
+            try{
+                store.set('bytter_dictGroup', dictGroup);
+            }catch (e) {
+                bt.dictContextGroup = dictGroup;
+            }
+        }, 'JSON');
+
+        /**
+         * 获取用户资源权限
+         * 避免使用用户角色资源判断权限，加载太慢导致页面报错
+         * zuoy 2019-06-25
+         * */
+        $.get(basePath + "/userResource", function (json) {
+            if (json) {
+                store.remove('bytter_userresource');
+                //store.set('bytter_userresource', json);
+                try{
+                    bt.userResource = json;
+                    store.set('bytter_userresource', json);
+                }catch (e) {
+                    bt.userResource = json;
+                }
+            }
+        }, 'JSON');
+
+        /**
+         * 获取用户单位资源权限
+         *
+         */
+        $.get(basePath + "/resource", function (json) {
+             if (json) {
+                 try {
+                     store.remove('bytter_resource');//清除 liuyj 2018-06-05
+                     store.set('bytter_resource', json);
+                     bt.userCorpResource = json;
+                 } catch (error) {
+                     //报错则表示store存储的数据大小超出了限制
+                     bt.userCorpResource = json;
+                 }
+             }
+         }, 'JSON');
+        /**
+         * 递归存储特殊资源权限
+         * Created by chenlw on 2019/04/29.
+         *
+         * @param bytter_resource
+         * @param dataLength
+         */
+        function dfsIndexSaveResourcesToStore(bytter_resource, dataLength) {
+            try {
+                var limitLength = dataLength / 2, length = 0;
+                if (limitLength <= 0) {
+                    return;
+                }
+                var bytter_resourceTemp = {};
+                for (var key in bytter_resource) {
+                    if (length < limitLength) {
+                        length++;
+                        bytter_resourceTemp[key] = bytter_resource[key];
+                    }
+                }
+                store.remove('bytter_resource');
+                store.set('bytter_resource', bytter_resourceTemp);
+
+            } catch (error) {
+                //报错则表示store存储的数据大小超出了限制，取数据的一半再次存储，若再次报错，递归下一轮再取一半数据存储。直到不报错或取一半数据的长度变为0。
+                if (dataLength / 2 >= 1) {
+                    dfsIndexSaveResourcesToStore(bytter_resource, dataLength / 2);
+                } else {
+                    store.remove('bytter_resource');
+                    store.set('bytter_resource', {});
+                }
+            }
+        }
+        var bytter_lang = store.get('bytter_lang')
+        if(!bytter_lang){
+            $.ajax({
+                url: basePath + "/lang", type: 'get', async: false, dataType: 'json',
+                success: function (json) {
+                    if (!json) {
+                        return;
+                    }
+                    var lang =  {};
+                    for (var i = 0; i < json.length; i++) {
+                        lang[json[i].langKey] = json[i].langContext;
+                    }
+                    window.mutiLang = lang;
+                    store.remove('bytter_lang');//清除 liuyj 2018-06-05
+                    bt.bytterMutiLang = lang;
+                    // store.set('bytter_lang', lang);
+                    try {
+                        store.set('bytter_lang', lang)
+                    }catch (e) {
+
+                    }
+                }
+            });
+        }else{
+            window.mutiLang = bytter_lang;
+            bt.bytterMutiLang = bytter_lang;
+        }
+
+
+        //获取拥有批量撤消功能的url集合,并存贮在bt.tablUrl中
+        var url = basePath + '/bpm/flowCategory/revokableUrl';
+        $.get(url, function (res) {
+            if (res) {
+                bt.tableUrl = res;
+            }
+        }, "json");
+        //获取汇率小数位数
+        $.ajaxSettings.async = false;
+        var paramsConvert = {
+            typeId: "40439bffb86146d8a12ebfc05e23a785"
+        };
+        $.post(basePath +"/basic/business/btratetype/getRateDecimalPlaces", paramsConvert, function (result) {
+            if(result){
+                store.remove('bytter_excRateConvert');
+                //store.set('bytter_excRateConvert', result);
+                try {
+                    store.set('bytter_excRateConvert', result);
+                    bt.excRateConvert = result;
+                }catch (e) {
+                    bt.excRateConvert = result;
+                }
+            }
+        }, 'JSON');
+        var paramsBudget = {
+            typeId: "927d1b39382c4078987ddd1561428c71"
+        };
+        $.post(basePath +"/basic/business/btratetype/getRateDecimalPlaces", paramsBudget, function (result) {
+            if(result){
+                store.remove('bytter_excRateBudget');
+                // store.set('bytter_excRateBudget', result);
+                try {
+                    store.set('bytter_excRateBudget', result);
+                    bt.excRateBudget = result;
+                }catch (e) {
+                    bt.excRateBudget = result;
+                }
+            }
+        }, 'JSON');
+        $.ajaxSettings.async = true;
+
+    </script>
+    <script type="text/javascript" src="${basePath}/static/plugins/bytter/oprate.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.resize.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.lazyload.min.js?_btv=${resourceVersion}"></script>
+    ##    <script type="text/javascript" src="${basePath}/static/modules/sys/main.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/scrollbar/jquery.mCustomScrollbar.concat.min.js?_btv=${resourceVersion}"></script>
+
+    <!--[if lt IE 9]>
+    <script src="${basePath}/static/plugins/mq/html5.min.js?_btv=${resourceVersion}"></script>
+    <script src="${basePath}/static/plugins/mq/respond.min.js?_btv=${resourceVersion}"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="layui-layout-body" style="margin: 0 auto">
+    #if($tempLicense)
+        ##测试许可
+        <div style="position: fixed;top: 17px;left: 0;right: 0;text-align: center;color: #fff;font-size: 18px;">#springMessage(
+            'sys.index.title')</div>
+    #end
+    <div id="layoutBox" style="position: fixed;top:0;left: 0;width: calc(100vw);height: calc(100vh);background-color:#fff;z-index: 19840111;"></div>
+    ##消息提醒
+    <div id="notification" class="notification">
+        <div class="layui-anim layui-anim-upbit">
+            <div class="notification-header">
+                ##                所有标记已读
+                <span class="notification-close-all read-item" title="#springMessage("sys.notification.markAllRead")" data-key="all">
+                    <span class="font_family icon-danchuang_lajitong1"></span>
+                </span>
+                <span class="notification-close" id="close-notice"><i class="fa fa-times" aria-hidden="true"></i></span>
+                <div class="layui-btn-group" id="notice-type">
+                    ##                    通知
+                    <button class="layui-btn layui-btn-primary layui-btn-sm active" data-type="1">#springMessage("sys.notification.notify")</button>
+                    ##                    待审批
+                    ##                    <button class="layui-btn layui-btn-primary layui-btn-sm" data-type="3">#springMessage("bpm.message.beApprove")</button>
+                    ##                  待处理
+                    <button class="layui-btn layui-btn-primary layui-btn-sm" data-type="2" >#springMessage("sys.notification.todo")</button>
+                </div>
+            </div>
+            <div class="notification-body">
+                <ul class="content" id="notification-content">
+                </ul>
+                <div class="more" id="loading-more">
+                    ##                    加载更多
+                    <a href="javascript:void(0)">#springMessage("sys.notification.loadMore")</a>
+                </div>
+                ##                载入中...
+                <div class="loading"  id="loading"><p class="loading-text">#springMessage("sys.notification.loading")</p></div>
+                ##                暂无内容
+                <div class="empty"  id="text-empty">#springMessage("sys.notification.empty")</div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header  t2-bg-main t2-header">
+            <div class="layui-logo"></div>
+            <ul class="layui-nav layui-layout-right disabled-click">
+                <li class="layui-nav-item">
+                    <a href="javascript:;" class="user-box">
+                        <img src="${basePath}/static/v3.2/images/index/Group 2@2x.png"
+                             class="layui-nav-img">
+                        <span class="t2-header-text">$shiro.getPrincipal().username</span>
+                    </a>
+                    <dl class="layui-nav-child">
+                        ##                    个人信息
+                        <dd><a href="javascript:;" class="view-userinfo-btn">#springMessage('sys.index.selfInfo')</a>
+                        </dd>
+                        ##                    修改密码
+                        <dd><a href="javascript:;" class="modify-pwd-btn">#springMessage('sys.index.editPassword')</a>
+                        </dd>
+                        ##                    登录信息
+                        <dd><a href="javascript:;" class="show-loginInfo-btn">#springMessage('sys.index.loginInfo')</a>
+                        </dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    ##                消息
+                    <a href="javascript:;" class="message-btn">
+                        <span class="font_family icon-dinglan_xiaoxi"></span>
+                        <span class="t2-header-text">#springMessage('sys.index.msg')</span>
+                        <span class="layui-badge-dot shake-dot"></span></a>
+                </li>
+                ##    CAS如果为true表示启用单点登录，则不使用锁屏功能
+                #if(!$casSwitch)
+                    <li class="layui-nav-item">
+                        ##                锁屏
+                        <a href="javascript:;" class="lock-btn">
+                            ##                            <i class="fa fa-lock" aria-hidden="true"></i>
+                            <span class="font_family icon-dinglan_suoping"></span>
+                            <span class="t2-header-text">#springMessage('common.button.lockScreen')</span>
+                        </a>
+                    </li>
+                #end
+                <li class="layui-nav-item">
+                    <span class="t2-header-divider"></span>
+                </li>
+                <li class="layui-nav-item">
+                    ##                退出
+                    <a href="javascript:;" class="logout-btn">
+                        <span class="font_family icon-tuichu_dinglan"></span>
+                        ##                        <i class="fa fa-power-off" aria-hidden="true"></i>
+                        <span class="t2-header-text">#springMessage('sys.index.exit')</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="layui-body my-body" >
+            <a href="javascript:;" id="menuExpand" class="menu-toggle-btn t2-menu-toggle" title="#springMessage('sys.index.menuOpen')">
+                <span class="font_family icon-zuodaohangzhankaianniu"></span>
+            </a>
+            <div class="layui-tab layui-tab-card" lay-filter="card" lay-allowClose="true">
+                <ul class="layui-tab-title layui-tab-title-menu t2-tab-title">
+                    ##                首页
+                    <li lay-id="0"><span>#springMessage('common.table.firstPage')</span></li>
+                </ul>
+                <div class="layui-tab-content" id="tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <div class="main-body">
+                            #if($!{configTag.getConfig('sys','uiStyle')} == "1")
+                                ##新版UI
+                                #parse("views/main.vm")
+                            #else
+                                ##旧版UI
+                                #parse("views/oldMain.vm")
+                            #end
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-side" id="menuLeft">
+            <span class="t2-menu-search">
+                <input placeholder="#springMessage('sys.home.widget.search')" id="searchTree" autocomplete="off" type="text" class="span2" readonly onfocus="this.removeAttribute('readonly');" x-webkit-speech="" lang="zh-CN" x-webkit-grammar="builtin:translate">
+                <span class="font_family icon-sousuo1"></span>
+            </span>
+            <div class="layui-side-content">
+                <div class="layui-side-mini">
+                    <ul class="bt-nav">
+                        #foreach($menu in $menuList)
+                            <li>
+                                #if($menu.url)
+                                    <a href="javascript:;" name="${menu.name}" data-name="${menu.name}"
+                                       href-url="${basePath}$!{menu.url}" data-id="${menu.id}" data-type="tabAdd">
+                                        #if($!{configTag.getConfig('sys','uiStyle')} == "1")
+                                            ##新版UI
+                                            <span class="iconfont #if($menu.icon) ${menu.icon}#else bysidebar_a#end"></span>
+                                        #else
+                                            ##旧版UI
+                                            <span class="font_family #if($menu.oldIcon) ${menu.oldIcon}#else icon-jichupingtai1#end"></span>
+                                        #end
+                                        <span class="menu-arrow-tips menu-nav-tips">&nbsp;</span>
+                                    </a>
+                                #else
+                                    <a href="javascript:;" data-name="${menu.name}" data-id="${menu.id}">
+                                        #if($!{configTag.getConfig('sys','uiStyle')} == "1")
+                                            ##新版UI
+                                            <span class="iconfont #if($menu.icon) ${menu.icon}#else bysidebar_a#end"></span>
+                                        #else
+                                            ##旧版UI
+                                            <span class="font_family #if($menu.oldIcon) ${menu.oldIcon}#else icon-jichupingtai1#end"></span>
+                                        #end
+                                        <span class="menu-arrow-tips menu-nav-tips">&nbsp;</span>
+                                    </a>
+                                #end
+                            </li>
+                        #end
+                    </ul>
+                </div>
+                <div class="layui-side-scroll">
+                    <ul id="sideMenuNav" class="tree treeFolder collapse bt-nav">
+                        #foreach($menu in $menuList)
+                            <li level="${menu.level}">
+                                <a autobypy="bz" dataType="topmenu" childMneu="menus${menu.id}" data-id="${menu.id}" keyboard="A" class="menu-level${menu.level}" href="javascript:;"
+                                   #if($menu.url)href-url="${basePath}$!{menu.url}" data-type="tabAdd"#end>
+                                    #if($!{configTag.getConfig('sys','uiStyle')} == "1")
+                                        ##新版UI
+                                        <span class="iconfont-left iconfont #if($menu.icon) ${menu.icon}#else bysidebar_a#end"></span>
+                                    #else
+                                        ##旧版UI
+                                        <span class="font_family #if($menu.oldIcon) ${menu.oldIcon}#else icon-jichupingtai1#end"></span>
+                                    #end
+                                    <span class="menu-name">$!{menu.name}</span>
+                                    <span class="menu-border-left"></span>
+                                </a>
+                                #if(!$menu.url)
+                                    <span class="bt-nav-more">
+                                        <span class="font_family icon-zhankai_zuodaohang bt-nav-next"></span>
+                                    </span>
+                                    #oldMenuTemplate1($menu.children,0,$menu)
+                                #end
+                            </li>
+                        #end
+                    </ul>
+
+                    #macro(oldMenuTemplate1 $menus $index $parent)
+                        <ul id="menus${parent.id}"  class="bzmenus_sub">
+                            #foreach($menu in $menus)
+                                #set($hasChildren=$menu.children && $menu.children.size()>0)
+
+                                <li level="${menu.level}" class="#if(!$hasChildren)menu-last-li #end">
+                                    <a autobypy="$menu.id" class="menu-level${menu.level}" title="$!{menu.name}" href="javascript:;"
+                                       #if($!menu.url)href-url="${basePath}$!{menu.url}" data-id="${menu.id}" data-type="tabAdd"
+                                       name="$!{menu.name}" menu-collect #end>
+                                        ##                                        <span class="font_pos"><i class="external_small"></i></span>
+                                        #if(!$hasChildren)
+                                            <span class="menu-last-text">&bull;</span>
+                                        #end
+                                        <span class="menu-name">$!{menu.name}</span>
+                                    </a>
+                                    <span class="bt-nav-more">
+                                        #if($hasChildren)
+                                             <span class="font_family icon-zhankai_zuodaohang bt-nav-next"></span>
+                                        #else
+
+                                            #if(!$lists.contains($menuCollectIds,$menu.id))
+                                                ##                    添加收藏菜单
+                                                <span class="font_family icon-xingxing_kongxin bt-menu-collect"></span>
+                                            #else
+                                                ##                    取消收藏菜单
+                                                <span class="font_family icon-xingxing bt-menu-collect"></span>
+                                            #end
+                                        #end
+                                    </span>
+                                    #if($hasChildren)
+                                        #oldMenuTemplate1($menu.children,1,$menu)
+                                    #end
+                                </li>
+                            #end
+                        </ul>
+                    #end
+                </div>
+            </div>
+        </div>
+    </div>
+    ##锁屏
+    <div class="lock-screen-container hide">
+        <div class="lock-screen-div">
+            <form onsubmit="return lockScreen.checkSubmit();">
+                <div class="lock-screen">
+                    <div class="lock"></div>
+                    <div class="lock-box">
+                        <span style="font-size: 30px;padding-right: 10px">
+                            $shiro.getPrincipal().loginName
+                        </span>
+                        <span style="font-size: 20px;line-height: 30px">
+                          ($shiro.getPrincipal().username)
+                        </span>
+                    </div>
+                    <div class="input-content">
+                        <div>
+                            <img src="${basePath}/static/v3.2/images/index/mima.png"
+                                 class="user-icon-left">
+                            <input type="text" autocomplete="off" placeholder="#springMessage('sys.login.enterPassword')" class="lock-srk" id="lockInput" oninput="passwordInput(this)">
+##                            <input type="password" autocomplete="new-password" placeholder="#springMessage('sys.login.enterPassword')" class="lock-srk" readonly onfocus="this.removeAttribute('readonly');">
+                        </div>
+                        <div>
+                            <button type="button" class="unlock-btn" id="unlock">#springMessage('sys.user.button.unlock')</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    bt.use(['layer', 'navtab', 'form', 'util', 'money'], function () {
+        var layer = bt.layer, $ = bt.jquery;
+        $("img.lazyload").lazyload();
+        //关闭chrome 浏览器缩放页面功能功能
+        $('body').css('zoom', 'reset');
+
+        // 解决锁屏刷新可以看到页面的内容的问题
+        setTimeout(function () {
+            $("#layoutBox").remove();
+        },100)
+
+        $(document).keydown(function (event) {
+            //event.metaKey mac的command键
+            if ((event.ctrlKey === true || event.metaKey === true) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
+                event.preventDefault();
+            }
+        });
+        $(window).bind('mousewheel DOMMouseScroll', function (event) {
+            if (event.ctrlKey === true || event.metaKey) {
+                event.preventDefault();
+            }
+        });
+        //初始化tab
+        bt.navtab.init();
+        //美化滚动条
+        $(".layui-side-content").mCustomScrollbar({theme: "minimal-dark"});
+
+        //mini菜单弹出tips开始
+        var leftNavEnterTimer = 0;
+        var leftNavLeaveTimer = 0;
+        $('.layui-side-mini li').mouseenter(function (e) {
+            var that = $(this).find('a');
+            clearTimeout(leftNavEnterTimer);
+            leftNavEnterTimer = setTimeout(function () {
+                var title = that.data("name");
+                layer.closeAll('tips');
+                layer.tips(title, that.find('.menu-arrow-tips'), {time: 30000});
+            }, 50);
+        }).mouseleave(function () {
+            clearTimeout(leftNavLeaveTimer);
+            leftNavLeaveTimer = setTimeout(function () {
+                layer.closeAll('tips');
+            }, 50)
+        });
+        //mini菜单弹出tips结束
+//        菜单收缩开始
+        var menuToggleFunc = function (that,open) {
+            if ($('.my-body').hasClass('my-body-expand') && !open) {
+                $('.my-body').removeClass('my-body-expand');
+                $('.layui-side-scroll').hide();
+                $('.layui-side-mini').show();
+                $('.layui-side').addClass('layui-side-collapse').removeClass('layui-side-expand');
+                // 展开菜单
+                that.attr('title', bt.lang('sys.index.menuOpen')).removeClass("t2-menu-toggle-expand");
+                // that.find('i').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+                that.find('.font_family ').addClass('icon-zuodaohangzhankaianniu').removeClass('icon-zuocedaohangshouqianniu');
+            } else {
+                $('.my-body').addClass('my-body-expand');
+                $('.layui-side-mini').hide();
+                $('.layui-side-scroll').show();
+                $('.layui-side').addClass('layui-side-expand').removeClass('layui-side-collapse');
+                // 收起菜单
+                that.attr('title', bt.lang('sys.index.menuClose')).addClass("t2-menu-toggle-expand");
+                that.find('.font_family ').removeClass('icon-zuodaohangzhankaianniu').addClass('icon-zuocedaohangshouqianniu');
+            }
+            adjustPendingInformationTitle();
+            $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
+            //设置地图的自适应模功能
+            if ($('#main').is(":visible")){ //判断是不是世界地图或中国地图或大洲地图
+                if (window.biz && window.biz['myChart'] && window.biz['myChart']['world']){
+                    window.biz['myChart']['world'].resize();
+                }
+            }else if ($('#province1').is(":visible")){　//判断是不是省份柱状地图或折线图
+                if (window.biz && window.biz['myChart'] && window.biz['myChart']['barChart']){
+                    window.biz['myChart']['barChart'].resize();
+                }
+            } else if ($('#province2').is(":visible")){//判断是不是省份饼图
+                if (window.biz && window.biz['myChart'] && window.biz['myChart']['pieChart']){
+                    window.biz['myChart']['pieChart'].resize();
+                }
+            }
+            //调整选项卡内容的宽度
+            // adjustTabContentWidth();
+        };
+        //迷你菜单点击
+        $('.layui-side-mini a').click(function () {
+            var that = $(this);
+            //如果mini菜单点开为直接打开链接则不执行
+            if (that.data("type")) {
+                return;
+            }
+            menuToggleFunc($('.menu-toggle-btn'));
+            //根据id展开指定的一级菜单
+            var id = $(this).data("id");
+            var targetMenuElem = $("#sideMenuNav").children('li').find('[data-id="'+id+'"]');
+            if (!targetMenuElem.hasClass("parent-active")){
+                targetMenuElem.trigger('click');
+            }
+            var index = that.parents('li').index();
+            var navItem = $('.layui-side-scroll .bt-nav li:eq(' + index + ') a.menu-level0');
+            navClickFunc(navItem);
+        });
+        //展开、收起按钮点击
+        $('.menu-toggle-btn').click(function () {
+            menuToggleFunc($(this));
+        });
+        //聚焦时，展开
+        $("#searchTree").on("focus",function(e){
+            menuToggleFunc($('.menu-toggle-btn'),true);
+        });
+
+        $('.layui-side-content').bind("mousedown", function( event ) {
+            event.preventDefault();
+        }).hover(function(){
+            $("#menuExpand").show();
+            $("#menuExpand").animate({opacity:1})
+        },function(){
+            $("#menuExpand").animate({opacity:0})
+        });
+        //导航栏事件
+        $('.t2-tab-title').on("mouseover ","li" ,function( event ) {
+            $(this).next('li').find('.t2-tab-divider').hide();
+        })
+        $('.t2-tab-title').on("mouseout ","li" ,function( event ) {
+            $(this).next('li').find('.t2-tab-divider').show();
+        });
+//菜单收缩结束
+        //菜单点击事件
+        var activeClassName = 'active';
+        var navClickFunc = function (that) {
+            var parent = that.parent();
+            var level = parent.attr('level');
+
+            //菜单为第一级，且为点开直接打开链接则不执行展开操作
+            if (level == "0" && that.data("type")) {
+                return;
+            }
+            if (that.data('id')) {
+                return;
+            }
+            parent.siblings().removeClass(activeClassName);
+            if (parent.hasClass('bt-nav-item')) {
+                parent.siblings().find('.bt-nav-more i.fa-minus').removeClass('fa-minus').addClass('fa-plus');
+            } else {
+                parent.siblings().find('.bt-nav-more i.fa-angle-down').removeClass('fa-angle-down').addClass('fa-angle-right');
+            }
+            if (!parent.hasClass(activeClassName)) {
+                parent.addClass(activeClassName);
+                if (parent.hasClass('bt-nav-item')) {
+                    that.siblings('.bt-nav-more').find('i').addClass('fa-minus');
+                } else {
+                    that.siblings('.bt-nav-more').find('i').addClass('fa-angle-down');
+                }
+            } else {
+                parent.removeClass(activeClassName);
+                if (parent.hasClass('bt-nav-item')) {
+                    that.siblings('.bt-nav-more').find('i').removeClass('fa-minus');
+                } else {
+                    that.siblings('.bt-nav-more').find('i').removeClass('fa-angle-down');
+                }
+            }
+        }
+        //查看登录信息
+        $(".show-loginInfo-btn").click(function () {
+            bt.navtab.addNavtab(bt.lang('sys.index.loginInfo'), basePath + "/sys/loginLog/userLoginInfo");
+        });
+        //查看个人信息
+        $('.view-userinfo-btn').click(function () {
+            layer.open({
+                type: 2,
+                title: bt.lang('sys.index.selfInfo'),
+                area: ['450px', '380px'],
+                content: basePath + "/sys/user/view/$shiro.getPrincipal().id"
+            });
+        });
+        //修改密码点击
+        $('.modify-pwd-btn').click(function () {
+            layer.open({
+                type: 2,
+                // 修改密码
+                title: bt.lang('sys.index.editPassword'),
+                area: ['410px', '250px'],
+                content: basePath + "/sys/user/modifyPassword"
+            });
+        });
+        $('.message-btn').click(function () {
+        });
+        $('.bg-btn').click(function () {
+            bgImg = $(this).attr("value");
+            $("body").css("background", "url('" + basePath + "/static/images/bg/" + bgImg + "') no-repeat top center fixed");
+            var url = basePath + "/sys/config/saveSkin";
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: url,
+                data: {content: bgImg},
+                dataType: "json", //返回数据形式为json
+                success: function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }
+            });
+        });
+        $('.bg-btn').mouseover(function () {
+            $("body").css("background", "url('" + basePath + "/static/images/bg/" + $(this).attr("value") + "') no-repeat top center fixed");
+        });
+        $('.bg-btn').mouseout(function () {
+            $("body").css("background", "url('" + basePath + "/static/images/bg/" + bgImg + "') no-repeat top center fixed");
+        });
+
+//        退出系统按钮
+        $('.logout-btn').click(function () {
+            // 是否退出系统
+            // layer.confirm(bt.lang('sys.index.isExit'), {icon: 3}, function (index) {
+            //     location.href = basePath + '/oauth/logout';
+            //     //清除缓存的内容 liuyj 2018-06-05
+            //     // store.remove('rateType');
+            //     // store.remove('bytter_dict');
+            //     // store.remove('bytter_resource');
+            //     // store.remove('bytter_lang');
+            //     store.clearAll()
+            //
+            //     layer.close(index);
+            // });
+            layer.confirm(bt.lang('sys.index.isExit'), {icon: 3}, function (index) {
+                var pathUrl = basePath + '/oauth/logout';
+                $.get(pathUrl, function (json) {
+                    //清除缓存的内容
+                    clearCookies()
+                    store.clearAll();
+                    if (json.success) {
+                        // 清除cookie token
+                        // document.cookie = "Access-Token="+store.set('Access-Token')+"; expires=" + new Date(0).toUTCString();
+                        location.href=basePath+"/login";
+                        layer.close(index);
+                    }else{
+                        location.href=basePath+"/login";
+                        //抛异常?
+                    }
+                    //清除缓存的内容
+                    clearCookies()
+                    store.clearAll();
+                }, 'JSON');
+            });
+        });
+
+        $.get(basePath + "/sys/user/checkUserPassword", function (json) {
+            if (json.success) {
+                if (json.params && parseInt(json.params[0]) !== 3) {
+                    layer.alert(json.msg, {icon: 0}, function () {
+                        layer.closeAll();
+                        layer.open({
+                            type: 2,
+                            // 修改密码
+                            title: bt.lang('sys.index.editPassword')/*'修改密码'*/,
+                            area: ['350px', '250px'],
+                            closeBtn: parseInt(json.params[0]),
+                            content: basePath + "/sys/user/modifyPassword"
+                        });
+                    });
+                }
+            }
+        }, 'JSON');
+
+        var adjustTabContent = function () {
+            var documentElem = $(document);
+            var win = $(window);
+            var cardTitleHeight = documentElem.find(".layui-tab[lay-filter='card'] ul.layui-tab-title").innerHeight();
+            // 需要减去的高度
+            var height = win.height() - $('.layui-header').height() - cardTitleHeight;
+            // 设置高度
+            // documentElem.find(".layui-tab[lay-filter='card'] div.layui-tab-content").height(height);
+            $('#tab-content').height(height);
+
+            //设置选项卡内容的宽度
+            adjustTabContentWidth();
+
+            if (!documentElem.find('li[lay-id="0"]').hasClass('layui-this')) {
+                // bt.navtab.refreshCurrentTable();
+            }
+        }
+        //设置选项内容的宽度
+        var adjustTabContentWidth = function () {
+            var width = $(".layui-layout-body").width();
+            if ($(document).find('.layui-side-expand')[0]) {
+                width = width - 250;
+            } else {
+                width = width - 100;
+
+            }
+            $(document).find('.my-body').width(width);
+        }
+
+        function adjustPendingInformationTitle(){
+            bt.each($(".content-boby-name"),function () {
+                var $c = $(this)
+                        .clone()
+                        .css({display: 'inline', width: 'auto', visibility: 'hidden'})
+                        .appendTo('body');
+
+                var c_width = $c.width();
+                    $c.remove();
+                if ( c_width > $(this).width() ){
+                    $(this).attr('title',$(this).text())
+                }else {
+                    $(this).removeAttr('title')
+                }
+            })
+        }
+        adjustTabContent();
+        // 左侧菜单容器高度设置
+        var menuWrapperHeight = $("#menuLeft").height();
+        $(".layui-side-content").height( menuWrapperHeight- 50 );
+        // 自适应
+        $(window).on('resize', function () {
+            adjustTabContent();
+            // 左侧菜单容器高度设置
+            var menuWrapperHeight = $("#menuLeft").height();
+            $(".layui-side-content").height( menuWrapperHeight- 60 );
+            adjustPendingInformationTitle();
+            $(".t2-tab-open").removeClass("t2-tab-open")
+        });
+        //执行ESC键关闭弹框
+        $(document).on('keydown', function (event) {
+            var event = window.event || event;
+            if (event.keyCode == 27) {
+                layer.closeAll();
+            }
+            if (event.keyCode == 27) {
+                layer.closeAll();
+            }
+        })
+
+        //首页待处理信息栏点击事件
+        $("#workFlow").on("click",".content-information-item",function () {
+            var title   = $(this).find(".content-boby-name").text().trim();      // 导航栏text
+            var src     = basePath + $(this).attr('href-url');   // 导航栏跳转URL
+            bt.navtab.addNavtab(title,src)
+        });
+
+    });
+    $(function () {
+        initScreenTimer($!configTag.getConfig('sys','screenTime'));
+    });
+</script>
+<script>
+    var baseUrl = window.location.host
+    var ws = new WebSocket("ws://" + baseUrl + "/ws/$shiro.getPrincipal().id");
+    ws.onopen = function() {
+        console.log("open websocket...");
+    };
+
+    //close event
+    ws.onclose = function() {
+        console.log("close websocket...");
+    };
+
+    // 响应onmessage事件:
+    ws.onmessage = function(msg) {
+        //这里可以处理接收到服务器的数据
+        console.log(msg);
+        if(msg&&msg.data){
+            var result = JSON.parse(msg.data);
+            switch (result.type) {
+                case "HOME_NOTICE":
+                    loadPendingInformation();
+                    break
+                case "UI_UPDATE":
+                    layer.open({
+                        title: '系统风格变更' ,
+                        btn: ['确认'],
+                        content: '系统风格已经修改，请刷新！！',
+                    })
+                    break
+                default:
+                    break
+            }
+        }
+    };
+</script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/dad/dad.min.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/oldIndex/index.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/map.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8" src="${basePath}/static/plugins/crypto/crypto-js.min.js"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/lockscreen.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/uiTool.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/jtree.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/jTreeInit.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script src="/static/js/crypto-js.js"></script>
+<script src="/static/js/sm2.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form verify" method="post">
+			<input id="id" name="id" type="hidden" value="$!{fcInstrateAdjustPage.id}">
+		<input id="createTime" name="createTime" type="hidden" value="$!{fcInstrateAdjustPage.createTime}">
+		<input id="createBy" name="createBy" type="hidden" value="$!{fcInstrateAdjustPage.createBy}">
+		<input id="updateTime" name="updateTime" type="hidden" value="$!{fcInstrateAdjustPage.updateTime}">
+		<input id="updateBy" name="updateBy" type="hidden" value="$!{fcInstrateAdjustPage.updateBy}">
+        <input id="types" name="types" type="hidden" value="">
+        <input id="poolSign" name="poolSign" type="hidden" value="$!{poolSign}">
+        <table class="layui-table">
+			<tbody>
+            <tr>
+                #if($!{poolSign} == "1")
+                ##资金池
+                    <td class="textRight">#springMessage('nis.pool.fcCorpPool.pool')</td>
+                    <td>
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-selectType" data-name="netId" data-biz-name="netId" data-callback="netIdCallback"
+                                 data-url="${basePath}/basic/business/fcinstrateadjust?getUserCorpPools"
+                                 data-valuefield="id" data-textfield="showName" data-search="true" data-defaultValue="$!{netId}">
+                            </div>
+                        </div>
+                    </td>
+                ##子单位
+                    <td class="textRight">#springMessage('nis.pool.fcCorpPool.poolsubCorp')</td>
+                    <td>
+                        <div class="layui-input-inline">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType" data-url="" data-name="corpId" data-biz-name="corpId"
+                                     data-valuefield="corpId" data-textfield="showName" data-search="true"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="textRight">#springMessage('fcAccBalanceQuery.subjectId')</td>
+                    <td>
+                        <div class="layui-inline">
+                            <div type="list"  class="bt-biz-selectType" data-biz-name="subjectId" data-callback="callData" data-search="true"  data-beforeinit="beforeInit"  data-required="true" data-name="subjectId" data-url="${basePath}/finacial/paramconfig/FcSubjectPool/jsonSubjectData" data-valueField="id" data-textField="subjectName"></div>
+                        </div>
+                    </td>
+                #else
+                    <td class="textRight">#springMessage('table.fcAcc.netId')</td>
+                    <td width="20%"><div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="net"
+                             data-type="selectTree"
+                             data-name="netId"
+                             data-group="corpGroup"
+                             data-change="corpId"
+                             data-callbackData="netChange"
+                             data-required="true"
+                             data-resource="netbank:innerAccount:rate:adjust"
+                             data-scope="net"></div>
+                    </div>
+                    </td>
+                    <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+                ##开户单位ID
+                    <td width="20%">
+                        <div class="layui-inline">
+                            <div class="bt-biz-corp"
+                                 data-biz-type="corp"
+                                 data-type="selectTree"
+                                 data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"
+                                 data-group="corpGroup"
+                                 data-name="corpId"
+                                 data-backData="corpChange"
+                                 data-resource="netbank:innerAccount:rate:adjust"
+                                 data-scope="all"></div>
+                        </div>
+                    </td>
+                ##科目
+                    <td class="textRight">#springMessage('fcAccBalanceQuery.subjectId')</td>
+                    <td width="20%">
+                        <div class="layui-inline">
+                            <div type="list"  class="bt-biz-selectType" data-biz-name="subjectId" data-callback="callData"
+                                 data-search="true"  data-beforeinit="beforeInit"  data-required="true"
+                                 data-name="subjectId" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate"
+                                 data-valueField="id" data-textField="subjectName"></div>
+                        </div>
+                    </td>
+                #end
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('table.fcAcc.curId')</td>
+                <td>
+                    <div class="layui-inline">
+                        <div type="list"  class="bt-biz-selectType" data-biz-name="curId"  data-callback="callData"  data-required="true" data-name= "curId" data-url="${basePath}/basic/business/btcurrency/json" data-valueField="id" data-textField="curName" ></div>
+                    </div>
+                </td>
+				##调整类型
+                <td class="textRight">#springMessage('table.fcInstrateAdjust.changtype')</td>
+                <td >
+                    <div class="layui-inline">
+                        <select lay-filter="changType" name="changType" >
+							#foreach($dict in $dictTag.list("interestRateType"))
+                                <option value="$dict.code">$dict.name</option>
+							#end
+                        </select>
+                    </div>
+                </td>
+                <td class="textRight">#springMessage('table.fcInstrateAdjust.account')</td>
+                <td>
+                    <input type="text" name="account"  onblur="$dyncTable()" field="account"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcInstrateAdjust.account')">
+                </td>
+
+            </tr>
+            #if($!{poolSign} == '1')
+                #foreach($dict in $dictTag.list("Common.poolInstrtType"))
+                <tr>
+                    ##利率类型
+                    <td class="textRight"><input type="checkbox" value="$dict.code"  lay-skin="primary"  name="instrtType" lay-filter="instrtType"/> </td>
+                    <td >
+                        #springMessage('table.fcInstrateAdjust.instrtType')$dict.name
+
+                    </td>
+                    ##新利率
+                    <td class="textRight tdIns">
+                        <span class="Ins1">#springMessage('table.fcInstrateAdjust.newInstrate')</span>
+                    </td>
+                    <td>
+                        <input type="text" id="newInstrate$dict.code" data-name="newInstrate$dict.code" instrtType="$dict.code"
+                               autocomplete="off"  lay-verify=""  data-ratetype="percent"	data-callback="calRate"  class="layui-input bt-biz-rateType" data-biz-name="newInstrate$dict.code" placeholder="">
+                    </td>
+
+                    ##生效日期
+                    <td class="textRight">#springMessage('table.fcInstrateAdjust.adjustTime')</td>
+                    <td >
+                        <input type="text" name="adjustTime$dict.code"  class="layui-input bt-biz-dateType" data-type="date" data-biz-name="adjustTime$dict.code"></div>
+                    </td>
+                </tr>
+                #end
+
+            #else
+                #foreach($dict in $dictTag.list("Common.InstrtType"))
+                <tr>
+                ##利率类型
+                <td class="textRight"><input type="checkbox" value="$dict.code"  lay-skin="primary"  name="instrtType" lay-filter="instrtType"/> </td>
+                <td >
+                    #springMessage('table.fcInstrateAdjust.instrtType')$dict.name
+
+                </td>
+                ##新利率
+                <td class="textRight tdIns">
+                    <span class="Ins1">#springMessage('table.fcInstrateAdjust.newInstrate')</span>
+                </td>
+                <td>
+                    <input type="text" id="newInstrate$dict.code" data-name="newInstrate$dict.code" instrtType="$dict.code"
+                           autocomplete="off"  lay-verify=""  data-ratetype="percent"	data-callback="calRate"  class="layui-input bt-biz-rateType" data-biz-name="newInstrate$dict.code" placeholder="">
+                </td>
+
+                ##生效日期
+                <td class="textRight">#springMessage('table.fcInstrateAdjust.adjustTime')</td>
+                <td >
+                    <input type="text" name="adjustTime$dict.code"  class="layui-input bt-biz-dateType" data-type="date" data-biz-name="adjustTime$dict.code"></div>
+                </td>
+                </tr>
+                #end
+            #end
+            <tr>
+                <td colspan="6" style="width: 100%">
+                    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+                        <thead>
+                        <tr>
+                            <td><input type="checkbox" id="controlAll" lay-skin="primary" lay-filter="controlAll"/></td>
+                            <td>#springMessage('table.fcAccbookDtlHis.lineNo')</td>
+                            <td>#springMessage('table.fcPredrawDtlTemp.account')</td>
+                            <td>#springMessage('table.accountDTO.accName')</td>
+                            <td>#springMessage('table.fcInstrateAdjust.instrtType')</td>
+                            <td>#springMessage('table.fcAcc.accStartDate')</td>
+                            <td>#springMessage('table.fcInstrateAdjust.lastAdjustTime')</td>
+                            <td>#springMessage('fcInstrate.oldInstrate')</td>
+                            <td>#springMessage('fcInstrate.interestRate')</td>
+							
+                        </tr>
+                        </thead>
+                        <tbody id="dyncTable">
+
+                        </tbody>
+                    </table>
+
+                </td>
+            </tr>
+				<tr>
+					<td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" type="button" id="submit">#springMessage('common.button.adjust')</button>
+						<button class="layui-btn" type="button" id="close">#springMessage('common.button.close')</button>
+					</td>
+				</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/basic/business/fcInstrateAdjust.add.js?_btv=${resourceVersion}"></script>
+</html>

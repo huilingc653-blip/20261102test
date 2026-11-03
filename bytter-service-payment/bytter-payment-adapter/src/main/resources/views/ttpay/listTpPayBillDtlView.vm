@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table" style="display: none">
+        <tbody>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+				<input type="hidden" name="payType" value="$!{payType}" />
+				<input type="hidden" name="billDate" value="$!{billDate}" />
+                <input type="hidden" name="appId" value="$!{appId}" />
+                <button class="layui-btn" type="button" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" type="button" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    	</tbody>
+    </table>
+</form>
+    <table id="appTable" class="layui-table layui-form" >
+        <thead>
+        <tr>
+			#if($!fieldList)
+			#foreach($info in $fieldList)
+            <th>#springMessage("$!{info.fieldName}")</th>
+			#end
+			#end
+        </tr>
+        </thead>
+    </table>
+	#parse("views/common/footer.vm")
+</body>
+<script language="javascript" type="text/javascript">   
+var datatable={};
+bt.use(['form','datatable','date','moneyType'], function(){
+    $ = bt.jquery,form = bt.form();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:true,
+		order: [1,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/ttpay/payBillDtl/dtlViewDatatable"
+        },
+        buttons: []
+        ,columns: [
+			#if($!fieldList)
+        	#foreach($info in $fieldList)
+				#if($!info.dataType eq "money")
+			{data:"$!{info.dataKey}",bSortable:true,className:'textRight',
+                       render: function ( data, type, full, meta ) {
+                       	return bt.money.format(data);
+                }
+             },
+				#elseif($!info.dataType eq "date")
+			{data:"$!{info.dataKey}",bSortable:true,
+                       render: function ( data, type, full, meta ) {
+                       	return bt.date.format(data, 'yyyy-MM-dd');
+                }
+             },
+				#elseif($!info.dataType eq "time")
+			{data:"$!{info.dataKey}",bSortable:true,
+                       render: function ( data, type, full, meta ) {
+                       	return bt.date.format(data, 'yyyy-MM-dd hh:mm:ss');
+                }
+             },
+			 	#elseif($!info.dictType)
+			 {data:"$!{info.dataKey}",bSortable:true,
+				render: function ( data, type, full, meta ) {
+                	return bt.dict("$!{info.dictType}", data);
+                }
+			},
+				#else
+            {data:"$!{info.dataKey}",bSortable:true},
+				#end
+        	#end
+        	#end
+        ],
+        summary:{
+            pageSum:true,
+            selectSum:true,
+            sumList:[
+			#if($!fieldList)
+        	#foreach($info in $fieldList)
+			#if($!info.dataType eq "money")
+                {colNum:'$!{velocityCount}',dataName:'$!{info.dataKey}'},
+			#end
+			#end
+        	#end
+            ]
+        },
+        exportFile: { //输出文档设置
+            outputTitle: bt.dict("TTPAY_PAY_TYPE",$('[name="payType"]').val()),		// 设置导出标题　默认为父级选项卡内容
+            outputFilename: bt.dict("TTPAY_PAY_TYPE",$('[name="payType"]').val()) 		// 设置导出文件名称　默认为父级选项卡内容或标题名称
+        }
+    });
+});
+</script> 
+</html>

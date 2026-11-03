@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+	<table class="layui-table">
+            <tbody>
+                <tr>
+                    <td class="textRight">#springMessage('table.fcBond.bondAcc')</td>##保证金账户
+                    <td>
+						<input type="text" name="likes_bankAcc" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.bondAcc')">
+                    </td>
+                    <td class="textRight">#springMessage('table.fcBond.accountname')</td>##账户名称
+                    <td>
+                        <input type="text" name="likes_accName"  autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.accountname')">
+                    </td>
+                    <td style="text-align: center;">
+                    	<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+			</tbody>
+        </table>
+    </div>
+</form>
+<table id="externalAccTable" class="layui-table">
+    <thead>
+    <tr>
+		<th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.fcBond.depositaccount')</th> ##存入账户
+        <th>#springMessage('table.fcBond.accountname')</th> ##账户名称
+        <th>#springMessage('table.fcBond.corpName')</th> ##单位名称
+        <th>#springMessage('table.fcBond.accBalance')</th> ##账户余额
+		<th>#springMessage('table.fcBond.bankName')</th> ##存入银行
+        <th>#springMessage('table.fcBond.curCode')</th>##币别
+        <th>#springMessage('table.fcBond.occupyMoney')</th>##占用金额
+        <th>#springMessage('table.fcBond.availableMoney')</th>##可用金额
+	    <th style="hidden">#springMessage('table.fcBond.depositdate')</th>##存入日期
+	    <th style="hidden"></th>##保证金id
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery','dateType'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        bt.dateType.init();
+        var $ = bt.jquery;
+
+        var table = bt.datatable.init({
+            elem: "#externalAccTable",
+            selectCss: false,
+			order: [[1,'asc']],
+            ajax: {
+                url: basePath + "/bond/fcbondAddition/getSelectBondAcc.json",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+            	formFilter: "search"
+            },
+            columns: [
+			 {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+				    return '<a href="javascript:void(0);" onclick="BondAdd(this)";class="acc-bank-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+             },
+		    {data: "bankAcc",},
+            {data: "accName",},
+            {data: "corpName",},
+		    {data: "accBalance",
+			 render: function ( data, type, full, meta ) {
+             return bt.money.format(full.accBalance);}
+			 },
+            {data: "bankName",},
+            {data: "curName",},
+            {data: "applyMoney",
+			 render: function ( data, type, full, meta ) {
+             return bt.money.format(full.applyMoney);}
+			 },
+			{data: "availMoney",
+			 render: function ( data, type, full, meta ) {
+             return bt.money.format(full.availMoney);}
+             },
+             {data:"bondDate",
+                    render:function( data, type, full, meta){
+                        return bt.date.format(full.bondDate, 'yyyy-mm-dd');
+                    },
+                visible:false},
+			 {data:"bondId",visible:false}
+            ]
+        });
+    });
+	
+function BondAdd(el){
+ var data = layui.jquery("#externalAccTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if (data) {
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.add.data'), basePath + "/bond/fcbondAddition/addBondAdditionMoney/"+ data.bondId);
+            parent.layer?parent.layer.closeAll():layer.closeAll();
+			return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/bond/fcbondAddition/editBondAddition/" + data.bondId,
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    } 
+}
+</script>
+</body>
+</html>

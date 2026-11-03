@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" value="$!{id}" id="id" name="id"/>
+    <input type="hidden" value="$!{opType}" id="opType" name="opType"/>
+    <input type="hidden" value="$!{accType}" id="accType" name="accType"/>
+    <input type="hidden" value="$!{netId}" id="netId" name="netId"/>
+    <input type="hidden" value="$!{account}" id="account" name="account"/>
+    <input type="hidden" value="$!{generateMode}" id="generateMode" name="generateMode"/>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAccuBalance.date')</th><!-- 日期 -->
+        <th>#springMessage('table.fcAccuBalance.account')</th><!-- 账号 -->
+        <th>#springMessage('table.fcAcc.accName')</th><!-- 户名 -->
+        <th>#springMessage('table.fcInitAcc.cumulation')</th><!-- 积数 -->
+        <th>#springMessage('table.fcAccuBalance.Cumu')</th><!-- 调整积数 -->
+        <th>#springMessage('finacial.paramConfig.fcSubject.accType')</th><!-- 开户种类 -->
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form', 'datatable', 'moneyType', 'date'], function () {
+        $ = bt.jquery, form = bt.form(), moneyFun = bt.moneyType.getFun();
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'rtlip',
+            colReorder: false,
+            checkbox: false, order: false,
+            ajax: {
+                'url': basePath + "/finacial/interest/single/noti/toLoadAccuBill"
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: 'BALANCEDATE',
+                    className: 'center',
+                    bSortable: false,
+                    render: function (data, type, full, meta) {
+                        if(data){
+                            return bt.date.format(data, "yyyy-MM-dd");
+                        }
+                        return '';
+                    }
+                },
+                {
+                    data: 'ACCOUNT', className: 'center', bSortable: false,
+                    render: function (data, type, full, meta) {
+                        if (full.ACCOUNT == "total") {//小计
+                            return bt.lang("finacial.interest.accu.total");
+                        } else if (full.ACCOUNT == "AllTotal") {//合计
+                            return bt.lang("finacial.interest.accu.AllTotal");
+                        } else {
+                            return full.ACCOUNT;
+                        }
+                    }
+                },
+                {data: 'ACCNAME', className: 'center', bSortable: false},
+                {
+                    data: 'CUMU', bSortable: false, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if (full.ACCOUNT == "total" || full.ACCOUNT == "AllTotal") {
+                            return "<strong>" + moneyFun.format(full.CUMU) + "</strong>";
+                        } else {
+                            return moneyFun.format(full.CUMU);
+                        }
+                    }
+                },
+                {
+                    data: 'ADJUSTCUMU', bSortable: false, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if (full.ACCOUNT == "total" || full.ACCOUNT == "AllTotal") {
+                            return "<strong>" + moneyFun.format(full.ADJUSTCUMU) + "</strong>";
+                        } else {
+                            return moneyFun.format(full.ADJUSTCUMU);
+                        }
+                    }
+                },
+                {
+                    data: 'ACCTYPE', bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("InnerAccount.AccType", full.ACCTYPE);
+                    }
+                }
+            ]
+        });
+    });
+</script>

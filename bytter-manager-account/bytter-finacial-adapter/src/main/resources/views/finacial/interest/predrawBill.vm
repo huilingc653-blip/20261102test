@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+<input type="hidden" value="$!{opType}" id="opType" name="opType"/>
+<input type="hidden" value="$!{accType}" id="accType" name="accType"/>
+<input type="hidden" value="$!{netId}" id="netId" name="netId"/>
+<input type="hidden" value="$!{account}" id="account" name="account">
+<input type='hidden' value="$!{endInstDate}" name='endInstDate' id="endInstDate" />
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAccuBalance.account')</th><!-- 账号 -->
+        <th>#springMessage('table.fcAcc.accName')</th><!--账户名称  -->
+        <th>#springMessage('table.fcAccbook.orderNo')</th><!--流水号  -->
+        <th>#springMessage('table.fcAccuBalance.interestTime')</th><!--计息日期  -->
+        <th>#springMessage('table.fcPredrawDtl.interest')</th><!--利息  -->
+        <th>#springMessage('table.predraw.strikeInterest')</th><!--冲销金额  -->
+        <th>#springMessage('table.predraw.status')</th><!--状态  -->
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+ <script>
+    bt.use(['form','datatable','moneyType'], function(){
+    	$ = bt.jquery,form = bt.form(),moneyFun = bt.moneyType.getFun();
+    	//生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'rtlip',
+            colReorder: true,
+            checkbox:false,order: false,
+            ajax: {
+                'url': basePath+"/finacial/interest/fcinterest/doPreviewRush"
+            },
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            columns: [
+				{data:'ACCOUNT',className:'center',bSortable:false},
+				{data:'ACC_NAME',className:'center',bSortable:false},
+				{data:'ORDER_NO',className:'center',bSortable:false},
+				{data:'INTEREST_TIME',className:'center',bSortable:false},
+				{data:'INTEREST',className:'textRight',bSortable:false,
+					render: function ( data, type, full, meta ) {
+	                    return moneyFun.format(full.INTEREST);
+	                }	
+				},
+				{data:'STRIKE_INTEREST',bSortable:false,className:'textRight',
+					render: function ( data, type, full, meta ) {
+	                    return moneyFun.format(full.STRIKE_INTEREST);
+	                }	
+				},
+				{data:'STATUS',bSortable:false,className:'center',
+					render: function ( data, type, full, meta ) {
+	                    return bt.dict("interest.busStatus",full.STATUS);
+	                }	
+				}
+            ]
+    });
+    });
+</script>

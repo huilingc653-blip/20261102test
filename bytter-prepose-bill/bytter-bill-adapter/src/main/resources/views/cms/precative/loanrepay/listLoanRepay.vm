@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+   <form class="layui-form" id="searchForm">
+  		<input type="hidden" id="opType" value="$!{opType}">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+                    ##借款人
+                    <td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.loanOpp')</td>
+                    <td width="30%">
+                        <div class="layui-input-inline">
+                           <div class="bt-biz-corp" data-biz-type="corp" data-type="selectTree" data-name="eqs_loanOpp" data-scope="all" data-resource="cms:loan:cmsloansend:apply" data-defaultvalue="$!{precativePage.loanOpp}" ></div>
+                        </div>
+                    </td>
+                   ##单据编号
+					<td style="text-align:right;">#springMessage('table.cmsPrecativeLoanInfo.billCode')</td>
+					<td width="30%">
+						<input type="text layui-input" name="likes_infoBillCode"  autocomplete="off" class="layui-input">
+					</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cmsPrecativeLoanInfo.billCode')</th>
+        <th>#springMessage('table.cmsPrecativeLoanSend.contractCode')</th>
+        <th>#springMessage('table.cmsPrecativeLoanInfo.loanOpp')</th>
+        <th>#springMessage('table.cmsPrecativeLoanInfo.precativeId')</th>
+        <th>#springMessage('table.cmsPrecativeLoanSend.sendDate')</th>
+        <th>#springMessage('table.cmsPrecativeLoanSend.deadlineDate')</th>
+		<th>#springMessage('table.fcAcc.delayDeadlineDate')</th>
+        <th>#springMessage('table.cmsPrecativeLoanInfo.curId')</th>
+        <th>#springMessage('table.cmsPrecativeLoanSend.money')</th>
+        <th>#springMessage('table.cmsPrecative.outstandingAmount')</th>
+        <th>#springMessage('table.cmsPrecativeLoanSend.repayType')</th>
+        <th>#springMessage('table.cmsPrecativeLoanSend.interestWay')</th>
+        <th>#springMessage('table.cmsPrecativeLoanInfo.loanSendOutType')</th>
+  <!--       <th>#springMessage('table.cmsPrecativeLoanInfo.plType')</th> -->
+        <th>#springMessage('table.cmsPrecativeLoanRepay.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+
+	var repayPlan = "$!{repayPlan}";
+	var showSign;
+	var dataUrl;
+	switch(repayPlan){
+	  case "1":dataUrl = basePath+"/cms/precative/loanrepay/dataRepayPlanable?type="+ $("#opType").val();showSign=true;break;
+	  default:dataUrl = basePath+"/cms/precative/loanrepay/datatable?type="+ $("#opType").val();showSign=false;
+	  
+	}
+
+bt.use(['form','datatable','corp','moneyType'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    var moneyType = bt.moneyType.init();
+    var moneyFun = bt.moneyType.getFun();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': dataUrl
+        },
+        buttons: [
+            {
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ]
+        ,columns: [
+            {data:"infoBillCode",bSortable:true,className:"center"},
+            {data:"contractCode",bSortable:false,className:"center"},
+            {data:"loanOppName",bSortable:true,className:"center"},
+            {data:"precativeName",bSortable:true,className:"center"},
+            {data:"sendDate",bSortable:true,className:"center"},
+            {data:"deadlineDate",bSortable:true,className:"center"},
+			{data:"deferredRepayDate",bSortable:false,className:"center",visible:showSign},
+            {data:"curName",bSortable:true,className:"center"},
+            {data:"sendMoney",bSortable:true,className:"textRight",
+            	render: function (data, type, full, meta) {
+            		return moneyFun.format(full.sendMoney);
+            	}
+            },
+            {data:"sumMoney",bSortable:true,className:"textRight",
+            	render: function (data, type, full, meta) {
+            		var sendMoney = moneyFun.format(full.sumMoney);
+            		return sendMoney;
+            	}
+            },
+            // {data:"repayway",bSortable:true,className:"center",
+            // 	render: function (data, type, full, meta) {
+            // 		return bt.dict("Provide.RepayType",full.repayway);
+            // 	}
+            // },
+            {data:"repaywayName",bSortable:true,className:"center"},
+            {data:"interestWay",bSortable:true,className:"center",
+            	render: function (data, type, full, meta) {
+            		return bt.dict("Admin.PredrawSign",full.interestWay);
+            	}
+            },
+            {data:"loanSendOutType",bSortable:true,className:"center",
+            	render: function (data, type, full, meta) {
+            		return bt.dict("cms.loan.loanSendOutType",full.loanSendOutType);
+            	}
+            },
+        /*     {data:"plName",bSortable:true,className:"textRight"}, */
+            {data:"bizStatus",bSortable:true,className:"center",
+            	render : function(data,type,full,meta){
+            		return bt.dict("cms.bizStatus",full.bizStatus);
+            	}
+            },
+            {data:null,bSortable:false,className:'center',
+            	render: function (data, type, full, meta) {
+					var html;
+					if(repayPlan=="1"){ 
+						html= '<a class="" href="#" data-row="'+meta.row+'" onclick="editRepayPlan(this)">'+bt.lang("cms.loan.RepaymentPlanModify")+'</a>&nbsp;';
+		                 html += '| <a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+		                 html +=' | <a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("common.button.logInfo")+'</a>';
+		            }else{
+						 html= '<a class="" href="#" data-row="'+meta.row+'" onclick="repay(this)">'+bt.lang("cms.button.repay")+'</a>&nbsp;';
+		                 html += '| <a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+		                 html +=' | <a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("common.button.logInfo")+'</a>';
+					}
+		            return html;
+		        }
+            }
+        ],
+        summary:{
+            pageSum: true,//小计功能开启
+            selectSum: false,//已选汇总功能开启
+            //groupColumn: 'curName',//分类汇总列参数
+            format: {
+                decimal: 2
+            },
+            sumList: [
+                {
+                    colNum: '8', //汇总列序号
+                    dataName: 'sendMoney' //汇总列发放金额
+                },
+                {
+                    colNum: '9', //汇总列序号
+                    dataName: 'sumMoney' //汇总列待未还金额
+                }
+            ]
+        }
+    });
+});
+/** 
+* 判断是否为空 true：空 false:不为空
+* @param data 
+*/
+function isNull(data){ 
+	return (data == "" || data == undefined || data == null) ? true : false; 
+}
+
+function editRepayPlan(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	var params;
+	if(isNull(data.deferredRepayDate)){
+		params="billCode=" + data.sendId+"&type=2&rateBase=360";
+	}else{
+		params="billCode=" + data.sendId+"&type=2" + "&deferredRepayDate="+data.deferredRepayDate+"&zqRate="+ data.deferredRate+"&rateBase=360";
+	}
+	var path=basePath + "/cms/basedata/updaterepaymentschedule/toRepayPlanUpdate?"+ params;
+	if(data){
+		if(bt.navtab){
+	        bt.navtab.addNavtab(bt.lang('common.button.add'),path);
+	        return;
+	    }
+	    parent.layer.open({
+	        type: 2,
+	        area: ['850px', '530px'],
+	        maxmin: true,
+	        content: path,
+	        end:function(){
+	        	billTable.draw();
+	        }
+	    });
+	}
+}
+
+function repay(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang("cms.button.repay"),basePath + "/cms/precative/loanrepay/repay?infoBillCode=" + data.infoBillCode +"&sendCode="+data.sendCode);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/precative/loanrepay/send?infoBillCode=" + data.infoBillCode +"&sendCode"+data.sendCode ,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.view'),basePath + "/cms/precative/loanrepay/view/?sendCode=" + data.sendCode);
+            return;
+        }
+	}
+}
+
+//日志列表
+function listMsg(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.logInfo'),basePath + "/cms/basedata/cmsprocessmsg/list?billCode=" + data.infoBillCode+","+data.sendCode);
+            return;
+        }
+	}
+}
+
+</script>
+</html>

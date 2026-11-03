@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+    <input type="hidden" name="llikes_acctName" value="$!{accName}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.fcBond.bondAcc')</td>##保证金账户
+            <td>
+                <input type="text" name="likes_acctNo" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.bondAcc')">
+            </td>
+            <td class="textRight">#springMessage('table.fcBond.accountname')</td>##账户名称
+            <td>
+                <input type="text" name="likes_acctName"  autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBond.accountname')">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('fcbond.type')</td>##保证金类型
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="AB_BILL_BAIL_TYPE" data-name="eqs_timType"></div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td style="text-align: center;" colspan="4">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+</form>
+<table id="zhBondAccTable" class="layui-table">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.fcBond.bondAcc')</th> ##保证金帐号
+        <th>#springMessage('table.fcBond.accountname')</th> ##账户名称
+        <th>#springMessage('table.fcAcc.curId')</th> ##币别
+        <th>#springMessage('table.btInnerAccApp.innerDate')</th> ##开户时间
+        <th>#springMessage('common.end.data')</th>##到期时间
+        <th>#springMessage('table.fcAccbookExt.paysysbankcode')</th>##开户行
+        <th>#springMessage('table.fcInterestDtl.interestRate')</th>##利率
+        <th>#springMessage('fcbond.type')</th> ##保证金类型
+        <th>#springMessage('table.bisAccDtl.balance')</th> ##余额
+        <th>#springMessage('table.fcBond.availableMoney')</th>##可用余额
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery','rateType','dateType','dicts'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        bt.dicts.init();
+        var $ = bt.jquery;
+        var rateType = bt.rateType.getFun();
+        bt.dateType.init();
+        table = bt.datatable.init({
+            elem: "#zhBondAccTable",
+            selectCss: false,
+            order: [[1,'asc']],
+            ajax: {
+                url: basePath + "/bill/accebill/abemitbill/getMsBondAcc"
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="zhBondAccInfo-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "acctNo", bSortable: false},
+                {data: "acctName", bSortable: false},
+                {data: "cur", bSortable: false},
+                {data:"openDate",bSortable: false},
+                {data:"expireDate",bSortable: false},
+                {data:"deptName",bSortable: false},
+                {data:"rate",bSortable: false,render:function (data, type, full, meta){
+                        if (data && Number(data)){
+                            return rateType.format(data/100);
+                        }else {
+                            return '-';
+                        }
+                    }},
+                {data:"timType",bSortable: false},
+                {
+                    data: "bal", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.bal);
+                    }
+                },
+                {
+                    data: "availBal", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.availBal);
+                    }
+                }
+            ]
+        });
+
+        //生成列表
+        table.on('click', '.zhBondAccInfo-select', function (event) {
+            var parentsIndex = $('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-cmbBailAccountInfo']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-cmbBailAccountInfo']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+        // bt.bondAccInfo.init();
+    });
+</script>
+</body>
+</html>

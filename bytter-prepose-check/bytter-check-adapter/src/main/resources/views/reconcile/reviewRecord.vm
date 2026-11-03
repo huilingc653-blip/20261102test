@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post"  id="opForm">
+		<input id="ids" name="ids" type="hidden" value="$!{ids}">
+		<input id="opt" name="opt" type="hidden" value=""/>
+		
+		<div align="center">
+			请选择您的复核意见！
+		</div>
+        <div class="layui-form-submit-adaptive">
+            <div style="text-align: center;">
+				<button class="layui-btn" lay-submit=""  type="button" lay-filter="retreat">#springMessage('bill.log.check.succ')</button>
+				<button class="layui-btn layui-btn-primary" name="revert">#springMessage('bis.check.btn.revert')</button>
+			</div>
+		</div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+##<script src="${basePath}/static/modules/reconcile/optContrastRecord.edit.js?_btv=${resourceVersion}"></script>
+<script>
+bt.use(['form','mulselect','dicts'], function(){
+    var $ = bt.jquery,form = bt.form();
+    bt.mulselect.init();
+    bt.dicts.init();
+    //复核通过
+    form.on('submit(retreat)', function(data){
+    	$("#opt").val("1");
+        optSure(data);
+    });
+    //复核驳回
+    $("[name='revert']").click(function(data){
+    	$("#opt").val("2");
+    	optSure(data);
+    });
+}); 
+
+function optSure(data){
+    var url = basePath +"/bis/stateTracking/reviewSure";
+	var bean = new Object();
+	 $.post(url,$('#opForm').serialize(),function(result){
+        bt.loading.hide();
+        parent.layer.alert(bt.lang("common.message.operate.fail"), {icon: result.success?1:2});
+        if(result.success){
+            parent.layer.closeAll();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        }
+        return false;
+    },'JSON');
+}
+</script>
+</html>

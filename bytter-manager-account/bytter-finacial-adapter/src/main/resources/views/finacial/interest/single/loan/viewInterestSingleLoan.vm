@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <input type="hidden" name="id" id="id" value="$!{entityInfo.id}"/>#*主键*#
+        <input type="hidden" name="accType" id="accType"
+               value="$!{accType}"/>#*账户类型 01-企业活期 02-银行活期 03-放款[内部贷款] 04-银行借款 05-企业定期 08-通知存款*#
+        <input type="hidden" name="opType" id="opType" value="$!{opType}"/>#*操作类型*#
+        <input type="hidden" name="netId" id="netId" value="$!{entityInfo.netId}"/>#*网点ID*#
+        <input type="hidden" name="netName" id="netName" value="$!{entityInfo.netName}"/>#*网点名称*#
+        <input type="hidden" name="curId" id="curId" value="$!{entityInfo.curId}"/>#*币别ID*#
+        <input type="hidden" name="curName" id="curName" value="$!{entityInfo.curName}"/>#*币别名称*#
+        <input type="hidden" name="poolSign" id="poolSign" value="$!{entityInfo.poolSign}"/>#*资金池标识 0-非资金池；1-资金池*#
+        <input type="hidden" name="interestSign" id="interestSign" value="$!{entityInfo.interestSign}"/>#*计息标志*#
+        <input type="hidden" name="corpId" id="corpId" value="$!{entityInfo.corpId}"/>#*开户单位*#
+        <input type="hidden" name="account" id="account" value="$!{entityInfo.account}"/>#*账户*#
+        <input type="hidden" name="generateMode" id="generateMode" value="I"/>#*产生方式 P-批量计息 I-个别计息*#
+        <input type="hidden" name="tallyDate" id="tallyDate"
+               value="$!date.format('yyyy-MM-dd',$!{entityInfo.tallyDate})"/>
+        <input type="hidden" name="endDate" id="endDate" value="$!date.format('yyyy-MM-dd',$!{entityInfo.endDate})"/>
+        <input type="hidden" name="pageFlag" id="pageFlag" value="$!{pageFlag}" />#*界面标志0-新增 1-修改 2-复核*#
+        <tbody>
+        <tr>
+        <tr>
+            ## 账号
+            <td width="8%" class="textRight">#springMessage('table.fcAcc.blnctrAcc')</td>
+            <td width="17%">
+                ##内部账号
+				$!{entityInfo.account}
+            </td>
+            ## 余额  table.fcAccBalance.balance
+            <td width="8%" class="textRight">#springMessage('table.fcAccBalance.balance')</td>
+            <td width="17%">
+                <div id="showAccountBalanceElement" style="text-align: left;">
+                    $number.formatNumeric($!{balance})
+                </div>
+            </td>
+            ## 还款金额 table.cmsLoanRepay.repayMoney
+            <td width="8%" class="textRight">#springMessage('table.cmsLoanRepay.repayMoney')</td>
+            <td width="17%">
+                <div id="showAccountBalanceElement" style="text-align: left;">
+                    $number.formatNumeric($!{entityInfo.money})
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ## 记账日期
+            <td width="8%" class="textRight">#springMessage('table.fcAccbook.tallyDate')</td>
+            <td width="17%">
+                $!date.format('yyyy-MM-dd',$!{entityInfo.tallyDate})
+            </td>
+            ## 止息日期
+            <td width="8%" class="textRight">#springMessage('table.interet.blnInstDate')</td>
+            <td width="17%">
+                $!date.format('yyyy-MM-dd',$!{entityInfo.endDate})
+            </td>
+            ## 附件张数
+            <td width="8%" class="textRight">#springMessage('table.fcAccbookHis.affixAmount')</td>
+            <td width="17%">
+                $!{entityInfo.affixAmount}
+            </td>
+        </tr>
+
+        <tr>
+            ## 还款方式
+            <td width="8%" class="textRight">#springMessage('table.cmsLoanInfo.repayType')</td>
+            <td width="17%">
+                $dictTag.get("cms.repayType",$!{entityInfo.payWay})
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8" align="center">
+                #if($pageFlag.equals('2'))
+                    <button class="layui-btn layui-btn-mini" lay-submit lay-filter="doCheck">#springMessage('common.button.check')</button><!--复核 -->
+                    <button class="layui-btn layui-btn-mini" lay-submit lay-filter="doBack">#springMessage('common.button.back')</button><!--打回 -->
+                #end
+                <button class="layui-btn layui-btn-mini" lay-submit lay-filter="doExportInterestBill">#springMessage(
+                    'table.interet.printlxqd')</button>
+                <button class="layui-btn layui-btn-mini" lay-submit lay-filter="doBatchPrint">#springMessage(
+                    'table.interet.vourcher')</button>
+                <button class="layui-btn layui-btn-mini" lay-submit lay-filter="doPrintRateNotice">#springMessage(
+                    'table.interet.lxtzd')</button><!-- 打印利息通知单 -->
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<div class="layui-tab layui-tab-card my-tab" lay-filter="card2" style="height: 100%">
+    <ul class="layui-tab-title">
+        <li class="layui-this" lay-id="lxqd">#springMessage('table.interet.lxqd')</li><!--利息清单  -->
+        <li lay-id="jxpz">#springMessage('table.interet.jxpz')</li><!--计息凭证  -->
+        <li lay-id="jsqd">#springMessage('table.interet.jsqd')</li><!--积数清单  -->
+    </ul>
+    <div class="layui-tab-content" style="width: 100%; height: 100%">
+        <div class="layui-tab-item layui-show" style="width: 100%; height: 100%">
+            <iframe id="lxqdiframe" src="" frameborder="0" style="width: 100%; height: 100%"></iframe>
+        </div>
+        <div class="layui-tab-item" style="width: 100%; height: 100%">
+            <iframe id="jxpziframe" src="" frameborder="0" style="width: 100%; height: 100%"></iframe>
+        </div>
+        <div class="layui-tab-item" id="newiframeDiv"
+             style="width: 100%; height: 100%; overflow-y: auto; display: none">
+            <iframe id="jsqdiframe" src="" frameborder="0" style="width: 100%; height: 100%;display: none"></iframe>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/interest/single/loan/fcInterestLoan.common.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/finacial/interest/single/loan/fcInterestLoan.view.js?_btv=${resourceVersion}"></script>
+</html>

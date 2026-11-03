@@ -1,0 +1,73 @@
+<div id="gatherViewPirPage" class="widget-box"></div>
+<script>
+    ;!function(window, undefined){
+        var initChartPie = function(legend, series ,title) {
+            var option = {
+                ##title: title,
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params,ticket,callback){//"{b} : {c} ({d}%)"
+                        var result = params.name + " : " + bt.money.format(params.value,{separator: ",",decimal: 2}) + " ( "+ params.percent +"% )";
+                        return result;
+                    },
+                    axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+                        type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                    }
+                },
+                legend: {
+                    data: legend,
+                    bottom: 10,
+                    left: 'center',
+                },
+                toolbox: {
+                    show : false,
+                    feature : {
+                        mark : {show: false},
+                        dataView : {show: true, readOnly: false},
+                        restore : {show: true},
+                        saveAsImage : {show: true}
+                    }
+                },
+                calculable : false,
+                series: JSON.parse(series)
+            };
+            return option;
+        }
+
+        var GatherViewPirPage = function(){
+            this.interval;
+            this.myChart;
+        };
+
+        GatherViewPirPage.prototype.onReady = function(){
+            var chart = document.getElementById('gatherViewPirPage');
+            var that = this;
+            this.myChart = echarts.init(chart);
+//            var myChartPie = echarts.init(document.getElementById('gatherViewPirPage'));
+//            myChartPie.showLoading();
+            //通过Ajax获取数据
+            var url = basePath + "/cms/report/cmsbalancegather/gatherPieListPage";
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: url,
+##                data: {"corpId":$!{vo.corpId},"curId": ${vo.curId}},
+                dataType: "json", //返回数据形式为json
+                success: function (result) {
+                    var option = initChartPie(result.legend,  result.series ,result.title);
+                    that.myChart.setOption(option);
+                }
+            });
+        };
+
+        GatherViewPirPage.prototype.onResize = function(){
+            this.myChart.resize();
+        };
+
+        GatherViewPirPage.prototype.onDispose = function(){
+            clearInterval(this.interval);
+        };
+
+        bt.widget['CmsBalanceGather'] = new GatherViewPirPage();
+    }(window);
+</script>

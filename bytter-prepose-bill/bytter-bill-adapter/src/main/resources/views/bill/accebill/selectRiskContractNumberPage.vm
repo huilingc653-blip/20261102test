@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form layui-hide" id="searchForm">
+    <input type="hidden" name="ins_creditlineid" value="$!{creditlineid}">
+</form>
+<table id="cooperativeBankNumber" class="layui-table">
+    <thead>
+    <tr>
+		<th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>风险合同编号</th>
+        <th>借贷合同编号</th>
+        <th>担保物类型</th>
+        <th>合同币种</th>
+        <th>担保物可用金额</th>
+        <th>合同可用金额</th>
+        <th>费率（万分比）</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery','dicts'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        bt.dicts.init();
+        var table = bt.datatable.init({
+            elem: "#cooperativeBankNumber",
+            selectCss: false,
+            ignoreButtons:['colvis','output','print','state'],// 忽略的表单默认按钮 state取消状态保存按钮
+            ajax: {
+                url: basePath + "/bill/accebill/abemitbill/dataTableCMBCRLCONInfo",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+            	formFilter: "search"
+            },
+            columns: [
+				{
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="data-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "acrcon", orderable: false},
+                {data: "connum", orderable: false},
+                {data: "grttyp", orderable: false},
+                {data: "conccy", orderable: false},
+                {data: "grtave", orderable: false},
+                {data: "conave", orderable: false},
+                {data: "grtper", orderable: false}
+            ]
+        });
+
+
+       /* table.on('click', '.data-select', function (event) {
+            bt.navtab.getCurrentDom().setRiskContractNumberData(table.row($(this).data('row')).data());
+            parent.layer.closeAll();
+        });*/
+        //生成列表
+        table.on('click', '.data-select', function (event) {
+            var parentsIndex = $('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-bankInfo']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-cmbCrlcon']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" id="noPayeeListSize" value="$!{noPayeeListSize}">
+    <button class="layui-btn" type="button" onclick="addNoPayeeTr()" >#springMessage('common.addTr')</button>
+    <table class="layui-table layui-table-border" width="100%" id="noPayeeTable">
+        <thead>
+        <tr>
+            <th>
+                <span class="pl"><span class="required-icon">*</span></span>账号
+            </th>
+            <th>
+                <span class="pl"><span class="required-icon">*</span></span>户名
+            </th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+        <tbody class="ignore-required-icon">
+            #foreach($noPayee in $!noPayeeList)
+                #set($index = $velocityCount - 1)
+            <tr>
+                <td>
+                    <input type="text" class="layui-input" name="noPayeeList[$index].payeeAcc"
+                           lay-verify="required|strlength" data-maxlength="30" value="$!{noPayee.payeeAcc}"
+                           autocomplete="off" placeholder="账号">
+                </td>
+                <td>
+                    <input type="text" class="layui-input" name="noPayeeList[$index].payeeName"
+                           lay-verify="required|strlength" data-maxlength="200" value="$!{noPayee.payeeName}"
+                           autocomplete="off" placeholder="户名">
+                </td>
+                <td class="center">
+                    <a href="javascript:void (0)" onclick="delNoPayeeTr(this)">#springMessage(
+                                    'common.delTr')</a>
+                </td>
+            </tr>
+            #end
+        </tbody>
+    </table>
+    <div style="text-align: center; padding-top: 10px;">
+        <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+        <button class="layui-btn" type="button" onclick="closeNoPayeeTable()">#springMessage(
+            'common.button.revert')</button>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script type="text/javascript">
+    var $, form;
+    var rowIndex = 0;
+    bt.use(['form', 'jquery', 'select', 'datatable', 'dicts'], function () {
+        $ = bt.jquery;
+        form = bt.form();
+
+        //监听提交
+        form.on('submit(submit)', function (data) {
+            var params = data.field;
+            globalParams = params;
+            bt.navtab.getCurrentDom().setChildNoPayeeParam(params)
+            parent.layer ? parent.layer.closeAll() : layer.closeAll();
+            return false;
+        });
+
+        var noPayeeListSize = $("#noPayeeListSize").val();
+        if (noPayeeListSize > 0) {
+            rowIndex = noPayeeListSize - 1
+        }
+    });
+
+    // 新增行
+    function addNoPayeeTr() {
+        rowIndex++
+        var html = '<tr>';
+        html += '<td><input type="text" class="layui-input" name="noPayeeList[' + rowIndex + '].payeeAcc" lay-verify="required|strlength" data-maxlength="30" autocomplete="off" placeholder="账号"></td>';
+        html += '<td><input type="text" class="layui-input" name="noPayeeList[' + rowIndex + '].payeeName" lay-verify="required|strlength" data-maxlength="200" autocomplete="off"  placeholder="户名"></td>';
+        html += '<td class="center"><a href="javascript:void (0)" onclick="delNoPayeeTr(this)">' + bt.lang("common.delTr") + '</a></td>';
+        html += '</tr>';
+        $("#noPayeeTable").find('tbody').append(html);
+    }
+
+    // 删除行
+    function delNoPayeeTr(_this) {
+        $(_this).parents("tr").remove();
+    }
+
+    // 返回
+    function closeNoPayeeTable() {
+        var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+        parent.layer ? parent.layer.close(index) : layer.close(index);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post" id="myform">
+    <input type="hidden" id="id" name="id" value="$!{fexCotpVO.id}">
+    <input type="hidden" name="cotpLevel" value="0">
+    <table class="layui-table layui-form">
+        <tr>
+        ##名称
+            <td class="textRight" style="width: 20%">#springMessage('table.tbCreditPeriod.designation')</td>
+            <td style="width: 50%">
+                <div class="layui-input-inline">
+                    <input type="text" id="cotpName" name="cotpName" value="$!{fexCotpVO.cotpName}" lay-verify="required" onblur="checkName(this)" class="layui-input">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##费用名称
+            <td class="textRight">#springMessage('fex.cotp.subordinateGroup')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="parentName" value="$!{fexCotpVO.parentName}" name="parentName" readonly="readonly" class="layui-input">
+                    <div class="bt-div-search" >
+                        <button class="bt-biz-bankInfo" type="button" onclick="selectCotpGroup()">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                    <input type="hidden" id="parentId" value="$!{fexCotpVO.parentId}" name="parentId">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##是否有效
+            <td class="textRight">#springMessage('table.fbsBudgetPeriod.rmk')</td>
+            <td>
+                <textarea name="rmk" class="layui-textarea">$!{fexCotpVO.rmk}</textarea>
+            </td>
+        </tr>
+    </table>
+
+    <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+        <ul class="layui-tab-title">
+        #*交易对手组*#
+            <li class="layui-this">#springMessage('fex.cotp.groupMembers')</li>
+        ##                            自定义信息
+            <li>#springMessage('fex.cotp.customInformation')</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <input type="hidden" name="eqs_parentId" value="$!{fexCotpVO.id}">
+                <table class="layui-table">
+                    <tr>
+                        <td width="10%" class="textRight">#springMessage('table.tbCreditPeriod.designation')</td>
+                        <td width="40%">
+                            <div class="layui-inline">
+                                <input type="text" name="likes_cotpName" class="layui-input" >
+                            </div>
+                        </td>
+                        <td>
+                            <button type="button" class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+                            <button type="button" class="layui-btn layui-btn-small" onclick="selectCotp()">#springMessage("添加")</button>
+                        </td>
+                    </tr>
+                </table>
+                <table id="appTable" class="layui-table">
+                    <thead>
+                    <tr>
+                    ##                                    名称
+                        <th>#springMessage('table.tbCreditPeriod.designation')</th>
+                    ##                                  层级
+                        <th>#springMessage('fex.cotp.hierarchy')</th>
+                    ##                                  短名称
+                        <th>#springMessage('fex.cotp.shortName')</th>
+                    ##                                  正式名称
+                        <th>#springMessage('fex.cotp.officialName')</th>
+                    ##                                  操作
+                        <th>#springMessage('common.table.thead.operation')</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-table layui-form" id="custFields">
+                    #foreach($element in $custFieldS)
+                        #if($velocityCount % 2 == 0)
+                            <td class="textRight" style="width: 10%">
+                                $!{element.fieldName}
+                                <input type="hidden" name="fexCotpCustInfoVOS[$velocityCount].fieldId" value="$!{element.id}">
+                            </td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    #if($!{element.presetVal.indexOf(",")} > 0)
+                                        <select name="fexCotpCustInfoVOS[$velocityCount].fieldVal" lay-verify="required">
+                                            #foreach($option in $!{element.presetVal.split(",")})
+                                                <option value="$!{option}" #if($!{option} == $!{element.fieldVal}) selected="selected" #end>$!{option}</option>
+                                            #end
+                                        </select>
+                                    #else
+                                        #if($!{element.fieldType} == 1)
+                                        ##                                                        文本
+                                            <input type="text" class="layui-input" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) onblur="checkSrcVal(this)" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 2)
+                                        ##                                                        数字
+                                            <input type="text" data-id="FexCotpCustInfo$velocityCount" class="layui-input bt-biz-moneyType" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkNumSrcVal" #end
+                                                #if($!{element.minVal}) data-min="$!{element.minVal}" #end
+                                                #if($!{element.maxtVal}) data-max="$!{element.maxtVal}" #end
+                                                #if($!{element.decimalDigit}) data-decimal="$!{element.decimalDigit}" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 3)
+                                        ##                                                        日期
+                                            <input type="text" class="layui-input bt-biz-dateType" data-id="FexCotpCustInfo$velocityCount" data-type="date" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkDateSrcVal" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 4)
+                                        ##                                                        时间
+                                            <input type="text" class="layui-input bt-biz-dateType" data-id="FexCotpCustInfo$velocityCount" data-type="time" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkDateSrcVal" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 5)
+                                        ##                                                        日期时间
+                                            <input type="text" class="layui-input bt-biz-dateType" data-id="FexCotpCustInfo$velocityCount" data-type="datetime" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkDateSrcVal" #end
+                                            >
+                                        #end
+                                    #end
+                                    <span data-srcValue="$!{element.presetVal}" style="color: red;display: none">#springMessage('fex.cotp.custField.defaultValCkeck')</span>
+                                </div>
+                            </td>
+                            </tr>
+                        #else
+                        <tr>
+                            <td class="textRight" style="width: 10%">
+                                $!{element.fieldName}
+                                <input type="hidden" name="fexCotpCustInfoVOS[$velocityCount].fieldId" value="$!{element.id}">
+                            </td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    #if($!{element.presetVal.indexOf(",")} > 0)
+                                        <select name="fexCotpCustInfoVOS[$velocityCount].fieldVal" lay-verify="required">
+                                            #foreach($option in $!{element.presetVal.split(",")})
+                                                <option value="$!{option}" #if($!{option} == $!{element.fieldVal}) selected="selected" #end>$!{option}</option>
+                                            #end
+                                        </select>
+                                    #else
+                                        #if($!{element.fieldType} == 1)
+                                        ##                                                        文本
+                                            <input type="text" class="layui-input" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) onblur="checkSrcVal(this)" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 2)
+                                        ##                                                        数字
+                                            <input type="text" data-id="FexCotpCustInfo$velocityCount" class="layui-input bt-biz-moneyType" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkNumSrcVal" #end
+                                                #if($!{element.minVal}) data-min="$!{element.minVal}" #end
+                                                #if($!{element.maxtVal}) data-max="$!{element.maxtVal}" #end
+                                                #if($!{element.decimalDigit}) data-decimal="$!{element.decimalDigit}" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 3)
+                                        ##                                                        日期
+                                            <input type="text" class="layui-input bt-biz-dateType" data-id="FexCotpCustInfo$velocityCount" data-type="date" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkDateSrcVal" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 4)
+                                        ##                                                        时间
+                                            <input type="text" class="layui-input bt-biz-dateType" data-id="FexCotpCustInfo$velocityCount" data-type="time" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkDateSrcVal" #end
+                                            >
+                                        #elseif($!{element.fieldType} == 5)
+                                        ##                                                        日期时间
+                                            <input type="text" class="layui-input bt-biz-dateType" data-id="FexCotpCustInfo$velocityCount" data-type="datetime" name="fexCotpCustInfoVOS[$velocityCount].fieldVal" style="display: inline"
+                                                   value="$!{element.fieldVal}"
+                                                #if(${element.controlRule.indexOf("4")} > -1) lay-verify="required" #end
+                                                #if(${element.controlRule.indexOf("1")} > -1 && ${element.controlRule.indexOf("2")} < 0) readonly="readonly" #end
+                                                #if($!{element.controlRule.indexOf("3")} > -1) data-callback="checkDateSrcVal" #end
+                                            >
+                                        #end
+                                    #end
+                                    <span data-srcValue="$!{element.presetVal}" style="color: red;display: none">#springMessage('fex.cotp.custField.defaultValCkeck')</span>
+                                </div>
+                            </td>
+                            #if($foreach.last)
+                                <td style="width: 10%"></td>
+                                <td></td>
+                            </tr>
+                            #end
+                        #end
+                    #end
+                </table>
+            </div>
+        </div>
+    </div>
+    <div style="width: 100%;text-align: center">
+        <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('common.button.submit')</button>
+        <button class="layui-btn" type="button" lay-submit="submit" value="0" lay-filter="submit">#springMessage('common.button.temp')</button>
+        <button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+    </div>
+</form>
+</body>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/fexCotp/fexCotpGroup.edit.js?_btv=${resourceVersion}"></script>
+</html>

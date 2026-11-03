@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form" method="post">
+        <input type="hidden"  id="searchEndDate" value="$!{searchEndDate}">
+
+	    <table class="layui-table">
+	    	<tbody>
+	    	<tr>
+                <td class="textRight" width="25%">#springMessage('table.report.searchDate')</td>##查询截止日期
+                <td width="25%">
+                    <div class="layui-inline">
+                        <input id="endDate" name="endDate" data-biz-name="endDate" data-today="true" lay-verify="required" data-type="date"
+                               data-max="$!{searchEndDate}" value="$!date.format('yyyy-MM-dd',$!{endDate})"
+                               class="layui-input bt-biz-dateType" type="text" data-callback="changeSearchDate" onblur="changeSearchDate()">
+                    </div>
+                </td>
+	    		<td class="textRight" width="25%">#springMessage('balance.query.Statistical.dimension')</td>##统计维度
+	    		<td width="25%">
+                    <div class="layui-form" autocomplete="off">
+                        <div class="bt-biz-dict" data-type="select" data-defaultvalue="0"data-biz-name="typesOfStatistics"  data-required="true" data-name="typesOfStatistics" data-group="type.statistics" required="true" data-callback="setSortType"></div>
+                    </div>
+	    		</td>
+	    	</tr>
+            <tr>
+                <td class="textRight">#springMessage("btBankType.typeName")</td>##银行类型
+                <td >
+                    <div class="bt-biz-selectType"
+                         data-name="bankType"
+                         data-biz-name="bankType"
+                         data-url="${basePath}/cms/report/cmsLDRanalysis/bankTypeList"
+                         data-valuefield="id"
+                         data-textfield="typeName"
+                         data-disabled="true"
+                    >
+                    </div>
+                </td>
+                <td class="textRight" width="25%">#springMessage('common.isConvert.currency')</td>##是否折合币种
+                <td width="25%">
+                    <div class="layui-form">
+                        <div class="bt-biz-dict is_not_render" data-type="radio" data-group="sf_yn" data-defaultvalue="0"
+                             data-name="isConvertStandCur" data-biz-name="isConvertStandCur" data-callback="changeCurSelect"></div>
+                    </div>
+                </td>
+            </tr>
+			<tr>
+                <td class="textRight" width="25%">#springMessage('cms.report.cur')</td>##币别
+                <td width="25%">
+                    <div class="bt-biz-selectType"
+                         data-name="curId"
+                         data-biz-name="curId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id"
+                         data-textfield="curName"
+                         data-required="true"
+                         data-callback="checkConvertCurCallBack"
+                    >
+                    </div>
+                </td>
+                <td class="textRight" width="25%">#springMessage('commom.converted.into.currency')</td>##折合币别
+                <td width="25%">
+                    <div class="bt-biz-selectType"
+                         data-name="convertCurId"
+                         data-biz-name="convertCurId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id"
+                         data-textfield="curName"
+                         data-disabled = "true"
+                         data-callback="checkConvertCurCallBack"
+                    >
+                    </div>
+                </td>
+            </tr>
+	    	<tr>
+            ##是否包含在途金额
+                <td class="textRight">#springMessage('table.report.includeFreezeMoney')</td>##
+                <td>
+                    <div class="layui-form">
+                        <div class="bt-biz-dict" data-type="radio" data-defaultvalue="1" data-biz-name="isContain"  data-name="isContain" data-group="sf_yn" ></div>
+                    </div>
+                </td>
+                <td class="textRight" width="25%">#springMessage('common.moneyType')</td>##金额单位
+				<td>
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.MoneyType"
+                         data-defaultvalue="1" data-value="$!{moneyUnit}"
+                         data-name="moneyUnit" data-biz-name="moneyUnit" data-selecttext="false"></div>
+				</td>
+	    	</tr>
+            <tr>
+                <td class="textRight">#springMessage("statisticsReport.IntegratedQuery.comparedCycle")</td>##对比周期
+                <td>
+                    <div class="layui-form" autocomplete="off">##data-defaultvalue="L,M,S,Y"
+                        <div class="bt-biz-dict" data-type="mulselect" data-defaultvalue="all" data-biz-name="cycle" data-name="cycle" data-group="Compare.the.cycle" data-callback="bt.changeCycle"></div>
+                    </div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+	    	<tr>
+	    		<td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary" data-callback="resetCallback">#springMessage('common.button.reset')</button>
+	    		</td>
+	    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th rowspan="2">#springMessage('table.report.corpId')</th><!-- 单位 -->
+            <th colspan="3" class="d searchEndDate" id="searchEndDate1">#springMessage('cms.report.end')$!{searchEndDate}#springMessage("cms.loan.ternUnit.day")</th><!--截止**（查询截止日期）日  -->
+            <th colspan="3" class="m">#springMessage("statisticsReport.IntegratedQuery.befMonthEnd")</th>##较上月末
+            <th colspan="3" class="s">#springMessage("statisticsReport.IntegratedQuery.befQuarterEnd")</th>##较上季度末
+            <th colspan="3" class="l">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>##较去年同期
+            <th colspan="3" class="y">#springMessage("statisticsReport.IntegratedQuery.yearEarly")</th>##较年初
+        </tr>
+        <tr>
+            <!--截止**（查询截止日期）日  -->
+            <th class="d">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="d">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="d">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+            ##较上月末
+            <th class="m">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="m">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="m">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+            ##较上季度末
+            <th class="s">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="s">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="s">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+            ##较去年同期
+            <th class="l">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="l">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="l">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+            ##较年初
+            <th class="y">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="y">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="y">#springMessage("table.report.depositLoanRate")</th>##存贷比
+        </tr>
+        </thead>
+    </table>
+
+    <table id="bankTable" class="layui-table layui-form" style="width:100%;display: none;">
+        <thead>
+        <tr>
+            <th rowspan="2">#springMessage('btBankType.typeName')</th><!-- 银行类型 -->
+            <th colspan="3" class="d searchEndDate" id="searchEndDate2">#springMessage('cms.report.end')$!{searchEndDate}#springMessage("cms.loan.ternUnit.day")</th><!--截止**（查询截止日期）日  -->
+            <th colspan="3" class="m">#springMessage("statisticsReport.IntegratedQuery.befMonthEnd")</th>##较上月末
+            <th colspan="3" class="s">#springMessage("statisticsReport.IntegratedQuery.befQuarterEnd")</th>##较上季度末
+            <th colspan="3" class="l">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>##较去年同期
+            <th colspan="3" class="y">#springMessage("statisticsReport.IntegratedQuery.yearEarly")</th>##较年初
+        </tr>
+        <tr>
+            <!--截止**（查询截止日期）日  -->
+            <th class="d">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="d">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="d">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+        ##较上月末
+            <th class="m">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="m">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="m">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+        ##较上季度末
+            <th class="s">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="s">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="s">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+        ##较去年同期
+            <th class="l">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="l">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="l">#springMessage("table.report.depositLoanRate")</th>##存贷比
+
+        ##较年初
+            <th class="y">#springMessage("table.report.totalDeposits")</th>##存款合计
+            <th class="y">#springMessage("table.report.totalLoans")</th>##贷款合计
+            <th class="y">#springMessage("table.report.depositLoanRate")</th>##存贷比
+        </tr>
+        </thead>
+    </table>
+
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/loan/cmsLDRAnalysis.list.js?_btv=${resourceVersion}"></script><!-- 单位 -->
+</html>

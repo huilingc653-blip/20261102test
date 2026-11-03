@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.report.corpId')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-biz-name="corpId"
+                         data-scope="all"
+                         data-tree-type="check"
+                         data-resource="netbank:fcBond:depositOut:apply"
+                         data-defaultvalue="$!{applyVO.corpId}"
+                         placeholder="#springMessage('common.placeholder.select')"></div>
+                </div>
+            </td>
+            ##项目类型
+            <td class="textRight" width="15%">#springMessage('table.fcBond.itemType')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="mulselect" data-group="fcBond.itemType" data-filterData="0,4"
+                     data-name="itemType" data-biz-name="itemType" data-defaultvalue="$!{applyVO.itemType}">
+                </div>
+            </td>
+            ##存入账户
+            <td class="textRight">#springMessage('table.fcBond.depositaccount')</td>
+            <td class="rCode">
+                <div class="layui-input-inline">
+                    <input type="text" id="bankAcc" name="bankAcc" data-biz-name="bankAcc" value="$!{applyVO.bankAcc}"
+                           autocomplete="off" class="layui-input text">
+                    <table id="bankAccTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.fcBond.depositaccount')</th>
+                            <th>#springMessage('table.fcBond.depositaccountName')</th>
+                            <th>#springMessage('table.fcBond.depositBank')</th>
+                            <th>#springMessage('table.fcBond.curCode')</th>
+                            </th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##存入银行
+            <td class="textRight">#springMessage('table.fcBond.bankName')</td>
+            <td width="20%" class="rCode">
+                <input type="text" name="bankName" autocomplete="off" class="layui-input bank" value="$!{applyVO.bankName}">
+            </td>
+            ##保证金金额
+            <td class="textRight">#springMessage('保证金金额')</td>
+            <td class="rCode">
+                <div class="layui-inline">
+                    <input type="text" data-name="beginBondMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" data-moneyendid="endBondMoney" placeholder="#springMessage('开始金额')" value="$!{applyVO.beginBondMoney}">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" data-name="endBondMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" id="endBondMoney" placeholder="#springMessage('结束金额')" value="$!{applyVO.endBondMoney}">
+                </div>
+            </td>
+            ##占用金额
+            <td class="textRight">#springMessage('占用金额')</td>
+            <td class="rCode">
+                <div class="layui-inline">
+                    <input type="text" data-name="beginApplyMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" data-moneyendid="endApplyMoney" placeholder="#springMessage('开始金额')" value="$!{applyVO.beginApplyMoney}">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" data-name="endApplyMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" id="endApplyMoney" placeholder="#springMessage('结束金额')" value="$!{applyVO.endApplyMoney}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="excel"  type="button">#springMessage('common.button.exports')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<div id="tbl" style="overflow:auto">
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBond.corpCode')</th>##单位代码
+        <th>#springMessage('table.fcBond.corpName')</th>##单位名称
+        <th>#springMessage('table.fcBond.billNo')</th>##项目单号
+        <th>#springMessage('table.fcBond.itemType')</th>##项目类型
+        <th>#springMessage('table.fcBond.itemStartDate')</th>##项目开始日期
+        <th>#springMessage('table.fcBond.itemEndDate')</th>##项目到期日期
+        <th>#springMessage('table.fcBond.itemUnit')(#springMessage('table.fcBond.month'))</th>##项目期限(月)
+        <th>#springMessage('table.fcBond.depositaccount')</th>##存入账户
+        <th>#springMessage('table.fcBond.accountname')</th>##账号名称
+        <th>#springMessage('table.fcBond.bankName')</th>##存入银行
+        <th>#springMessage('table.fcBond.bondmoney')</th>##保证金金额
+        <th>#springMessage('table.fcBond.occupyMoney')</th>##占用金额
+    </tr>
+    </thead>
+#foreach($bondUse in $!{useDtlVOS})
+	<tr>
+        <td align="center">$!{bondUse.corpCode}</td>
+		<td align="center">$!{bondUse.corpName}</td>
+        <td align="center">$!{bondUse.itemNo}</td>
+		<td align="center">$dictTag.get("fcBond.itemType", $!{bondUse.itemType.trim()})</td>
+        <td align="center">$!date.format('yyyy-MM-dd',$!{bondUse.startDate})</td>
+        <td align="center">$!date.format('yyyy-MM-dd',$!{bondUse.endDate})</td>
+		<td align="center">$!{bondUse.itemUnit}</td>
+        <td align="center">$!{bondUse.bankAcc}</td>
+		<td align="center">$!{bondUse.accName}</td>
+		<td align="center">$!{bondUse.bankName}</td>
+        <td align="right">$number.formatNumeric($!{bondUse.bondMoney})</td>
+        <td align="right">$number.formatNumeric($!{bondUse.applyMoney})</td>
+	</tr>
+#end
+</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/fcbond/bondUseDetail.view.js?_btv=${resourceVersion}"></script>
+<script>
+
+</script>
+</html>

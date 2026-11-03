@@ -1,0 +1,83 @@
+#parse("views/common/head.vm")
+<table  class="layui-table">
+	<tbody>
+	<tr>
+		<td class="textRight" width="20%">#springMessage('table.bisBifInit.bankType')</td>
+		<td width="30%">
+			<div class="layui-input-inline">
+				<div data-name="bankType" class="bt-biz-selectType"
+					 data-url="${basePath}/basic/business/btbanktype/json"
+					 data-valueField="id"
+					 data-biz-name="bankType"
+					 data-textField="typeName"
+					 data-required="true"
+					 data-search="true"
+					 data-callback="bt.bankTypeCallback"></div>
+			</div>
+	    </td>
+		<td class="textRight" width="20%">#springMessage('table.btBankAccApp.bankAcc')</td>
+		<td width="30%">
+			<div class="layui-input-inline">
+				<div class="layui-input-inline">
+					<input type="hidden" id="curId" name="curId">
+					<input type="text" id="bankAcc" name="bankAcc" lay-verify="tableData" data-biz-name="bankAcc"
+						   autocomplete="off" class="layui-input text" placeholder="#springMessage('table.btBankAccApp.bankAcc')">
+					<table id="bankAccTable" class="hide">
+						<thead>
+						<tr>
+							<th>#springMessage('table.nisBillhead.bankAcc')</th>
+							<th>#springMessage('table.nisBillhead.bankAccName')</th>
+							<th>#springMessage('table.nisBillhead.payerBank')</th>
+							<th>#springMessage('table.nisBillhead.curId')</th>
+						</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
+		</td>
+	</tr>
+	</tbody>
+</table>
+<script type="application/javascript">
+	bt.use(['selectType','selectTable'],function(){
+		//付款账号
+		var bankAccInit = bt.selectTable.init({
+			elem: "#bankAccTable",
+			url: basePath + "/bankacc/btbankaccdtl/getBankAcc",
+			urldata: {bankType: "-1"},
+			scrollX: true,
+			scrollY: "200px",
+			searchInput: "#bankAcc",
+			paging: true,
+			columns: [
+				{data: "bankAcc",},
+				{data: "accName",},
+				{data: "bankName",},
+				{data: "curName",}
+			],
+			clickCallback: function (data) {
+				if (data) {
+					$('#bankAcc').val(data.bankAcc);
+					$('#curId').val(data.curId);
+				} else {
+					$('input.text').val('');
+				}
+			}
+		});
+
+		//银行类别回调函数
+		bt.bankTypeCallback = function (data) {
+			//重新加载付款账号
+			bankAccInit.get("bankAcc").rebuild({
+				urldata: {bankType: data.id},
+				columns: [
+					{data: "bankAcc",},
+					{data: "accName",},
+					{data: "bankName",},
+					{data: "curName",}
+				]
+			});
+		}
+		bt.selectType.init();
+	});
+</script>

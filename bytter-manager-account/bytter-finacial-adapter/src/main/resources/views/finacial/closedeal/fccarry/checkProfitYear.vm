@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+    <form class="layui-form requr" id="myform">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+            ##所属网点
+                <td class="textRight">#springMessage('table.fcCarry.netId')</td>
+                <td width="25%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp" data-name="eqs_netId" data-biz-name="netId" data-biz-type="net"  data-scope="net" data-type="selectTree"
+                             data-defaultvalue="$!{param.netCode}" data-resource="fcl:close:fccarry:check"></div>
+##                        1=复核提交 -1=打回
+                        <input id="flag" name="flag" value="" type="hidden">
+                        <input id="backReason" name="backReason" value="" type="hidden">
+                    </div>
+                </td>
+            ##日期
+                <td class="textLeft">
+                    <button class="layui-btn" lay-submit="" type="button" lay-filter="search">#springMessage('common.button.search')</button>
+                    <button class="layui-btn" lay-submit="" type="button" lay-filter="submit" value="1">#springMessage('Finacial.accbook.common.button.check')</button>
+                    <button class="layui-btn" lay-submit="" type="button" lay-filter="submit" value="-1">#springMessage('common.button.back')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <iframe id="myiframe" src="${basePath}/finacial/closedeal/fccarry/getCheckProfitYear" frameborder="0" scrolling="yes" style="width: 100%;height: 700px"></iframe>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery','element','datatable','btdate','corp','date','dateType'], function(){
+        $ = bt.jquery;
+        form = bt.form();
+        var corp = bt.corp.init();
+        dateType = bt.dateType.init();
+
+        form.on("submit(submit)", function (data) {
+            if (1 == data.elem.value) {
+                $("#flag").val(data.elem.value);
+                bt.loading.show();
+                var url = basePath + "/finacial/closedeal/fccarry/docheckProfitYear";
+                $.ajax({
+                    url: url,
+                    data: $("#myform").serialize(),
+                    dataType: "json",
+                    type: "POST",
+                    success: function (data) {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        if (data.success) {
+                            if (!bt.navtab) {
+                                bt.navtab.refreshCurrent();
+                            }
+                        }
+                        bt.loading.hide();
+                    }
+                });
+            } else {
+                parent.layer.prompt({
+                    title: bt.lang('table.cmsLoanInfo.refuseWhy'),
+                    formType: 2,
+                    cancel: function(index, layero){
+                        bt.loading.hide(); //关闭加载中
+                    },
+                    end:function(){
+                        bt.loading.hide(); //关闭加载中
+                    }
+                },function (value, index, elem) {
+                    $("#flag").val(data.elem.value)
+                    $("#backReason").val(value)
+                    bt.loading.show();
+                    var url = basePath+"/finacial/closedeal/fccarry/docheckProfitYear"
+                    $.ajax({
+                        url : url,
+                        data : $("#myform").serialize(),
+                        dataType : "json",
+                        type : "POST",
+                        success : function (data) {
+                            parent.layer?parent.layer.closeAll():layer.closeAll();
+                            parent.layer?parent.layer.alert(data.msg, {icon: data.success?1:2}):layer.alert(data.msg, {icon: data.success?1:2});
+                            if (data.success) {
+                                if (!bt.navtab) {
+                                    bt.navtab.refreshCurrent();
+                                }
+                            }
+                            bt.loading.hide();
+                        }
+                    })
+                });
+            }
+            return false;
+        });
+
+        form.on("submit(search)", function (data) {
+            var eqs_netId = corp.get("netId").val();
+            bt.loading.show();
+            var url = basePath + "/finacial/closedeal/fccarry/getCheckProfitYear?eqs_netId=" + eqs_netId;
+            $("#myiframe").attr("src", url);
+            bt.loading.hide();
+            return false;
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+</script>
+</body>
+</html>

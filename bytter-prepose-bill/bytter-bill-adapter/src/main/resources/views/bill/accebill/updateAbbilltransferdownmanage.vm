@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input name="trid" id="trid" type="hidden" value="$!{vo.trid}">
+		<input name="aid" type="hidden" value="$!{vo.aid}">
+		<input name="billAid" type="hidden" id="billAid" value="$!{vo.billAid}">
+		<input name="briefId" type="hidden" value="$!{vo.briefId}">
+        <input name="applyCode" type="hidden" value="$!{vo.applyCode}">
+		<input name="billBalance" id="billBalance" value="$!{vo.billBalance}" type="hidden">
+		<input name="oldIds" id="oldIds" type="hidden">
+		
+        <table class="layui-table">
+			<tbody>
+			#if($!{vo.applyCode} && $!{vo.applyCode} ne "" )##基于申请单编辑
+			<tr>
+				##下拨单号
+				<td class="textRight">#springMessage('table.abBillTransfer.allocatedCode.down')</td>
+				<input name="allocatedCode" type="hidden" id="allocatedCode" value="$!{vo.allocatedCode}">
+				<td width="40%" id="allocatedCodeName">
+                        $!{vo.allocatedCode}
+				</td>
+				##申请单号
+				<td class="textRight">#springMessage('table.abBillTransfer.allocatedCode.apply')</td>
+				<input name="applyCode" id="applyCode" type="hidden" value="$!{vo.applyCode}">
+				<td width="40%">
+                        $!{vo.applyCode}
+				</td>
+			</tr>
+			<tr>
+				##录入日期
+				<td class="textRight">#springMessage('table.abBillTransfer.recordDate')</td>
+				<td width="40%">
+					<input type="hidden" name="recordDate" data-name="recordDate" class="layui-input bt-biz-dateType" data-today="true"
+							readonly="true"	data-type="date" value="$!{recordDate}">
+					$!{recordDate}
+				</td>
+				##申请金额 allocationMoney
+				<td class="textRight">#springMessage('table.abBillTransfer.applyMoney')</td>
+				<td>
+                    <input id="applyMoney" name="applyMoney" type="hidden" value="$!{vo.applyMoney}">
+					#if($!{vo.applyMoney} && $!{vo.applyMoney} ne "" )$number.formatNumeric($!{vo.applyMoney})#end
+				</td>
+			</tr>
+			#else
+            <tr>
+				##下拨单号
+                <td class="textRight">#springMessage('table.abBillTransfer.allocatedCode.down')</td>
+                <input name="allocatedCode" type="hidden" id="allocatedCode" value="$!{vo.allocatedCode}">
+                <td width="40%" id="allocatedCodeName">
+					$!{vo.allocatedCode}
+                </td>
+				##录入日期
+                <td class="textRight">#springMessage('table.abBillTransfer.recordDate')</td>
+                <td width="40%">
+                    <input type="hidden" name="recordDate" data-name="recordDate" class="layui-input bt-biz-dateType" data-today="true"
+                           readonly="true"	data-type="date" value="$!{recordDate}">
+					$!{recordDate}
+                </td>
+            </tr>
+			#end
+			<tr>	
+        		##下拨中心
+				<td class="textRight"><span style="color:red;font-size: 14px;font-weight:bold;vertical-align: middle;">*</span>#springMessage('bill.accebill.transferdownmanage.corpCenter')</td>
+				<input type="hidden" id="netId" name="eqs_netId"  value="$!{vo.recordCorpId}" readonly="true">
+				#if($!{vo.applyCode} && $!{vo.applyCode} ne "" )##下拨单修改(基于申请单编辑)
+				<td width="25%">
+					<input id="recordCorpName" class="layui-input" name="recordCorpName" type="text" value="$!{vo.recordCorpName}" readonly="true">
+					<input id="recordCorpId" name="recordCorpId" type="hidden" value="$!{vo.recordCorpId}" >
+                    </td>
+				#else
+				<td width="25%">
+					#*<input id="recordCorpName" name="recordCorpName" type="hidden" value="$!{vo.recordCorpName}">*#
+					<div class="layui-input-inline">
+						#*input参数用于刷新进行查询时的条件*#
+						<input type="hidden" id="netId" name="eqs_netId"  value="$!{netId}" readonly="true">
+						<div class="bt-biz-corp"
+							 data-name="recordCorpId"
+							 data-biz-name="netId"
+							 data-biz-type="net"
+							 data-type="select"
+							 data-scope="net"
+							 data-required="true"
+							 data-scope="net"
+							 data-callback="netCallback"
+                             data-defaultvalue="$!{vo.recordCorpId}"
+							 data-resource="ab:bill:resource:transferdownmanage:query">
+						</div>
+                    </div>
+                </td>
+        		#end
+				##下拨中心账号
+				<td class="textRight">#springMessage('table.abBillTransfer.recordBankAcc')</td>
+				<input id="recevieCorpName" value="$!{vo.recevieCorpName}" type="hidden">
+				<input id="recordBankaccOld" value="$!{vo.recordBankacc}" type="hidden">
+				<td>
+					<div class="layui-input-inline">
+						<input type="text" id="recordBankacc" name="recordBankacc" data-name="recordBankacc" data-biz-name="recordBankacc"
+							data-resource="ab:bill:resource:transferdownmanage:query" lay-verify="strlength"
+                            data-maxlength="30"
+							value="$!{vo.recordBankacc}" data-defaultcorp = "$!{vo.recordCorpId}" electricBill="1"
+                               class="bank layui-input bt-biz-accountTable" data-callback="recordBankaccCallBack" >
+					</div>
+				</td>
+			</tr>
+			
+        	<tr>	
+        		##收票单位
+				<td class="textRight">#springMessage('table.abBillTransfer.recevieCorpId')</td>
+				#if($!{vo.applyCode} && $!{vo.applyCode} ne "" )##下拨单修改(基于申请单编辑)
+				<td >
+					<input id="recevieCorpName" class="layui-input" name="recevieCorpName" type="text" value="$!{vo.recevieCorpName}" readonly="true">
+					<input id="recevieCorpIdOld" name="recevieCorpId" value="$!{vo.recevieCorpId}" type="hidden">
+				</td>
+				#else
+				<td >
+					<input id="recevieCorpName" name="recevieCorpName" type="hidden" value="$!{vo.recevieCorpName}">
+					<input id="recevieCorpIdOld" value="$!{vo.recevieCorpId}" type="hidden">
+					<div id="corpId"></div>
+				</td>
+				#end
+				##收票单位账号
+				<td class="textRight">#springMessage('table.abBillTransfer.recevieBankAcc')</td>
+				<td>
+					<div class="layui-input-inline">
+						#if($!{vo.applyCode} && $!{vo.applyCode} ne "" )
+							<input class="layui-input" id="recevieBankacc" name="recevieBankacc" value="$!{vo.recevieBankacc}" readonly="true" >
+						#else
+						<input id="recevieBankaccOld" value="$!{vo.recevieBankacc}" type="hidden">
+						<input type="text" id="recevieBankacc" name="recevieBankacc" data-name="recevieBankacc" data-biz-name="recevieBankacc"
+							value="$!{vo.recevieBankacc}" lay-verify="strlength" data-maxlength="30"
+						    data-defaultcorp = "$!{vo.recevieCorpId}" electricBill="1"
+						    class="bank layui-input bt-biz-accountTable" data-callback="recevieBankaccCallBack" >
+						#end
+					</div>
+				</td>
+			</tr>
+        	<tr>
+				##下拨票据
+				<td class="textRight">#springMessage('table.abBillTransfer.downBill')</td>
+				<td >
+					<button class="layui-btn bt-biz-accebillInfoReceive" id="accebillInfoBut" type="button" data-beforeClick="bt.accebillInfoParams"
+						data-callback="bt.accebillInfoCallback">#springMessage('common.button.selectBill')</button>
+					<button class="layui-btn bt-biz-accebillView" id="accebillViewBut" type="button" data-beforeClick="bt.accebillViewParams" 
+						data-callback="bt.accebillViewParams">#springMessage('common.button.viewBill')</button>
+                    &nbsp;&nbsp;&nbsp;
+                    <span style="color:red">
+						##注意:收票单位账号为空时只能下拨纸票
+						(#springMessage('bill.accebill.transferdownmanage.selectbill'))
+					</span>
+                </td>
+				##选票票号
+				<td class="textRight">#springMessage('table.abBillTransfer.billNo')</td>
+				###if($!{vo.applyCode})##下拨单修改(基于申请单编辑)
+				<input name="aids" type="hidden" id="aids" value="$!{vo.aids}">
+				###end
+				<input name="billNo" id="billNo" type="hidden" value="$!{vo.billNo}">
+				<td id="billNoName">
+					$!{vo.billNo}
+                </td>
+			</tr>
+			
+        	<tr>
+				##下拨金额
+				<td class="textRight">#springMessage('table.abBillTransfer.downMoney')</td>
+				#*<input name="allocationMoney" id="allocationMoney" type="hidden" value="$!{vo.allocationMoney}">*#
+                <input type="hidden" id="allocationMoney" data-name="allocationMoney" data-biz-name="allocationMoney" class="layui-input bt-biz-moneyType" value="$!{vo.allocationMoney}"></div>
+				<td id="allocationMoneyName">
+					#if($!{vo.allocationMoney} && $!{vo.allocationMoney} ne "")$number.formatNumeric($!{vo.allocationMoney})#end
+				</td>
+				##剩余金额
+  				#if($!{vo.applyCode} && $!{vo.applyCode} ne "" )##基于申请单编辑
+				<td class="textRight">#springMessage('table.abBillTransfer.surplusMoney')</td>
+				<td id="surplusMoney">
+				</td>
+				#else
+				<td class="textRight"></td>
+				<td></td>
+				#end
+			</tr>
+
+			
+        	<tr>
+        		##票据币别
+				<td class="textRight">#springMessage('table.abBillTransfer.billCurrency')</td>
+				<td >
+					<div class="layui-inline">
+						##票据不开放其它币别##
+                        <input type="hidden" name="billCurrency" value="$!{vo.billCurrency}" >
+                        <input type="text" class="layui-input" readonly="true" value="#springMessage('table.curName.rmb')" >
+						#*<input id="billCurrencyOld" value="$!{vo.billCurrency}" type="hidden">
+                        <div type="list" field="billCurrency" name = "billCurrency" fieldHref="${basePath}/basic/business/btcurrency/json" dictField="id" dictText="curName" ></div>*#
+                    </div>
+                </td>
+				##业务归属日期
+				<td class="textRight">#springMessage('table.abVoucherinfo.Business.date')</td>
+				<td >
+					<input type="text" name="businessDate" data-name="businessDate" class="layui-input bt-biz-dateType"  data-type="date"
+							    data-biz-name="businessDate" placeholder="$!{table.abVoucherinfo.Business.date}" data-today="true">
+                </td>
+			</tr>
+
+        	<tr>
+        		##下拨原因
+				<td class="textRight">#springMessage('table.abBillTransfer.downReason')</td>
+				<td colspan="3">
+						<textarea name="allocationReason" required placeholder="#springMessage('table.abBillTransfer.downReason')" class="layui-textarea">$!{vo.allocationReason}</textarea>
+                </td>
+			</tr>
+			#*#if($!{vo.applyCode})##下拨单修改(基于申请单编辑)
+            <tr>
+                <td colspan="4">
+                    <input id="attachmentId" name="attachmentId" type="hidden"  value="$!{vo.enclosure}" >
+                    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+                </td>
+            </tr>
+			#end*#
+			<br>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" type="button" lay-filter="save">#springMessage('common.button.temp')</button>
+					<button class="layui-btn" lay-submit="" type="button" lay-filter="submit">#springMessage('common.button.submit')</button>
+					<button type="reset" type="button" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/modules/bill/accebill/abbilltransferdownmanage.edit.js?_btv=${resourceVersion}"></script>
+</html>

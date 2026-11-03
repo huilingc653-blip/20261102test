@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-input {
+            width: 148px;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tr>
+            ##  swiftCode
+            <td class="textRight" width="20%">#springMessage('table.btswiftinfo.swiftCode')</td>
+            <td width="30%">
+                <input type="text" name="likes_swiftCode" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.swiftCode')">
+            </td>
+            ##  机构名称
+            <td class="textRight" width="20%">#springMessage('table.institution.name')</td>
+            <td width="30%">
+                <input type="text" name="likes_bankName" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.institution.name')">
+            </td>
+        </tr>
+        <tr>
+            ##  本地清算号
+            <td class="textRight" width="20%">#springMessage('table.btswiftinfo.localClearNo')</td>
+            <td width="30%">
+                <input type="text" name="likes_localClearNo" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.localClearNo')">
+            </td>
+            ##银行类型
+            <td class="textRight" width="16%">#springMessage('table.ratBkration.bankType')</td>
+            <td width="34%">
+                <div data-name="eqs_bankTypeId" class="bt-biz-selectType"
+                     data-url="${basePath}/basic/business/btbanktype/json"
+                     data-valueField="id"
+                     data-biz-name="eqs_bankTypeId"
+                     data-textField="typeName"
+                     data-search="true"></div>
+            </td>
+        </tr>
+        <tr>
+            ##所在国家
+            <td class="textRight">#springMessage('table.btswiftinfo.countryCode')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="eqs_nameZh" id="eqs_nameZh" class="layui-input text" data-biz-name="eqs_countryCode"
+                           autocomplete="off" placeholder="#springMessage('table.btswiftinfo.countryCode')" >
+                    <table id="countryCodeTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.tbCreditPeriod.code')</th>
+                            <th>#springMessage('table.btswiftinfo.namezh')</th>
+                            <th>#springMessage('table.btswiftinfo.nameen')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+            ##	所在城市
+            <td class="textRight">#springMessage('table.btswiftinfo.cityName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="eqs_cityNameZh" id="eqs_cityNameZh" data-biz-name="eqs_cityNameZh" class="layui-input text"
+                           autocomplete="off" placeholder="#springMessage('table.btswiftinfo.cityName')" >
+                    <table id="cityNameTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.tbCreditPeriod.code')</th>
+                            <th>#springMessage('table.btswiftinfo.namezh')</th>
+                            <th>#springMessage('table.btswiftinfo.nameen')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##  查询重置
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.ratBkration.bankType')</th>
+        <th>#springMessage('table.institution.name')</th>
+        <th>#springMessage('table.btswiftinfo.swiftCode')</th>
+        <th>#springMessage('table.btswiftinfo.localClearNo')</th>
+        <th>#springMessage('table.btswiftinfo.countryCode')</th>
+        <th>#springMessage('table.btswiftinfo.cityName')</th>
+        <th>#springMessage('table.btswiftinfo.bankAdd')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable','selectType','selectTable'], function () {
+        var $ = bt.jquery, table;
+        bt.selectType.init();
+
+        var countryInit = bt.selectTable.init({
+            elem: "#countryCodeTable",
+            url: basePath + "/basic/business/syscountrycust/listSysCountryCust",
+            searchInput: "#eqs_nameZh",
+            scrollX: "900px",
+            scrollY: "300px",
+            columns: [
+                {data: "code",},
+                {data: "nameZh",},
+                {data: "nameEn",},
+            ],
+            clickCallback: function (data, $tr) {
+                if (data) {
+                    $('#eqs_nameZh').val(data.nameZh);
+                }else {
+                    $('#eqs_nameZh').val('');
+                }
+
+                cityInit.get("eqs_cityNameZh").rebuild({
+                    url: basePath + "/basic/business/syscountrycust/listSysCountryArea/"+data.id,
+                    columns: [
+                        {data: "code",},
+                        {data: "nameZh",},
+                        {data: "nameEn",},
+                    ]
+                });
+            },
+        })
+
+        var countryCode = "0";
+
+        var cityInit = bt.selectTable.init({
+            elem: "#cityNameTable",
+            url: basePath + "/basic/business/syscountrycust/listSysCountryArea/"+countryCode,
+            searchInput: "#eqs_cityNameZh",
+            scrollX: "900px",
+            scrollY: "300px",
+            columns: [
+                {data: "code",},
+                {data: "nameZh",},
+                {data: "nameEn",},
+            ],
+            clickCallback: function (data, $tr) {
+                if (data) {
+                    $('#eqs_cityNameZh').val(data.nameZh);
+                }else {
+                    $('#eqs_cityNameZh').val('');
+                }
+            },
+        })
+
+        /**初始化国家信息列表,组件:datatable;  begin*/
+        table = bt.datatable.init({
+            elem: "#appTable",
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/basic/business/btswiftinfo/dataTableSelect"
+            },
+            selectCss: false,
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="country-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "bankTypeName", bSortable: true},
+                {data: "bankName", bSortable: true},
+                {data: "swiftCode", bSortable: true},
+                {data: "localClearNo", bSortable: true},
+                {data: "nameZh", bSortable: true},
+                {data: "cityNameZh", bSortable: true},
+                {data: "bankAdd", bSortable: true},
+            ]
+        });
+        /**国家信息列表  end*/
+
+        /**选择的数据进行数据传输  begin*/
+        table.on('click', '.country-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-allBankInfo']['callback'];
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                data.isInCountry = false;
+                data.type="outerBank"
+                func(data);
+            }
+        });
+        /**数据传输  end*/
+
+
+    });
+</script>
+</body>
+</html>

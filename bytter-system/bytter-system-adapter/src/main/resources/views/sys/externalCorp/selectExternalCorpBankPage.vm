@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+    <input type="hidden" name="corpId" value="$!{corpId}">
+    <input type="hidden" name="includeDomestic" value="1">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.externalCorp.name')</td>
+            <td>
+                <input type="text" name="name" autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalCorp.name')">
+            </td>
+            <td class="textRight">#springMessage('table.externalBankAcc.bankAcc')</td>
+            <td>
+                <input type="text" name="externalAcc" value="$!{externalAcc}" autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalBankAcc.bankAcc')">
+            </td>
+        </tr>
+
+        <tr>
+            <td class="textRight">#springMessage("sys.externalCorp.bwType")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="SYS_BUS_ENTITY_TYPE"
+                     data-defaultvalue="" data-name="bwType"></div>
+            </td>
+            <td class="textRight">#springMessage("table.externalCorp.corpStatus")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="sf_yn"
+                     data-defaultvalue="" data-name="isNative"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+</form>
+<table id="externalCorpTable" class="layui-table">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.externalCorp.name')</th>
+        <th>#springMessage('table.externalBankAcc.bankAcc')</th>
+        <th>#springMessage('table.externalBankAcc.bankName')</th>
+        <th>#springMessage('table.externalBankAcc.bankSourceCode')/#springMessage('table.btswiftinfo.swiftCode')</th>
+        <th>#springMessage('table.externalBankAcc.prov')/#springMessage('table.fcAcc.account')#springMessage('table.btswiftinfo.countryCode')</th>
+        <th>#springMessage('table.externalBankAcc.city')/#springMessage('table.fcAcc.account')#springMessage('table.btswiftinfo.cityName')</th>
+        <th>#springMessage('table.externalBankAcc.isDefaultAcc')</th>
+        <th>#springMessage('table.externalBankAcc.remark')</th>
+        <th>#springMessage("sys.externalCorp.bwType")</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery','dicts'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        bt.dicts.init();
+        var table = bt.datatable.init({
+            elem: "#externalCorpTable",
+            selectCss: false,
+            order: [[1,'asc']],
+            ajax: {
+                url: basePath + "/sys/externalCorp/selectExternalCorp.json",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="acc-bank-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "name", orderable: false},
+                {data: "externalAcc", orderable: false},
+                {data: "bank", orderable: false},
+                {data: "bankSourceCode", orderable: false},
+                {
+                    data: "accProvince", orderable: false,
+                    render: function (data, type, full, meta) {
+                        if (full.isNative == 0) {
+                            return full.accProvinceFexName;
+                        }
+                        return full.accProvinceName;
+                    }
+                },
+                {
+                    data: "accCity", orderable: false,
+                    render: function (data, type, full, meta) {
+                        if (full.isNative == 0) {
+                            return full.accCityFexName;
+                        }
+                        return full.accCityName;
+                    }
+                },
+                {
+                    data: "isDefaultAcc", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.isDefaultAccName;
+                    }
+                },
+                {data: "remarks", orderable: false},
+                {data: "bwTypeName",bSortable:false, className: 'center'}
+            ]
+        });
+
+
+        table.on('click', '.acc-bank-select', function (event) {
+//            var func = top.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            var parentsIndex = parent.$('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex;
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            //var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                data.isExternal=true;
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

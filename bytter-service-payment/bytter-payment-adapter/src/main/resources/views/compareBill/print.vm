@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        table.list {border-collapse: collapse;border: #000 solid 1px;}
+        table.list td, table.list tr {border: #000 solid 1px;font-size: 12px;height: 25px;padding: 0 5px;}
+        table.middle, table.middle tr:last-child, table.middle tr:last-child td {border-bottom: none;}
+        .not-same {height: 175px;margin: 10px;}
+        .table-title {font-weight: bold;text-align: center;}
+        .no-print{text-align: center;margin-top: 50px;}
+    </style>
+</head>
+<body>
+<div id="print_doc">
+    <table style="width:780px;margin-bottom: 10px;" cellspacing="0" border="0" cellpadding="0" align="center">
+        <tbody>
+        <tr>
+            <td height="25" colspan="4" align="center" valign="middle">
+                &nbsp;<br>
+                <span style="font-size: 20px;font-weight: bold;" id="companyname">$!{entity.netName}</span>
+                ## 网上银行对账回执联
+                <div style="font-size: 15px;font-weight: bold;text-align: right;margin: 6px;">#springMessage("fc.corpCompareBill.netBankBill")</div>
+            </td>
+        </tr>
+        <tr>
+            <td width="10%" align="right">#springMessage("table.externalCorp.corp.name")：</td>
+            <td width="70%" align="left">$!{entity.corpName}</td>
+            ##对账月份
+            <td width="10%" align="right">#springMessage("fc.corpCompareBill.checkMonth")：</td>
+            <td width="10%" align="left">$!{entity.billMonth}</td>
+        </tr>
+        </tbody>
+    </table>
+    <table class="list middle " style="width:780px" cellspacing="0" border="0" cellpadding="0" align="center">
+        <thead>
+        <tr class="title">
+            ## 账号
+            <td align="center">#springMessage("sys.login.label.account")</td>
+            ## 账户名称
+            <td align="center">#springMessage("table.fcAcc.accName")</td>
+            ## 币别
+            <td align="center">#springMessage("table.fcAccBalance.curId")</td>
+            ## 账户类型
+            <td align="center">#springMessage("accountGrant.sysAccountType")</td>
+            ## 账户余额
+            <td align="center">#springMessage("table.nisBillhead.balance")</td>
+            #if($entity.same=="0")
+                ## 企业账面余额
+                <td align="center">#springMessage("fc.corpCompareBill.erpBalance")</td>
+            #end
+            ## 核对结果
+            <td align="center">#springMessage("fc.corpCompareBill.checkResult")</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td align="center">$!{entity.account}</td>
+            <td align="center">$!{entity.accountName}</td>
+            <td align="center">$!{entity.currencyName}</td>
+            <td align="center">$dictTag.get("InnerAccount.AccType",$!{entity.accountType})</td>
+            <td align="right">$!number.formatNumeric($!{balance})</td>
+            #if($entity.same=="0")
+                <td align="right">$!number.formatNumeric($!{erpBalance})</td>
+            #end
+            <td align="center">$dictTag.get("fc.corpCompareBillSame",$!{entity.same})</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table class="list" style="width:780px" cellspacing="0" border="0" cellpadding="0" align="center">
+        #if($entity.same=="0")
+            <tr>
+                ## 兹将不符款项列示如下
+                <td class="table-title" colspan="4">#springMessage("fc.corpCompareBill.unSameDemo")</td>
+            </tr>
+            <tr>
+                ## 我单位账上无以下款项
+                <td class="table-title" colspan="2">#springMessage("fc.corpCompareBill.ownerBill")</td>
+                ## 贵单位账上无以下款项
+                <td class="table-title" colspan="2">#springMessage("fc.corpCompareBill.otherBill")</td>
+            </tr>
+            <tr>
+                ## 借方
+                <td class="table-title">#springMessage("table.fcVoucherEntryDefine.debit")</td>
+                ## 贷方
+                <td class="table-title">#springMessage("table.fcVoucherEntryDefine.credit")</td>
+                ## 借方
+                <td class="table-title">#springMessage("table.fcVoucherEntryDefine.debit")</td>
+                ## 贷方
+                <td class="table-title">#springMessage("table.fcVoucherEntryDefine.credit")</td>
+            </tr>
+            <tr>
+                <td width="195">
+                    <div class="not-same">
+                        $!{entity.accountDebitMoney}
+                    </div>
+                </td>
+                <td width="195">
+                    <div class="not-same">
+                        $!{entity.accountCreditMoney}
+                    </div>
+                </td>
+                <td width="195">
+                    <div class="not-same">
+                        $!{entity.erpDebitMoney}
+                    </div>
+                </td>
+                <td width="195">
+                    <div class="not-same">
+                        $!{entity.erpCreditMoney}
+                    </div>
+                </td>
+            </tr>
+        #end
+        <tr>
+            ## 对账时间
+            <td width="195" align="center">#springMessage("table.fcBankBill.checkDate")：$!date.format('yyyy-MM-dd HH:mm:ss ',$!entity.checkDate)</td>
+            ## 对账人
+            <td width="195" align="center">#springMessage("fc.corpCompareBill.checkBill")：$!{username}</td>
+            ## 复核人
+            <td width="195" align="center">#springMessage("table.fcInstrateAdjust.checkerCode")：$!{approves}</td>
+            <td width="195" colspan="3" rowspan="2" align="center" style="padding: 10px">
+                #if($attachmentId)
+                    <img id="printImg" src="$!{basePath}/download/attachment?id=$!attachmentId" width="137" height="137"/>
+                #end
+            </td>
+        </tr>
+        <tr>
+            ## 打印时间
+            <td align="center">#springMessage("common.print.date")：$!date.format('yyyy-MM-dd HH:mm:ss ',$!printDate)</td>
+            ## 打印次数
+            <td align="center">#springMessage("table.fcAccbookExt.printCount")：$!{entity.prints}</td>
+            ## 打印人
+            <td align="center">#springMessage("common.print.printer")：$!{printer}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div class="no-print">
+    <button class="layui-btn" onclick="print()">#springMessage('common.button.print')</button>
+</div>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script>
+
+    function print() {
+        $.ajax({
+            type: "GET",
+            url: basePath + "/allowOnce?size=1",
+            dataType:"json",
+            success: function(result){
+                if(result){
+                    var src = $("#printImg").attr("src");
+                    $("#printImg").attr("src",src+"&_allow_once_="+result[0])
+                    var LODOP = getLodop();
+                    $(".no-print").hide();
+                    LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Full-Width");
+                    LODOP.SET_PRINT_PAGESIZE(1, 0, 0, "A4");
+                    LODOP.ADD_PRINT_HTM('9mm', '0mm', 'RightMargin:0mm', "BottomMargin:9mm", document.documentElement.innerHTML);
+                    $(".no-print").show();
+                    LODOP.PREVIEW();
+                }
+            }
+        });
+
+    }
+</script>
+</body>
+</html>

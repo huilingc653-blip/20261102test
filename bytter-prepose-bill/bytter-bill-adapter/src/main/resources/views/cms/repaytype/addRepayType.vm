@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="isSystem" name="isSystem" type="hidden" value="0">
+    <input id="capitalFrequencyDetail" name="capitalFrequencyDetail" type="hidden"
+           value="$!{repayTypePage.capitalFrequencyDetail}">
+    <table class="layui-table">
+
+        <tbody>
+        <tr>
+            <td class="textRight" width="30%">#springMessage('table.repay.repayCode')</td>
+            <td>
+                <input type="text" id="repayCode" name="repayCode" lay-verify="required|strlength"
+                       data-minlength="2" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.repay.repayCode')"
+                       value="$!{repayCode}">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.repay.repayName')</td>
+            <td>
+                <input type="text" id="repayName" name="repayName" lay-verify="required|strlength"
+                       data-maxlength="150"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.repay.repayName')">
+            </td>
+        </tr>
+
+        <tr id="relation">
+            ##本息关系
+            <td class="textRight">#springMessage('table.repay.capitalAndInterest')</td>
+            <td>
+                ## 利息按剩余本金计算
+                <input type="radio" name="capitalAndInterest" value="1" lay-filter="capitalAndInterest" checked
+                       title="#springMessage("table.repay.capitalAndInterest.money")">
+                ## 等额本息（仅频率一致支持）
+                <input type="radio" name="capitalAndInterest" value="2" lay-filter="capitalAndInterest"
+                       title="#springMessage("table.repay.capitalAndInterest.equality")">
+                ## 利息与本金无关系（分别自定义）
+                <input type="radio" name="capitalAndInterest" value="3" lay-filter="capitalAndInterest"
+                       title="#springMessage("table.repay.capitalAndInterest.irrelative")">
+            </td>
+        </tr>
+
+        <tr id="payTimes">
+            ##本金支付频率
+            <td class="textRight">#springMessage('table.repay.capitalFrequency')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-width="130px" data-name="capitalFrequencyType"
+                         data-value="$!{repayTypePage.capitalFrequencyType}" data-biz-name="capitalFrequencyType"
+                         data-type="select" data-filterData=""
+                         data-group="repay.frequency" data-callback="showCapitalFrequencyType"
+                         data-required="true"></div>
+                </div>
+                <div class="layui-inline" id="showCapitalFrequencyNext">
+                    #if("$!{repayTypePage.capitalFrequencyType}" == "D")
+                        ##按时间周期：accrual.dateType
+                        <div class="bt-biz-dict" data-width="130px" data-name="capitalFrequencyNext"
+                             data-value="$!{repayTypePage.capitalFrequencyNext}"
+                             data-biz-name="capitalFrequencyNextByDate" data-type="select" data-group="accrual.dateType"
+                             data-displayData="1,2,3,4,5"
+                             data-callback="showCapitalFrequencyNextByDate"></div>
+                    #elseif("$!{repayTypePage.capitalFrequencyType}" == "C")
+                        ##按次数：repay.numberType
+                        <div class="bt-biz-dict" data-width="130px" data-name="capitalFrequencyNext"
+                             data-value="$!{repayTypePage.capitalFrequencyNext}"
+                             data-biz-name="capitalFrequencyNextByNumber" data-type="select"
+                             data-group="repay.numberType" data-callback="showCapitalFrequencyNextByNumber"></div>
+                    #end
+                </div>
+                <div class="layui-inline" id="showCapitalFrequencyThird">
+                    #if("$!{repayTypePage.capitalFrequencyType}" == "D")
+                        #if("$!{repayTypePage.capitalFrequencyNext}" == "5")
+                            ##年
+                            <div class="bt-biz-dict" data-width="80px" data-name="capitalFrequencyThird"
+                                 data-type="select"
+                                 data-biz-name="capitalFrequencyThird" data-group="accrual.yearType"
+                                 data-callback="callCapitalFrequencyThiredByType"
+                                 data-value="$!{repayTypePage.capitalFrequencyThired}"
+                                 data-required="true"></div>
+                        #end
+                    #end
+                </div>
+                <div class="layui-inline" id="showCapitalFrequency">
+                    #if("$!{repayTypePage.capitalFrequencyType}" == "D")
+                        ##按时间周期：accrual.dateType
+                        ## 天：accrual.dayCycle
+                        #if("$!{repayTypePage.capitalFrequencyNext}" == "1")
+                            <div class="bt-biz-dict" data-width="80px" data-name="capitalFrequencyNum"
+                                 data-type="select"
+                                 data-biz-name="capitalFrequencyNumDay" data-group="accrual.dayCycle"
+                                 data-callback="callCapitalFrequencyNumDayByDate"
+                                 data-value="$!{repayTypePage.capitalFrequency}"
+                                 data-required="true"></div>
+                        #elseif(
+                            "$!{repayTypePage.capitalFrequencyNext}" == "2" ||
+                            "$!{repayTypePage.capitalFrequencyNext}" == "4")
+                            ## 周：accrual.weekCycle
+                            ## 季：accrual.seasonCycle
+                            <div class="bt-biz-dict" data-width="80px" data-name="capitalFrequencyNum"
+                                 data-type="select"
+                                 data-biz-name="capitalFrequencyNumWeek" data-group="accrual.weekCycle"
+                                 data-callback="callCapitalFrequencyNumDayByDate"
+                                 data-value="$!{repayTypePage.capitalFrequency}"
+                                 data-required="true"></div>
+                        #elseif("$!{repayTypePage.capitalFrequencyNext}" == "3")
+                            ## 月：accrual.monthCycle
+                            <div class="bt-biz-dict" data-width="80px" data-name="capitalFrequencyNum"
+                                 data-type="select"
+                                 data-biz-name="capitalFrequencyNumMonth" data-group="accrual.monthCycle"
+                                 data-callback="callCapitalFrequencyNumDayByDate"
+                                 data-value="$!{repayTypePage.capitalFrequency}"
+                                 data-required="true"></div>
+                        #elseif("$!{repayTypePage.capitalFrequencyNext}" == "5")
+                            #if("$!{repayTypePage.capitalFrequencyThird}" == "12")
+                                ## 年：accrual.yearCycle
+                                <div class="bt-biz-dict" data-width="80px" data-name="capitalFrequencyNum"
+                                     data-type="select"
+                                     data-biz-name="capitalFrequencyNumYear" data-group="accrual.yearCycle"
+                                     data-callback="callCapitalFrequencyNumDayByDate"
+                                     data-value="$!{repayTypePage.capitalFrequency}"
+                                     data-required="true"></div>
+                            #end
+                        #end
+                    #elseif("$!{repayTypePage.capitalFrequencyType}" == "C")
+                        ##按次数：repay.numberType
+                    #end
+                </div>
+                <div class="layui-inline" id="showCapitalFrequencyNumInput">
+                    #if("$!{repayTypePage.capitalFrequency}"=="other")
+                        <input type="text" id="capitalFrequencyNumInput" name="capitalFrequencyNum"
+                               lay-verify="required" autocomplete="off"
+                               class="layui-input" data-width="130px"
+                               placeholder="#springMessage('sys.form.verify.mustBeInteger')"
+                               value="$!{repayTypePage.capitalFrequencyNum}">
+                    #end
+                </div>
+            </td>
+        </tr>
+        <tr style="display: none" id="capitalFrequencyDetailShow">
+            ##本金支付频率详细信息
+            <td class="textRight"></td>
+            <td>
+                <table class="layui-table">
+                    <tr>
+                        <td>
+                            <table id="dataTableDetail" class="layui-table">
+                                <thead>
+                                <th>#springMessage('table.repay.num')</th>##次数
+                                <th>#springMessage('table.repay.percent')</th>##比例%
+                                </thead>
+                                <tbody id="dataTableDetailBody">
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="payInterestTimes">
+            ##利息支付频率
+            <td class="textRight">#springMessage('table.repay.interestFrequency')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-width="130px" data-name="interestFrequencyType"
+                         data-value="$!{repayTypePage.interestFrequencyType}" data-biz-name="interestFrequencyType"
+                         data-type="select" data-displayData="D"
+                         data-group="repay.frequency" data-callback="showInterestFrequencyType"
+                         data-required="true"></div>
+                </div>
+                <div class="layui-inline" id="showInterestFrequencyNext">
+                    #if("$!{repayTypePage.interestFrequencyType}" == "D")
+                        ##按时间周期：accrual.dateType
+                        <div class="bt-biz-dict" data-width="130px" data-name="interestFrequencyNext"
+                             data-value="$!{repayTypePage.interestFrequencyNext}"
+                             data-biz-name="interestFrequencyNextByDate" data-type="select"
+                             data-group="accrual.dateType"
+                             data-displayData="1,2,3,4,5"
+                             data-callback="showInterestFrequencyNextByDate"></div>
+                    #elseif("$!{repayTypePage.interestFrequencyType}" == "C")
+                        ##按次数：repay.numberType
+                        <div class="bt-biz-dict" data-width="130px" data-name="interestFrequencyNext"
+                             data-value="$!{repayTypePage.interestFrequencyNext}"
+                             data-biz-name="interestFrequencyNextByNumber" data-type="select"
+                             data-group="repay.numberType" data-callback="showInterestFrequencyNextByNumber"></div>
+                    #end
+                </div>
+                <div class="layui-inline" id="showInterestFrequencyThird">
+                    #if("$!{repayTypePage.interestFrequencyType}" == "D")
+                        #if("$!{repayTypePage.interestFrequencyNext}" == "5")
+                            ##年
+                            <div class="bt-biz-dict" data-width="80px" data-name="interestFrequencyThird"
+                                 data-type="select"
+                                 data-biz-name="interestFrequencyThird" data-group="accrual.yearType"
+                                 data-callback="callInterestFrequencyThiredByType"
+                                 data-value="$!{repayTypePage.interestFrequencyThird}"
+                                 data-required="true"></div>
+                        #end
+                    #end
+                </div>
+                <div class="layui-inline" id="showInterestFrequency">
+                    #if("$!{repayTypePage.interestFrequencyType}" == "D")
+                        ##按时间周期：accrual.dateType
+                        ## 天：accrual.dayCycle
+                        #if("$!{repayTypePage.interestFrequencyNext}" == "1")
+                            <div class="bt-biz-dict" data-width="80px" data-name="interestFrequency"
+                                 data-type="select"
+                                 data-biz-name="interestFrequencyDay" data-group="accrual.dayCycle"
+                                 data-callback="callInterestFrequencyNumByDate"
+                                 data-value="$!{repayTypePage.interestFrequency}"
+                                 data-required="true"></div>
+                        #elseif("$!{repayTypePage.interestFrequencyNext}" == "2")
+                            ## 周：accrual.weekCycle
+                            <div class="bt-biz-dict" data-width="80px" data-name="interestFrequency"
+                                 data-type="select"
+                                 data-biz-name="interestFrequencyWeek" data-group="accrual.weekCycle"
+                                 data-callback="callInterestFrequencyNumByDate"
+                                 data-value="$!{repayTypePage.interestFrequency}"
+                                 data-required="true"></div>
+                        #elseif("$!{repayTypePage.interestFrequencyNext}" == "3")
+                            ## 月：accrual.monthCycle
+                            <div class="bt-biz-dict" data-width="80px" data-name="interestFrequency"
+                                 data-type="select"
+                                 data-biz-name="interestFrequencyMonth" data-group="accrual.monthCycle"
+                                 data-callback="callInterestFrequencyNumByDate"
+                                 data-value="$!{repayTypePage.interestFrequency}"
+                                 data-required="true"></div>
+                        #elseif("$!{repayTypePage.interestFrequencyNext}" == "4")
+                            ## 季：accrual.seasonCycle
+                            <div class="bt-biz-dict" data-width="80px" data-name="interestFrequency"
+                                 data-type="select"
+                                 data-biz-name="interestFrequencyWeek" data-group="accrual.seasonCycle"
+                                 data-callback="callInterestFrequencyNumByDate"
+                                 data-value="$!{repayTypePage.interestFrequency}"
+                                 data-required="true"></div>
+                        #elseif("$!{repayTypePage.interestFrequencyNext}" == "5")
+                            ## 年：accrual.yearCycle
+                            #if("$!{repayTypePage.interestFrequencyThird}" == "12")
+                                <div class="bt-biz-dict" data-width="80px" data-name="interestFrequency"
+                                     data-type="select"
+                                     data-biz-name="interestFrequencyYear" data-group="accrual.yearCycle"
+                                     data-callback="callInterestFrequencyNumByDate"
+                                     data-value="$!{repayTypePage.interestFrequency}"
+                                     data-required="true"></div>
+                            #end
+                        #end
+                    #elseif("$!{repayTypePage.interestFrequencyType}" == "C")
+                        ##按次数：repay.numberType
+                    #end
+                </div>
+                <div class="layui-inline" id="showInterestFrequencyNumInput">
+                    #if("$!{repayTypePage.interestFrequency}"=="other" ||
+                        "$!{repayTypePage.interestFrequencyType}"=="C")
+                        <input type="text" id="interestFrequencyNumInput" name="interestFrequencyNum"
+                               lay-verify="required" autocomplete="off"
+                               class="layui-input" style="width: 100px"
+                               placeholder="#springMessage('sys.form.verify.mustBeInteger')"
+                               value="$!{repayTypePage.interestFrequency}">
+                    #end
+                </div>
+                <div class="layui-inline" id="showInterestFrequencyThis">
+                    #if("$!{repayTypePage.interestFrequencyNext}" == "3" )
+                        ## 月：accrual.monthCycle
+                        <div class="bt-biz-dict" data-width="130px" data-name="interestFrequencyThis"
+                             data-type="select"  data-selectText="false"
+                             data-biz-name="interestFrequencyThisMonth" data-group="accrual.month.thisinterest"
+                             data-value="$!{repayTypePage.interestFrequencyThis}"
+                             data-required="true"></div>
+                    #elseif("$!{repayTypePage.interestFrequencyNext}" == "4" )
+                        ##季
+                        <div class="bt-biz-dict" data-width="130px" data-name="interestFrequencyThis"
+                             data-type="select"  data-selectText="false"
+                             data-biz-name="interestFrequencyThisSeason" data-group="accrual.season.thisinterest"
+                             data-value="$!{repayTypePage.interestFrequencyThis}"
+                             data-required="true"></div>
+                    #end
+                </div>
+            </td>
+        </tr>
+            ##当利息与金额相关，可选择还本金时候是否归还利息
+        <tr id="showInterestRepayType" >
+            <td class="textRight">#springMessage('table.repayType.interestRepayType')</td>
+            <td>
+                <div class="bt-biz-dict" data-width="80px" data-type="select" data-group="repayType.interestRepayType" data-defaultvalue="0"
+                     data-name="interestRepayType" data-biz-name="interestRepayType" data-selectText="false" data-callback="interestCallBack"></div>
+                <div id="interestRepayTypeNext" style="display: none" class="layui-inline">
+                    <div class="bt-biz-dict"  data-type="select" data-group="repayType.interestRepayType.next" data-defaultvalue="0"
+                         data-name="interestRepayTypeNext" data-biz-name="interestRepayTypeNext"  data-selectText="false"></div>
+                    <i id="interestRepayType-Next" class="layui-icon">&#xe60b;</i>
+                </div>
+            </td>
+        </tr>
+            ##当利息与金额相关，并且是一次性还本金时，还利息为时间周期时，利息的计算有按实际天数和平均还息的算法
+        <tr id="showInterestWay">
+            <td class="textRight">#springMessage('table.repayType.interestWay')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="repayType.interestWay" data-defaultvalue="0"
+                     data-name="interestWay" data-biz-name="interestWay"></div>
+            </td>
+        </tr>
+        <tr>
+            ##            计息日
+            <td class="textRight">#springMessage('table.cmsProvideLoanSend.expiryDate')</td>
+            <td>
+                <div class="layui-inline" id="expiryDateTd">
+                    <div class="bt-biz-dict" data-name="interestDay" data-type="select"
+                         data-biz-name="expiryDateMonth"
+                        #if($!{repayTypePage.interestFrequencyNext} == "2")
+                         data-group="accrued.week"
+                        #else
+                         data-group="cms.repayType.interestDay"
+                        #end
+                        ##                         等额本息，不规律，随借随还，按天支付则禁用
+                        #if($!{repayTypePage.capitalAndInterest} == "2" ||
+                            $!{repayTypePage.interestFrequencyType} == "P" ||
+                            $!{repayTypePage.interestFrequencyType} == "N" ||
+                            $!{repayTypePage.interestFrequencyNext} == "1")
+                         data-disabled="true"
+                        #end
+                        #if($!{repayTypePage.interestDay})
+                         data-value="$!{repayTypePage.interestDay}"
+                        #else
+                         data-value="21"
+                        #end
+                         data-required="true"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.repay.validSign')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="valid_sign" data-defaultvalue="1"
+                     data-name="validSign" data-biz-name="validSign"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.repay.rmk')</td>
+            <td>
+                <textarea placeholder="#springMessage('table.repay.rmk')" lay-verify="strlength" data-maxlength="200"
+                          class="layui-textarea" id="rmk" name="rmk"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage(
+                    'common.button.save')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/repaytype/repayType.add.js?_btv=${resourceVersion}"></script>
+</html>

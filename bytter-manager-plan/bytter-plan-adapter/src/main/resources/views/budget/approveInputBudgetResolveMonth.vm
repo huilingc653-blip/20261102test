@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        table .layui-input {
+            width: 148px;
+        }
+    </style>
+</head>
+<body>
+	<form class="layui-form layui-form-pane">
+		<input type="hidden" id="taskId" name= "taskId" value="$!{taskId}">
+	</form>
+    <form class="layui-form ignore-required-icon" method="post" id="inputForm">
+        <input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+        <input id="createBy" name="createBy" type="hidden" value="$!{fbsBudgetPage.createBy}">
+        <input id="createDate" name="createDate" type="hidden" value="$!{fbsBudgetPage.createDate}">
+        <input id="updateBy" name="updateBy" type="hidden" value="$!{fbsBudgetPage.updateBy}">
+        <input id="updateDate" name="updateDate" type="hidden" value="$!{fbsBudgetPage.updateDate}">
+        <input id="status" name="status" type="hidden" value="$!{fbsBudgetPage.status}">
+        <input id="corpId" name="corpId" type="hidden" value="$!{fbsBudgetPage.corpId}">
+        <input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetPage.timeType}">
+        <input id="beginDate" name="beginDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})">
+        <input id="endDate" name="endDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})">
+        <input id="busName" name="busName" type="hidden" value="$!{busName}">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                ##单位
+                <td class="textRight">#springMessage('table.fbsBudget.corpId')</td>
+                <td>$!{fbsBudgetPage.corpName}</td>
+                ##周期类型
+                <td class="textRight">#springMessage('table.fbsBudget.timeType')</td>
+                <td>$dictTag.get("fbs.timeType",$!{fbsBudgetPage.timeType})</td>
+            </tr>
+            <tr>
+                ##开始日期
+                <td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})</td>
+                ##结束日期
+                <td class="textRight">#springMessage('table.fbsBudget.endDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})</td>
+            </tr>
+            </tbody>
+        </table>
+        <!-- 新增币种 -->
+        <div class="layui-input-inline" style="padding: 10px; float: right">
+            <div class="layui-input-inline">
+                #springMessage('table.fbsBudgetDetail.curId')：
+            </div>
+            <div class="layui-input-inline">
+                <input type="hidden" id="curId" name="curId" lay-verify="required" value="$!{fbsBudgetPage.curId}">
+                $!{currencyTag.getCurName($!{fbsBudgetPage.curId})}
+            </div>
+            <div class="layui-input-inline">
+                <input type="hidden" id="exchangeRate" name="exchangeRate" value="$!{fbsBudgetPage.exchangeRate}">
+            </div>
+        </div>
+        <!-- 查看本期明细 -->
+        #if($!{collectFlag} == "1")
+            <div class="layui-input-inline" style="padding: 10px; float: right">
+                <div class="layui-input-inline">
+                    <button class="layui-btn" type="button" onclick="dtlView();" >#springMessage('common.button.dtlView')</button>
+                </div>
+            </div>
+        #end
+        <div style="display:inline-block;width:100%;">
+            <div id="maingrid1"></div>
+        </div>
+        <div style="width: 100%;overflow-x: scroll;margin-bottom: 10px;display: none">
+            <table id="appTable" class="layui-table" style="width:100%;">
+                <thead>
+                <tr>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.number')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.itemCode')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.itemName')</th>
+                    <!-- 可上报金额 -->
+                    #if($!{fbsBudgetPage.parentTimeType} != "")
+                        <th rowspan="2">#springMessage('table.fbsBudgetYear.canBMoney')</th>
+                    #end
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.bMoney')</th>
+                    #foreach($week in $weeks.entrySet())
+                        <th>#springMessage('table.fbsBudgetYear.the')$!{week.key}#springMessage('table.fbsBudgetYear.weekShow')</th>
+                    #end
+                    <th rowspan="2">#springMessage('table.fbsBudgetPeriod.rmk')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.dtl')</th>
+                </tr>
+                <tr>
+                    #foreach($week in $weeks.entrySet())
+                        <th>#springMessage('table.fbsBudgetYear.bMoney')</th>
+                    #end
+                </tr>
+                </thead>
+                <tbody>
+                    #foreach($date in $resolveList)
+                    <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}" data-tt-subject-sort="$!{date.itemCode}">
+                        <td>$!{velocityCount}</td>
+                        <td>
+                            $!{date.itemCode}
+                            <input type="hidden" id="detailId_$!{date.itemCode}" name="detailId" value="$!{date.detailId}">
+                            <input type="hidden" id="itemCode_$!{date.itemCode}" name="itemCode" value="$!{date.itemCode}">
+                            <input type="hidden" id="itemRelation_$!{date.itemCode}" name="itemRelation" data-curItemCode="$!{date.itemCode}" value="$!{date.item.itemRelation}">
+                            <input type="hidden" id="sign_$!{date.itemCode}" name="sign" value="$!{date.item.sign}">
+                            <input type="hidden" id="isBeginPeriod_$!{date.itemCode}" name="isBeginPeriod" value="$!{date.item.isBeginPeriod}">
+                            <input type="hidden" id="isEndPeriod_$!{date.itemCode}" name="isEndPeriod" value="$!{date.isEndPeriod}">
+                            <input type="hidden" id="resolveId_$!{date.itemCode}" name="resolveId" value="$!{date.id}">
+                        </td>
+                        <td>$!{date.itemName}</td>
+                        <!-- 可上报金额 -->
+                        #if($!{fbsBudgetPage.parentTimeType} != "")
+                            <td align="right">
+                                <input type="hidden" id="canBMoney_$!{date.itemCode}" data-name="canBMoney"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{date.canBMoney}"
+                                       data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="canBMoney_$!{date.itemCode}">
+                                <div id="canBMoneyDiv_$!{date.itemCode}" name="bMoneyDiv">$!{date.canBMoney}</div>
+                            </td>
+                        #end
+                        <td align="right" >
+                            <input type="hidden" id="bMoney_$!{date.itemCode}" name="bMoney" data-name="bMoney"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{date.bMoney}" data-key=""
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney_$!{date.itemCode}">
+                            <div id="bMoneyDiv_$!{date.itemCode}" name="bMoneyDiv">$!{date.bMoney}</div>
+                        </td>
+                        #foreach($money in $date.bMoneyMap.entrySet())
+                            <td align="right" >
+                                #if($!{collectFlag} != "1")
+                                    #if($!{date.item.isWrite} == "1")
+                                        <input type="text" id="bMoney$!{money.key}_$!{date.itemCode}" name="bMoney$!{money.key}" lay-verify="required" data-name="bMoney$!{money.key}"
+                                                #if($!{date.item.isBeginPeriod} == "1" || $!{date.item.isEndPeriod} == "1")
+                                                   data-minus="true"
+                                                #end
+                                                #if($!{date.item.isWriteDetail} == "1")
+                                                    readonly="readonly"
+                                                #end
+                                               autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{money.value}" data-key="$!{money.key}"
+                                               data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{money.key}_$!{date.itemCode}">
+                                    #else
+                                        <input type="hidden" id="bMoney$!{money.key}_$!{date.itemCode}" name="bMoney$!{money.key}" data-name="bMoney$!{money.key}"
+                                               autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{money.value}" data-key="$!{money.key}"
+                                               data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{money.key}_$!{date.itemCode}">
+                                        <div id="bMoneyDiv$!{money.key}_$!{date.itemCode}" name="bMoneyDiv">$!number.formatNumeric($!{money.value})</div>
+                                    #end
+                                #else
+                                    $!number.formatNumeric($!{money.value})</div>
+                                #end
+                            </td>
+                        #end
+                        <td>
+                            <input type="text" id="rmk_$!{date.itemCode}" name="rmk" autocomplete="off" class="layui-input" value="$!{date.rmk}">
+                        </td>
+                        <td data-name="dtl" align="center">
+                            #if($!{date.item.isWrite} == "1" && $!{date.item.isBeginPeriod} != "1" && $!{date.item.isEndPeriod} != "1")
+                                <a class="" href="#" onclick="inputDtl('$!{fbsBudgetPage.id}','$!{date.detailId}','$!{date.canBMoney}')">#springMessage('common.button.dtl')</a>
+                            #end
+                        </td>
+                    </tr>
+                    #end
+                </tbody>
+            </table>
+        </div>
+        #if($!{collectFlag} != "1")
+            <div style="text-align: center; padding-top: 10px;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="$!{fbsBudgetPage.status}">#springMessage('common.button.submit')</button>
+            </div>
+        #end
+        <!-- 附件上传 -->
+        <input id="attachmentId" name="attachmentId" type="hidden" value="$!{fbsBudgetPage.attachmentId}">
+        <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+        <!-- 日志 -->
+        <div id="tagMsg"></div>
+    </form>
+        #parse("views/common/footer.vm")
+        #if($!{showNetAmount} == "1")
+            #set($btnPrependHtml = '<button type="button" class="layui-btn" id="showNetAmount" onclick="showNetAmount()">'+"#springMessage('fbsBudget.button.viewNetAmount')"+'</button>')
+            #workFlowHtml($!{btnPrependHtml})
+        #else
+            #workFlowHtml()
+        #end
+        #workFlowScript()
+	<script>
+        var moneyFun;
+        var moneyType;
+        bt.use(['form','layedit','btdate','moneyType','toLigerTree','btUpload', 'selectType'], function(){
+            var $ = bt.jquery,form = bt.form();
+            bt.toLigerTree.init({
+                elem: '#appTable',
+                newElem: '#maingrid1',
+                rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+                isDoubleHeader: true,//是否有双表头
+                allowHideColumn: false,
+                resize:false,
+                height: "80%",
+                fixedLeftColumns: 2,
+            });
+            moneyType = bt.moneyType.init();
+            moneyFun = bt.moneyType.getFun();
+            var up = bt.btUpload.init({
+                elem: "#uploader",
+                auto: false,
+                hasDelete: false,
+                hasUpload: false,
+                isExpand: true,
+                gid: $("#attachmentId").val()
+            });
+            /**
+             * 计划上报-明细录入
+             * @param id
+             * @param detailId
+             * @param canBMoney
+             */
+            inputDtl = function (id, detailId, canBMoney) {
+                var url = basePath + "/budget/fbsbudgetdetail/inputDtl?budgetId=" + id + "&detailId=" + detailId + "&canBMoney=" + canBMoney;
+                if (bt.navtab) {
+                    bt.navtab.addNavtab(bt.lang('common.button.dtl'), url);
+                    return;
+                }
+            };
+
+            //币种回调函数
+            bt.curIdCallback = function (data) {
+                //获取汇率
+                $.ajax({
+                    url: basePath + "/basic/business/fcexcrateadjust?getExcrateAdjustForBudget",
+                    method: 'POST',
+                    data: {corpId: $("#corpId").val(),curId: data.id},
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.obj) {
+                            $("#exchangeRate").val(data.obj);
+                        }else{
+                            $("#exchangeRate").val('');
+                        }
+                        form.render();
+                    }
+                });
+            };
+            var selectType = bt.selectType.init();
+            /**
+             * 查看本期明细
+             */
+            dtlView = function () {
+                var timeType = $("#timeType").val();
+                var corpId = $("#corpId").val();
+                var beginDate = $("#beginDate").val();
+                var endDate = $("#endDate").val();
+                beginDate = bt.date.format(beginDate, "yyyy-MM-dd");
+                endDate = bt.date.format(endDate, "yyyy-MM-dd");
+                if (bt.navtab) {
+                    bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/budget/fbsbudget/curView/" + corpId + "/" + timeType + "/" + beginDate + "/" + endDate + "/input");
+                    return;
+                }
+            };
+            //监听提交
+            form.on('submit(submit)', function(data){
+                $("#status").val($(this).attr("value"));
+                $("#attachmentId").val(up.getGroupId());
+
+                var exchangeRate = $("#exchangeRate").val();
+                if(!exchangeRate){
+                    bt.loading.hide();
+                    layer.alert(bt.lang('budget.message.exchangeRate.null'), {icon: 7});
+                    return false;
+                }
+
+                var action = "/budget/fbsbudget/inputResolveMonthSaveApprove";
+                $.post(basePath + action,$('#inputForm').serialize(),function(result){
+                    parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                },'JSON');
+                return false;
+            });
+
+            var bMoneyDiv = $('div[name="bMoneyDiv"]');
+            for(var i=0; i<bMoneyDiv.length; i++){
+                $(bMoneyDiv[i]).text(moneyFun.format($(bMoneyDiv[i]).text()));
+            }
+
+            /**
+             * 生成日志列表
+             * @return
+             */
+                $genMsgHtml= function() {
+                var url=basePath + "/budget/fbsmessage/list/"+$('#id').val()+"/"+$("#busName").val();
+                if($("#target").val() == "superadd"){
+                    url=basePath + "/budget/fbsmessage/list/"+$('#superaddId').val()+"/"+$("#busName").val();
+                }
+                $.ajax({
+                    url:url,
+                    method: 'GET',
+                    async:false,
+                    success: function (json) {
+                        $("#tagMsg").html("");
+                        $("#tagMsg").html(json);
+                        form.render();
+                    }
+                });
+            }
+            $genMsgHtml();
+
+            /**
+             * 查看收支净额
+             */
+            showNetAmount = function (){
+                parent.layer.open({
+                    type: 2,
+                    area: ['1020px', '530px'],
+                    maxmin: true,
+                    content: basePath + "/budget/fbsbudget/showNetAmount/" + $('#id').val()
+                });
+            }
+        });
+
+        //明细录入
+        function inputDtl(id,detailId){
+            $ = bt.jquery,form = bt.form();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/budget/fbsbudgetdetail/inputDtl?budgetId="+id+"&detailId="+detailId
+            });
+        };
+
+        //计划科目上报金额计算
+        function calItemMoney(data, obj){
+            var $ = bt.jquery,form = bt.form();
+            var bMoney = obj.data();
+            calSuperItemMoney(bMoney.itemcode,bMoney.superitemcode,bMoney.key);
+            calMonthSuperItemMoney();
+            //校验金额是否超过可上报金额
+            var canBMoneyLength = $("input[data-biz-name='canBMoney_"+bMoney.itemcode+"']").length;
+            if(canBMoneyLength){
+                var canBMoney = moneyFun.toNumber(moneyType.get("canBMoney_"+bMoney.itemcode).val());
+                var bMoneyInput = moneyFun.toNumber(moneyType.get("bMoney_"+bMoney.itemcode).val());
+                var sign = $("#sign_"+bMoney.itemcode).val();//资金流向：1流入 -1流出
+                if(canBMoney < bMoneyInput && sign == -1){
+                    layer.alert(bt.lang('budget.message.bmoney.gt.canbmoney'), {icon: 7});
+                    moneyType.get("bMoney"+bMoney.key+"_"+bMoney.itemcode).val(0);
+                    calSuperItemMoney(bMoney.itemcode,bMoney.superitemcode,bMoney.key);
+                    calMonthSuperItemMoney();
+                }
+            }
+        };
+        //上级科目汇总计算
+        function calSuperItemMoney(itemCode, superItemcode, key){
+            var $ = bt.jquery,form = bt.form();
+            var bMoneyTotal = 0;
+
+            //判断是否有上级科目
+            if(superItemcode && superItemcode!=""){
+                //获取上级科目的流向标志
+                var signSuper = $("#sign_" + superItemcode).val();
+                $('form').find('input[data-superItemCode="'+superItemcode+'"][data-key="'+key+'"]').each(function(){
+                    //获取子科目的流向标志，计算上级科目金额（必须增加流向标志，客户存在同一个科目下子科目既有流入又有流出）
+                    var sign = $("#sign_" + $(this).attr("data-itemCode")).val();
+                    if(signSuper == sign) {
+                        bMoneyTotal = moneyFun.add(bMoneyTotal, moneyFun.toNumber($(this).val()));
+                    }else{
+                        bMoneyTotal = moneyFun.sub(bMoneyTotal, moneyFun.toNumber($(this).val()));
+                    }
+                });
+                //上级科目金额
+                var bMoneySuper = moneyFun.format(bMoneyTotal);
+                moneyType.get("bMoney"+key+"_"+superItemcode).val(bMoneySuper);
+                $("#bMoneyDiv"+key+"_"+superItemcode).text(bMoneySuper);
+            }
+
+            //判断是否有计算公式 如：k100+k200
+            $('form').find('input[name="itemRelation"]').each(function(){
+                var itemRelation = $(this).val();
+                if(itemRelation && itemRelation!=""){
+                    if(itemRelation.indexOf(itemCode)!=-1 || itemRelation.indexOf(superItemcode)!=-1){
+                        caluteItemRelation($(this).attr("data-curItemCode"),itemRelation, key);
+                    }
+                }
+            });
+
+            //判断上级科目是否存在上级科目
+            var superItemcodeNew =  $("[data-id='bMoney"+key+"_"+superItemcode+"']").attr("data-superItemCode");
+            var keyNew = $("[data-id='bMoney"+key+"_"+superItemcode+"']").attr("data-key");
+            if(superItemcodeNew && superItemcodeNew!=""){
+                calSuperItemMoney(superItemcode, superItemcodeNew, keyNew);
+            }
+        };
+        //关系运算符计算
+        function caluteItemRelation(curItemCode, itemRelation, key){
+            var $ = bt.jquery,form = bt.form();
+            //替换运算符（+、-、*、/）获取科目数组
+            var itemRelation1 = itemRelation.replace(/\+/g, ";");
+            itemRelation1 = itemRelation1.replace(/\-/g, ";");
+            itemRelation1 = itemRelation1.replace(/\*/g, ";");
+            itemRelation1 = itemRelation1.replace(/\//g, ";");
+            var itemCodes = itemRelation1.split(";");//科目
+            //替换科目获取运算符数组
+            var itemRelation2 = itemRelation;
+            for(var i=0; i<itemCodes.length; i++){
+                itemRelation2 = itemRelation2.replace(itemCodes[i], ";");
+            }
+            var operators = itemRelation2.split(";");//运算符+、-、*、/
+            //金额计算
+            var bMoneyTotal = 0;
+            for(var i=0; i<itemCodes.length-1; i++){
+                var itemCode = itemCodes[i];//获取科目
+                var itemCodeNext = itemCodes[i+1];
+                var operator = operators[i+1];//获取运算符
+                var bMoneySuper = 0;
+                var bMoneySuperNext = 0;
+
+                if(i != 0){
+                    bMoneySuper = bMoneyTotal;
+                }else{
+                    //包含‘k’则为科目
+                    if(itemCode.indexOf("k")!=-1){
+                        itemCode = itemCode.replace("k", "");
+                        //科目不存在，计算时按0计算
+                        var bMoneyLength = $("input[data-biz-name='bMoney"+key+"_"+itemCode+"']").length;
+                        if(!bMoneyLength){
+                            bMoneySuper = 0;
+                        }else{
+                            bMoneySuper = moneyFun.mul(moneyFun.toNumber(moneyType.get("bMoney"+key+"_"+itemCode).val()),$("#sign_"+itemCode).val());
+                        }
+                    }else{
+                        bMoneySuper = moneyFun.toNumber(itemCode);
+                    }
+                }
+                if(itemCodeNext.indexOf("k")!=-1){
+                    itemCodeNext = itemCodeNext.replace("k", "");
+                    //科目不存在，计算时按0计算
+                    var bMoneyLength = $("input[data-biz-name='bMoney"+key+"_"+itemCodeNext+"']").length;
+                    if(!bMoneyLength){
+                        bMoneySuperNext = 0;
+                    }else{
+                        bMoneySuperNext = moneyFun.mul(moneyFun.toNumber(moneyType.get("bMoney"+key+"_"+itemCodeNext).val()),$("#sign_"+itemCodeNext).val());
+                    }
+                }else{
+                    bMoneySuperNext = moneyFun.toNumber(itemCodeNext);
+                }
+                //根据运算符计算
+                var resultTemp = 0;
+                if(operator=="+"){
+                    resultTemp = moneyFun.add(bMoneySuper, bMoneySuperNext);
+                }else if(operator=="-"){
+                    resultTemp = moneyFun.sub(bMoneySuper, bMoneySuperNext);
+                }
+                bMoneyTotal = resultTemp;
+            }
+            //计算科目金额
+            moneyType.get("bMoney"+key+"_"+curItemCode).val(bMoneyTotal);
+            $("#bMoneyDiv"+key+"_"+curItemCode).text(moneyFun.format(bMoneyTotal));
+        }
+
+        function calMonthSuperItemMoney(){
+            var $ = bt.jquery,form = bt.form();
+            //月计划计算
+            $('form').find('input[name="itemCode"]').each(function(){
+                var bMoneyTotal = 0;
+                for(var key=1;key<=6;key++){
+                    if($('input[data-biz-name = "bMoney'+key+'_'+$(this).val()+'"]')[0]){
+                        var bMoney = moneyType.get("bMoney"+key+"_"+$(this).val()).val();
+                        bMoneyTotal = moneyFun.add(bMoneyTotal, moneyFun.toNumber(moneyType.get("bMoney"+key+"_"+$(this).val()).val()));
+                    }
+                }
+                var bMoneySuper = moneyFun.format(bMoneyTotal);
+                moneyType.get("bMoney_"+$(this).val()).val(bMoneySuper);
+                $("#bMoneyDiv_"+$(this).val()).text(bMoneySuper);
+            });
+        }
+	</script>
+</body>
+</html>

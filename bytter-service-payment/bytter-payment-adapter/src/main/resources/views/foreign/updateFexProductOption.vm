@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="createBy" name="createBy" type="hidden" value="$!{fexProductPage.createBy}">
+		<input id="createDate" name="createDate" type="hidden" value="$!{fexProductPage.createDate}">
+		<input id="updateBy" name="updateBy" type="hidden" value="$!{fexProductPage.updateBy}">
+		<input id="updateDate" name="updateDate" type="hidden" value="$!{fexProductPage.updateDate}">
+		<input id="id" name="id" type="hidden" value="$!{fexProductPage.id}">
+		<input id="proLevel" name="proLevel" type="hidden" value="$!{fexProductPage.proLevel}">
+		<input id="tranType" name="tranType" type="hidden" value="$!{fexProductPage.tranType}">
+		<input id="fexOption1Def" name="fexOption1Def" type="hidden" value="$!{fexProductPage.fexOption1}">
+		<table class="layui-table">
+			<tbody>
+				<tr>
+    				<td class="textRight" width="40%">#springMessage('table.fexProduct.proName')</td>
+                    <td width="60%">
+						<input type="text" id="proName" name="proName" lay-verify="required|strlength" value="$!{fexProductPage.proName}" data-maxlength="60"
+							   autocomplete="off" class="layui-input" placeholder="#springMessage('table.fexProduct.proName')">
+    				</td>
+				</tr>
+				<tr>
+					<td class="textRight" width="40%">#springMessage('table.fexProduct.proDesc')</td>
+					<td width="60%">
+						<input lay-verify="strlength" type="text" id="proDesc" name="proDesc" value="$!{fexProductPage.proDesc}"  data-maxlength="100"
+							   autocomplete="off" class="layui-input" placeholder="#springMessage('table.fexProduct.proDesc')">
+					</td>
+				</tr>
+				<tr>
+    				<td class="textRight">#springMessage('table.fexProduct.proId')</td>
+                    <td>
+						<div class="bt-biz-selectType" data-url="${basePath}/foreign/fexproduct/listProductGroup/$!{fexProductPage.tranType}" data-name ="proId" data-biz-name ="proId"
+							 data-valueField="id" data-textField="proName" data-value="$!{fexProductPage.proId}"></div>
+    				</td>
+				</tr>
+				##外汇期权品种
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.fexOption')</td>
+					<td>
+						<div class="layui-input-inline">
+						##外汇期权品种1 0-普通期权、1-奇异期权
+							<div class="bt-biz-dict" data-type="select" data-group="fexProduct.fexOption1" data-defaultvalue="$!{fexProductPage.fexOption1}" data-name="fexOption1" data-biz-name="fexOption1" data-required = "true" data-callback="bt.fexOption1Callback"></div>
+						</div>
+						#if($!{fexProductPage.fexOption1} == "1")
+							<div class="layui-input-inline" id="fexOption2Div">
+						#else
+							<div class="layui-input-inline" id="fexOption2Div" style="display: none">
+						#end
+						##外汇期权品种2 1-亚式期权、2-单障碍期权、3-双障碍期权
+							<div class="bt-biz-dict" data-type="select" data-group="fexProduct.fexOption2" data-defaultvalue="$!{fexProductPage.fexOption2}" data-name="fexOption2" data-biz-name="fexOption2" data-callback="bt.fexOption2Callback"></div>
+						</div>
+						#if($!{fexProductPage.fexOption2} == "2" || $!{fexProductPage.fexOption2} == "3")
+							<div class="layui-input-inline" id="fexOption3Div">
+						#else
+							<div class="layui-input-inline" id="fexOption3Div" style="display: none">
+						#end
+							##外汇期权品种3 1-上涨生效单障碍期权(Up & In)、2-上涨失效单障碍期权(Up & Out)、3-下跌失效单障碍期权(Down & Out)、4-下跌生效单障碍期权(Down & In)、5-单触碰生效双障碍期权(Double In)、6-单触碰失效双障碍期权(Double Out)
+							<div class="bt-biz-dict" data-type="select" data-group="fexProduct.fexOption3" data-defaultvalue="$!{fexProductPage.fexOption3}" data-name="fexOption3" data-biz-name="fexOption3" data-callback="bt.fexOption3Callback"
+								#if($!{fexProductPage.fexOption2} == "2")
+										 data-displayData="1,2,3,4"
+								#elseif($!{fexProductPage.fexOption2} == "3")
+										 data-displayData="5,6"
+								#end
+							></div>
+						</div>
+					</td>
+				</tr>
+				##外汇期权类型 0-欧式、1-美式
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.fexOptionType')</td>
+					<td>
+						<div class="layui-inline" id="fexOptionTypeDiv">
+							<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.fexOptionType" data-defaultvalue="$!{fexProductPage.fexOptionType}" data-name="fexOptionType" data-biz-name="fexOptionType" data-required = "true"></div>
+						</div>
+					</td>
+				</tr>
+				##期权费汇率 0-使用协定汇率、1-使用即期汇率
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.fexOptionRate')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.fexOptionRate" data-defaultvalue="$!{fexProductPage.fexOptionRate}" data-name="fexOptionRate" data-biz-name="fexOptionRate" data-required = "true"></div>
+					</td>
+				</tr>
+				##退款支付时间 0-到期日、1-敲出日
+				<tr id="refundTimeTr" #if(!$!{fexProductPage.refundTime})
+					class ="layui-hide"
+				#end>
+					<td class="textRight">#springMessage('table.fexProduct.refundTime')</td>
+					<td>
+						##退款支付时间：2-上涨失效单障碍期权(Up & Out)、3-下跌失效单障碍期权(Down & Out) 必选
+						<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.refundTime" data-defaultvalue="$!{fexProductPage.refundTime}" data-name="refundTime" data-biz-name="refundTime"
+							#if($!{fexProductPage.fexOption3} == "2" || $!{fexProductPage.fexOption3} == "3")
+							 data-required = "true"
+							#end
+						></div>
+					</td>
+				</tr>
+				##加权天数规则 0-按日历（不区分是否工作日）、1-仅工作日
+				#if($!{fexProductPage.fexOption2} == "1")
+				<tr id="daysRuleDiv">
+				#else
+				<tr id="daysRuleDiv" style="display: none">
+				#end
+					<td class="textRight">#springMessage('table.fexProduct.daysRule')</td>
+					<td>
+						##加权天数规则：1-亚式期权时才显示且必选
+						<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.daysRule" data-defaultvalue="$!{fexProductPage.daysRule}" data-name="daysRule" data-biz-name="daysRule"
+							#if($!{fexProductPage.fexOption2} == "1")
+							 data-required = "true"
+							#end
+						></div>
+					</td>
+				</tr>
+				##交易时障碍验证标准 0-即期汇率、1-即期汇率对应的货币价值
+				##交易时障碍验证标准：2-单障碍期权和3-双障碍期权时才显示且必选
+				#if($!{fexProductPage.fexOption2} == "2" || $!{fexProductPage.fexOption2} == "3")
+				<tr id="validStandardDiv">
+				#else
+				<tr id="validStandardDiv" style="display: none">
+				#end
+					<td class="textRight">#springMessage('table.fexProduct.validStandard')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.validStandard" data-defaultvalue="$!{fexProductPage.validStandard}" data-name="validStandard" data-biz-name="validStandard"
+							#if($!{fexProductPage.fexOption2} == "2" || $!{fexProductPage.fexOption2} == "3")
+							 data-required = "true"
+							#end
+						></div>
+					</td>
+				</tr>
+##				##交易结算方式 0-现金、0-即期交易
+##				<tr>
+##					<td class="textRight">#springMessage('table.fexProduct.tranSettleMethod')</td>
+##					<td>
+##						<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.tranSettleMethod" data-defaultvalue="$!{fexProductPage.tranSettleMethod}" data-name="tranSettleMethod" data-biz-name="tranSettleMethod" data-required = "true"></div>
+##					</td>
+##				</tr>
+					##交割类型 0-本金交割、1-无本金交割
+				<td class="textRight">#springMessage('table.fexProduct.deliveryType')</td>
+				<td>
+					<div class="bt-biz-dict" data-type="radio" data-group="fexProduct.deliveryType" data-defaultvalue="$!{fexProductPage.deliveryType}" data-name="deliveryType" data-biz-name="deliveryType" data-required = "true"></div>
+				</td>
+				##在交易时展示经纪人 0-否、1-是
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.isShowAgent')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{fexProductPage.isShowAgent}" data-name="isShowAgent" data-biz-name="isShowAgent" data-required = "true"></div>
+					</td>
+				</tr>
+				##在交易时展示清算所 0-否、1-是
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.isShowClearHouse')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{fexProductPage.isShowClearHouse}" data-name="isShowClearHouse" data-biz-name="isShowClearHouse" data-required = "true"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.buyCurId')</td>
+					<td>
+						<div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="buyCurId" data-biz-name ="buyCurId"
+							 data-valueField="id" data-textField="englishCode" data-value="$!{fexProductPage.buyCurId}"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="textRight">#springMessage('table.fexProduct.sellCurId')</td>
+					<td>
+						<div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="sellCurId" data-biz-name ="sellCurId"
+							 data-valueField="id" data-textField="englishCode" data-value="$!{fexProductPage.sellCurId}"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="textRight">#springMessage('table.btCurrency.validSign')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="radio" data-group="valid_sign" data-defaultvalue="$!{fexProductPage.validSign}" data-name="validSign" data-required = "true"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="textRight">#springMessage('bisAccAttribute.rmk')</td>
+					<td >
+						<textarea lay-verify="strlength" placeholder="#springMessage('bisAccAttribute.rmk')" class="layui-textarea" style="width:100%" id="rmk" name="rmk" data-maxlength="100">$!{fexProductPage.rmk}</textarea>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" style="text-align: center;">
+						<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.save')</button>
+						<button type="reset" class="layui-btn layui-btn-primary" data-callback="resetFnOption">#springMessage('common.button.reset')</button>
+					</td>
+				</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/foreign/fexProduct.edit.js?_btv=${resourceVersion}"></script>

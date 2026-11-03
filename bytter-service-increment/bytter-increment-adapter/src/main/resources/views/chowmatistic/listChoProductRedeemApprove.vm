@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}"/>
+    <table class="layui-table">
+        <tr>
+            ##单位名称
+            <td class="textRight">#springMessage("table.choBankFinance.corpId")</td>
+            <td width="20%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="ins_corpId"
+##                         data-beforeInit="beforeInitCorp"
+                         data-resource="cho:productRedeem:choProductRedeem:query"
+                         data-tree-type="check"
+                         data-scope="all"></div>
+                </div>
+            </td>
+            ##理财类型
+            <td class="textRight">#springMessage("table.choProduct.financialType")</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="select" data-group="financial.type" data-callback="financialTypeCallback"
+                     data-name="eqs_financialType" data-biz-name="financialType" id="financialType"></div>
+            </td>
+            ##产品类型
+            <td class="textRight">#springMessage("table.choProduct.productType")</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="select" data-group="cho.productType"
+                     data-name="eqs_productType" data-biz-name="productType" id="eqs_productType"></div>
+            </td>
+        </tr>
+        <tr>
+            ##产品代码
+            <td class="textRight">#springMessage("table.choProduct.productCode")</td>
+            <td width="20%">
+                <div class="bt-biz-selectType" data-url="${basePath}/chowmatistic/choproduct/json"
+                     data-name ="eqs_productCode" data-biz-name ="eqs_productCode"  data-valueField="productCode" data-textField="productCode"></div>
+            </td>
+            ##产品名称
+            <td class="textRight">#springMessage("table.choProduct.productName")</td>
+            <td width="20%">
+                <div class="bt-biz-selectType" data-url="${basePath}/chowmatistic/choproduct/json"
+                     data-name ="likes_productName" data-biz-name ="likes_productName"  data-valueField="productName" data-textField="productName"></div>
+
+            </td>
+            ##银行类别
+            <td class="textRight">#springMessage("table.choProduct.bankTypeId")</td>
+            <td width="20%">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/json"
+                     data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id" data-textField="typeName"></div>
+            </td>
+        </tr>
+        <tr>
+            ##金额单位
+            <td class="textRight">#springMessage("table.choProductReq.moneyUnit")</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="radio" data-group="common.MoneyType"  data-biz-name="moneyUnit" data-name="moneyUnit"
+                     data-defaultvalue="1"></div>
+            </td>
+            ##币别
+            <td class="textRight">#springMessage("table.choProduct.curId")</td>
+            <td width="20%">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                     data-name ="eqs_curId" data-biz-name ="eqs_curId"  data-valueField="id" data-textField="curName"></div>
+            </td>
+            ##状态
+            <td class="textRight">#springMessage("table.choProductReq.status")</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="select" data-group="choBankFinance.status" data-name="eqi_status"
+                     data-biz-name="eqi_status" id="eqi_status" data-filterData="-2,11,95"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" onclick="resetProductType()">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width: 100%;">
+    <thead>
+    <tr>
+        <th>#springMessage("table.choBankFinance.corpId")</th>
+        <th>#springMessage("table.choProduct.bankTypeId")</th>
+        <th>#springMessage("table.choProduct.financialType")</th>
+        <th>#springMessage("table.choProductReq.bankName")</th>
+        <th>#springMessage("table.choProduct.productCode")</th>
+        <th>#springMessage("table.choProduct.productName")</th>
+        <th>#springMessage("table.choProduct.productType")</th>
+        <th>#springMessage("table.choProductReq.bankAcc")</th>
+        <th>#springMessage("table.choProduct.curId")</th>
+        <th>#springMessage("table.choProductReq.status")</th>
+        <th>#springMessage("common.table.thead.operation")</th>
+    </tr>
+    </thead>
+</table>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+</body>
+<script>
+    bt.use(['form','datatable','selectType','dicts','rateType','dateType','corp'],function () {
+        var selectType=bt.selectType.init();
+        var dict = bt.dicts.init();
+        var corp = bt.corp.init();
+        bt.dateType.init();
+        var rateType = bt.rateType.getFun();
+        table = bt.datatable.init({
+            elem: "#appTable",
+            dom: "Brtlip",
+            colReorder:true,
+            checkbox: true,
+            searchForm:{
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+            ajax: {
+                'url': basePath+"/chowmatistic/choproductredeem/dataTableApprove"
+            },
+            buttons:[
+                {
+                    extend: "colvis",
+                    text: bt.lang("common.button.theadHide"),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns:[
+                {data:"corpName",bSortable:true,className:'center'},
+                {data:"bankTypeName",bSortable:true,className:'center'},
+                {data:"financialTypeName",bSortable:true,className:'center'},
+                {data:"bankName",bSortable:true,className:'center'},
+                {data:"productCode",bSortable:true,className:'center'},
+                {data:"productName",bSortable:true,className:'center'},
+                {data:"productType",bSortable:true,className:'center',
+                    render:function (data, type, full, meta) {
+                        return bt.dict("cho.productType",full.productType);
+                    }
+                },
+                {data:"bankAcc",bSortable:true,className:'center'},
+                {data:"curName",bSortable:true,className:'center'},
+                {data:"status",bSortable:true,className:'center',
+                    render:function (data, type, full, meta) {
+                        return bt.dict("common.status",full.status);
+                    }
+                },
+                {data:"null",bSortable:false,className:'center',render:function (data, type, full, meta) {
+                        var html='';
+                        if($("#flowStatus").val()=='todo'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                        }
+                        if($("#flowStatus").val() == 'pass'){
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }else {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }
+                        return html;
+                    }}
+            ]
+        })
+    });
+
+    function view(e1) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(e1).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/chowmatistic/choproductredeem/view/" + data.id
+        })
+    }
+    // 理财类型回调函数
+    function financialTypeCallback(data) {
+        var filterData
+        if (data.value === '1') {
+            filterData = '3,4,5,6'
+        } else if (data.value === '0') {
+            filterData = '1,2'
+        } else if (data.value === '2') {
+            filterData = '2,3,4,5,6'
+        }
+        bt.dicts.get("productType").attr({'data-filterData': filterData})
+        var url = basePath + "/chowmatistic/choproduct/json?financialType=" + data.value;
+        bt.selectType.get("eqs_productCode").attr("data-url", url);
+        bt.selectType.get("likes_productName").attr("data-url", url);
+        bt.dicts.render()
+    }
+
+    function resetProductType() {
+        bt.dicts.get("productType").attr({'data-filterData':''})
+        var url = basePath + "/chowmatistic/choproduct/json";
+        bt.selectType.get("likes_productName").attr("data-url", url);
+        bt.selectType.get("eqs_productCode").attr("data-url", url);
+    }
+
+    // beforeInitCorp = function (nodes) {
+    //     $.ajax({
+    //         url: basePath + "/chowmatistic/choproductreq/filterBySource",
+    //         method: 'POST',
+    //         data: {corpVOList: JSON.stringify(nodes)},
+    //         dataType: 'json',
+    //         async:false,
+    //         success: function (data) {
+    //             nodes = data;
+    //         }
+    //     });
+    //     return nodes;
+    // }
+</script>
+<script src="${basePath}/static/modules/chowmatistic/choProductRedeemApprove.list.js?_btv=${resourceVersion}"></script>
+</html>

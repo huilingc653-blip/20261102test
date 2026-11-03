@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        table{
+            font-size: 12px;
+        }
+        body{
+            background-color: #fff;
+            font-family: '宋体';
+        }
+        .voucher-title {
+            font-weight: bold;
+            font-size: 24px;
+            text-align: center;
+        }
+        .layui-table > thead th, .layui-table td {
+            position: static;
+        }
+        .noBorder tr td{
+            border: none!important;
+        }
+    </style>
+</head>
+<body>
+<input type="hidden" id="size" value="$!{size}">
+<form class="layui-form layui-form-pane" method="post">
+    <div id="printContainer">
+        #foreach($item in $map.entrySet())
+            <div id="print_${velocityCount}">
+                <div class="print-list">
+                ##凭证头部
+                    <div class="print-header">
+                    ##记账凭证
+                        <div style="text-align:center;">
+                            <div class="print-header-name">$!{item.value.netCorp.name}</div>
+                            <div class="print-header-title">$!dictTag.get('InnerAccount.AccType',$!{item.value.fcSubjectDTO.accType})#springMessage('interest.statement')</div>
+                            <div class="print-body-header">$!date.format('yyyy-MM-dd',$!{item.value.listFcAccInterestVO.interestTime})</div>
+                        </div>
+                    </div>
+                ##凭证内容
+                    <div class="print-body">
+                        <table style="width: 100%; " class="print-body-header">
+                            <tr>
+                            ##账户
+                                <td width="30%">#springMessage('table.fcInterestDtl.account')：$!{item.value.listFcAccInterestVO.blnctrAcc}</td>
+                            ##户名
+                                <td width="50%">#springMessage('table.nisPersonnelDetail.accName')：$!{item.value.listFcAccInterestVO.accName}</td>
+                            ##币别
+                                <td width="20%">#springMessage('table.fbsBudgetDetail.curId')：$!{item.value.listFcAccInterestVO.curName}</td>
+                            </tr>
+                        </table>
+                    ## 凭证表格数据
+                        <table id="dataTable" style="width: 100%;margin-top: 0px;margin-bottom: 0px;" class="layui-table breakRow">
+                            <thead>
+                            <tr>
+                            ##                起息日期
+                                <th style="text-align: center;min-width: 80px">#springMessage('table.fcInterestDtl.interestStartDate')</th>
+                            ##                  止息日
+                                <th style="text-align: center;min-width: 80px">#springMessage('table.interet.blnInstDate')</th>
+                            ##                天数
+                                <th style="text-align: center;min-width: 80px">#springMessage('table.fcInterestDtl.days')</th>
+                            ##                积数
+                                <th style="text-align: center;min-width: 80px">#springMessage('table.fcInterestDtl.cumulation')</th>
+                            ##                利率
+                                <th style="text-align: center;max-width:120px" colspan="2">#springMessage('table.fcInterestDtl.interestRate')</th>
+                            ##                利息
+                                <th style="text-align: center;">#springMessage('table.fcInterestDtl.interest')</th>
+                            ##                备注
+                                <th style="text-align: center;">#springMessage('table.fcInstrateAdjust.rmk')</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            #foreach($FcAcc in $item.value.listFcAccInterestVOList)
+                            <tr>
+                                <td class="textCenter">
+                                    $!date.format('yyyy-MM-dd',$!FcAcc.interestStartDate)
+                                </td>
+                                <td class="textCenter">
+                                    $!date.format('yyyy-MM-dd',$!FcAcc.blnInstDate)
+                                </td>
+                                <td class="textRight">$!{FcAcc.days}</td>
+                                <td class="textRight" > $number.formatNumeric($!{FcAcc.cumulation})</td>
+                                #set($interestRate = $!{FcAcc.interestRate}*100)
+                                <td class="textRight" colspan="2">$!number.formatDoubles($!interestRate , 4)%</td>
+                                <td class="textRight">$number.formatNumeric($!{FcAcc.interest})</td>
+                                <td class="textCenter">$dictTag.get("interest.type",$!{FcAcc.interestType})</td>
+                            </tr>
+                            #end
+                            <tr>
+                                <td colspan="2" style="border-right: 0px">
+                                    #if($!{item.value.listFcAccInterestVO.accType} == "03")
+                                        本金为： $number.formatNumeric($!{item.value.listFcAccInterestVO.repayMoneyDTO.loanMoney})        <br>
+                                        #if($!{item.value.listFcAccInterestVO.generateMode} == "i" || $!{item.value.listFcAccInterestVO.generateMode} == "I")
+                                            归还金额为：$number.formatNumeric($!{item.value.listFcAccInterestVO.repayMoneyDTO.repayMoney})
+                                        #else
+                                            &nbsp;
+                                        #end
+                                    #end
+                                </td>
+                                <td colspan="2" style="border-left: 0px">
+                                    #if($!{item.value.listFcAccInterestVO.accType} == "03")
+                                    余额为：$number.formatNumeric($!{item.value.listFcAccInterestVO.repayMoneyDTO.leftMoney})           <br>
+                                        #if($!{item.value.listFcAccInterestVO.generateMode} == "i" || $!{item.value.listFcAccInterestVO.generateMode} == "I")
+                                    累计归还为：$number.formatNumeric($!{item.value.listFcAccInterestVO.repayMoneyDTO.sumRepayMoney})
+                                        #else
+                                            &nbsp;
+                                        #end
+                                    #end
+                                </td>
+                            ##利息总计
+                                <td colspan="2" class="textCenter">#springMessage('table.fcAcc.interestSummary1')</td>
+                                <td class="textRight">$number.formatNumeric($!{item.value.interestSum})</td>
+                                <td></td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="4" rowspan="2" style="border: none;vertical-align: bottom;border:0px solid #fff!important;" class="no-border">
+                                    #if($!{item.value.listFcAccInterestVO.accType} == "01")
+##                                        #springMessage('orther.Info')
+                                    #end
+                                    #if($!{item.value.listFcAccInterestVO.accType} == "03")
+                                        扣息活期户名：$!{item.value.listFcAccInterestVO.repayMoneyDTO.interestAccName}  <br>
+                         &nbsp;&nbsp;&nbsp;&nbsp;账号：$!{item.value.listFcAccInterestVO.repayMoneyDTO.interestAcc}      <br>
+                                        ##springMessage('interest.loan.other.Info')
+                                        上列放款信息，已照借扣除利息.
+                                    #end
+                                </td>
+                                <td rowspan="2" style="width: 60px;border:none;border:0px solid #fff!important;" class="no-border"></td>
+                            ##                    会计分录
+                                <td rowspan="2" align="right" style="width: 20px;">#springMessage('accounting.entry')</td>
+                                <td colspan="2">
+                                ##*springMessage('finacial.check.cdSign.debit'):
+                                    （借） 科目：$!{item.value.listFcAccInterestVO.borrow}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                ##*springMessage('finacial.check.cdSign.credit'):
+                                    &nbsp;对方科目：&nbsp;$!{item.value.listFcAccInterestVO.loan}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    ##凭证底部
+                        <div class="print-footer">
+                            <table style="width: 100%; ">
+                                <tr>
+                                ##                制表日期
+                                    <td width="25%">#springMessage('com.table.makeDate'):$!{Date}</td>
+                                ##                复核
+                                    <td width="25%"> #springMessage('table.accbook.recombination'):$!{item.value.listFcAccInterestVO.checkerName}</td>
+                                ##                记账人
+                                    <td width="25%"> #springMessage('config.nis.Accounter'):$!{item.value.listFcAccInterestVO.operatorName}</td>
+                                ##                制表人
+                                    <td width="25%"> #springMessage('table.cmsRatInfo.TabPerson'):$!{createTableUserName}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        #end
+    </div>
+    <div class="layui-inline no-print">
+        <div class="layui-form-item layui-form-submit" id="buttonDiv">
+                <button class="layui-btn layui-btn-mini" lay-submit="" lay-filter="submit">#springMessage('common.button.revert')</button>
+            ##打印
+                <button type="button" class="layui-btn layui-btn-mini" onclick="print()">#springMessage('common.button.print')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+    bt.use(['form','layedit'], function(){
+        var $ = bt.jquery,form = bt.form();
+        //监听提交
+        form.on('submit(submit)', function(data){
+            parent.layer ? parent.layer.closeAll() : layer.closeAll();
+            return false;
+        });
+    });
+    function print() {
+        var size = $("#size").val();
+        var LODOP=getLodop();
+        $(".no-print").hide();
+        LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Width:90%");
+        for(var i=1;i<=size;i++) {
+            LODOP.NewPageA();
+            LODOP.ADD_PRINT_HTM('5mm', '5mm', 'RightMargin:0mm', "BottomMargin:9mm", printStyle + '<body>' + $("#print_"+i).html() + '</body>');
+        }
+        $(".no-print").show();
+        LODOP.PREVIEW();
+    }
+</script>
+</html>

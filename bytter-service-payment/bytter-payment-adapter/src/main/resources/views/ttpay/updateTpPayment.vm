@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post" id="inputForm">
+	<!-- 默认值 -->
+	<input id="isBudget" name="isBudget" type="hidden" value="">
+	<input id="status" name="status" type="hidden" value="0">
+	<input id="timeStamp" name="timeStamp" type="hidden" value="">
+	<input id="billNo" name="billNo" type="hidden" value="$!{tpPaymentPage.billNo}">
+
+	<!-- 系统参数 -->
+	<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+	<input id="payItem" name="payItem" type="hidden" value="$!{payItem}">
+	<input id="defItemCode" name="defItemCode" type="hidden" value="">
+	<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+	<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+
+	<input id="isOpenLimit" name="isOpenLimit" type="hidden" value="$!{isOpenLimit}">
+	<input id="bankaccOver" name="bankaccOver" type="hidden" value="$!{bankaccOver}">
+	<input id="balControlType" name="balControlType" type="hidden" value="$!{balControlType}">
+	<!-- 资金计划参数 明细项控制模式-->
+	<input type="hidden" id="curId" name="curId" value="$!{currencyTag.getRMBCurrency().id}">
+	<input id="dtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+	<input id="id" name="id" type="hidden" value="$!{tpPaymentPage.id}">
+
+	<!-- 人民币 -->
+	<input id="natualCurId" name="natualCurId" type="hidden" value="$!{currencyTag.getRMBCurrency().id}">
+	<input id="natualCurName" name="natualCurName" type="hidden" value="$!{currencyTag.getRMBCurrency().curName}">
+	<input type="hidden" name="sysDate" lay-verify="required" class="layui-input bt-biz-dateType" data-type="date" data-today="true" data-name="sysDate" data-biz-name="sysDate">
+
+	<div class="layui-collapse">
+		<div class="layui-colla-item">
+			<h2 class="layui-colla-title">#springMessage('table.nisBillhead.titleInfo')</h2>
+			<div class="layui-colla-content layui-show">
+				<table class="layui-table layui-table-border">
+					<tbody>
+					<tr>
+						<td rowspan="3" width="5%" align="center">#springMessage('table.nisAllocationReq.payerInfo')</td>
+						##创建日期
+						<td class="textRight" width="15%">#springMessage('table.nisBillhead.createDate')</td>
+						<td  width="30%">$!date.format('yyyy-MM-dd',$!{tpPaymentPage.createDate})</td>
+						<td rowspan="3" width="5%" align="center">#springMessage('table.nisAllocationReq.payeeInfo')</td>
+						##支付方式
+						<td class="textRight" width="15%">#springMessage('ttpay.payType')</td>
+						<td width="30%">
+							<input type="hidden" id="payTypeDef" value="$!{tpPaymentPage.payType}">
+							<div class="layui-input-inline">
+								<select name="payType" id="payType" lay-verify="required" lay-search="" lay-filter="payType">
+									<option value=""></option>
+								</select>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						##付款单位
+						<td class="textRight" width="15%" >#springMessage('table.nisBillhead.corpId')</td>
+						<td width="30%">
+							<input type="hidden" id="corpIdDef" value="$!{tpPaymentPage.corpId}">
+							$!{tpPaymentPage.corpName}
+							<div class="layui-input-inline"  style="display: none;">
+								<div class="bt-biz-corp"
+									 data-biz-type="corp"
+									 data-type="selectTree"
+									 data-name="corpId"
+									 data-biz-name="corpId"
+									 data-scope="all"
+									 data-resource="ttpay:tpPayment:update"
+									 data-required="true"
+									 data-defaultvalue="$!{tpPaymentPage.corpId}"
+									 data-callback="bt.corpCallback"></div>
+							</div>
+						</td>
+						##收款账户
+						<td class="textRight" width="15%" >#springMessage('ttpay.payeeMerchantNo')</td>
+						<td>
+							<div class="layui-input-inline">
+								<input type="text" id="payeeModeName" name="payeeModeName" style="width:80px;" readonly="readonly" data-name="payeeModeName" data-biz-name="payeeModeName"
+									   autocomplete="off" class="layui-input" value="$dictTag.get("ttpay.payeeMode",$!{tpPaymentPage.payeeMode})">
+								<input type="hidden" id="payeeMode" name="payeeMode" readonly="readonly" data-name="payeeMode" data-biz-name="payeeMode"
+									   autocomplete="off" class="layui-input" value="$!{tpPaymentPage.payeeMode}" readonly="readonly" >
+							</div>
+							<div class="layui-input-inline">
+								<input type="text" id="payeeAcc" name="payeeAcc" lay-verify="required"  data-biz-name="payeeAcc" readonly="readonly" autocomplete="off" class="layui-input" placeholder="#springMessage('ttpay.payeeMerchantNo')" value="$!{tpPaymentPage.payeeAcc}">
+							</div>
+							<div class="layui-input-inline">
+								<button  class="bt-biz-externalCorpBankAcc" id="selPayeeAccBut" type="button" >
+									<span class="iconfont byicon_box_add bussiness" title="#springMessage('ttpay.addBussiness')"></span>
+								</button>
+							</div>
+							<div class="layui-input-inline" >
+								<table id="payeeAccTable" class="hide">
+									<thead>
+									<tr>
+										<th>#springMessage('ttpay.bussiness.loginNo')</th>
+										<th>#springMessage('bis.check.mobileNo')</th>
+										<th>#springMessage('ttpay.mail')</th>
+										<th>#springMessage('ttpay.payeeMerchantName')</th>
+										<th>#springMessage('table.externalCorp.externalType')</th>
+										<th>#springMessage('ttpay.payeeMode')</th>
+									</tr>
+									</thead>
+								</table>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						##付款账号
+						<td class="textRight" width="15%" >#springMessage('ttpay.payerMerchantNo')</td>
+						<td width="30%">
+							<div class="layui-input-inline">
+								<input type="hidden" id="payerAccDef" value="$!{tpPaymentPage.payerAcc}">
+								<input type="text" id="payerAcc" name="payerAcc" lay-verify="required|tableData" data-biz-name="payerAcc"
+									   autocomplete="off" class="layui-input text" value="$!{tpPaymentPage.payerAcc}"  placeholder="#springMessage('ttpay.payerMerchantNo')">
+								<table id="payerAccTable" class="hide">
+									<thead>
+									<tr>
+										<th>#springMessage('ttpay.merchantNo')</th>
+										<th>#springMessage('ttpay.payType')</th>
+										<th>#springMessage('ttpay.isOnline')</th>
+										<th>#springMessage('ttpay.rmk')</th>
+									</tr>
+									</thead>
+
+								</table>
+							</div>
+						</td>
+						##收款商户名称
+						<td class="textRight" width="15%" >#springMessage('ttpay.payeeMerchantName')</td>
+						<td width="30%">
+							<input type="text" id="payeeAccName" name="payeeAccName" lay-verify="required" data-biz-name="payeeAccName"
+								   autocomplete="off" class="layui-input text" readonly="readonly" value="$!{tpPaymentPage.payeeAccName}" placeholder="#springMessage('ttpay.payeeMerchantName')">
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="layui-colla-item">
+			<h2 class="layui-colla-title">#springMessage('table.nisBillhead.payInfo')</h2>
+			<div class="layui-colla-content layui-show">
+				<table class="layui-table layui-table-border">
+					<tr>
+						##业务标题
+						<td class="textRight" width="20%">#springMessage('ttpay.busTitle')</td>
+						<td width="30%">
+							<div class="layui-input-inline">
+								<input type="text" id="busTitle" name="busTitle"  lay-verify="required|strlength"  data-maxlength="30"
+									   autocomplete="off" class="layui-input" value="$!{tpPaymentPage.busTitle}" placeholder="#springMessage('ttpay.busTitle')">
+							</div>
+						</td>
+						##是否对私付款
+						<td class="textRight" width="20%">#springMessage('table.nisBillhead.isForindividual')</td>
+						<td>
+							<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{tpPaymentPage.isForindividual}" data-name="isForindividual" data-biz-name="isForindividual" data-required = "true"></div>
+						</td>
+					</tr>
+					<tr>
+						##金额
+						<td class="textRight" width="20%">#springMessage('table.nisBillhead.payMoney.lower')</td>
+						<td width="30%">
+							<div class="layui-input-inline" id="payMoneyDiv">
+								<input type="text" id="payMoney" name="payMoney" style="text-align:right;padding-right: 35px;" lay-verify="required|number2" data-name="payMoney" data-toUp="payMoneyUp" data-biz-name="payMoney"
+									   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{tpPaymentPage.payMoney}" placeholder="#springMessage('table.nisBillhead.payMoney.lower')">
+
+							</div>
+						</td>
+						<td class="textRight" width="20%">#springMessage('table.nisBillhead.payMoney.upper')</td>
+						<td width="30%" style="padding-left:0px">
+							<div id="payMoneyUp"></div>
+						</td>
+
+					</tr>
+					<tr>
+						<td class="textRight">#springMessage('table.nisBillhead.balance')</td>
+						<td>
+							<div id="balanceDiv" name="balanceDiv">$!{tpPaymentPage.balance}</div>
+							<input type="hidden" id="balance" name="balance" style="text-align:right" readonly="readonly" data-name="balance" data-biz-name="balance"
+								   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{tpPaymentPage.balance}" placeholder="#springMessage('table.bisAccBal.availBal')">
+						</td>
+						##可用余额
+						<td class="textRight" >#springMessage('table.bisAccBal.availBal')</td>
+						<td>
+							<div id="availBalDiv" name="availBalDiv">$!{tpPaymentPage.availBal}</div>
+							<input type="hidden" id="availBal" name="availBal" style="text-align:right" readonly="readonly" data-name="availBal" data-biz-name="availBal"
+								   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{tpPaymentPage.availBal}"  placeholder="#springMessage('config.nis.balControlType.availBal')">
+						</td>
+					</tr>
+					<tr>
+						##期望支付日期
+						<td class="textRight" width="20%">#springMessage('table.nisBillhead.wishPayday')</td>
+						<td>
+							<div class="layui-input-inline">
+								<input type="text" name="wishPayday" lay-verify="required" class="layui-input bt-biz-dateType"
+									   data-today="true" data-min="$!{wishPayday}" value="$!{tpPaymentPage.wishPayday}" data-type="date" data-name="wishPayday" data-biz-name="wishPayday" data-callback="dateCallBack">
+							</div>
+						</td>
+						##业务类别
+						<td class="textRight" width="20%">#springMessage('table.nisBillhead.busType')</td>
+						<td>
+							<div class="layui-input-inline">
+								<input type="hidden" id="busTypeDef" name="busTypeDef" value="$!{tpPaymentPage.busType}">
+								#if($!{requiredBusiness} == "1")
+									<div class="bt-biz-selectType" data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=1&corpId=${tpPaymentPage.corpId}" data-name="busType" data-biz-name="busType" data-callback="busTypeCallback"
+										 data-valuefield="busId" data-textfield="busTypeName" data-defaultvalue="$!{tpPaymentPage.busType}" data-search="true" data-required="required" data-beforeinit="busBefore"></div>
+								#else
+									<div class="bt-biz-selectType" data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=1&corpId=${tpPaymentPage.corpId}" data-name="busType" data-biz-name="busType" data-callback="busTypeCallback"
+										 data-valuefield="busId" data-textfield="busTypeName" data-defaultvalue="$!{tpPaymentPage.busType}" data-search="true" data-beforeinit="busBefore"></div>
+								#end
+							</div>
+						</td>
+					</tr>
+					<tr>
+					#if($!{isOpenLimit} == "1")
+						##限额信息
+						<td class="textRight" width="20%"><div id="quota_title" #if($!{tpQuotaPage}) style="display: none;"#end >#springMessage('ttpay.quota.info')</div></td>
+						<td width="30%">
+
+							<div class="layui-input-inline" id="quota_info" #if(${tpQuotaPage}) style="display: none;" #end >
+								#springMessage('ttpay.quota.daysingle')：<span id="s_daySingle" style="color: blue;"> #if($!tpQuotaPage.daySingle) $!number.formatNumeric($!{tpQuotaPage.daySingle})#else 无 #end </span>&nbsp;|&nbsp;
+								#springMessage('ttpay.quota.dayTotalAvail')：<span id="s_dayTotalAvail" style="color: blue;"> #if($!tpQuotaPage.dayTotalAvail) $!number.formatNumeric($!{tpQuotaPage.dayTotalAvail})#else 无 #end  </span>&nbsp;|&nbsp;
+								#springMessage('ttpay.quota.monthTotalAvail')：<span id="s_monthTotalAvail" style="color: blue;">#if($!tpQuotaPage.monthTotalAvail)$!number.formatNumeric($!{tpQuotaPage.monthTotalAvail}) #else 无 #end </span>
+							</div>
+
+						</td>
+						#else
+							<td class="textRight" width="20%"></td>
+							<td width="30%"></td>
+						#end
+						##用途
+						<td class="textRight" width="20%">#springMessage('table.nisBillhead.purpose')</td>
+						<td width="30%">
+							<div class="layui-input-inline">
+								<div class="bt-biz-selectType" data-url="${basePath}/basic/business/btpurpose?getByList&sysBusType=1&corpId=${tpPaymentPage.corpId}"
+									 data-name="purpose" data-biz-name="purpose" data-defaultvalue="$!{tpPaymentPage.purpose}" data-callback="purposeCallBack"
+									 data-valuefield="purpose" data-textfield="purpose" data-inputvalue="inputvalue" data-extraData="true" data-search="true" data-required="true"></div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						##备注说明
+						<td class="textRight"  width="20%">#springMessage('table.settlement.rmk')</td>
+						<td width="100%" colspan="4">
+							<div class="layui-input-inline">
+									<textarea class="layui-textarea" name="rmk" id='rmk' autocomplete="off" placeholder="#springMessage('table.settlement.rmk')"
+											  style="resize:none" cols="138" rows="2" >$!{tpPaymentPage.rmk}</textarea>
+							</div>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div style="text-align: center; padding-top: 10px;">
+		<button class="layui-btn" lay-submit="" lay-filter="submit" value="11" >#springMessage('common.button.submit')</button>
+		<button class="layui-btn" lay-submit="" lay-filter="submit" value="0" >#springMessage('common.button.temp')</button>
+		<button type="reset" class="layui-btn layui-btn-primary" data-callback="resetCallBack">#springMessage('common.button.reset')</button>
+	</div>
+	<!-- 资金计划 -->
+	<div id="tagItemDetail"></div>
+	<!-- 附件上传 -->
+	<input id="attachmentId" name="attachmentId" type="hidden" value="$!{tpPaymentPage.attachmentId}">
+	<div id="uploader" class="layui-input-inline" style="width:100%"></div>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/sys/blackWhite/blackWhiteBase.check.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/ttpay/tpPayment.edit.js?_btv=${resourceVersion}"></script>

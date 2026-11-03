@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<input type="hidden" name="ids" value="$!{params.id}">
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" name="netId" value="$!{params.netId}">
+    <input type="hidden" name="corpId" value="$!{params.corpId}">
+    <input type="hidden" name="bankCode" value="$!{params.bankCode}">
+    <input type="hidden" name="curId" value="$!{params.curId}">
+    <input type="hidden" name="sysSubjectCode" value="$!{params.sysSubjectCode}">
+    <input type="hidden" name="interestAcc" value="$!{params.interestAcc}">
+    <div class="layui-collapse" lay-filter="collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title"></h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td class="textRight">#springMessage('table.fcAcc.blnctrAcc')</td>
+                        <td>
+                            <input type="text" name="bankAcc" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAcc.blnctrAcc')">
+                        </td>
+                        <td class="textRight">#springMessage('table.fcAcc.accName')</td>
+                        <td>
+                            <input type="text" name="accName" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAcc.accName')">
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis"  data-biz-name="innerData">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAcc.blnctrAcc')</th>
+        <th>#springMessage('table.fcAcc.accName')</th>
+        <th>#springMessage('table.fcAcc.netId')</th>
+        <th>#springMessage('table.fcAcc.corpId')</th>
+        <th>#springMessage('table.fcAcc.curId')</th>
+        <th>#springMessage('table.fcAcc.accType')</th>
+        <th>#springMessage('table.fcAcc.accState')</th>
+        <th>#springMessage('table.fcAcc.accOpenTime')</th>
+    </tr>
+    </thead>
+</table>
+<br />
+<br />
+<div class="layui-form-item layui-form-submit" id="buttonDiv">
+    <div class="layui-input-block">
+        <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+<script type="text/javascript">
+    var accTable={};
+    var dicts={};
+    var users={};
+    bt.use(['form','jquery','select','element','datatable','dicts','dateType','users'], function(){
+        $ = bt.jquery,form = bt.form();
+        var element = bt.element();
+        bt.dateType.init();
+        dicts=bt.dicts.init();
+        users=bt.users.init();
+        //生成列表
+        accTable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:true,
+            jumpPageSelect:true,
+            order: [3,'desc'],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/inneraccount/fcacc/accInfoDataTable"
+            },
+            buttons: [
+                {
+                    text:bt.lang('common.button.select'),
+                    action: function ( e, dt, node, config ) {
+                        var datas = bt.datatable.getJumpSelectedData("innerData");
+                        bt.selectOp(datas);
+                    }
+                }
+            ]
+            ,columns: [
+                {data: "blnctrAcc", bSortable: true},
+                {data: "accName", bSortable: true},
+                {data: "netName", bSortable: true},
+                {data: "corpName", bSortable: true},
+                {data: "curName", bSortable: true},
+                {data: "accTypeName", bSortable: true},
+                {data: "accStateName", bSortable: true},
+                {data: "accOpenTime", bSortable: true},
+            ],
+            btDrawCallback:function(){
+                var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var interestAccVal = top.frames[currentParentIframe].window.interestVal();
+                var accArr = interestAccVal.split(';');
+                var obj = [];
+                var data = accTable.rows().data();
+                for(var i=0; i<accArr.length; i++){
+                    bt.each(data, function (index, item) {
+                        if (item.blnctrAcc == accArr[i]) {
+                            obj.push({key:"blnctrAcc",value:item.blnctrAcc,checked:true,rowIndex:index});
+                            bt.datatable.onCheckRow("#appTable",obj);
+                        }
+                    })
+                }
+            },
+
+        });
+        bt.selectOp = function(datas){
+            var len = datas.length;
+            if(!len){
+                layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+                return;
+            }
+            var rowDatas = datas.splice(0,len);
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-fcAccInfo']['callback'];
+            if(func){
+                var data=rowDatas;
+                func(data);
+            }
+        }
+    });
+    var closeForms=function(){
+        parent.layer?parent.layer.closeAll():layer.closeAll();
+    }
+</script>
+</body>
+</html>

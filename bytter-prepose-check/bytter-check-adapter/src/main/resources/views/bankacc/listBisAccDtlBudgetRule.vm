@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<div class="layui-tab layui-tab-brief" lay-filter="paymentblending">
+    <ul class="layui-tab-title" id="intTab">
+        <li lay-id="inner1"  class="layui-this">#springMessage('table.netbank.receiptclaim')</li>
+        <li lay-id="inner2" onclick="pushTable('otherTable')">#springMessage('table.netbank.otherreceiptclaim')</li>
+    </ul>
+    <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show">
+            <form id="searchForm1" class="layui-form ">
+                <input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+                ##是否启用拆分
+                <input id="isEnableSplit" name="isEnableSplit" type="hidden" value="$!{isEnableSplit}">
+                ##是否启用合并
+                <input id="isEnableMerge" name="isEnableMerge" type="hidden" value="$!{isEnableMerge}">
+                ##是否认领到业务类别
+                <input id="isClaimBusType" name="isClaimBusType" type="hidden" value="$!{isClaimBusType}">
+                <input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+                <input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+                <input id="itemCode" name="itemCode" type="hidden">
+                <input id="defItemCode" name="defItemCode" type="hidden">
+                <input id="corpId" name="corpId" type="hidden">
+                <input id="cdSign" name="cdSign" type="hidden">
+                <!-- 折合人民币 -->
+                <input id="natualCurId" name="natualCurId" type="hidden"value="$!{currencyTag.getNatualCurrency().id}">
+                <input id="natualCurExrate" name="natualCurExrate" type="hidden"value="$!{currencyTag.getNatualCurrency().curExrate}">
+                <!-- 科目明细参数 -->
+                <input id="detailControl" name="detailControl" type="hidden" value="true">
+                <input id="dtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+                <input id="fbsItemBalance" name="fbsItemBalance" type="hidden" value="$!{configTag.getConfig('fbs','itemBalance')}">
+                <input id="curId" name="curId" type="hidden" >
+                <input id="payerAcc" name="payerAcc" type="hidden" >
+                <input id="payeeAccName" name="payeeAccName" type="hidden">
+                <input id="payeeAcc" name="payeeAcc" type="hidden" >
+                <input id="payeeBank" name="payeeBank" type="hidden">
+                <table class="layui-table">
+                    <tbody >
+                    <tr>
+                    ##交易日期
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.transTime')</td>
+                        <td>
+                            <input type="text" name="ged_transTime" data-type="date" data-biz-name="ged_transTime" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_transTime" data-today="true">
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_transTime" data-type="date" data-biz-name="led_transTime" class="layui-input bt-input-inline bt-biz-dateType" id="led_transTime" data-today="true">
+                        </td>
+                    ##单位
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.corp')</td>
+                        <td width="20%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-tree-type="check"
+                                     data-name="ins_corpId"
+                                     data-scope="all"
+                                     data-resource="netbank:bankAcc:bisAccDtlBudgetRule:query"
+                                     data-callback="corpCallback"></div>
+                            </div>
+                        </td>
+                    ##银行类别
+                        <td class="textRight">#springMessage('table.bisBifInit.bankType')</td>
+                        <td>
+                            <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/listFilter"
+                                 data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id" data-textField="typeName"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##付款账号
+                        <td class="textRight">#springMessage('table.btBankAccDtl.bankAcc')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_bankAcc" name="likes_bankAcc" data-name="likes_bankAcc" data-biz-name="likes_bankAcc" accountType="2,3" permission="D"
+                                       data-resource="netbank:bankAcc:bisAccDtlBudgetRule:query"  class="layui-input bt-biz-accountTable" data-callback="bt.accountCallBack" placeholder="#springMessage('table.btBankAccDtl.bankAcc')"/>
+                            </div>
+                        </td>
+                    ##收款账号
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.oppAccNo')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_oppAccNo" name="likes_oppAccNo" class="layui-input bank" placeholder="#springMessage('table.btBankAccDtl.oppAccNo')">
+                            </div>
+                        </td>
+                    ##收款账号名称
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.oppAccName')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_oppAccName" name="likes_oppAccName" class="layui-input" placeholder="#springMessage('table.btBankAccDtl.oppAccName')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##币别
+                        <td class="textRight">#springMessage('table.btBankAccDtl.curName')</td>
+                        <td>
+                            <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                                 data-name ="eqs_curId" data-biz-name ="eqs_curId"  data-valueField="id" data-textField="curName"></div>
+                        </td>
+                    ##摘要
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.remark')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_remark" name="likes_remark" class="layui-input" placeholder="#springMessage('table.btBankAccDtl.remark')">
+                            </div>
+                        </td>
+                    ##查询收款明细
+                        <input type="hidden" name="eqs_cdSign" value="0"/>
+                    ##                        <td class="textRight">#springMessage('table.bisAccDtlBudgetRule.sign')</td>
+                    ##                        <td >
+                    ##                            <div class="bt-biz-dict" data-type="select" data-group="btBankAccDtl.cdSign"
+                    ##                                 data-name="eqs_cdSign" data-biz-name="cdSign" ></div>
+                    ##                        </td>
+                    ##状态
+                        <td class="textRight">#springMessage('table.btBankAccDtl.status')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select"
+                                 data-group="bisAccDtlBudgetRule.fbsStatus" data-name="eqs_fbsStatus" data-defaultvalue="0"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##发生额
+                        <td class="textRight">#springMessage('table.bisAccDtlBudgetRule.amt')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <input data-name="geg_amt" data-moneyendid="endAmt" class="layui-input bt-biz-moneyType" type="text">
+                            </div>
+                            <div class="layui-inline">
+                                <span class="date-mid">~</span>
+                            </div>
+                            <div class="layui-inline">
+                                <input id="endAmt" data-name="leg_amt" class="layui-input bt-biz-moneyType" type="text">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+##                           ## #if($shiro.hasPermission("netbank:bankAcc:bisAccDtlBudgetRule:apply"))
+                                <button class="layui-btn" lay-submit lay-filter="search1" type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+##                           ## #end
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </form>
+            <table id="appTable" class="layui-table layui-form" style="width:100%;">
+                <thead>
+                <tr>
+                    <th>#springMessage('table.btBankAccDtl.transTime')</th>
+                    <th>#springMessage('table.nisPersonnelDetail.corpId')</th>
+                    <th>#springMessage('table.btBankAccDtl.bankAcc')</th>
+                    <th>#springMessage('table.btBankAccDtl.accName')</th>
+                    <th>#springMessage('table.btBankAccDtl.oppAccNo')</th>
+                    <th>#springMessage('table.btBankAccDtl.oppAccName')</th>
+                    <th>#springMessage('table.btBankAccDtl.curName')</th>
+                    <th>#springMessage('table.bisAccDtlBudgetRule.sign')</th>
+                    <th>#springMessage('table.bisAccDtlBudgetRule.amt')</th>
+                    <th>#springMessage('table.btBankAccDtl.remark')</th>
+                    <th>#springMessage('table.btBankAccDtl.status')</th>
+                    <th>#springMessage('table.nisBillhead.busType')</th>
+                    <th>#springMessage('table.nisReceivable.billNo')</th>
+                    <th>#springMessage('table.fbsBudgetProcess.settlType')</th>
+                    <th>#springMessage('table.bisAccDtlBudgetRule.processTime')</th>
+##                    <th>#springMessage('table.bisAccDtlBudgetRule.matchBudget')</th>
+                    <th>#springMessage('table.fbsBudgetPeriod.rmk')</th>
+                    <th>#springMessage('common.table.thead.operation')</th>
+                </tr>
+                </thead>
+            </table>
+            <!-- 资金计划 -->
+            <div id="box" style="width:99%;">
+                <table class="layui-table dark-layui-table layui-table-border" style="width:100%;">
+                    <tr>
+                        #if($!{isClaimBusType} == 1)
+                            <td  class="textRight" width="10%">#springMessage('table.nisBillhead.busType')</td>
+                            <td width="15%">
+                                <div class="layui-form" id="batchBusTypeDiv">
+                                </div>
+                            </td>
+                        #end
+                        <td class="textRight" width="10%">#springMessage('table.fbsBudgetProcess.settlType')</td>
+                        <td width="15%">
+                            <div class="layui-form">
+                                <div class="bt-biz-dict" data-type="select" data-group="settlType" data-name="settlTypeBatch" data-biz-name="settlTypeBatch"
+                                     data-callback="settlTypeBatchCallback"></div>
+                            </div>
+                        </td>
+                        #if($!{budgetSel} == 1)
+                            <td class="textRight" width="10%">#springMessage("table.bisAccDtlBudgetRule.processTime")</td>
+                            <td width="10%">
+                                <div class="layui-input-inline"width="10%">
+                                    <input type="text" name="processDateBatch" data-biz-name="processDateBatch" class="layui-input bt-input-inline bt-biz-dateType" data-type="date" data-today="true" placeholder="#springMessage("table.bisAccDtlBudgetRule.processTime")" data-btns= "clear,now,confirm">
+                                </div>
+                            </td>
+                            <td class="textRight" width="10%">#springMessage("table.fbsBudgetProcess.itemCode")</td>
+                            <td width="15%">
+                                <div class="layui-inline" id="itemDiv">
+                                    <div class="bt-biz-itemType"
+                                         data-type="selectTree"
+                                         id="itemInfo"
+                                         data-name="itemInfo"
+                                         data-biz-name="itemInfo"
+                                         data-corpId=""
+                                         data-itemCode=""
+                                         data-sign="1"
+                                         data-tree-type="radio"
+                                         data-callbackData="itemChange"
+                                         data-initcomplete = "itemInfoInit"
+                                         data-scope=""></div>
+                                </div>
+                                <input type="hidden" id="itemName" name="itemName" autocomplete="off" class="layui-input"/>
+                            </td>
+                        #end
+                        <td class="leftRight" width="20%">
+##                            #if($shiro.hasPermission("netbank:bankAcc:bisAccDtlBudgetRule:apply"))
+                                <div class="layui-input-inline">
+                                    <button class="layui-btn" onclick="batchSure('appTable')" type="button">#springMessage('common.button.sure')</button>
+                                </div>
+                                <div class="layui-input-inline">
+                                    <button class="layui-btn" onclick="batchDelete('appTable')" type="button">#springMessage('common.button.delete')</button>
+                                </div>
+##                            #end
+                        </td>
+                    </tr>
+                </table>
+                <table id="budgetProcessDataTable" class="layui-table dark-layui-table layui-table-border" style="display: none;width:100%;">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('table.fbsBudgetProcess.itemCode')</th>
+                        <th>#springMessage('table.fbsBudgetProcess.itemName')</th>
+                        <th>#springMessage('table.fbsBudgetProcess.itemBalance')</th>
+                        <th>#springMessage('table.fbsBudgetProcess.superItemBalance')</th>
+                        <th>#springMessage('table.fbsBudgetProcess.topItemBalance')</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr row="0">
+                        <td >
+                            <input id="isControl" name="isControl" type="hidden">
+                            <span id="itemCodeText"></span>
+                        </td>
+                        <td >
+                            <span id="itemNameText"></span>
+                        </td>
+                        <td class="textRight">
+                            <span id="itemBalanceText"></span>
+                        </td>
+                        <td class="textRight">
+                            <span id="superItemBalanceText"></span>
+                        </td>
+                        <td class="textRight">
+                            <span id="topItemBalanceText"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+        </div>
+    </div>
+        <div class="layui-tab-item">
+            <form id="searchForm" class="layui-form">
+                <input id="otherbudgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+                <input id="otherbusinessName" name="businessName" type="hidden" value="$!{businessName}">
+                <input id="otherprocessSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+                <input id="otheritemCode" name="itemCode" type="hidden">
+                <input id="otherdefItemCode" name="defItemCode" type="hidden">
+                <input id="othercorpId" name="corpId" type="hidden">
+                <input id="othercdSign" name="cdSign" type="hidden">
+                <!-- 折合人民币 -->
+                <input id="othernatualCurId" name="natualCurId" type="hidden"value="$!{currencyTag.getNatualCurrency().id}">
+                <input id="othernatualCurExrate" name="natualCurExrate" type="hidden"value="$!{currencyTag.getNatualCurrency().curExrate}">
+                <!-- 科目明细参数 -->
+                <input id="otherdetailControl" name="detailControl" type="hidden" value="true">
+                <input id="otherdtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+                <input id="otherfbsItemBalance" name="fbsItemBalance" type="hidden" value="$!{configTag.getConfig('fbs','itemBalance')}">
+                <input id="othercurId" name="curId" type="hidden" >
+                <input id="otherpayerAcc" name="payerAcc" type="hidden" >
+                <input id="otherpayeeAccName" name="payeeAccName" type="hidden">
+                <input id="otherpayeeAcc" name="payeeAcc" type="hidden" >
+                <input id="otherpayeeBank" name="payeeBank" type="hidden">
+                <input type="hidden" name="eqs_cdSign" value="1"/>
+                ##是否启用拆分
+                <input id="isEnableSplit" name="isEnableSplit" type="hidden" value="$!{isEnableSplit}">
+                ##是否启用合并
+                <input id="isEnableMerge" name="isEnableMerge" type="hidden" value="$!{isEnableMerge}">
+                <table class="layui-table">
+                    <tbody >
+                    <tr>
+                    ##交易日期
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.transTime')</td>
+                        <td>
+                            <input type="text" name="ged_transTime" data-type="date" data-biz-name="otherged_transTime" class="layui-input bt-input-inline bt-biz-dateType" data-endid="otherled_transTime" data-today="true">
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_transTime" data-type="date" data-biz-name="otherled_transTime" class="layui-input bt-input-inline bt-biz-dateType" id="otherled_transTime" data-today="true" >
+                        </td>
+                    ##银行类别
+                        <td class="textRight">#springMessage('table.bisBifInit.bankType')</td>
+                        <td>
+                            <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/listFilter"
+                                 data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id" data-textField="typeName"></div>
+                        </td>
+                    ##摘要
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.remark')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_remark" name="likes_remark" class="layui-input" placeholder="#springMessage('table.btBankAccDtl.remark')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.corp')</td>
+                        <td width="20%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-tree-type="check"
+                                     data-name="ins_corpId"
+                                     data-scope="all"
+                                     data-resource="netbank:bankAcc:btBankAccDtl:query"
+                                     data-callback="corpCallback"></div>
+                            </div>
+                        </td>
+                        ##本方账号
+                        <td class="textRight">#springMessage('table.btBankAccDtl.bankAcc')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_otherBankAcc" name="likes_otherBankAcc" data-name="likes_otherBankAcc" data-biz-name="likes_otherBankAcc" accountType="2,3" permission="D"
+                                       data-resource="netbank:bankAcc:bisAccDtlBudgetRule:query"  class="layui-input bt-biz-accountTable" data-callback="accountOtherCallBack"/>
+                            </div>
+                        </td>
+                    ##收款账号
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.oppAccNo')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_oppAccNo" name="likes_oppAccNo" class="layui-input bank" placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('table.btBankAccDtl.curName')</td>
+                        <td>
+                            <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                                 data-name ="eqs_curId" data-biz-name ="eqs_curId"  data-valueField="id" data-textField="curName"></div>
+                        </td>
+                    ##状态
+                        <td class="textRight">#springMessage('table.btBankAccDtl.status')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select"
+                                 data-group="bisAccDtlBudgetRule.fbsStatus" data-name="eqs_fbsStatus" data-defaultvalue="0"></div>
+                        </td>
+                    ##对方账号名
+                        <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.oppAccName')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="likes_oppAccName" name="likes_oppAccName" class="layui-input" placeholder="#springMessage('table.btBankAccDtl.oppAccName')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                    ##发生额
+                        <td class="textRight">#springMessage('table.bisAccDtlBudgetRule.amt')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <input data-name="othergeg_amt" data-moneyendid="otherendAmt" class="layui-input bt-biz-moneyType" type="text">
+                            </div>
+                            <div class="layui-inline">
+                                <span class="date-mid">~</span>
+                            </div>
+                            <div class="layui-inline">
+                                <input id="otherendAmt" data-name="otherleg_amt" class="layui-input bt-biz-moneyType" type="text">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+##                            #if($shiro.hasPermission("netbank:bankAcc:bisAccDtlBudgetRule:apply"))
+                                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+##                            #end
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </form>
+            <table id="otherTable" class="layui-table layui-form" style="width:100%;">
+                <thead>
+                <tr>
+                    <th>#springMessage('table.btBankAccDtl.transTime')</th>
+                    <th>#springMessage('table.nisPersonnelDetail.corpId')</th>
+                    <th>#springMessage('table.btBankAccDtl.bankAcc')</th>
+                    <th>#springMessage('table.btBankAccDtl.accName')</th>
+                    <th>#springMessage('table.btBankAccDtl.oppAccNo')</th>
+                    <th>#springMessage('table.btBankAccDtl.oppAccName')</th>
+                    <th>#springMessage('table.btBankAccDtl.curName')</th>
+                    <th>#springMessage('table.bisAccDtlBudgetRule.sign')</th>
+                    <th>#springMessage('table.bisAccDtlBudgetRule.amt')</th>
+                    <th>#springMessage('table.btBankAccDtl.remark')</th>
+                    <th>#springMessage('table.btBankAccDtl.status')</th>
+                    <th>#springMessage('table.nisBillhead.busType')</th>
+                    <th>#springMessage('table.fbsBudgetProcess.settlType')</th>
+                    <th>#springMessage('table.bisAccDtlBudgetRule.processTime')</th>
+##                    <th>#springMessage('table.bisAccDtlBudgetRule.matchBudget')</th>
+                    <th>#springMessage('common.table.thead.operation')</th>
+                </tr>
+                </thead>
+            </table>
+            <!-- 资金计划 -->
+            <div id="otherbox" style="width:99%;">
+                        <table class="layui-table dark-layui-table layui-table-border" style="width:100%;">
+                            <input type="hidden" id="otherControl" name="otherControl"/>
+                            <tr>
+                                #if($!{isClaimBusType} == 1)
+                                    <td  class="textRight" width="10%">#springMessage('table.nisBillhead.busType')</td>
+                                    <td width="15%">
+                                        <div class="layui-form" id="otherbatchBusTypeDiv">
+                                        </div>
+                                    </td>
+                                #end
+                                <td class="textRight" width="10%">#springMessage('table.fbsBudgetProcess.settlType')</td>
+                                <td width="15%">
+                                    <div class="layui-form">
+                                        <div class="bt-biz-dict" data-type="select" data-group="settlType" data-name="settlTypeBatch" data-biz-name="othersettlTypeBatch"
+                                             data-callback="settlTypeBatchCallback"></div>
+                                    </div>
+                                </td>
+                                #if($!{budgetSel} == 1)
+                                    <td class="textRight" width="10%">#springMessage("table.bisAccDtlBudgetRule.processTime")</td>
+                                    <td width="10%">
+                                        <div class="layui-input-inline"width="10%">
+                                            <input type="text" name="processDateBatch" data-biz-name="otherprocessDateBatch" class="layui-input bt-input-inline bt-biz-dateType" data-type="date" data-today="true" placeholder="#springMessage("table.bisAccDtlBudgetRule.processTime")" data-btns= "clear,now,confirm">
+                                        </div>
+                                    </td>
+                                    <td class="textRight" width="10%">#springMessage("table.fbsBudgetProcess.itemCode")</td>
+                                    <td width="15%">
+                                        <div class="layui-inline" id="otheritemDiv">
+                                            <div class="bt-biz-itemType"
+                                                 data-type="selectTree"
+                                                 id="otheritemInfo"
+                                                 data-name="otheritemInfo"
+                                                 data-biz-name="otheritemInfo"
+                                                 data-corpId=""
+                                                 data-itemCode=""
+                                                 data-sign="-1"
+                                                 data-tree-type="radio"
+                                                 data-callbackData="otheritemChange"
+                                                 data-initcomplete = "otheritemInfoInit"
+                                                 data-scope=""></div>
+                                        </div>
+                                        <input type="hidden" id="otheritemName" name="itemName" autocomplete="off" class="layui-input"/>
+                                    </td>
+                                #end
+                                <td class="leftRight" width="20%">
+##                                    #if($shiro.hasPermission("netbank:bankAcc:bisAccDtlBudgetRule:apply"))
+                                        <div class="layui-input-inline">
+                                            <button class="layui-btn" onclick="batchSure('otherTable')" type="button">#springMessage('common.button.sure')</button>
+                                        </div>
+                                        <div class="layui-input-inline">
+                                            <button class="layui-btn" onclick="batchDelete('otherTable')" type="button">#springMessage('common.button.delete')</button>
+                                        </div>
+##                                    #end
+                                </td>
+                            </tr>
+                        </table>
+                        <table id="otherbudgetProcessDataTable" class="layui-table dark-layui-table layui-table-border" style="display: none;width:100%;">
+                            <thead>
+                            <tr>
+                                <th>#springMessage('table.fbsBudgetProcess.itemCode')</th>
+                                <th>#springMessage('table.fbsBudgetProcess.itemName')</th>
+                                <th>#springMessage('table.fbsBudgetProcess.itemBalance')</th>
+                                <th>#springMessage('table.fbsBudgetProcess.superItemBalance')</th>
+                                <th>#springMessage('table.fbsBudgetProcess.topItemBalance')</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr row="0">
+                                <td >
+                                    <input id="otherisControl" name="isControl" type="hidden">
+                                    <span id="otheritemCodeText"></span>
+                                </td>
+                                <td >
+                                    <span id="otheritemNameText"></span>
+                                </td>
+                                <td class="textRight">
+                                    <span id="otheritemBalanceText"></span>
+                                </td>
+                                <td class="textRight">
+                                    <span id="othersuperItemBalanceText"></span>
+                                </td>
+                                <td class="textRight">
+                                    <span id="othertopItemBalanceText"></span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/bankacc/bisAccDtlBudgetRule.list.js?_btv=${resourceVersion}"></script>
+</html>

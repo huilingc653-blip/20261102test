@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .style {
+            color: red !important;
+        }
+
+    </style>
+</head>
+
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <!-- 交单查询 -->
+        <tr>
+            <!-- 单位 -->
+            <td class="textRight" width="14%">#springMessage('table.nisBillhead.corpId')</td>
+            <td width="36%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-type="selectTree"
+                         data-name="ins_corpId"
+                         data-biz-name="corpId"
+                         data-scope="all"
+                         data-tree-type="check"
+                         data-resource="international:credit:report:arrival:query"
+                    >
+                    </div>
+                </div>
+            </td>
+
+            ##信用证类型
+            <td class="textRight" width="14%">#springMessage('international.credit.lcInter')</td>
+            <td width="36%">
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="letter_of_credit_inter"
+                         data-name="eqs_lcInter" data-biz-name="lcInter">
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##信用证号
+            <td class="textRight" width="14%">#springMessage('international.credit.creditNo')</td>
+            <td width="36%"><input type="text" class="layui-input" name="likes_creditNo" id="creditNo"/></td>
+
+            ##币别
+            <td class="textRight" width="14%">#springMessage('table.fcBusinessRuleDefine.curCode')</td>
+            <td class="rCode" width="36%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-biz-name="curId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id" data-textfield="curName" data-name="eqs_curId"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <!--交单日期 -->
+            <td class="textRight" width="14%">#springMessage('table.arrival.paymentDate')</td>
+            <td width="36%">
+                <div class=layui-inline>
+                    <input class="layui-input bt-input-inline bt-biz-dateType" type=text data-endid="led_paymentDate"
+                           name="ged_paymentDate" data-biz-name="ged_paymentDate">
+                    <span class=date-mid>~</span>
+                    <input class="layui-input bt-input-inline bt-biz-dateType" type=text
+                           name="led_paymentDate" data-biz-name="led_paymentDate" id="led_paymentDate">
+                </div>
+            </td>
+        </tr>
+
+
+        <!--提交按钮 -->
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+
+        </tbody>
+    </table>
+</form>
+
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="print">
+    <thead>
+    <tr>
+        <th rowspan="2" class="style">#springMessage('table.nisPersonnelDetail.corpId')</th>
+        <th class="style">#springMessage('(L/C NO)')</th>
+        <th rowspan="2" class="style">#springMessage('international.credit.lcInter')</th>##信用证类型
+        <th class="style">#springMessage('(Presenting Bank)')</th>
+        <th class="style">#springMessage('(Ben)')</th>
+        <th rowspan="2" class="style">#springMessage('table.internation.arrival.money')</th>##交单金额
+        <th class="style">#springMessage('(Currency)')</th>
+        <th class="style">#springMessage('(Presenting Date)')</th>
+        <th rowspan="2" class="style">#springMessage('common.table.status')</th>
+        <th rowspan="2" class="style">#springMessage('common.button.view')</th>
+    </tr>
+    <tr>
+        <th>#springMessage('international.credit.creditNo')</th>
+        <th>#springMessage('table.internation.arrival.bank')</th>
+        <th>#springMessage('international.credit.beneficiary')</th>
+        <th>#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+        <th>#springMessage('table.arrival.paymentDate')</th>##交单日期
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    var $, form, dicts, dateType, corp, selectType;
+    bt.use(['form', 'datatable', 'btdate', 'selectType', 'corp', 'dicts', 'money', 'dateType', 'bank', 'rateType'], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        dicts = bt.dicts.init();
+        dateType = bt.dateType.init();
+        corp = bt.corp.init();
+        selectType = bt.selectType.init();
+
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            ordering: true,
+            buttonsLayout: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/international/credit/arrivalletter/reportDatatable"
+            },
+            ignoreButtons: ['colvis', 'output', 'state'],
+            buttons: [
+                {
+                    text: bt.lang('common.button.exports'),
+                    action: function (e, dt, node, config) {
+                        exports();
+                    }
+                }
+            ],
+            exportFile: {
+                customPrint: {
+                    header: function () {
+                        var html = "    <thead>\n" +
+                                "    <tr>\n" +
+                                "        <th rowspan=\"2\" class=\"style\">" + bt.lang('table.nisPersonnelDetail.corpId') + "</th>\n" +
+                                "        <th class=\"style\">" + bt.lang('(L/C NO)') + "</th>\n" +
+                                "        <th rowspan=\"2\" class=\"style\">" + bt.lang('international.credit.lcInter') + "</th>\n" +
+                                "        <th class=\"style\">" + bt.lang('(Presenting Bank)') + "</th>\n" +
+                                "        <th class=\"style\">" + bt.lang('(Ben)') + "</th>\n" +
+                                "        <th rowspan=\"2\" class=\"style\">" + bt.lang('table.internation.arrival.money') + "</th>\n" +
+                                "        <th class=\"style\">" + bt.lang('(Currency)') + "</th>\n" +
+                                "        <th class=\"style\">" + bt.lang('(Presenting Date)') + "</th>\n" +
+                                "        <th rowspan=\"2\" class=\"style\">" + bt.lang('common.table.status') + "</th>\n" +
+                                "    </tr>\n" +
+                                "    <tr>\n" +
+                                "        <th>" + bt.lang('international.credit.creditNo') + "</th>\n" +
+                                "        <th>" + bt.lang('table.internation.arrival.bank') + "</th>\n" +
+                                "        <th>" + bt.lang('international.credit.beneficiary') + "</th>\n" +
+                                "        <th>" + bt.lang('table.fbsBudgetDetail.curId') + "</th>\n" +
+                                "        <th>" + bt.lang('table.arrival.paymentDate') + "</th>\n" +
+                                "    </tr>\n" +
+                                "    </thead>";
+                        return html;
+                    }
+                }
+            }
+            , columns: [
+                {data: "corpName", bSortable: true, className: "center"},
+                {data: "creditNo", bSortable: true, className: "center"},
+                {
+                    data: "lcInter", bSortable: true, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter", full.lcInter);
+                    }
+                },
+                {data: "handDocBank", bSortable: true, className: "center"},
+                {data: "beneficiary", bSortable: true, className: "center"},
+                {
+                    data: "billMoney", bSortable: true, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.billMoney);
+                    }
+                },
+                {data: "curName", bSortable: true, className: "center"},
+                {data: "paymentDate", bSortable: true, className: "center"},
+                {
+                    data: "status",
+                    bSortable: true,
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        var status = "";
+                        if (full.status == 11) {
+                            if (null != full.status2 && "" != full.status2 && undefined != full.status2) {
+                                // 抵押打回或者抵押审批中时使用抵批状态显示
+                                status = bt.dict("international.lcMortgage.status", full.status2);
+                            } else {
+                                status = bt.dict("international.status", full.status);
+                            }
+                        } else {
+                            // 没有做抵押、到期收矿操作时状态显示
+                            if (99 == full.status) {//取消抵押，或者未做抵押操作显示状态
+                                status = bt.dict("international.lcBillArrival.status", full.status);
+                            } else {//抵押/到期收款操作审批通过后显示状态
+                                status = bt.dict("international.status", full.status);
+                            }
+                        }
+                        return status;
+                    }
+                }, {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                        var html = '';
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("table.fcloanrepay.Info") + '</a>';
+                        return html;
+                    }
+                }
+            ],
+            summary: {
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                // selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '6',//汇总列序号
+                        dataName: 'billMoney',//汇总列数据
+                    }
+                ]
+            }
+        });
+
+    });
+
+    function view(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/international/credit/arrivalletter/viewArrovalInfo?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/arrivalletter/viewArrovalInfo?id=" + data.id,
+        });
+    }
+
+    /**
+     * 导出功能
+     */
+    function exports() {
+        if (!checkTables()) {
+            layer.alert(bt.lang("common.message.notData"));
+            return false;
+        }
+        var url = basePath + "/international/credit/arrivalletter/exportArrival";
+        var formData = {
+            corpId: corp.get("corpId").val(),
+            lcInter: dicts.get("lcInter").val(),
+            creditNo: $("#creditNo").val(),
+            curId: selectType.get("curId").val(),
+            paymentStartDate: dateType.get("ged_paymentDate").val(),
+            paymentEndDate: dateType.get("led_paymentDate").val(),
+        }
+        DownLoadFile({url: url, data: formData, method: 'post'});
+    };
+
+    /**表格不为空验证*/
+    function checkTables() {
+        var isreturn = true;
+        //获取所有tr
+        var trs = $("#appTable").find("tr");
+        if (trs.length <= 2) {
+            isreturn = false;
+        }
+        return isreturn;
+    }
+
+    function DownLoadFile(options) {
+        var config = $.extend(true, {method: 'post'}, options);
+        var _iframe = $('<iframe id="down-file-iframe" style="display: none"/>');
+        var _form = $('<form target="_self" method="post" />');
+        _form.attr('action', config.url);
+        for (var key in config.data) {
+            _form.append('<input type="hidden" name="' + key + '" value="' + config.data[key] + '" />');
+        }
+        _iframe.append(_form);
+        $(document.body).append(_iframe);
+        _form[0].submit();
+        _iframe.remove();
+        return false;
+    }
+</script>
+</html>

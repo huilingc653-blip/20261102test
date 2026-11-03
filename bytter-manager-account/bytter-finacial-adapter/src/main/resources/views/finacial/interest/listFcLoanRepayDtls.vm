@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<table class="layui-table" id="repayDtl">
+	<thead>
+		<tr>
+	       <th>#springMessage('table.fclesspaybill.sendaccount')</th><!-- 放款账号 -->
+	       <th>#springMessage('table.fcAcc.accName')</th><!--户名  -->
+	       <th>#springMessage('table.fcAcc.curId')</th><!--币别  -->
+	       <th>#springMessage('table.fcInterestDtl.interest')</th><!--利息  -->
+	       <th>#springMessage('table.fclesspaybill.needinterestAcc')</th><!--应收利息账号  -->
+	       <th>#springMessage('table.fclesspaybill.needinterestAccName')</th><!--应收利息账号户名  -->
+	       <th>#springMessage('table.fclesspaybill.founddate')</th><!--录入时间  -->
+	       <th>#springMessage('common.table.thead.operation')</th>
+    	</tr>
+	</thead>
+</table>
+<input type="hidden" id="acc" value="$!{acc}">
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+var dtlData;
+bt.use(['form','bttable','moneyType'], function(){
+	$ = bt.jquery,form = bt.form(),moneyFun = bt.moneyType.getFun();
+	var table = bt.bttable.init({
+        elem:"#repayDtl",
+        checkbox:false,
+        url:basePath+"/finacial/interest/fcloanrepay/queryRepayDetailByAcc",
+        urldata:{
+			acc:$("#acc").val()        	
+        },
+        mulselect:false,
+        selectCss:false,
+        scrollX:true,
+        scrollY:"370px",
+        columns:[
+            {data:"account",className:'center',},
+            {data:"accName",className:'center'},
+            {data:"curName",className:'center'},
+            {data:"interest",className:'textRight',
+            	render:function(data,id){
+            		return moneyFun.format(data.interest);
+            	}
+            },
+            {data:"needinterestAcc",className:'textRight'},
+            {data:"needinterestAccName",className:'center'},
+            {data:"enterDate",className:'center'},
+            {data: null, className: 'center', 
+            	render: function (data, id) {
+                	return '<a href="javascript:void(0);" onClick="seletDtl('+id+')"><span style="color:blue">' + bt.lang("common.button.select") + '</span></a>';
+                }
+            }
+        ],
+        tableInitCallback:function(data){
+        	dtlData = data;
+        }
+   });
+	
+});
+
+function seletDtl(id){
+	var webObj = bt.navtab.getCurrentDom();
+	webObj.bt.jquery("#accnameshow").html(dtlData[id].accName);
+	webObj.bt.jquery("#accshow").html(dtlData[id].account);
+	webObj.bt.jquery("#needinterestAccShow").html(dtlData[id].needinterestAcc);
+	webObj.bt.jquery("#needinterestAcc").val(dtlData[id].needinterestAcc);
+	webObj.bt.jquery("#needinterestAccNameShow").html(dtlData[id].needinterestAccName);
+	webObj.bt.jquery("#accName2").val(dtlData[id].needinterestAccName);
+	webObj.bt.jquery("#account2").val(dtlData[id].needinterestAcc);
+	webObj.bt.jquery("#repayId").val(dtlData[id].id);
+    webObj.bt.moneyType.init().get("interest").val(dtlData[id].interest);
+    
+    webObj.bt.moneyType.init().get("debitMoney1").val(dtlData[id].interest);
+    webObj.bt.moneyType.init().get("creditMoney2").val(dtlData[id].interest);
+    webObj.bt.jquery("#debitMoneySum").html(moneyFun.format(dtlData[id].interest));
+    webObj.bt.jquery("#creditMoneySum").html(moneyFun.format(dtlData[id].interest));
+	parent.layer.closeAll();
+}
+
+</script>
+</html>

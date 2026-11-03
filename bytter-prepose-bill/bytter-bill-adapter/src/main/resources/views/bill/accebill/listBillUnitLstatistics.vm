@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form id="queryForm" action="${basePath}/bill/accebill/abbillQuery/billUnitLstatistics"
+	  class="layui-form input150-container" onsubmit="return check(this)">
+	<table class="layui-table">
+		<tbody>
+		<tr>
+			<td width="8%" class="textRight">#springMessage('bill.accebill.isCorp')</td>
+			<td width="25%">
+				<div class="layui-inline">
+					<div class="bt-biz-corp"
+						 data-tree-type="check"
+						 data-biz-type="corp"
+						 data-biz-name="bizCorpId"
+						 data-type="selectTree"
+						 data-name="corpId"
+						 data-scope="all"
+						 data-required="true"
+						 data-defaultvalue="$!{infoParams.corpId}"
+						 data-resource="bill:accebill:billUnitLstatistics:query:corpop"
+					>
+					</div>
+				</div>
+			</td>
+		##收付标记
+			<td width="8%" class="textRight">#springMessage('bill.accebill.billpayerpayeetype')</td>
+			<td width="25%">
+				<div class=layui-form>
+					<div class="bt-biz-dict" data-type="select" data-name="type"  data-biz-name="type"  data-group="BILL_PAYERPAYEE_TYPE"
+						 data-defaultvalue="$!{infoParams.type}" ></div>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			##开始日期
+			<td width="8%" class="textRight">#springMessage('bill.accebill.beginDate')</td>
+			<td width="25%">
+				<div class="layui-inline">
+					<input type="text" id="beginDate" name="beginDate" data-name="beginDate" class="layui-input bt-biz-dateType"
+						   data-biz-name="beginDate" value="$!{beginDate}" data-type="date" >
+				</div>
+			</td>
+		##截止日期
+			<td width="8%" class="textRight">#springMessage('bill.accebill.endDate')</td>
+			<td width="25%">
+				<div class="layui-inline">
+					<input type="text" id="endDate" name="endDate" data-name="endDate" class="layui-input bt-biz-dateType"
+						   data-biz-name="endDate" data-type="date"  value="$!{endDate}" data-today="true">
+				</div>
+			</td>
+		</tr>
+		<tr>
+			## 是否统计在池和非在池
+			<td class="textRight">#springMessage('bill.accebill.countIspool')</td>
+			<td >
+				<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="countIsPool" data-biz-name="countIsPool" data-defaultvalue="$!{infoParams.countIsPool}"></div>
+			</td>
+
+			<input type=hidden id="firstTime" name="firstTime" data-name="firstTime" class="layui-input"
+				   data-biz-name="firstTime" value="$!{firstTime}" data-defaultvalue=true>
+		</tr>
+		<tr>
+			<td colspan="6" style="text-align: center;">
+				<div class="layui-inline">
+					<button class="layui-btn" type="submit" >#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary" data-callBack="resetValue">#springMessage('common.button.reset')</button>
+				</div>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+</form>
+<div class="table-list">
+	<div>
+		<button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage('common.button.print')</button>
+		<button class="layui-btn" type="button" lay-submit onclick="exports()">#springMessage('common.button.exports')</button>
+	</div>
+	<div id="print">
+		<table id="appTable" class="layui-table dark-layui-table" style="width:100%;" >
+			#set($countIsPool = $!{infoParams.countIsPool} == '1')
+			<thead>
+			<tr>
+				<th>#springMessage('bill.accebill.bustype')</th>
+				<th>#springMessage('table.abVoucherinfo.billFlag')</th>
+				<th>#springMessage('table.abVoucherinfo.billType')</th>
+				<th>#springMessage('bill.accebill.money')</th>
+				#if($!countIsPool)
+					<th>#springMessage('bill.accebill.zcMoney')</th>
+					<th>#springMessage('bill.accebill.fzcMoney')</th>
+				#end
+				<th>#springMessage('bill.accebill.zCount')</th>
+				#if($!countIsPool)
+					<th>#springMessage('bill.accebill.zcCount')</th>
+					<th>#springMessage('bill.accebill.fzcCount')</th>
+				#end
+				<th>#springMessage('bill.accebill.ztCount')</th>
+			</tr>
+			</thead>
+			<tbody>
+				#if($!listInfo)
+					#set($rowspanBustype = $!{billTypeDictList.size()} * 2 + 3)
+					#set($rowspanbillFlag = $!{billTypeDictList.size()} + 1)
+					#foreach($info in $listInfo)
+						#foreach($billTypeInfo in $billTypeDictList)
+							#set($moneyKey = 'dp' + $billTypeInfo.code + 'money')
+							#set($countKey = 'dp' + $billTypeInfo.code + 'count')
+							#set($ztcountKey = 'dp' + $billTypeInfo.code + 'ztcount')
+							#set($zcmoneyKey = 'dp' + $billTypeInfo.code + 'zcmoney')
+							#set($fzcmoneyKey = 'dp' + $billTypeInfo.code + 'fzcmoney')
+							#set($zccountKey = 'dp' + $billTypeInfo.code + 'zccount')
+							#set($fzccountKey = 'dp' + $billTypeInfo.code + 'fzccount')
+
+						##重置金额、笔数、总笔数数据
+							#set($billtypemoney =0)
+							#set($billtypecount =0)
+							#set($billtypeztcount =0)
+							#set($billtypezcmoney =0)
+							#set($billtypefzcmoney =0)
+							#set($billtypezccount =0)
+							#set($billtypefzccount =0)
+
+							#set($billtypemoney = $!{info.get($moneyKey)} )
+							#set($billtypecount = $!{info.get($countKey)})
+							#set($billtypeztcount = $!{info.get($ztcountKey)})
+							#set($billtypezcmoney = $!{info.get($zcmoneyKey)} )
+							#set($billtypefzcmoney = $!{info.get($fzcmoneyKey)} )
+							#set($billtypezccount = $!{info.get($zccountKey)})
+							#set($billtypefzccount = $!{info.get($fzccountKey)})
+							#if(!$billtypemoney)
+								#set($billtypemoney = 0 )
+							#end
+							#if(!$billtypecount)
+								#set($billtypecount = 0 )
+							#end
+							#if(!$billtypeztcount)
+								#set($billtypeztcount = 0 )
+							#end
+							#if(!$billtypezcmoney)
+								#set($billtypezcmoney = 0 )
+							#end
+							#if(!$billtypefzcmoney)
+								#set($billtypefzcmoney = 0 )
+							#end
+							#if(!$billtypezccount)
+								#set($billtypezccount = 0 )
+							#end
+							#if(!$billtypefzccount)
+								#set($billtypefzccount = 0 )
+							#end
+						<tr>
+							#if($velocityCount eq 1 )
+								<td rowspan="$!{rowspanBustype}" align="center" ><a class="" href="#" onclick="toDtlInfo('$!{info.bustype}')">$!{info.bustypename}</a></td>
+								<td rowspan="$!{rowspanbillFlag}" align="center" >#springMessage('table.abVoucherinfo.billFlag_11')</td>
+							#end
+							<td align="center">$billTypeInfo.name</td>
+							<td align="right" >$number.formatNumeric($!{billtypemoney})</td>
+							#if($!countIsPool)
+								<td align="right" >$number.formatNumeric($!{billtypezcmoney})</td>
+								<td align="right" >$number.formatNumeric($!{billtypefzcmoney})</td>
+							#end
+							<td align="center">$!{billtypecount}</td>
+							#if($!countIsPool)
+								<td align="center">$!{billtypezccount}</td>
+								<td align="center">$!{billtypefzccount}</td>
+							#end
+							<td align="center">$!{billtypeztcount}</td>
+						</tr>
+						#end
+					<tr>
+						<td align="center">#springMessage('table.datatable.total')</td>
+						<td align="right">
+							#if(!$info.dpmoney)
+								0.00
+							#else
+								$number.formatNumeric($!{info.dpmoney})
+							#end
+						</td>
+						#if($!countIsPool)
+							<td align="right">
+								#if(!$info.dpzcmoney)
+									0.00
+								#else
+									$number.formatNumeric($!{info.dpzcmoney})
+								#end
+							</td>
+							<td align="right">
+								#if(!$info.dpfzcmoney)
+									0.00
+								#else
+									$number.formatNumeric($!{info.dpfzcmoney})
+								#end
+							</td>
+						#end
+						<td align="center">
+							#if(!$info.dpcount)
+								0
+							#else
+								$!{info.dpcount}
+							#end
+						</td>
+						#if($!countIsPool)
+							<td align="center">
+								#if(!$info.dpzccount)
+									0
+								#else
+									$!{info.dpzccount}
+								#end
+							</td>
+							<td align="center">
+								#if(!$info.dpfzccount)
+									0
+								#else
+									$!{info.dpfzccount}
+								#end
+							</td>
+						#end
+						<td align="center">
+							#if(!$info.dpztcount)
+								0
+							#else
+								$!{info.dpztcount}
+							#end
+						</td>
+					</tr>
+						#foreach($billTypeInfo in $billTypeDictList)
+							#set($moneyKey = 'zp' + $billTypeInfo.code + 'money')
+							#set($countKey = 'zp' + $billTypeInfo.code + 'count')
+							#set($ztcountKey = 'zp' + $billTypeInfo.code + 'ztcount')
+							#set($zcmoneyKey = 'zp' + $billTypeInfo.code + 'zcmoney')
+							#set($fzcmoneyKey = 'zp' + $billTypeInfo.code + 'fzcmoney')
+							#set($zccountKey = 'zp' + $billTypeInfo.code + 'zccount')
+							#set($fzccountKey = 'zp' + $billTypeInfo.code + 'fzccount')
+
+						##重置金额、笔数、总笔数数据
+							#set($billtypemoney =0)
+							#set($billtypecount =0)
+							#set($billtypeztcount =0)
+							#set($billtypezcmoney =0)
+							#set($billtypefzcmoney =0)
+							#set($billtypezccount =0)
+							#set($billtypefzccount =0)
+
+							#set($billtypemoney = $!{info.get($moneyKey)} )
+							#set($billtypecount = $!{info.get($countKey)})
+							#set($billtypeztcount = $!{info.get($ztcountKey)})
+							#set($billtypezcmoney = $!{info.get($zcmoneyKey)} )
+							#set($billtypefzcmoney = $!{info.get($fzcmoneyKey)} )
+							#set($billtypezccount = $!{info.get($zccountKey)})
+							#set($billtypefzccount = $!{info.get($fzccountKey)})
+							#if(!$billtypemoney)
+								#set($billtypemoney = 0 )
+							#end
+							#if(!$billtypecount)
+								#set($billtypecount = 0 )
+							#end
+							#if(!$billtypeztcount)
+								#set($billtypeztcount = 0 )
+							#end
+							#if(!$billtypezcmoney)
+								#set($billtypezcmoney = 0 )
+							#end
+							#if(!$billtypefzcmoney)
+								#set($billtypefzcmoney = 0 )
+							#end
+							#if(!$billtypezccount)
+								#set($billtypezccount = 0 )
+							#end
+							#if(!$billtypefzccount)
+								#set($billtypefzccount = 0 )
+							#end
+						<tr>
+							#if($velocityCount eq 1 )
+								<td rowspan="$!{rowspanbillFlag}" align="center">#springMessage('table.abVoucherinfo.billFlag_10')</td>
+							#end
+							<td align="center">$billTypeInfo.name</td>
+							<td align="right" >$number.formatNumeric($!{billtypemoney})</td>
+							#if($!countIsPool)
+								<td align="right" >$number.formatNumeric($!{billtypezcmoney})</td>
+								<td align="right" >$number.formatNumeric($!{billtypefzcmoney})</td>
+							#end
+							<td align="center">$!{billtypecount}</td>
+							#if($!countIsPool)
+								<td align="center">$!{billtypezccount}</td>
+								<td align="center">$!{billtypefzccount}</td>
+							#end
+							<td align="center">$!{billtypeztcount}</td>
+						</tr>
+						#end
+					<tr>
+						<td align="center">#springMessage('table.datatable.total')</td>
+						<td align="right">
+							#if(!$info.zpmoney)
+								0.00
+							#else
+								$number.formatNumeric($!{info.zpmoney})
+							#end
+						</td>
+						#if($!countIsPool)
+							<td align="right">
+								#if(!$info.zpzcmoney)
+									0.00
+								#else
+									$number.formatNumeric($!{info.zpzcmoney})
+								#end
+							</td>
+							<td align="right">
+								#if(!$info.zpfzcmoney)
+									0.00
+								#else
+									$number.formatNumeric($!{info.zpfzcmoney})
+								#end
+							</td>
+						#end
+						<td align="center">
+							#if(!$info.zpcount)
+								0
+							#else
+								$!{info.zpcount}
+							#end
+						</td>
+						#if($!countIsPool)
+							<td align="center">
+								#if(!$info.zpzccount)
+									0
+								#else
+									$!{info.zpzccount}
+								#end
+							</td>
+							<td align="center">
+								#if(!$info.zpfzccount)
+									0
+								#else
+									$!{info.zpfzccount}
+								#end
+							</td>
+						#end
+						<td align="center">
+							#if(!$info.zpztcount)
+								0
+							#else
+								$!{info.zpztcount}
+							#end
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" align="center">#springMessage('table.onlineledger.total')</td>
+						<td align="right" >
+							#if(!$info.zmoney)
+								0.00
+							#else
+								$number.formatNumeric($!{info.zmoney})
+							#end
+						</td>
+						#if($!countIsPool)
+							<td align="right" >
+								#if(!$info.zcmoney)
+									0.00
+								#else
+									$number.formatNumeric($!{info.zcmoney})
+								#end
+							</td>
+							<td align="right" >
+								#if(!$info.fzcmoney)
+									0.00
+								#else
+									$number.formatNumeric($!{info.fzcmoney})
+								#end
+							</td>
+						#end
+						<td align="center">
+							#if(!$info.zcount)
+								0
+							#else
+								$!{info.zcount}
+							#end
+						</td>
+						#if($!countIsPool)
+							<td align="center">
+								#if(!$info.zccount)
+									0
+								#else
+									$!{info.zccount}
+								#end
+							</td>
+							<td align="center">
+								#if(!$info.fzccount)
+									0
+								#else
+									$!{info.fzccount}
+								#end
+							</td>
+						#end
+						<td align="center">
+							#if(!$info.zztcount)
+								0
+							#else
+								$!{info.zztcount}
+							#end
+						</td>
+					</tr>
+					#end
+				#end
+			</tbody>
+		</table>
+	</div>
+</div>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/report/export.js?_btv=${resourceVersion}"></script>
+<script language="javascript" type="text/javascript">
+	var corp={};
+	var dicts={};
+	var dateType={};
+	var fromObj={};
+	var selectTreeDefaultValue = '$!infoParams.corpId'
+	bt.use(['form','dicts','dateType','moneyType','corp','printType'], function(){
+		$ = bt.jquery,fromObj = bt.form();
+		dicts=bt.dicts.init();
+		corp=bt.corp.init();
+		dateType=bt.dateType.init();
+		//打印初始化
+		bt.printType.init();
+	});
+
+	function resetValue() {
+		$("#endDate").val('');
+		$("#beginDate").val('');
+		bt.corp.get("bizCorpId").val('')
+		bt.corp.get("bizCorpId").val(selectTreeDefaultValue)
+	}
+	/**
+	 * 导出功能
+	 */
+	exports = function () {
+		var url = basePath+"/bill/accebill/abbillQuery/exportUnitCountExcel";
+		var formData = {
+			corpId: corp.get("bizCorpId").val(),
+			type: dicts.get("type").val(),
+			endDate: dateType.get("endDate").val(),
+			countIsPool: dicts.get("countIsPool").val()
+		}
+		DownLoadFile({url:url,data:formData,method:'post'});
+	};
+
+	var check=function(obj){
+		return fromObj.verifyFun('#queryForm');
+	}
+	var toDtlInfo=function(busType){
+		var corpId=corp.get("bizCorpId").val();
+		var endDate=dateType.get("endDate").val();
+		var beginDate=dateType.get("beginDate").val();
+		var firstTime="$!{info.zmoney}";
+		var countIsPool = dicts.get("countIsPool").val()
+		var params="busType="+busType+"&corpId="+corpId+"&firstTime="+firstTime+"&countIsPool="+countIsPool;
+		if(beginDate != "" || typeof(beginDate) == "undefined" || beginDate != null ){
+			params += "&beginDate="+beginDate;
+		}
+		if(endDate != "" || typeof(endDate) == "undefined" || endDate != null ){
+			params += "&endDate="+endDate;
+		}else{
+			//默认给当前日期
+			endDate = new Date().format('yyyy-MM-dd');
+		}
+		if(bt.navtab){
+			bt.navtab.addNavtab(bt.lang('common.button.dtl.view') ,
+					basePath + "/bill/accebill/abbillQuery/billUnitLstatisticsDtl?" + params);
+			return;
+		}
+		parent.layer.open({
+			type: 2,
+			area: ['900px', '700px'],
+			maxmin: true,
+			content: basePath + "/bill/accebill/abbillQuery/billUnitLstatisticsDtl?" + params
+		});
+	}
+</script>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body style="height: 85%"
+    <form id="searchForm" class="layui-form" method="post">
+        <input type="hidden" id="corpId" name="corpId" value="$!{analysisVO.corpId}">
+        <input type="hidden" id="startDate" name="startDate" value="$!{analysisVO.startDate}">
+        <input type="hidden" id="endDate" name="endDate" value="$!{analysisVO.endDate}">
+        <input type="hidden" id="curId" name="curId" value="$!{analysisVO.curId}">
+        <input type="hidden" id="isConvertStandCur" name="isConvertStandCur" value="$!{analysisVO.isConvertStandCur}">
+        <input type="hidden" id="convertCurId" name="convertCurId" value="$!{analysisVO.convertCurId}">
+        <input type="hidden" id="moneyUnit" name="moneyUnit" value="$!{analysisVO.moneyUnit}">
+        <input type="hidden" id="searchFrequency" value="$!{analysisVO.searchFrequency}">
+        <input type="hidden" id="typesOfStatistics" value="$!{analysisVO.typesOfStatistics}">
+        <input type="hidden" id="netId" value="$!{analysisVO.netId}">
+        <input type="hidden" id="bankType" value="$!{analysisVO.bankType}">
+        <input type="hidden" id="loanSign" value="$!{analysisVO.loanSign}">
+        <input type="hidden" id="searchCorps" value="$!{analysisVO.searchCorps}">
+        <input type="hidden" id="isContain" value="$!{analysisVO.isContain}">
+    </form>
+    <div id="chartSum"  style="width:100%;height:100%;text-align: center;"></div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    var seriesData,myChartSum,dataAverage,option,moneyFun,xData,markLabel;
+    bt.use(['form','moneyType'], function () {
+        $ = bt.jquery, form = bt.form();
+        moneyFun = bt.moneyType.getFun();
+
+        if($("#searchFrequency").val()=="1"){//按月查询
+            markLabel=bt.lang('table.report.monthAverage')
+        }else{//按天查询
+            markLabel=bt.lang('table.report.dailyAverage')
+        }
+        seriesData=new Array();
+        var data = {
+            corpId: $("#corpId").val(),
+            startDate: $("#startDate").val(),
+            endDate: $("#endDate").val(),
+            isConvertStandCur: $("#isConvertStandCur").val(),
+            moneyUnit: $("#moneyUnit").val(),
+            searchFrequency: $("#searchFrequency").val(),
+            bankType: $("#bankType").val(),
+            typesOfStatistics: $("#typesOfStatistics").val(),
+            netId: $("#netId").val(),
+            curId: $("#curId").val(),
+            loanSign: $("#loanSign").val(),
+            searchCorps: $("#searchCorps").val(),
+            isContain: $("#isContain").val(),
+            convertCurId: $("#convertCurId").val()
+        };
+        var url = basePath + "/cms/report/loanDailyAnalysis/getDailyBalance";
+        $.ajax({
+            type: "post",
+            async: false, //同步执行
+            url: url,
+            data: data,
+            dataType: "json", //返回数据形式为json
+            success: function (result) {
+                seriesData =result.seriesData;
+                dataAverage=result.dataAverage;//数据平均数
+                xData=result.xData;//x轴的数据
+                option = {
+                    toolbox: {
+                        show: true, feature: {
+                            mark: {
+                                show: true,
+                                lineStyle: {color: "#1e90ff", type: "dashed", width: 2}
+                            },
+                            magicType: {
+                                show: true,
+                                type: ["line", "bar"]
+                            },
+                            restore: {show: true},
+                            saveAsImage: {show: true, type: "png"}
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: $.parseJSON(xData),
+                        axisLabel: {
+                            interval: 0,
+                            rotate: 45,
+                            formatter: function (value) {
+                                return value
+                            },
+                        }
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: $.parseJSON(seriesData),
+                        type: 'line',
+                        markLine: {
+                            data: [
+                                {yAxis:dataAverage}
+                            ],
+                            label: {
+                                normal: {
+                                    formatter: markLabel+":" + moneyFun.format(dataAverage),
+                                }
+                            },
+                        }
+                    }]
+                };
+                myChartSum= echarts.init(document.getElementById('chartSum'));
+                myChartSum.hideLoading();
+                myChartSum.setOption(option, true);
+                window.onresize = myChartSum.resize;
+            }
+        });
+    });
+
+</script>
+</html>

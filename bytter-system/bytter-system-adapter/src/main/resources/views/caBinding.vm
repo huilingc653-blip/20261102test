@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+    #parse("views/common/caData.vm")
+<head>
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <script src="${basePath}/static/plugins/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.min.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/plugins/store/store.legacy.min.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <title>证书绑定</title>
+    <script>
+        var basePath = "${basePath}";
+        if(top.location != this.location){top.location.replace(basePath+'/');}
+    </script>
+    <script type="text/javascript" src="${basePath}/static/plugins/bytter/oprate.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <link rel="stylesheet" href="${basePath}/static/plugins/layui/css/layui.css">
+    <style>
+        /* login */
+        .login-body {
+            ##background: url("${basePath}/static/images/bg/bg5.jpg") repeat fixed;
+        }
+        .login-box {
+            position: fixed;
+            top: 0;
+            bottom: 30%;
+            left: 0;
+            right: 0;
+            margin: auto;
+            width: 320px;
+            height: 241px;
+            max-height: 300px;
+        }
+        .login-body .login-box h3{
+            color: #444;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        .login-box .layui-input[name='captcha'] {
+            display: inline-block;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .login-box img {
+            display: inline-block;
+            width: 46%;
+            height: 38px;
+            border: none;
+            vertical-align: top;
+            cursor: pointer;
+            margin-left: 4%;
+        }
+        .login-box button.btn-reset{
+            width: 95px;
+        }
+        .login-box button.btn-submit{
+            width: 190px;
+        }
+
+    </style>
+</head>
+<body class="login-body body">
+
+<div class="login-box">
+    <form class="layui-form layui-form-pane" method="post" action="">
+        #caDataHidden()
+        <div class="layui-form-item">
+            <h3>#springMessage("sys.login.button.caBinding")</h3>
+        </div>
+        #if($!{config.value} != 2)
+            <div class="layui-form-item">
+                <label class="layui-form-label">#springMessage("sys.login.label.account")</label>
+
+                <div class="layui-input-inline">
+                    <input type="text" name="loginName" class="layui-input" lay-verify="account" placeholder="#springMessage("sys.login.label.account")" value="$!{user.loginName}" autocomplete="on" maxlength="20"/>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">#springMessage("sys.login.label.password")</label>
+
+                <div class="layui-input-inline">
+                    <input type="password" name="password" class="layui-input" lay-verify="password" value="$!{user.password}" placeholder="#springMessage("sys.login.label.password")" maxlength="20"/>
+                </div>
+            </div>
+        #end
+        #if($showCaptcha)
+            <div class="layui-form-item">
+                <label class="layui-form-label">#springMessage("sys.login.label.captcha")</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="captcha" class="layui-input" autocomplete="off" lay-verify="code" placeholder="#springMessage("sys.login.label.captcha")" maxlength="4"/><img id="captchaImg" src="/captcha.jpg" alt="#springMessage("common.button.click.refresh")">
+                </div>
+            </div>
+        #end
+        <div class="layui-form-item">
+            <input type="hidden" id="userCadn" name="userCadn"/>
+            <button type="reset" class="layui-btn layui-btn-danger btn-reset">#springMessage("common.button.reset")</button>
+            <button type="submit" class="layui-btn btn-submit" lay-submit="" lay-filter="sub">#springMessage("sys.login.button.caBinding")</button>
+        </div>
+    </form>
+</div>
+
+
+<script type="text/javascript">
+    function reloadRandCodeImage(obj) {
+        var date = new Date();
+        obj.src=basePath + '/captcha.jpg?_=' + date.getTime();
+    }
+    bt.use(['form', 'layer'], function () {
+        var $ = bt.jquery,form = bt.form(),layer = bt.layer;
+        // 验证
+        form.verify({
+            account: function (value) {
+                if (value == "") {
+                    return bt.lang("sys.login.message.account.null");
+                }
+            },
+            password: function (value) {
+                if (value == "") {
+                    return bt.lang("sys.login.message.password.null");
+                }
+            },
+            #if($showCaptcha)
+                code: function (value) {
+                    if (value == "") {
+                        return bt.lang("sys.login.message.captcha.null");
+                    }
+                }
+            #end
+        });
+        // 提交监听
+        form.on('submit(sub)', function (data) {
+            var encrypt = $("#encrypt").val();
+            if(encrypt != 0 ){
+                try {
+                    if(encrypt == 1){
+                        var certList = selectiTrusCa();
+                        layer.open({
+                            title: '天威证书列表',
+                            content: certList,
+                            yes: function(index, layero){
+                                CurCert=selectSingleCert("",layero.find("select option:selected").val());
+                                var userCadn = "";
+                                var signature = "";
+                                userCadn = layero.find("select option:selected").val();
+                                $("#userCadn").val(userCadn);
+                                data.field.userCadn = userCadn;
+                                signature = sign(encrypt, userCadn);
+                                $("#signature").val(signature);
+                                data.field.signature = signature;
+                                layer.close(index);
+                                data.field.rememberMe = data.field.rememberMe ? 1 : 0;
+                                $.post(basePath + '/saveCa', data.field, function (reslut) {
+                                    if (reslut.success) {
+                                        layer.msg(reslut.msg, {
+                                            time: 1500
+                                        }, function (index) {
+                                            location.href = basePath + "/login";
+                                        });
+                                    } else {
+                                        layer.alert(reslut.msg, {icon: 2}, function (index) {
+                                            layer.close(index);
+                                        });
+                                    }
+                                }, 'JSON');
+                            }
+                        });
+                    }else {
+                        selectCa(encrypt);
+                        var userCadn = "";
+                        var signature = "";
+                        userCadn = getCertInfo(encrypt);
+                        $("#userCadn").val(userCadn);
+                        data.field.userCadn = userCadn;
+                        signature = sign(encrypt, userCadn);
+                        $("#signature").val(signature);
+                        data.field.signature = signature;
+                        if(signature == "" || signature =="null" || signature == null){
+                            return false;
+                        }
+                    }
+                }catch (e){
+                    layer.alert(bt.lang("sys.ca.abnormal"),{icon: 2});
+                    return false;
+                }
+            }
+            if(encrypt != 1) {
+                data.field.rememberMe = data.field.rememberMe ? 1 : 0;
+                $.post(basePath + '/saveCa', data.field, function (reslut) {
+                    if (reslut.success) {
+                        layer.msg(reslut.msg, {
+                            time: 1500
+                        }, function (index) {
+                            location.href = basePath + "/login";
+                        });
+                    } else {
+                        layer.alert(reslut.msg, {icon: 2}, function (index) {
+                            layer.close(index);
+                        });
+                    }
+                }, 'JSON');
+            }
+
+            return false;
+        })
+    })
+
+</script>
+    #caDataScript()
+</body>
+</html>

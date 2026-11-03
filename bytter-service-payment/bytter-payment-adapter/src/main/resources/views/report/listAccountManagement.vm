@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form id="searchForm" class="layui-form input150-container">
+		<input type="hidden" id="option" name="option" value="query">
+		<input type="hidden" id="onload" name="onload" value="$!{onload}">
+		<input type="hidden" id="total" value="${model.total}">
+		<input type="hidden" id="curr" value="${model.curr}">
+		<input type="hidden" id="len" value="${model.len}">
+		<input type="hidden"  id="rmbCur" value="$!{rmbCur.id}">
+        <table class="layui-table">
+         <tr>
+			##网点
+           <td class="textRight">#springMessage('table.fcAcc.netId')</td>
+           <td class="rCode">
+             <div class="layui-input-inline">
+               <div class="bt-biz-corp" data-biz-type="net" data-type="selectTree"  data-group="corpGroup" data-change="corpId"  data-resource="netbank:report:nisallocationreq:query"
+				data-name="netId" data-scope="net" data-biz-name="netId" data-defaultvalue="$!{netId}"></div>
+			 </div>
+		   </td>
+		   ##开户单位
+           <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+           <td class="rCode">
+			 <div class="layui-input-inline">
+             <div class="bt-biz-corp"  data-biz-name="corpId" data-name="corpId" data-group="corpGroup" data-scope="all" data-resource="netbank:report:nisallocationreq:query"
+				data-biz-type="corp" data-type="selectTree" data-tree-type="check" data-defaultvalue="$!{corpId}" data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"></div>
+             </div>
+           </td>
+		   ##申请日期
+             <td class="textRight">#springMessage('table.btInnerAccApp.opDate')</td>
+			 <td class="rCode">
+            		<div class="layui-inline">
+                    	<input type="text" data-biz-name="gedCreateDate" name="gedCreateDate" 
+                    	class="layui-input bt-biz-dateType" data-endid="startDate" data-type="date" value="${monthFirstDay}">
+                	</div>
+                	<div class="layui-inline">~</div>
+                	<div class="layui-inline">
+                    	<input type="text" data-biz-name="ledCreateDate" name="ledCreateDate" 
+                    	class="layui-input bt-biz-dateType" id="startDate" data-type="date"  value="${today}">
+                	</div>
+            		</td>
+		 </tr>
+		<tr>
+			##是否折合币种
+			<td class="textRight">#springMessage("common.isConvert.currency")</td>
+			<td>
+				<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="changeCur"
+					 data-biz-name="changeCur" data-callback="callToCurr"
+					 data-defaultvalue="$!{changeCur}"></div>
+			</td>
+			##折合币种
+			<td class="textRight">#springMessage("commom.converted.into.currency")</td>
+			<td>
+				<div class="bt-biz-selectType"
+					 data-biz-name="reducedCurId"
+					 data-url="${basePath}/basic/business/btcurrency/json"
+					 data-valuefield="id"
+					 data-textfield="curName"
+					 data-name="reducedCurId"
+					 data-search="true"
+					 #if(${changeCur}!="1")data-disabled = "true" #end
+					 data-defaultvalue="$!{reducedCurId}"
+					
+				></div>
+			</td>
+			##折算汇率类型
+			<td class="textRight">#springMessage('table.fexForeign.report.convert.rateType')</td>
+			<td>
+				<div type="list" data-name="rateType" class="bt-biz-selectType"
+					 #if(${changeCur}!="1")data-disabled = "true" #end data-name="rateType" data-biz-name="rateType"
+					 data-url="${basePath}/basic/business/btratetype/json" data-valueField="id" data-textField="typeName" data-defaultvalue="${rateType}"></div>
+			</td>
+		</tr>
+		<tr>
+			##汇率日期
+			<td class="textRight">#springMessage('report.fcExcrateAdjust.preTime')</td>
+			<td>
+				<input type="text" name="rateDate"  class="layui-input bt-input-inline bt-biz-dateType" value="$!{rateDate}"
+					   data-endid="rateDate" data-biz-name="rateDate" data-today="true"
+					   #if(${changeCur}!="1")
+					   readonly="readonly"
+					   #end
+					   >
+			</td>
+		</tr>
+		  <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary" data-callback = "resetCode()">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+		</table>
+    </form>
+	<div id="tbl" style="width:100%;overflow:auto" >
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+           <tr class="title">
+              <td rowspan="2" align="center">#springMessage('table.fcAcc.netId')</td>
+			  <td rowspan="2" align="center">#springMessage('table.fbsBudget.corpId')</td>
+			  <td rowspan="2" align="center">#springMessage('table.fbsBudgetDetail.curId')</td>
+			  <td colspan="2" align="center">#springMessage('common.button.transferup')</td>
+			  <td colspan="2" align="center">#springMessage('table.nisAllocationReport.turn')</td>
+			  <td colspan="2" align="center">#springMessage('table.nisAllocationReport.down')</td>
+			  <td colspan="2" align="center">#springMessage('table.nisAllocationReport.ask')</td>
+		   </tr>
+		   <tr>
+		   <th>#springMessage('table.fbsBudgetProcessReport.bsuperMoney.temp')</th>
+           <th>#springMessage('common.button.hadtransferup')</th>
+		   <th>#springMessage('table.fbsBudgetProcessReport.bsuperMoney.temp')</th>
+           <th>#springMessage('table.nisAllocationReport.hadturn')</th>
+		    <th>#springMessage('table.fbsBudgetProcessReport.bsuperMoney.temp')</th>
+           <th>#springMessage('table.nisAllocationReport.haddown')</th>
+		    <th>#springMessage('table.fbsBudgetProcessReport.bsuperMoney.temp')</th>
+           <th>#springMessage('table.nisAllocationReport.hadask')</th>
+           </tr>
+		   </thead>
+           <tbody>
+			#if($model.nisAllocationReq)
+				#foreach($nisAllocationReq in $!{model.nisAllocationReq})
+                    <tr>
+                     <td align="center"> $!{nisAllocationReq.netName}</td>
+					 <td align="center"> $!{nisAllocationReq.corpName}</td>
+					 <td align="center">
+						 #if($!{nisAllocationReq.curName} == "")
+						 	 #springMessage('table.fexForeign.report.convert.currency.total')
+						 #else
+							 #if($!{nisAllocationReq.corpName} == "")
+								 $!{nisAllocationReq.curName}#springMessage('table.datatable.total')
+							 #else
+								 $!{nisAllocationReq.curName}
+							 #end
+						 #end
+					 </td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.onDraw})
+							#if($!{nisAllocationReq.onDraw} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','10','on','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.onDraw})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.onDraw})
+							#end
+						#end
+					 </td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.hadDraw})
+							#if($!{nisAllocationReq.hadDraw} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','10','had','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.hadDraw})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.hadDraw})
+							#end
+						#end
+					</td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.onHanded})
+							#if($!{nisAllocationReq.onHanded} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','14','on','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.onHanded})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.onHanded})
+							#end
+						#end
+					 </td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.hadHanded})
+							#if($!{nisAllocationReq.hadHanded} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','14','had','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.hadHanded})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.hadHanded})
+							#end
+						#end
+					</td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.onDial})
+							#if($!{nisAllocationReq.onDial} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','11','on','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.onDial})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.onDial})
+							#end
+						#end
+					</td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.hadDial})
+							#if($!{nisAllocationReq.hadDial} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','11','had','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.hadDial})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.hadDial})
+							#end
+						#end
+					</td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.onRequest})
+							#if($!{nisAllocationReq.onRequest} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','12','on','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.onRequest})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.onRequest})
+							#end
+						#end
+					</td>
+					 <td class="textRight">
+						#if($!{nisAllocationReq.hadRequest})
+							#if($!{nisAllocationReq.hadRequest} != 0)
+							<a href="#" onclick="view('$!{nisAllocationReq.corpId}','12','had','$!{nisAllocationReq.curId}')">$number.formatNumeric($!{nisAllocationReq.hadRequest})</a>
+							#else
+							$number.formatNumeric($!{nisAllocationReq.hadRequest})
+							#end
+						#end
+					</td>
+					</tr>
+				#end
+			#end
+		   </tbody>
+		
+    </table>
+	<div id="page" style="position:fixed ; bottom:0px;width:100%"></div>
+	</div>
+	#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+var corp;
+var dateType;
+var moneyType;
+var selectType,dicts;
+bt.use(['form','datatable','dateType','select','pageType','moneyType','date','jquery','corp', 'dicts','selectType'],function(){
+	   $=bt.jquery,form=bt.form();
+	    dateType=bt.dateType.init();
+	    moneyType=bt.moneyType.init();
+	    corp=bt.corp.init();
+		dicts = bt.dicts.init();
+		selectType = bt.selectType.init();
+	   
+	   bt.pageType.init({
+	     elem:'#page',//分页组件容器
+		 count: $!{model.total},      //表格总页码
+		 curr: $!{model.curr},          //当前页码，默认值为0，即第一页
+		 limit:  $!{model.len},         //当前显示条数，默认值为10
+		 jump:function(obj){  //翻页方法
+		    var curr = obj.curr;
+        	var len = obj.limit;
+			location.href = basePath + "/report/nisAllocationReq/list?"+getParam()+"&start="+curr+"&len="+len;
+
+		 }
+	   
+	   })
+	
+	  $(function(){
+	     if("onload"==($("#onload").val())){
+		   search();
+		 }
+	  });
+	   
+	   //重置
+	   resetCode=function(){
+	      var inputs=$('.rCode').find('input');
+		  inputs.each(function(){
+		     $(this).val("");
+		  })
+		  form.render('select');
+	   }
+	   
+	   //查询
+	   form.on('submit(search)',function(data){
+	      search();
+	   });
+	});
+	
+var getParam=function(){
+    var param="";
+    var changeCur="0";
+    if(dicts.get('changeCur').val()){
+		changeCur=dicts.get('changeCur').val();
+	}
+	param +="netId="+corp.get('netId').val()+"&corpId="+corp.get('corpId').val()+"&gedCreateDate="+dateType.get('gedCreateDate').val()+
+	       "&ledCreateDate="+dateType.get('ledCreateDate').val()+"&option="+$("#option").val()+"&changeCur="+changeCur+"&reducedCurId="+selectType.get('reducedCurId').val()+
+			"&rateDate="+dateType.get('rateDate').val()+"&rateType="+selectType.get('rateType').val();
+	return param;
+
+}
+
+
+function view(corpIds,types,status,curIds){
+      parent.layer.open({
+        type: 2,
+        area: ['1120px', '800px'],
+        maxmin: true,
+        content: basePath + "/report/nisAllocationReq/view?"+getParam()+"&curIds="+curIds+"&corpIds="+corpIds+"&type="+types+"&status="+status
+    });
+}
+
+function search(){
+  location.href=basePath+ "/report/nisAllocationReq/list?"+getParam();
+}
+
+function callToCurr(data){
+	if(data.value =="1"){
+		selectType.get("reducedCurId").attr({'data-disabled':false,'data-required':true,'data-value':$("#rmbCur").val()});
+		selectType.get("rateType").attr({'data-disabled':false,'data-required':true});
+		dateType.get("rateDate").attr({'readonly':false,'data-required':true});
+	}else {
+		selectType.get("reducedCurId").attr({'data-disabled':true,'data-required':false});
+		selectType.get("rateType").attr({'data-disabled':true,'data-required':false});
+		dateType.get("rateDate").attr({'readonly':true,'data-required':false});
+	}
+	form.render();
+	form.renderIcon();
+}
+	
+</script>
+</html>

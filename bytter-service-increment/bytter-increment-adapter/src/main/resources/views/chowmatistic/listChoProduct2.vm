@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input id="eqs_financialType" name="eqs_financialType" type="hidden" value="$!{financialType}">
+    <input id="eqs_validSign" name="eqs_validSign" type="hidden" value="1">
+    <input id="initBankTypeId"  type="hidden" value="$!{bankTypeId}">
+    <table class="layui-table">
+        <tr>
+            ##银行类别
+            <td class="textRight">#springMessage("table.choProduct.bankTypeId")</td>
+            <td width="20%">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/json"
+                     data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id"
+                     data-defaultValue="$!{bankTypeId}" data-beforeInit="bt.delBankTypeInit" data-textField="typeName"></div>
+            </td>
+            ##产品类型名称
+            <td class="textRight">#springMessage("table.choProduct.productType")</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="select" data-group="cho.productType" data-value="$!{productType}"
+                     data-name="eqs_productType" data-biz-name="productType" id="productType"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" onclick="resetProductType()">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width: 100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage("table.choProduct.bankTypeId")</th>
+        <th>#springMessage("table.choProduct.productType")</th>
+        <th>#springMessage("table.choProduct.productCode")</th>
+        <th>#springMessage("table.choProduct.productName")</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+##<script src="${basePath}/static/modules/chowmatistic/choProduct.list.js?_btv=${resourceVersion}"></script>
+</html>
+<script>
+    bt.use(['form','datatable','selectType','dicts'],function () {
+        dict = bt.dicts.init();
+        var isInitBankType = false;
+        bt.delBankTypeInit=function(nodes){
+            isInitBankType = true;
+            return nodes;
+        }
+
+        selectType=bt.selectType.init();
+        table = bt.datatable.init({
+            elem: "#appTable",
+            dom: "Brtlip",
+            colReorder:true,
+            searchForm:{
+                formElem: "#searchForm",
+                formFilter: "search",
+                initQueryParams:function (params) {
+                    if(!isInitBankType){
+                        params.eqs_bankTypeId = $('#initBankTypeId').val();
+                    }
+                    return params
+                }
+            },
+            ajax: {
+                'url': basePath+"/chowmatistic/choproduct/datatable"
+            },
+            buttons:[
+                {
+                    text:bt.lang('common.button.add'),
+                    action:function (e, dt, node, config) {
+                        add(e, dt, node, config);
+                    }
+                },{
+                    extend: "colvis",
+                    text: bt.lang("common.button.theadHide"),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns:[
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="choProductTyep-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data:"bankTypeName",bSortable:true,className:'center'},
+                {data:"productType",bSortable:true,className:'center',
+                    render:function (data, type, full, meta) {
+                        return bt.dict("cho.productType",full.productType);
+                    }
+                },
+                {data:"productCode",bSortable:true,className:'center'},
+                {data:"productName",bSortable:true,className:'center'}
+            ]
+        })
+
+        table.on('click', '.choProductTyep-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-choProductType']['callback'];
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+
+    function add(e, dt, node, config) {
+        debugger;
+        if (bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath+'/chowmatistic/choproduct/add');
+
+            // var id = $('.layui-layer').attr('id');
+            // var index = id.sub(11, s.length);
+            parent.layer.closeAll();
+
+            return;
+        }
+        parent.layer.open({
+            type:2,
+            area:['850px','530px'],
+            maxmin:true,
+            content:basePath+'/chowmatistic/choproduct/add',
+            end:function () {
+                table && table.draw();
+            }
+        });
+    }
+
+    function update(e1) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(e1).data("row")).data();
+        if (data){
+            if (bt.navtab){
+                bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + '/chowmatistic/choproduct/update?id=' + data.id);
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px','530px'],
+                manmin: true,
+                content: basePath + "/chowmatistic/choproduct/update?id=" + data.id,
+                end:function () {
+                    table && table.draw();
+                }
+            })
+        }
+    }
+
+    function del(e1) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(e1).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function () {
+            $.post(basePath + "/chowmatistic/choproduct/delete/" + data.id,function (result) {
+                bt.datatable.refreshCurrentPage();
+                parent.layer.alert(result.msg,{icon: result.success?1:2});
+            },'JSON');
+        })
+    }
+
+    // 理财类型回调函数
+    function financialTypeCallback(data) {
+        var filterData
+        if (data.value === '1') {
+            filterData = '3,4,5,6'
+        } else if (data.value === '0') {
+            filterData = '1,2'
+        } else if (data.value === '2') {
+            filterData = '2,3,4,5,6'
+        }
+        dict.get("productType").attr({'data-filterData': filterData})
+
+        bt.dicts.render()
+    }
+
+    function resetProductType() {
+        dict.get("productType").attr({'data-filterData':''})
+    }
+</script>

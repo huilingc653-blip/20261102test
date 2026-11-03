@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+    <table class="layui-table">
+        <tbody>
+        <input type="hidden" id="isCustom" value="$!{isCustom}">
+        <tr>
+            ##客商编号
+            <td class="textRight">#springMessage('table.reporter.merchant.code')</td>
+            <td>
+                <input type="text" name="likes_ecCode" autocomplete="off" class="layui-input" placeholder="#springMessage('table.reporter.merchant.code')"
+                    #if($!{externalCorp})
+                       readonly="true"  value="$!{externalCorp.code}"
+                    #end>
+            </td>
+            ##客商名称
+            <td class="textRight">#springMessage('table.reporter.merchant.name')</td>
+            <td>
+                <input type="text" name="likes_ecName" autocomplete="off" class="layui-input" placeholder="#springMessage('table.reporter.merchant.name')"
+                    #if($!{externalCorp})
+                       readonly="true"  value="$!{externalCorp.name}"
+                    #end>
+            </td>
+
+        </tr>
+        <tr>
+            ##电话号码（MOBN）
+            <td class="textRight">#springMessage('fex.cotp.phoneCode')（MOBN）</td>
+            <td>
+                <input type="text" name="likes_tel" autocomplete="off" class="layui-input">
+            </td>
+            ##客商属性
+            <td class="textRight">#springMessage('sys.externalCorp.bwType')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="SYS_BUS_ENTITY_TYPE"
+                     data-defaultvalue="" data-name="eqs_bwType"
+                    #if($!{externalCorp})
+                     value="$!{externalCorp.bwType}"  data-displayData="$!{externalCorp.bwType}" data-selecttext="false"
+                    #end></div>
+            </td>
+        </tr>
+        <tr>
+            ##邮箱（EMAIL）
+            <td class="textRight">#springMessage('fex.cotp.email')（EMAIL）</td>
+            <td>
+                <input type="text" name="likes_email" autocomplete="off" class="layui-input">
+            </td>
+            ##信用卡号（AIIN）
+            <td class="textRight">#springMessage('table.externalCorpQuickPay.creditCard')</td>
+            <td >
+                <input type="text" name="likes_creditCard" autocomplete="off" class="layui-input">
+            </td>
+        </tr>
+        <tr>
+            ##FPS ID（SVID）
+            <td class="textRight">#springMessage('FPS ID（SVID）')</td>
+            <td >
+                <input type="text" name="likes_fpsId" autocomplete="off" class="layui-input">
+            </td>
+            ##香港身份证号（HKID）
+            <td class="textRight">#springMessage('fex.cotp.hkId')（HKID）</td>
+            <td >
+                <input type="text" name="likes_hkId" autocomplete="off" class="layui-input">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+</form>
+<table id="externalCorpTable" class="layui-table">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>##操作
+        <th>#springMessage('table.reporter.merchant.code')</th>##客商编号
+        <th>#springMessage('table.externalCorp.name')</th>##客商名称
+        <th>#springMessage('FPS ID（SVID）')</th>##FPS ID（SVID）
+        <th>#springMessage('fex.cotp.email')（EMAIL）</th>##邮箱（EMAIL）
+        <th>#springMessage('fex.cotp.phoneCode')（MOBN）</th>##电话号码（MOBN）
+        <th>#springMessage('table.externalCorpQuickPay.creditCard')</th>##信用卡号（AIIN）
+        <th>#springMessage('fex.cotp.hkId')（HKID）</th>##香港身份证号（HKID）
+        <th>#springMessage('table.externalCorp.name')(#springMessage('sys.lang.english'))</th>##客商名称（英文）
+        <th>#springMessage('sys.externalCorp.bwType')</th>##客商属性
+        <th>#springMessage('table.externalBankAcc.isDefaultAcc')</th>##首选账号
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery','dicts','corp','selectType'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        bt.corp.init();
+        bt.dicts.init();
+        bt.selectType.init();
+        var table = bt.datatable.init({
+            elem: "#externalCorpTable",
+            selectCss: false,
+            ajax: {
+                url: basePath + "/sys/externalCorp/fpsExternalBankAccDate",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="acc-bank-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "ecCode", orderable: false},
+                {data: "ecName", orderable: false},
+                {data: "fpsId", orderable: false},
+                {data: "email", orderable: false},
+                {data: "phone", orderable: false},
+                {data: "creditCard", orderable: false},
+                {data: "hkId", orderable: false},
+                {data: "ecNameEn", orderable: false},
+                {data: "bwTypeName", orderable: false},
+                {data: "isDefaultAccStr", orderable: false}
+            ]
+        });
+
+
+        table.on('click', '.acc-bank-select', function (event) {
+//            var func = top.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            var data = table.row($(this).data('row')).data();
+            data.type="fps";
+            data.isExternal=true;
+            //是否为两层页面子页面调用组件
+            var isCustom = $('#isCustom').val() == '1'?true:false;
+            if(isCustom){
+                bt.navtab.getCurrentDom().setData(data);
+                top.layer.closeAll();
+                return
+            }
+
+            var parentsIndex = parent.$('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex;
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            //var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-allExternalBankAcc']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-allExternalBankAcc']['callback'];
+            }
+
+            if (func) {
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

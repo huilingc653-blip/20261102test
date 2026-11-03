@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <input type="hidden" name="code" value="$!{code}">
+        <input type="hidden" name="inputId" value="$!{inputId}">
+        <tbody>
+        <tr>
+            <td class="textRight">名称</td>
+            <td width="40%" >
+                <div class="layui-inline">
+                    <input type="text" name="likes_name" class="layui-input" placeholder="名称">
+                </div>
+            </td>
+            <td class="textRight">编码</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <input type="text"  name="likes_code" class="layui-input" placeholder="编码">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" type="button" lay-filter="search">#springMessage('common.button.search')</button>
+                <button class="layui-btn layui-btn-primary" type="reset">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+        <th>编码</th>
+        <th>名称</th>
+        <th>隐藏列</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    var table ;
+    bt.use(['datatable','date'], function () {
+        var $ = bt.jquery;
+        table = bt.datatable.init({
+            elem: "#appTable",
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/erp/swap/template/inputDataTable"
+            }
+            ,columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="input-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data:"code",className:'center',bSortable:true},
+                {data:"name",className:'center',bSortable:true},
+                {data:"inputId",className:'center hidden',bSortable:true}
+            ]
+        });
+
+        //点击选择数据触发
+        table.on('click', '.input-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-$!{inputId}']['callback'];
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>
+

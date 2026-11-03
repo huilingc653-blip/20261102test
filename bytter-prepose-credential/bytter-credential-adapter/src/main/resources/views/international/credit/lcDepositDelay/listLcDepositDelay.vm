@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" method="post" id="searchForm">
+    <table class="layui-table">
+        <tr>
+            <td class="textRight">#springMessage('international.credit.lcInter')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                         data-name="eqs_lcInter" data-biz-name="lcInter" >
+                    </div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('international.credit.creditNo')</td>
+            <td>
+                <input type="text" class="layui-input" name="likes_creditNo" />
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center">
+                <button class="layui-btn" type="button" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="datatable" class="layui-table" style="width:100%">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcPredrawDtlTemp.orderNo')</th>##流水号
+        <th>#springMessage('international.credit.lcInter')</th>##信用证类型
+        <th>#springMessage('international.credit.creditNo')</th>##信用证号
+        <th>#springMessage('table.internation.arrival.com.no')</th>##到单号
+        <th>#springMessage('international.credit.contractNo')</th>##合同号
+        <th>#springMessage('international.lcDeposit.money')</th>##押汇金额
+        <th>#springMessage('table.international.arrival.curId')</th>##币种
+        <th>#springMessage('international.credit.createDate')</th>##登记时间
+        <th>#springMessage('table.international.arrival.paymentDate')</th>##到单日期
+        <th>#springMessage('international.lcDepositDelay.delayDate')</th>##展期日期
+        <th>#springMessage('international.credit.beneficiary')</th>##受益人
+        <th>#springMessage('common.table.status')</th>##单据状态
+        <th>#springMessage('common.table.thead.operation')</th>##操作
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(['jquery','datatable','form','dicts'], function(){
+        $ = bt.jquery;
+        bt.dicts.init();
+        var datatable = bt.datatable.init({
+            elem: "#datatable",
+            checkbox: false,
+            ajax: {
+                url: "queryLcDepositDelay",
+                dataSrc: "data"
+            },
+            colReorder: true,
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {
+                    data: "delayNo",//流水号
+                    className: "center"
+                }, {
+                    data: "lcInter",//信用类型
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter",full.lcInter);
+                    }
+                }, {
+                    data: "creditNo",//信用证号
+                    className: "center"
+                }, {
+                    data: "arrivalNo",//到单号
+                    className: "center"
+                }, {
+                    data: "contractNo",//合同号
+                    className: "center"
+                }, {
+                    data: "depositMoney",//押汇金额
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.depositMoney);
+                    }
+                }, {
+                    data: "curName",//币种
+                    className: "center"
+                }, {
+                    data: "createDate",//登记时间
+                    className: "center"
+                }, {
+                    data: "paymentDate",//到单日期
+                    className: "center"
+                }, {
+                    data: "delayDate",//展期日期
+                    className: "center"
+                }, {
+                    data: "beneficiary",//受益人
+                    className: "center"
+                }, {
+                    data: "status",//状态
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("international.deposit.status",full.status);
+                    }
+                }, {
+                    data: null,//操作
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        var  explode = "<span class=\"text-explode\">|</span>"
+                        var id = full.id;
+                        var html = "<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"cancelLcDepositDelay('" + id + "')\">" + bt.lang("international.lcDepositDelay.deposiDelaytCancel") + "</a>";
+                        html += explode+"<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"editLcDepositDelay('" + id + "')\">" + bt.lang("common.button.edit") + "</a>";
+                        html += explode+"<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"viewLcDepositDelay('" + id + "')\">" + bt.lang("common.button.view") + "</a>";
+                        // html += explode + "<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"bt.workFlow.trackFlowByBusinessId('" + full.id + "')\">" + bt.lang("common.button.trackFlow") + "</a>";
+                        return html;
+                    }
+                }
+            ],
+            btInitComplete: function (setting, json) {
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                callback: function (data) {
+
+                }
+            },
+            summary:{
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                // selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '6',//汇总列序号
+                        dataName: 'depositMoney',//汇总列数据
+                    }
+                ]
+            }
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    /**
+     * 编辑
+     * @param id
+     */
+    function editLcDepositDelay(id){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.edit'),basePath + "/international/credit/lcDepositDelay/editDepositDelay?id=" +id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/lcDepositDelay/editDepositDelay?id="+id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    /**
+     * 查看
+     * @param id
+     */
+    function viewLcDepositDelay(id){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.view'),basePath + "/international/credit/lcDepositDelay/viewDepositDelay?id=" +id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/lcDepositDelay/viewDepositDelay?id="+id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+
+    /**
+     * 取消
+     * @param id
+     */
+    function cancelLcDepositDelay(id) {
+        parent.layer.confirm(bt.lang('international.lcDepositDelay.alert.info4'),function() {
+            var url = basePath + "/international/credit/lcDepositDelay/deleteLcDepositDelay"
+            $.ajax({
+                url: url,
+                type: "POST",
+                dataType: "json",
+                data: {
+                    id: id
+                },
+                async: false,
+                success: function (data) {
+                    parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                    bt.navtab.refreshCurrent();
+                }
+            });
+        });
+    }
+</script>
+</body>
+</html>

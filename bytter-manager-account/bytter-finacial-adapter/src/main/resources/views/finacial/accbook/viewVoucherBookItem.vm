@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+	<style type="text/css">
+		table {
+			font-size: 12px;
+		}
+
+		body {
+			background-color: #fff;
+		}
+
+		.voucher-title {
+			font-weight: bold;
+			font-size: 22px;
+			text-decoration: underline;
+			text-align: center;
+		}
+
+		.layui-table > thead th, .layui-table td {
+			position: static;
+		}
+	</style>
+</head>
+<body id="body">
+<form class="layui-form layui-form-pane" method="post">
+	#foreach($voucher in $!{listVoucher})
+		#set($vcount1 = $velocityCount - 1)
+		<div style="page-break-after:always">## style="page-break-after:always"
+			<input id="id" name="accbook.id" type="hidden" value="$!{voucher.accbook.id}">
+			<input id="netId" name="accbook.netId" type="hidden" value="$!{voucher.accbook.netId}">
+			<input id="orderNo" name="accbook.orderNo" type="hidden" value="$!{voucher.accbook.orderNo}">
+			<input id="voucherNo" name="accbook.voucherNo" type="hidden" value="$!{voucher.accbook.voucherNo}">
+			<input id="operatorCode" name="accbook.operatorCode" type="hidden"
+				   value="$!{voucher.accbook.operatorCode}">
+			<div class="print">
+				<div class="voucher-title">
+				##记账凭证
+					<div style="float: contour">
+						<label>#springMessage('table.fcAccbook.tallyTitle')</label>
+					</div>
+					#if($!{voucher.accbook.voucherState} =="B")
+						<div style="float:right;">
+							<label align="right" style="color: #ff0000;font-weight:bold; ">#springMessage('table.fcAccbook.invalidFlag')</label>
+						</div>
+					#end
+				</div>
+				<table style="width: 100%; " class="layui-table">
+					<tr>
+					##业务种类
+						<td align="right" width="12%">#springMessage('table.fcAccbook.busRaceId')：</td>
+						<td width="18%">$!{voucher.accbook.raceName}</td>
+					##币别
+						<td align="right" width="12%">#springMessage('table.fbsBudgetDetail.curId')：</td>
+						<td width="20%">$!{voucher.accbook.curName}</td>
+					##附件数
+						<td align="right" width="12%">#springMessage('table.fcAccbook.affixAmount')：</td>
+						<td width="20%">$!{voucher.accbook.affixAmount}</td>
+					</tr>
+					<tr>
+					##流水号
+						<td align="right">#springMessage('table.fcAccbook.orderNo')：</td>
+						<td>$!{voucher.accbook.orderNo}</td>
+					##凭证号
+						<td align="right">#springMessage('table.fcAccbook.voucherNo')：</td>
+						<td>$!{voucher.accbook.voucherNo}</td>
+					##制单日期
+						<td align="right">#springMessage('table.fcAccbook.enrolTime')：</td>
+						<td>$!date.format('yyyy-MM-dd',$!voucher.accbook.enrolTime)</td>
+					</tr>
+				</table>
+			## 凭证表格数据
+				<table id="dataTable" style="width: 100%; " class="layui-table breakRow">
+					<thead>
+					<tr>
+						<th style="text-align: center;" colspan="2">#springMessage('table.fcAccbookDtl.summaryContent')</th>#*摘要*#
+						<th style="text-align: center;" colspan="3">#springMessage('table.fcAccbookDtl.account')</th>#*账号*#
+						<th style="text-align: center;" colspan="2">#springMessage('table.fcAccbookDtl.accName')</th>#*账户名称*#
+						<th style="text-align: center;">#springMessage('table.fcAccbookDtl.origVoucherNo')</th>#*原始凭证号*#
+						<th style="text-align: center;">#springMessage('table.fcAccbookDtl.debitMoney')</th>#*借方发生额*#
+						<th style="text-align: center;">#springMessage('table.fcAccbookDtl.creditMoney')</th>#*贷方发生额*#
+						<th style="text-align: center;width: 200px">#springMessage('finacial.common.cashFlow.item')</th>#*现金流项目*#
+					</tr>
+					</thead>
+					<tbody>
+						#foreach($bookDtl in $!{voucher.bookDtls})
+							#set($vcount = $velocityCount - 1)
+						<tr>
+							<td colspan="2">
+								$!{bookDtl.summaryContent}
+							</td>
+							<td colspan="3">
+								$!{bookDtl.subjectName}
+								<br>
+								$!{bookDtl.account}
+							</td>
+							<td colspan="2">
+								$!{bookDtl.accName}
+							</td>
+							<td>$!{bookDtl.origVoucherNo}</td>
+							<td align="right">
+								$number.formatNumeric($!{bookDtl.debitMoney})
+							</td>
+							<td align="right">
+								$number.formatNumeric($!{bookDtl.creditMoney})
+							</td>
+							<td>
+								<div class="layui-inline">
+									<input type="hidden" name="bookDtls[$vcount].id" value="$!{bookDtl.id}">
+									<div class="bt-biz-selectType" data-name="bookDtls[$vcount].cashFlux" data-url="${basePath}/finacial/paramconfig/cashItem/listAllFcCashItem"
+										 data-method="post" data-width="180px"
+										 #if($!{bookDtl.cashFlux})
+											 data-defaultvalue="$!{bookDtl.cashFlux}"
+										 #end
+										 data-valuefield="id" data-textfield="itemName" data-biz-name="cashFlux$vcount" >
+									</div>
+								</div>
+							</td>
+						</tr>
+						#end
+					</tbody>
+					<tr>
+						<td rowspan="5" align="center">#springMessage('table.fcAccbook.rmk')</td>##	备注
+						<td>#springMessage('table.fcAccbook.voucherType')</td>##凭证种类
+						<td colspan="3">$!{voucher.accbook.voucherName}</td>
+						<td>#springMessage('table.fcAccbook.tallyDate')</td>##记账日期
+						<td>$!date.format('yyyy-MM-dd',$!voucher.accbook.tallyDate)</td>
+						<td style="text-align: right;" rowspan="2">#springMessage('table.datatable.total')：</td>
+						<td style="text-align: right;" rowspan="2"><span id='debitTot' val="0">$!{debitTotStr.get($vcount1)}</span></td>
+						<td style="text-align: right;" rowspan="2"><span id='creditTot' val="0">$!{debitTotStr.get($vcount1)}</span></td>
+						<td rowspan="2"></td>
+					</tr>
+					<tr>
+						<td>#springMessage('table.fcAccbook.emergencySign')</td>##加急标志
+						<td>$dictTag.get('Accbook.EmergencySign',$!{voucher.accbook.emergencySign})</td>
+						<td>#springMessage('table.fcAccbookExt.tradeRate')</td>##成交汇率
+						<td>$!{voucher.bookExt.tradeRate}</td>
+						<td>#springMessage('table.fcAccbook.interestStartDate')</td>##起息日期
+						<td>$!date.format('yyyy-MM-dd',$!voucher.accbook.interestStartDate)</td>
+					</tr>
+					<tr>
+						<td>#springMessage('table.fcAccbookExt.externalCorp') </td>##外单位名称
+						<td colspan="3">$!{voucher.bookExt.externalCorp}</td>
+						<td>#springMessage('table.fcAccbookExt.externalAcc')</td>##外单位账号
+						<td colspan="5">$!{voucher.bookExt.externalAcc}</td>
+					</tr>
+					<tr>
+						<td>#springMessage('table.fcAccbookExt.paysysbankcode') </td>##开户行
+						<td colspan="3">$!{voucher.bookExt.externalBank}</td>
+						<td>#springMessage('table.fcAccbookExt.prov')</td>##省份
+						<td>$!{voucher.bookExt.prov}</td>
+						<td>#springMessage('table.fcAccbookExt.city')</td>##	城市
+						<td colspan="3">$!{voucher.bookExt.city}</td>
+					</tr>
+					<tr>
+						<td>#springMessage('table.fcAccbook.rmk') </td>##备注
+						<td colspan="9">$!{voucher.accbook.rmk}</td>
+					</tr>
+					#if(${voucher.accbook.voucherState} == 'F' || ${voucher.accbook.voucherState} == 'M')
+						<tr>
+							<td align="center">#springMessage('table.fcAccbookExt.backReason') </td>##	打回原因
+							<td colspan="9" style="word-wrap: break-word;">
+								$!{voucher.bookExt.backReason}
+							</td>
+						</tr>
+					#end
+				</table>
+			</div>
+		</div>
+	#end
+	<table class="layui-table">
+		<tr>
+			<td>
+				<div style="text-align: center;width: 100%">
+					<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+					<button class="layui-btn" onclick="colse()">#springMessage('common.button.close')</button>
+				</div>
+			</td>
+		</tr>
+	</table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+	var selectType;
+	bt.use(['form', 'layedit','selectType'], function () {
+		var $ = bt.jquery, form = bt.form();
+		selectType = bt.selectType.init();
+
+		//监听提交
+		form.on('submit(submit)', function (data) {
+			$.post(basePath + "/finacial/accbook/fcaccbook/updateVoucherBookItem",data.field,function(result){
+				if(result.success){
+					parent.layer ? parent.layer.closeAll() : layer.closeAll();
+				}
+				parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+			},'JSON');
+			return false;
+		});
+	});
+
+	/**
+	 * 关闭当前页
+	 */
+	function colse() {
+		bt.navtab.closeCurrent();
+	}
+
+</script>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+    <input type="hidden" name="corpId" value="$!{corpId}">
+	<table class="layui-table">
+            <tbody>
+                <tr>
+                    <td class="textRight">#springMessage('table.externalCorp.name')</td>
+                    <td>
+						<input type="text" name="name" autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalCorp.name')">
+                    </td>
+                    <td class="textRight">#springMessage('table.externalBankAcc.bankAcc')</td>
+                    <td>
+                        <input type="text" name="externalAcc" value="$!{externalAcc}" autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalBankAcc.bankAcc')">
+                    </td>
+                    <td style="text-align: center;">
+                    	<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+			</tbody>
+        </table>
+    </div>
+</form>
+<table id="externalCorpTable" class="layui-table">
+    <thead>
+    <tr>
+		<th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.externalCorp.name')</th>
+        <th>#springMessage('table.btswiftinfo.countryCode')</th>
+        <th>#springMessage('table.btswiftinfo.cityName')</th>
+        <th>#springMessage('table.btswiftinfo.bankAdd')</th>
+        <th>#springMessage('table.externalBankAcc.bankAcc')</th>
+        <th>#springMessage('table.btswiftinfo.bankName')</th>
+        <th>#springMessage('table.btswiftinfo.swiftCode')</th>
+        <th>#springMessage('table.fcAcc.account')#springMessage('table.btswiftinfo.countryCode')</th>
+        <th>#springMessage('table.fcAcc.account')#springMessage('table.btswiftinfo.cityName')</th>
+        <th>#springMessage('table.externalBankAcc.address')</th>
+        <th>#springMessage('table.externalBankAcc.isDefaultAcc')</th>
+
+        <th>#springMessage('table.externalBankAcc.remark')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+
+        var table = bt.datatable.init({
+            elem: "#externalCorpTable",
+            selectCss: false,
+			order: [[1,'asc']],
+            ajax: {
+                url: basePath + "/sys/externalCorp/selectExternalCorpFex.json",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+            	formFilter: "search"
+            },
+            columns: [
+				{
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="acc-bank-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "name", orderable: false},
+                {
+                    data: "province", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.provinceFexName;
+                    }
+                },
+                {
+                    data: "city", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.cityFexName;
+                    }
+                },
+                {data: "address", orderable: false},
+                {data: "externalAcc", orderable: false},
+                {data: "bank", orderable: false},
+                {data: "bankSourceCode", orderable: false},
+                {
+                    data: "accProvince", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.accProvinceFexName;
+                    }
+                },
+                {
+                    data: "accCity", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.accCityFexName;
+                    }
+                },
+                {
+                    data: "accAddress", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.accAddress;
+                    }
+                },
+                {
+                    data: "isDefaultAcc", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return full.isDefaultAccName;
+                    }
+                },
+
+                {data: "remarks", orderable: false}
+            ]
+        });
+
+
+        table.on('click', '.acc-bank-select', function (event) {
+//            var func = top.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            var parentsIndex = parent.$('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex;
+            }else{
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-externalCorpBankAccFex']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-externalCorpBankAccFex']['callback'];
+            }
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+				data.isExternal=true;
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

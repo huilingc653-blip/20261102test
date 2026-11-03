@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form " action="" id="searchForm">
+<input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+</form>
+<table id="dualManagerTable"></table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery','form',  'corp', 'tableGrid'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var $ = bt.jquery;
+        var flowStatus = '$!{flowStatus}'
+        var table = bt.tableGrid.init({
+            elem: "#dualManagerTable",
+            url: basePath + "/dual/manager/tableGrid.json?flowStatus=" + flowStatus,
+            colModel: [
+                {
+                    name: "managerType",
+                    label: bt.lang("sys.dual.manager.administrator.approval.type"),
+                    formatter: function (cellvalue, options, rowObject) {
+                        var mt = rowObject.managerType;
+                        mt = "sys.dual" + mt.substring(mt.lastIndexOf("."), mt.length);
+                        return bt.lang(mt);
+                    }
+                },
+                {
+                    name: "createDate", label: bt.lang("common.table.createTime")
+                },
+                {
+                    label: bt.lang("common.table.thead.operation"), sortable: false, width: 80, formatter: function (cellvalue, options, rowObject) {
+                        var html = '';
+                        if ($("#flowStatus").val() == 'todo') {
+                             html += '<a href="javascript:void(0);" data-row="' + rowObject.id + '" class="approve">' + bt.lang("common.button.approve") + '</a>&nbsp;|&nbsp;';
+                        }
+                        html += '<a class="" href="#" data-row="' + rowObject.id + '" onclick="bt.workFlow.trackFlow(\'' + rowObject.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        return html;
+
+                    }
+                }
+            ]
+        });
+
+        table.on("click", '.approve', function () {
+            var data = table.grid("getOriginalData", $(this).data("row"));
+//            bt.navtab.addNavtab("双管理员审批",basePath + data.approvePage +"?id="+data.id+"&taskId="+data.taskId);
+            bt.layer.open({
+                title: bt.lang("sys.dual.manager.double.administrator.approval"),
+                type: 2,
+                area: ['100%', '100%'],
+                maxmin: true,
+                content: basePath + data.approvePage + "?id=" + data.id + "&taskId=" + data.taskId,
+                end: function () {
+                    table.trigger("reloadGrid");
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

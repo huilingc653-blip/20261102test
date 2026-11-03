@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" id="searchForm" method="post">
+	<input id="netId" name="ins_netId" type="hidden" value="$!{netId}">
+    <input id="curId" name="ins_curId" type="hidden" value="$!{curId}">
+	<input id="resource" type="hidden" value="$!{resource}">
+		 <table class="layui-table">
+            <tbody>
+	<tr>
+		<td class="textRight">#springMessage('table.btInnerAccApp.innerAcc')</td>
+		<td>
+			<div class="layui-input-inline">
+		    <input class="layui-input bank" type="text" id="blnctrAcc" data-name="likes_blnctrAcc" name="likes_blnctrAcc"/>
+            </div>
+		</td>
+		  <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+           <td class="rCode">
+			 <div class="layui-input-inline">
+             <div class="bt-biz-corp" id="netId_tree"  data-biz-name="ins_corpId" data-name="ins_corpId" data-group="corpGroup" data-scope="all" data-tree-type="check"
+				data-biz-type="corp" data-type="selectTree"  data-defaultvalue="$!{corpId}" data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"></div>
+             </div>
+           </td>
+		   </tr>
+		   <tr>
+		   ##币别
+              <td class="textRight">#springMessage('table.nisAllocationReport.curName')</td>
+                <td class="rCode">
+						<div class="layui-input-inline">
+                    <div class="selectDemo bt-biz-mulselectType" data-url="${basePath}/basic/business/btcurrency/json"  data-biz-name="ins_curId"
+                         data-name="ins_curId" data-valueField="id" data-textField="curName" data-method="get"  data-defaultvalue="$!{curId}" data-initCompleteCallback="bt.restHiddenInput"></div>
+                     </div>
+                </td>
+				  ##账户类别
+                <td width="10%" class="textRight">#springMessage('table.fcAcc.accType')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <select lay-filter="accType"  name="eqs_accType" >
+                            <option value="">#springMessage("common.placeholder.select")</option>
+                            #foreach($dict in $dictTag.list("InnerAccount.AccType"))
+                                <option value="$dict.code">$dict.name</option>
+                            #end
+
+                        </select>
+                    </div>
+				</td>
+	</tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage("common.button.search")</button>
+			   <button type="reset" class="layui-btn layui-btn-primary" >#springMessage("common.button.reset")</button>
+			     <button type="button" class="layui-btn" onClick="transferData()" >#springMessage('common.button.submit')</button>
+            </td>
+        </tr>
+	  </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table">
+    <thead>
+    <tr>
+        <th>#springMessage('table.btInnerAccApp.innerAcc')</th>
+        <th>#springMessage('table.btBankAccApp.accName')</th>
+		<th>#springMessage('table.fbsBudget.net')</th>
+		<th>#springMessage('table.btInnerAccApp.corpId')</th>
+		<th>#springMessage('table.ratBkrationRelief.curCode')</th>
+		<th>#springMessage('table.btInnerAccApp.accType')</th>
+    </tr>
+    </thead>
+</table>
+
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery','bank','corp','selectType','mulselect'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+		var $ = bt.jquery;
+        var dataform = bt.dataform;
+        bt.restHiddenInput = function(){
+            $('#curId').removeAttr('name');
+        }
+		bt.initCallback = function(){
+		    bt.datatable.init({
+            elem: "#appTable",
+            selectCss:false,
+			checkbox:true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                url: basePath + "/netbank/cgsbill/listMulAccInfoDetail",
+            },
+            columns: [
+                {data: "blnctrAcc",bSortable: true,className:"center"},
+                {data: "accName",bSortable: true,className:"center"},
+				{data: "netName",bSortable: true,className:"center"},
+				{data: "corpName",bSortable: true,className:"center"},
+				{data: "curName",bSortable: true,className:"center"},
+				{data: "accTypeName",bSortable: true,className:"center"},
+            ]
+        }); 
+		}
+		bt.mulselect.init();
+        bt.initCallback();
+		bt.bank.init({ 
+    		elem:'.bank'
+    	})
+		$("#netId_tree").data('params','{"id":"'+$("#netId").val()+'","name":"netId"}');
+		$("#netId_tree").data('resource',$("#resource").val());
+		bt.corp.init();
+		bt.selectType.init();
+        
+		
+		//点击提交数据到前台页面
+		 transferData=function(){
+    		 var bln=[];
+			 //内置方法返回选中的数据
+    	      var data=bt.datatable.getSelectData('#appTable');
+    		  if(data.length>0){
+        		  for(var i=0;i<data.length;i++){
+				  var dataAcc={
+				     blnctrAcc:data[i].blnctrAcc,
+					 accName:data[i].accName,
+					 netId:data[i].netId,
+					 netName:data[i].netName,
+					 corpId:data[i].corpId,
+					 corpName:data[i].corpName,
+					 curId:data[i].curId,
+					 curName:data[i].curName,
+					 accType:data[i].accType,
+					 accTypeName:data[i].accTypeName
+				  }
+        			bln.push(dataAcc);
+        		  }
+    		  }else{
+    		      bln.push("");
+    		  }
+    		  var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+              var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-mulAccInfo']['callback'];
+                if (func) {
+                    var data =bln;
+                    func(data);
+                }
+	
+		}
+    });
+</script>
+</body>
+</html>

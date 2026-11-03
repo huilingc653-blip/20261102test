@@ -1,0 +1,30 @@
+##新增菜单“基础平台>>权限管理>>用户权限表”
+INSERT INTO sys_menu (`ID`, `CODE`, `DESCRIPTION`, `NAME`, `PARENT_ID`, `PARENT_IDS`, `SORT`, `STATUS`, `URL`, `NET_ID`, `ICON`, `CREATE_TIME`, `CREATE_BY`, `UPDATE_TIME`, `UPDATE_BY`, `IS_MODULE`)
+SELECT '0198c50a794c77a6b3a992d4f6c5ddaf', NULL, '用户权限表', '用户权限表', '49db09315da743d8a410bfcc86f7f01f', NULL, 80, 1, '/sys/user/list/permission', NULL, NULL, NULL, NULL, NULL, NULL, 0 FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM sys_menu WHERE ID = '0198c50a794c77a6b3a992d4f6c5ddaf' LIMIT 1
+);
+##GOGO
+
+DELIMITER $$
+
+CREATE PROCEDURE ADD_COL()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'sys_corp_user_resource'
+          AND COLUMN_NAME = 'CREATE_TIME'
+    ) THEN
+        ALTER TABLE sys_corp_user_resource
+            ADD COLUMN CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间';
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- 执行存储过程
+CALL ADD_COL();
+
+-- 删掉存储过程
+DROP PROCEDURE ADD_COL;

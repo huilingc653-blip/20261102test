@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<style>
+    body{
+        padding: 40px;
+    }
+    .font-til{
+        font-size: 14px;
+        color: black;
+        font-weight:bold;
+    }
+    .font-content{
+        color: black;
+    }
+    .itemBg{
+        background-color: #7dd1f152;
+    }
+    .ml-5{
+        margin-left: 5px;
+    }
+    .pl-5{
+        padding-left: 5px;
+    }
+    .mr-5{
+        margin-right: 5px;
+    }
+    .mt-10{
+        margin-top: 10px;
+    }
+    .ml-10{
+        margin-left: 10px;
+    }
+    .mr-10{
+        margin-right: 10px;
+    }
+    .elm-item{
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .bs1{
+        border: 1px solid #c9c9c9;
+     }
+     .dfc{
+        color: #818080;
+        font-size:14px;
+     }
+     .elm-item-til{
+        display: flex;
+        justify-content: space-between;
+        /*border-left: 5px solid #C70D0D;*/
+     }
+     .elm-item-content{
+        padding: 0 100px;
+        font-size: 16px;
+     }
+     .cur-bg{
+        background-color: #c9c9c9;
+        padding: 5px 10px;
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px;
+     }
+     .elm-center{
+        display:flex;
+        align-items: center;
+     }
+     .rate0 .layui-input{
+        width:100px !important;
+        height:30px !important;
+        border-left: 0;
+        border-right: 0;
+     }
+     .rate0 .layui-btn{
+        font-family: FZLTHIW!important;
+        height: 30px!important;
+        /*background: #C70D0D!important;*/
+        border-top-right-radius: 2px!important;
+        border-top-left-radius: 0!important;
+        border-bottom-right-radius: 2px!important;
+        border-bottom-left-radius: 0!important;
+        color: #fff!important;
+        padding: 0 10px!important;
+        border: none!important;
+     }
+     .item-til{
+        display: inline-block;
+        width: 140px;
+     }
+</style>
+<body>
+    <form class="layui-form" method="post" id="inputForm">
+        <input type="hidden" name="operationType" id="operationType" value="$!{operationType}"/>
+        <input type="hidden" name="batchNo" id="batchNo" value="$!{batchNo}"/>
+        <input type="hidden" name="docId" id="docId" value="$!{relationVo.docId}"/>
+        <input type="hidden" name="relationId" id="relationId" value="$!{relationVo.relationId}"/>
+        <input type="hidden" name="paymentMeans" id="paymentMeans" value="$!{paymentMeans}"/>
+        <input type="hidden" name="writeOffType" id="writeOffType" value="2"/>
+        <input type="hidden" id="curType1" name="curType1" value="$!{curType1}"/>
+        <input type="hidden" id="curType2" name="curType2" value="$!{curType2}"/>
+        <input type="hidden" id="rateTemp" name="rateTemp" value="0"/>
+        <input type="hidden" id="rateTemp0" name="rateTemp0" value="0"/>
+        <input type="hidden" id="money0" name="money0" value="$!{money0}"/>
+        <input type="hidden" id="money1" name="money1" value="0"/>
+        <input type="hidden" id="money2" name="money2" value="0"/>
+        <input type="hidden" id="money3" name="money3" value="0"/>
+        <div class="elm-item font-til itemBg">
+            <span class="textRight">#springMessage('批次号'): </span>
+            <span class="textRight ml-5">
+               $!{batchNo}
+            </span>
+        </div>
+
+    #if($curType1 != $curType2)
+        <div class="elm-item dfc elm-center rate0" style="padding: 0px;">
+            <input type="hidden" id="rateOpenStatus" value="1" />
+            <span class="textRight">#springMessage('输入汇率') </span>
+            <span class="textRight ml-10 cur-bg">
+               <span id="curTypeTag1">$!{curType1}</span>/<span id="curTypeTag2">$!{curType2}</span>
+            </span>
+            <input type="text" class="layui-input bt-biz-moneyType" style="display:inline-block;" data-decimal="4"
+                   onchange="updateRate()" id="rate" lay-verify="required" name="rate"
+                   data-name="rate" data-biz-name="rate">
+            <button class="layui-btn" type="button" onclick="switchCur()">#springMessage('切换货币对')</button>
+            <span class="ml-10">折算金额：<span id="curTypeTag3" class="ml-5">$!{curType1}</span><span id="ma" class="ml-5">0</span><span class="ml-5">→</span><span id="curTypeTag4" class="ml-5">$!{curType2}</span><span id="mb" class="ml-5">0</span></span>
+        </div>
+    #end
+
+    #if($operationType != "MO")
+        <div class="elm-item bs1">
+            <div class="elm-item-til">
+                <div class="elm-item-til-info pl-5 font-til">#springMessage('应收单信息')</div>
+                <div class="elm-item-til-opr">
+                    <a href="#" onclick="toInfoPage('0-$!{relationVo.docId}-应收单详情')"><span class="dfc">详情</span><span class="ml-10 dfc">></span></a>
+                </div>
+            </div>
+            <div class="elm-item-content">
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('单据编号')</span>
+                    <span class="ml-10 font-content">$!{docCode}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('应收余额')</span>
+                    <span class="ml-10 font-content" id="OOM1">$!{showCurMoney1}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('执行金额')</span>
+                    <span class="ml-10 font-content" id="executeMoney" data-id="$!{docIdOO}">$!{showCurMoney2}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('当前状态')</span>
+                    <span class="ml-10 font-content">
+                        #if($!writeOffStatus1 == "0")
+                            未核销
+                        #elseif($!writeOffStatus1 == "1")
+                            部分核销
+                        #elseif($!writeOffStatus1 == "2")
+                            已核销
+                        #end
+                    </span>
+                    <span class="ml-5">→</span>
+                    <span class="ml-10 font-content">
+                        核销后状态：
+                        <span id="NS1">
+                        #if($!writeOffStatus2 == "0")
+                            未核销
+                        #elseif($!writeOffStatus2 == "1")
+                            部分核销
+                        #elseif($!writeOffStatus2 == "2")
+                            已核销
+                        #end
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    #end
+
+    #if($operationType == "MO")
+        <div class="elm-item">
+            <div class="elm-item-til">
+                <div class="elm-item-til-info pl-5 font-til">#springMessage('匹配应收单信息')</div>
+                <div class="elm-item-til-opr">
+                    <a href="#" onclick="toInfoPage('0-$!{relationVo.docId}-应收单详情')"><span class="dfc">详情</span><span class="ml-10 dfc">></span></a>
+                </div>
+            </div>
+
+            <table id="appTableDoc" class="layui-table layui-form" style="width:100%;" data-biz-name="appTableDoc">
+                <thead>
+                <tr>
+                    <th>#springMessage('单据编号')</th>
+                    <th>#springMessage('应收余额')</th>
+                    <th>#springMessage('执行金额')</th>
+                    <th>#springMessage('当前状态')</th>
+                    <th>#springMessage('核销后状态')</th>
+                </tr>
+                </thead>
+                #foreach($doc in $docList)
+                <tr style="border-bottom: 1px solid #c9c9c9;">
+                    <td align="center">$!{doc.code}</td>
+                    <td align="center"><span class="NS5-1-1">$!{doc.enCode}</span><span class="ml-5 NS5-1">$!{doc.writeOffBal}</span></td>
+                    <td align="center"><span>$!{doc.enCode}</span><span class="ml-5 NS5-2" data-id="$!{doc.id}">$!{doc.executeMoney}</span></td>
+                    <td align="center">
+                        #if($doc.writeOffStatus == "0")
+                        未核销
+                        #elseif($doc.writeOffStatus == "1")
+                        部分核销
+                        #elseif($doc.writeOffStatus == "2")
+                        已核销
+                        #end
+                    </td>
+                    <td align="center" class="NS5">
+                        #if($doc.newWriteOffStatus == "0")
+                        未核销
+                        #elseif($doc.newWriteOffStatus == "1")
+                        部分核销
+                        #elseif($doc.newWriteOffStatus == "2")
+                        已核销
+                        #end
+                    </td>
+                </tr>
+                #end
+                <tr style="border-bottom: 1px solid #c9c9c9;">
+                    <td align="center">合计</td>
+                    <td align="center"></td>
+                    <td align="center" id="sumWriteOffBal">$!{sumWriteOffBal}</td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                </tr>
+            </table>
+        </div>
+    #end
+
+    #if($operationType == "MO")
+        <div class="elm-item bs1">
+            <div class="elm-item-til">
+                <div class="elm-item-til-info pl-5 font-til">#springMessage('收入信息')</div>
+                <div class="elm-item-til-opr">
+                    <a href="#" onclick="toInfoPage('$!{relationVo.paymentMeans}-$!{relationVo.relationId}-收入信息详情')"><span class="dfc">详情</span><span class="ml-10 dfc">></span></a>
+                </div>
+            </div>
+            <div class="elm-item-content">
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('类型')</span>
+                #if($paymentMeans == "1")
+                    <span class="ml-10 font-content">银行流水</span>
+                #elseif($paymentMeans == "2")
+                    <span class="ml-10 font-content">票据</span>
+                #elseif($paymentMeans == "3")
+                    <span class="ml-10 font-content">信用证</span>
+                #end
+                </div>
+                <div class="elm-item-content-item mt-10">
+                #if($paymentMeans == "1")
+                    <span class="textRight item-til">#springMessage('银行流水号')</span>
+                #elseif($paymentMeans == "2")
+                    <span class="textRight item-til">#springMessage('票据（包）号码')</span>
+                #elseif($paymentMeans == "3")
+                    <span class="textRight item-til">#springMessage('到单号')</span>
+                #end
+                    <span class="ml-10 font-content">$!{relationNo}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('可核销金额')</span>
+                    <span class="ml-10 font-content" id="MO1">$!{showCurMoney3}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('执行金额')</span>
+                    <span class="ml-10 font-content" id="executeMoney2" data-id="$!{docIdOO}">$!{showCurMoney4}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('当前状态')</span>
+                    <span class="ml-10 font-content">
+                        #if($!writeOffStatus3 == "0")
+                            未核销
+                        #elseif($!writeOffStatus3 == "1")
+                            部分核销
+                        #elseif($!writeOffStatus3 == "2")
+                            已核销
+                        #end
+                    </span>
+                    <span class="ml-5">→</span>
+                    <span class="ml-10 font-content">
+                        核销后状态：
+                        <span id="NS3">
+                        #if($!writeOffStatus4 == "0")
+                            未核销
+                        #elseif($!writeOffStatus4 == "1")
+                            部分核销
+                        #elseif($!writeOffStatus4 == "2")
+                            已核销
+                        #end
+                        </span>
+                    </span>
+                </div>
+            #if($paymentMeans == "2")
+                #if($!{sbbllRngEndSn} && $sbbllRngEndSn != '0')
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('子票区间开始序号')</span>
+                    <span class="ml-10 font-content">$!{sbbllRngStrtSn}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('子票区间结束序号')</span>
+                    <span class="ml-10 font-content">$!{sbbllRngEndSn}</span>
+                </div>
+                #end
+            #end
+            </div>
+        </div>
+    #end
+
+    #if($operationType == "OO")
+        <div class="elm-item bs1">
+            <div class="elm-item-til">
+                <div class="elm-item-til-info pl-5 font-til">#springMessage('匹配收入信息')</div>
+                <div class="elm-item-til-opr">
+                    <a href="#" onclick="toInfoPage('$!{relationVo.paymentMeans}-$!{relationVo.relationId}-收入信息详情')"><span class="dfc">详情</span><span class="ml-10 dfc">></span></a>
+                </div>
+            </div>
+            <div class="elm-item-content">
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('类型')</span>
+                    #if($paymentMeans == "1")
+                    <span class="ml-10 font-content">银行流水</span>
+                    #elseif($paymentMeans == "2")
+                    <span class="ml-10 font-content">票据</span>
+                    #elseif($paymentMeans == "3")
+                    <span class="ml-10 font-content">信用证</span>
+                    #end
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    #if($paymentMeans == "1")
+                    <span class="textRight item-til">#springMessage('银行流水号')</span>
+                    #elseif($paymentMeans == "2")
+                    <span class="textRight item-til">#springMessage('票据（包）号码')</span>
+                    #elseif($paymentMeans == "3")
+                    <span class="textRight item-til">#springMessage('到单号')</span>
+                    #end
+                    <span class="ml-10 font-content">$!{relationNo}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('可核销金额')</span>
+                    <span class="ml-10 font-content" id="OOM2">$!{showCurMoney3}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('执行金额')</span>
+                    <span class="ml-10 font-content" id="OOM3">$!{showCurMoney4}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('当前状态')</span>
+                    <span class="ml-10 font-content">
+                        #if($!writeOffStatus3 == "0")
+                            未核销
+                        #elseif($!writeOffStatus3 == "1")
+                            部分核销
+                        #elseif($!writeOffStatus3 == "2")
+                            已核销
+                        #end
+                    </span>
+                    <span class="ml-5">→</span>
+                    <span class="ml-10 font-content">
+                        核销后状态：
+                        <span id="NS2">
+                        #if($!writeOffStatus4 == "0")
+                            未核销
+                        #elseif($!writeOffStatus4 == "1")
+                            部分核销
+                        #elseif($!writeOffStatus4 == "2")
+                            已核销
+                        #end
+                        </span>
+                    </span>
+                </div>
+            #if($paymentMeans == "2")
+                #if($!{sbbllRngEndSn} && $sbbllRngEndSn != '0')
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('子票区间开始序号')</span>
+                    <span class="ml-10 font-content">$!{sbbllRngStrtSn}</span>
+                </div>
+                <div class="elm-item-content-item mt-10">
+                    <span class="textRight item-til">#springMessage('子票区间结束序号')</span>
+                    <span class="ml-10 font-content">$!{sbbllRngEndSn}</span>
+                </div>
+                #end
+            #end
+            </div>
+        </div>
+    #end
+
+    #if($operationType == "OM")
+        <div class="elm-item">
+            <div class="elm-item-til">
+                <div class="elm-item-til-info pl-5 font-til">#springMessage('匹配收入信息')</div>
+                <div class="elm-item-til-opr">
+                    <a href="#" onclick="toInfoPage('$!{relationVo.paymentMeans}-$!{relationVo.relationId}-收入信息详情')"><span class="dfc">详情</span><span class="ml-10 dfc">></span></a>
+                </div>
+            </div>
+
+            <table id="appTableDtl" class="layui-table layui-form" style="width:100%;" data-biz-name="appTableDtl">
+                <thead>
+                <tr>
+                #if($paymentMeans == "1")
+                    <th>#springMessage('银行流水号')</th>
+                #elseif($paymentMeans == "2")
+                    <th>#springMessage('票据（包）号码')</th>
+                #elseif($paymentMeans == "3")
+                    <th>#springMessage('到单号')</th>
+                #end
+                    <th>#springMessage('可核销金额')</th>
+                    <th>#springMessage('执行金额')</th>
+                    <th>#springMessage('当前状态')</th>
+                    <th>#springMessage('核销后状态')</th>
+                #if($paymentMeans == "2")
+                    <th>#springMessage('子票区间开始序号')</th>
+                    <th>#springMessage('子票区间结束序号')</th>
+                #end
+                </tr>
+                </thead>
+            #foreach($dtl in $dtlList)
+                <tr style="border-bottom: 1px solid #c9c9c9;">
+                    <td align="center">$!{dtl.customCol1}</td>
+                    <td align="center" class="NS6-1" >$!{dtl.customCol2}</td>
+                    <td align="center" class="NS6-2" data-id="$!{dtl.id}">$!{dtl.customCol3}</td>
+                    <td align="center">
+                        #if($dtl.customCol4 == "0")
+                        未核销
+                        #elseif($dtl.customCol4 == "1")
+                        部分核销
+                        #elseif($dtl.customCol4 == "2")
+                        已核销
+                        #end
+                    </td>
+                    <td align="center" class="NS6">
+                        #if($dtl.customCol5 == "0")
+                        未核销
+                        #elseif($dtl.customCol5 == "1")
+                        部分核销
+                        #elseif($dtl.customCol5 == "2")
+                        已核销
+                        #end
+                    </td>
+                #if($paymentMeans == "2")
+                    <td align="center">$!{dtl.customCol6}</td>
+                    <td align="center">$!{dtl.customCol7}</td>
+                #end
+                </tr>
+            #end
+                <tr style="border-bottom: 1px solid #c9c9c9;">
+                    <td align="center">合计</td>
+                    <td align="center"></td>
+                    <td align="center" id="sumWriteOffBal2">$!{sumWriteOffBal}</td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                </tr>
+            </table>
+        </div>
+    #end
+
+        <div style="text-align: right; padding-top: 10px;">
+            <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('确定')</button>
+            <button class="layui-btn layui-btn-primary" type="button" onclick="cancle()">#springMessage('取消')</button>
+        </div>
+    </form>
+
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/writeOff/writeOff.view2.js?_btv=${resourceVersion}"></script>

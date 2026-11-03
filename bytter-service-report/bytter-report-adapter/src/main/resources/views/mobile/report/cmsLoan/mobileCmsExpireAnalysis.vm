@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <script>var basePath = "${basePath}"</script>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+    <title>详细明细</title>
+    <link rel="stylesheet" href="$!{basePath}/static/mobile/plugins/fixedTable/table.min.css?_btv=${resourceVersion}">
+    <link rel="stylesheet" href="$!{basePath}/static/plugins/frozen/css/frozenui.css?_btv=${resourceVersion}">
+    <link rel="stylesheet" href="$!{basePath}/static/css/mobile/index.css?_btv=${resourceVersion}">
+    <style>
+        html {
+            font-size: 26.66667vw;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        .bt-chart-container {
+            margin: 0.2rem;
+        }
+
+        .popup-block * {
+            font-size: 0.14rem;
+        }
+
+        .container {
+            height: calc(100% - 1rem);
+            overflow-y: auto;
+        }
+
+        .ui-tab-nav-multi li {
+            display: inline;
+        }
+
+        input::-webkit-input-placeholder {
+            color: #666;
+        }
+
+        .bt-popup-container {
+            position: relative;
+            background-color: #fff;
+            max-height: calc(100% - 0.5rem);
+            overflow-y: auto;
+            height: calc(100% - 1.65rem);
+        }
+        .cms-select-title {
+            padding:0.1rem 0.15rem;
+        }
+        .cms-select-title > div {
+            margin-right: 0;
+        }
+        .bt-card .bt-card-header {
+            text-align: left;
+            padding-left: 0.15rem;
+        }
+        .chartTitle {
+            color: #999999;
+            font-size: 0.1rem;
+            font-weight: normal;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<section id="tab" class="ui-container">
+    <div>
+        <div class="ui-tab ">
+            <ul class="ui-tab-content" style="width:100%">
+                <li class="bt-show">
+                    <div class="ui-searchbar-wrap ui-border-b">
+                        <div class="ui-searchbar ui-border-radius" style="margin: 0 0.15rem;">
+                            <i class="ui-icon-search"></i>
+                            <div class="ui-searchbar-text">请选择单位</div>
+                            <div class="ui-searchbar-input">
+                                <input id="corpName" value="" type="text" readonly="readonly" placeholder="请选择单位" autocapitalize="off">
+                                <input id="corpIds" type="hidden">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui-btn-wrap bt-select-popup-left cms-select-title">
+                        <div class="bt-select-popup">
+                            <input type="text" value="融资种类" id="btn1" style="width:0.74rem;" readonly="readonly">
+                        </div>
+                        <div class="bt-select-popup" style="margin: 0 0.16rem">
+                            <input type="text" value="剩余期限" id="btn2" readonly="readonly" style="width:0.74rem;">
+                        </div>
+                        <div class="bt-select-popup">
+                            <input type="text" value="更多" id="btn3" readonly="readonly" style="width:0.45rem;">
+                        </div>
+
+                        <div class="popup-block">
+                            <div class="ui-actionsheet" id="actionsheet1" style="height:calc(100% - 1rem);top:1rem;"
+                                 data-link="btn1">
+                            <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1rem;">
+                            <section class="bt-popup-container">
+                            <div class="bt-card" id="loanType">
+                                <div class="bt-card-header">
+                                    融资种类
+                                    <input type="hidden" name="loanType" value="">
+                                </div>
+                            <div class="bt-card-body">
+                                #foreach($item in $loanTypes)
+                                    #set($vcount = $velocityCount - 1)
+                                    #if($!{vcount}%3 == 0)
+                                    <div class="ui-row-flex ui-whitespace">
+                                    #end
+                                    <div class="ui-col ui-col">
+                                        <div class="bt-card-item"
+                                             data-value="$!{item.code}">$!{item.name}</div>
+                                    </div>
+                                    #if($!{foreach.last})
+                                        #if($velocityCount % 3 == 1)
+                                            <div class="ui-col ui-col"></div>
+                                            <div class="ui-col ui-col"></div>
+                                        </div>
+                                        #elseif($velocityCount % 3 == 2)
+                                            <div class="ui-col ui-col"></div>
+                                        </div>
+                                        #else
+                                        </div>
+                                        #end
+                                    #else
+                                        #if($velocityCount % 3 == 0)
+                                        </div>
+                                        #end
+                                    #end
+                                #end
+                            </div>
+                        </div>
+</section>
+<div class="bt-popup-bottom">
+    <button type="button" id="clearValue1" class="bt-popup-reset">重置</button>
+    <button type="button" class="bt-popup-submit" data-link="btn1" name="submitValue">确定</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="popup-block">
+    <div class="ui-actionsheet" id="actionsheet2" style="height:calc(100% - 1rem);top:1rem;"
+         data-link="btn2">
+    <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1rem;">
+    <section class="bt-popup-container">
+    <div class="bt-card" id="biRemainTerm">
+        <div class="bt-card-header">
+            剩余期限
+            <input type="hidden" name="biRemainTerm" value="">
+        </div>
+    <div class="bt-card-body">
+        #foreach($item in $biRemainTerms)
+            #set($vcount = $velocityCount - 1)
+            #if($!{vcount}%3 == 0)
+            <div class="ui-row-flex ui-whitespace">
+            #end
+            <div class="ui-col ui-col">
+                <div class="bt-card-item"
+                     data-value="$!{item.id}">$!{item.termName}</div>
+            </div>
+            #if($!{foreach.last})
+                #if($velocityCount % 3 == 1)
+                    <div class="ui-col ui-col"></div>
+                    <div class="ui-col ui-col"></div>
+                </div>
+                #elseif($velocityCount % 3 == 2)
+                    <div class="ui-col ui-col"></div>
+                </div>
+                #else
+                </div>
+                #end
+            #else
+                #if($velocityCount % 3 == 0)
+                </div>
+                #end
+            #end
+        #end
+    </div>
+</div>
+</section>
+<div class="bt-popup-bottom">
+    <button type="button" id="clearValue2" class="bt-popup-reset">重置</button>
+    <button type="button" class="bt-popup-submit" data-link="btn2" name="submitValue">确定</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="popup-block">
+    <div class="ui-actionsheet" id="actionsheet3" style="height:calc(100% - 1rem);top:1rem;"
+         data-link="btn3">
+    <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1rem;">
+    <section class="bt-popup-container">
+    <div class="bt-card" id="curId">
+        <div class="bt-card-header">
+            币种
+            <input type="hidden" name="curId" value="">
+        </div>
+    <div class="bt-card-body">
+        #foreach($cur in $curList)
+            #set($vcount = $velocityCount - 1)
+            #if($!{vcount}%3 == 0)
+            <div class="ui-row-flex ui-whitespace">
+            #end
+            <div class="ui-col ui-col">
+                <div class="bt-card-item"
+                     data-value="$!{cur.id}">$!{cur.curName}</div>
+            </div>
+            #if($!{foreach.last})
+                #if($velocityCount % 3 == 1)
+                    <div class="ui-col ui-col"></div>
+                    <div class="ui-col ui-col"></div>
+                </div>
+                #elseif($velocityCount % 3 == 2)
+                    <div class="ui-col ui-col"></div>
+                </div>
+                #else
+                </div>
+                #end
+            #else
+                #if($velocityCount % 3 == 0)
+                </div>
+                #end
+            #end
+        #end
+    </div>
+</div>
+<div class="bt-card" id="isConvert">
+    <div class="bt-card-body">
+        <div class="ui-row-flex ui-whitespace">
+            <div class="ui-col ui-col bt-card-header" style="padding-left: 0">
+                是否折合币种
+                <input type="hidden" name="isConvert" value="0">
+            </div>
+            <div class="ui-col ui-col-2 bt-card-header">
+                <div class="ui-row-flex ui-whitespace">
+                    <div class="ui-col ui-col" style="margin-right: 0.1rem"><div class="bt-card-item" id="convertTrue" data-value="1">是</div></div>
+                    <div class="ui-col ui-col"><div class="bt-card-item active" data-value="0">否</div></div>
+                    <div class="ui-col ui-col"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="bt-card" id="convertCurId" style="display: none">
+    <div class="bt-card-header">
+        折算币种
+        <input type="hidden" name="convertCurId" value="">
+    </div>
+<div class="bt-card-body">
+    #foreach($cur in $curList)
+        #set($vcount = $velocityCount - 1)
+        #if($!{vcount}%3 == 0)
+        <div class="ui-row-flex ui-whitespace">
+        #end
+        <div class="ui-col ui-col">
+            <div class="bt-card-item"
+                 data-value="$!{cur.id}">$!{cur.curName}</div>
+        </div>
+        #if($!{foreach.last})
+            #if($velocityCount % 3 == 1)
+                <div class="ui-col ui-col"></div>
+                <div class="ui-col ui-col"></div>
+            </div>
+            #elseif($velocityCount % 3 == 2)
+                <div class="ui-col ui-col"></div>
+            </div>
+            #else
+            </div>
+            #end
+        #else
+            #if($velocityCount % 3 == 0)
+            </div>
+            #end
+        #end
+    #end
+</div>
+</div>
+<div class="bt-card" id="isInclude">
+    <div class="bt-card-body">
+        <div class="ui-row-flex ui-whitespace">
+            <div class="ui-col ui-col bt-card-header" style="padding-left: 0">
+                含在途
+                <input type="hidden" name="isInclude" value="0">
+            </div>
+            <div class="ui-col ui-col-2 bt-card-header">
+                <div class="ui-row-flex ui-whitespace">
+                    <div class="ui-col ui-col" style="margin-right: 0.1rem"><div class="bt-card-item" data-value="1" >是</div></div>
+                    <div class="ui-col ui-col"><div class="bt-card-item active" data-value="0">否</div></div>
+                    <div class="ui-col ui-col"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+<div class="bt-popup-bottom">
+    <button type="button" id="clearValue3" class="bt-popup-reset">重置</button>
+    <button type="button" class="bt-popup-submit" data-link="btn3" name="submitValue">确定</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+<div style="position: relative">
+    <div>
+        <div class="bt-chart-title ui-border-b" style="background: #ffffff;">
+            <div class="fl bt-chart-title-left" style="margin-left: 0.05rem;font-size: 0.14rem;width: 75%">
+                <span class="sp_head_vHeads" id="sp_head_vHeads" style="margin-left: 0.1rem">数据列表</span>
+                <span id="showDate" class="chartTitle" style="margin-left: 0.1rem"></span>
+                <span id="unit" class="chartTitle" style="float: right"> 单位：元</span>
+            </div>
+            <div class="sp-tab-switch fr bt-chart-title-right">
+                  <span data-name="map" id="mapImg" class="sp-tab-map">
+                  </span>
+                &nbsp; &nbsp;
+                <span style="margin-right: 0.1rem;" data-name="list" class="sp-tab-list active">
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="ms-body"  style="position: relative">
+        <div id="listData" style="height: calc(100vh - 1.55rem);">
+            <div id="sp-list" class="data-table" style="margin-bottom: 0.1rem;">
+                <div class="t_l">
+                    <!--1.1 冻结列表头-->
+                    <table>
+                        <tbody>
+                        <tr>
+                            <th>单位</th>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <!--1.2 冻结列表体-->
+                    <div class="t_l_freeze">
+                        <table width="100%">
+                            <tbody id="dtl1">
+                                #foreach($item in $!{cmsExpireAnalysisVOS})
+                                <tr>
+                                    <td>$!{item.corpName}</td>
+                                </tr>
+                                #end
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="t_r">
+                    <!--2.1　冻结行表头-->
+                    <div class="t_r_t">
+                        <table>
+                            <tbody>
+                            <tr>
+                                <th>融资种类</th>
+                                <th>剩余期限</th>
+                                <th>币种</th>
+                                <th>融资余额</th>
+                                <th>折合币种金额</th>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!--2.2 表格中心内容区域-->
+                    <div class="t_r_content">
+                        <table width="100%">
+                            <tbody id="dtl2">
+                                #foreach($item in $!{cmsExpireAnalysisVOS})
+                                <tr>
+                                    <td>$dictTag.get("Loan.Sign",$!{item.loanType})</td>
+                                    <td>$!{item.expireAnalysis}</td>
+                                    <td>$!{item.curName}</td>
+                                    #if($!{foreach.last})
+                                        <td style="text-align: right;">
+                                                    <span>
+                                                        $!number.formatNumeric($!{item.money})
+                                                    </span>
+                                        </td>
+                                    #else
+                                        <td style="text-align: right;color: #3D8EFF">
+                                                    <span class="dtl" data-loanType = "$!{item.loanType}" data-corpId = "$!{item.corpId}"
+                                                          data-remainTermId = "$!{item.remainTermId}" data-curId = "$!{item.curId}">
+                                                        $!number.formatNumeric($!{item.money})
+                                                    </span>
+                                        </td>
+                                    #end
+                                    <td style="text-align: right">$!number.formatNumeric($!{item.convertMoney})</td>
+                                </tr>
+                                #end
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="sp-map" style="display: none;margin-left: 0px;background-color: #F5F5F5;overflow-y: auto;height: calc(100vh - 1.55rem)">
+            <canvas id="barChart" style="width: 5rem;height: 3rem"></canvas>
+        </div>
+        <div id="bt-loading" class="bt-loading" style="text-align: center">
+            <center>
+                <img style="width:25px;" src="$!{basePath}/static/mobile/icon/loadinggif.gif">
+            </center>
+        </div>
+    </div>
+
+</div>
+</section>
+<script src="$!{basePath}/static/mobile/plugins/zepto/zepto.min.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/mobile/plugins/f2/f2.min.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/mobile/plugins/fixedTable/iscroll-probe.min.js?_btv=${resourceVersion}""></script>
+<script src="$!{basePath}/static/mobile/plugins/fixedTable/table.min.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/mobile/js/popup.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/js/mobile/money.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/modules/mobile/webViewAppScriptBridage.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/modules/mobile/webViewApp.js?_btv=${resourceVersion}"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script>
+    window.getSearchAction = (data)=>{
+        searchActionCallback(data)
+    }
+    window.getMobileData = (data)=>{
+        console.log('data12'+data)
+        getChartDataWd(data)
+    }
+    window.getMobileTable = (data)=>{
+        console.log('data'+data)
+        refreshDataWd(data)
+    }
+    (function (doc, win) {
+        // $("#bt-loading").show();
+        var ACTIVE = 'active';
+        initCard('#loanType');
+        initCard('#biRemainTerm');
+        initCard('#curId');
+        initCard('#convertCurId');
+        initCard('#isConvert');
+        initCard('#isInclude');
+
+        $("#clearValue1").click(function () {
+            initCard("#loanType", "", "", true);
+        });
+
+        $("#clearValue2").click(function () {
+            initCard("#biRemainTerm", "", "", true);
+        });
+
+        $("#clearValue3").click(function () {
+            initCard("#curId", "", "", true);
+            initCard("#convertCurId", "", "", true);
+            initCard("#isConvert", "", "", true);
+            initCard("#isInclude", "", "", true);
+        });
+
+
+        /**
+         * 初始化筛选条件
+         * @param id
+         * @param value
+         * @param clickCallback
+         * @param isInit
+         */
+        function initCard(id, value, clickCallback, isInit) {
+            if (!id) {
+                return
+            }
+            var $card = $(id);
+            var hiddenInput = $card.find('.bt-card-header input');
+            var items = $card.find('.bt-card-item');
+            items.removeClass(ACTIVE);
+            hiddenInput.val("");
+            //设置选中值
+            if (value) {
+                for (var i = 0; i < items.length; i++) {
+                    if (value === $(items[i]).data('value')) {
+                        $(items[i]).addClass(ACTIVE);
+                        hiddenInput.val(value);
+                        break
+                    }
+                }
+            }
+            if (isInit) {
+                if (id == "#isConvert") {
+                    $("#convertCurId").css("display", "none");
+                }
+                return;
+            }
+            $(id).on('click', '.bt-card-item', function () {
+                var value = '';
+                if ($(this).hasClass(ACTIVE)) { //如果当前被选中时，点击会取消选中
+                    $(this).removeClass(ACTIVE);
+                } else {
+                        $card.find('.bt-card-item').removeClass(ACTIVE);
+                    $(this).addClass(ACTIVE);
+                    value = $(this).data('value');
+                }
+                hiddenInput.val(value);
+                if (clickCallback) {
+                    clickCallback(value);
+                }
+                if (id == "#isConvert") {
+                    if ($("#convertTrue").hasClass("active")) {
+                        $("#convertCurId").css("display", "");
+                    } else {
+                        $("#convertCurId").css("display", "none");
+                    }
+                }
+            })
+        }
+
+
+        //搜索框点击
+        $('.ui-searchbar').on('click', function () {
+            console.log("555")
+            $('.ui-searchbar-wrap').addClass('focus');
+            $('.ui-searchbar-input input').focus();
+            setTimeout(function(){
+                var data = BTAppBridge.openCorpSelectionPage && BTAppBridge.openCorpSelectionPage('searchActionCallback',{resource: "cms:expireAnalysis:report:query"});
+                uni.postMessage({
+                    data:data
+                })
+            },100);
+        });
+        $('.ui-searchbar-cancel').on('click', function () {
+            $('.ui-searchbar-wrap').removeClass('focus');
+        });
+
+        window.getChartDataWd = function (data) {
+            // 加载图表数据
+            getChartData(data);
+        }
+
+        window.refreshDataWd = function (data) {
+            // 加载列表数据
+            refreshData(data);
+        }
+
+        window.searchActionCallback = function (data) {
+            // 根据data参数，查询数据
+            $("#corpName").val(data.corpNames);
+            $("#corpIds").val(data.corpIds);
+            // 加载数据
+            refreshPage();
+        }
+
+
+        //弹框选择
+        function showPopup($this, id) {
+            if ( $this.parent().hasClass('active')) {
+                hidePopup($this)
+                return;
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+                $this.parent().addClass('active');
+            $(id).addClass('show');
+        }
+
+        //弹框隐藏
+        function hidePopup($this) {
+            $('.ui-actionsheet').removeClass('show');
+                $this.parent().removeClass('active');
+        }
+
+        $("#btn1").click(function () {
+            showPopup($(this), '#actionsheet1');
+        });
+
+        $("#btn2").click(function () {
+            showPopup($(this), '#actionsheet2');
+        });
+
+        $("#btn3").click(function () {
+            showPopup($(this), '#actionsheet3');
+        });
+
+        $('.popup-block').on('click', '.bt-popup-item', function () {
+            var linkId = $(this).parents('.ui-actionsheet').data('link');
+            hidePopup($('#' + linkId));
+            $('#' + linkId).val($(this).text())
+        })
+
+        //数字格式化
+        function numberToMoney(n) {
+            return String(Math.floor(n * 100) / 100).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // 初始化图表
+        function initChart() {
+            var barData = null;
+            var params = getSubData();
+            /*$.ajax({
+                url: "/t2/cms/report/cmsExpireAnalysis/getchartData",
+                data: params,
+                type: "post",
+                dataType: "json",
+                success: function (data) {
+                    if (data.success) {
+                        $("#sp-map").empty();
+                        var xData = [];
+                            if (data.obj.xData.length > 5) {
+                                $.each(data.obj.xData,function (index,item) {
+                                    if (index < (data.obj.xData.length * 0.5)) {
+                                        xData[index] = item.termName;
+                                    }
+                                })
+                            } else {
+                                xData = data.obj.xData;
+                            }
+
+                        $.each(data.obj.mobileDate, function (index, item) {
+                            var canvas = "";
+                            if (index == 0) {
+                                if($("#mapImg").hasClass("active")){
+                                    $("#sp_head_vHeads").html(item.corpName);
+                                }
+                                canvas = "<div style='background-color: #FFFFFF;'><canvas id=\"barChart" + index + "\" style=\"width: 3.5rem;height: 3rem\"></canvas></div>";
+                            } else {
+                                canvas = "<div style='margin-top: 0.1rem;background-color: #FFFFFF;padding-top: 0.05rem;font-weight: 700;font-size: 0.14rem'><div style=\"width: 100%\"><span style='margin-left: 0.13rem;margin-top: 0.05rem'>" + item.corpName + "</span></div><canvas id=\"barChart" + index + "\" style=\"width: 3.5rem;height: 3rem\"></canvas></div>";
+                            }
+                            $("#sp-map").append(canvas);
+                            createChart(item.corpMbileData, "barChart" + index,xData);
+                        });
+                    }
+                }
+            });*/
+            console.log("6666")
+            setTimeout(function () {
+                var data = BTAppBridge.post("/mobile/report/cms/cmsExpireAnalysis/getchartData", params, 'getChartData');
+                uni.postMessage({
+                    data:data
+                })
+            }, 100);
+
+            getChartData = function(data){
+                if (data.success) {
+                    $("#sp-map").empty();
+                    var xData = [];
+                    if (data.obj.xData.length > 5) {
+                        $.each(data.obj.xData,function (index,item) {
+                            if (index < (data.obj.xData.length * 0.5)) {
+                                xData.push(item.termName)
+                            }
+                        })
+                    } else {
+                        $.each(data.obj.xData,function (index,item) {
+                            xData.push(item.termName);
+                        })
+                    }
+                    $.each(data.obj.mobileDate, function (index, item) {
+                        var canvas = "";
+                        if (index == 0) {
+                            if($("#mapImg").hasClass("active")){
+                                $("#sp_head_vHeads").html(item.corpName);
+                            }
+                            canvas = "<div style='background-color: #FFFFFF;'><canvas id=\"barChart" + index + "\" style=\"width: 3.5rem;height: 3rem\"></canvas></div>";
+                        } else {
+                            canvas = "<div style='margin-top: 0.1rem;background-color: #FFFFFF;padding-top: 0.05rem;font-weight: 700;font-size: 0.14rem'><div style=\"width: 100%\"><span style='margin-left: 0.13rem;margin-top: 0.05rem'>" + item.corpName + "</span></div><canvas id=\"barChart" + index + "\" style=\"width: 3.5rem;height: 3rem\"></canvas></div>";
+                        }
+                        $("#sp-map").append(canvas);
+                        createChart(item.corpMbileData, "barChart" + index,xData,item.maxYValue);
+                    });
+                }
+                $('#bt-loading').hide()
+            }
+        }
+
+        // 构造图标
+        function createChart(barData, id, xData, maxYValue) {
+            F2.track(false);
+            var chart = new F2.Chart({
+                id: id,
+                pixelRatio: window.devicePixelRatio, // 指定分辨率
+            });
+            var originDates = xData;
+            maxYValue = Math.ceil(maxYValue);
+            chart.source(barData, { //1、立即更新数据chart.changeData(data);　2、
+                "xValue": {
+                    type: 'cat',
+                    tickCount: xData.length,
+                    values: originDates
+                },
+                "yValue": {
+                    tickCount: 5,
+                    min: 0,
+                    max: maxYValue
+                }
+            });
+
+            //设置横坐标样式
+            chart.axis('xValue', { // 横坐标样式
+                label: function (text, index, total) {  //横坐标文字设置
+                    return {
+                        text: text.substring(0, 3) + "\n" + text.substring(3),//内容
+                        fill: '#666666' //字体颜色
+                    };
+                },
+                line: {
+                    top: true
+                }
+            });
+
+            //设置纵坐标样式
+            chart.axis('yValue', {
+                position: 'left', // 纵坐标位置
+                label: function label(text) {
+                    return {
+                        text: text.substring(0, 5) + "\n" + text.substring(5),
+                        fill: '#666666'
+                    };
+                },
+                tickCount: 5,
+                grid: { //网格线
+                    stroke: '#EFEFEF',
+                    border: 'line'
+                }
+            });
+
+            chart.legend({
+                align: 'center'
+            }); // 是否显示图例
+
+            chart.tooltip({
+                showItemMarker: false,
+                background: {
+                    fill: '#69A4FF',
+                    radius: 4,
+                },
+                valueStyle: {
+                    fontSize: 10,
+                    fill: '#fff',
+                },
+                titleStyle: {
+                    fontSize: 10,
+                    fill: '#fff',
+                }, // tooltip 标题的文本样式配置，showTitle 为 false 时不生效
+                nameStyle: {
+                    fontSize: 10,
+                    fill: '#fff',
+
+                }
+            });
+
+
+            chart.interval()
+                    .position('xValue*yValue')
+                    .size(6)　//设置柱状大小
+                    .color('categoryName', function (categoryName) { //设置柱状图的颜色
+                        if (categoryName === '内部贷款') {
+                            return 'l(90) 0:#FD9574 1:#FEBF40'
+                        } else if (categoryName === '委托贷款') {
+                            return 'l(90) 0:#EDAEF9 1:#A1B1F9'
+                        } else if (categoryName === '银行借款') {
+                            return 'l(90) 0:#14D2B8 1:#2DC9EB'
+                        }
+                    })
+                    .adjust({
+                        type: 'dodge',
+                        marginRatio: 0.05 // 设置分组间柱子的间距
+                    })
+                    .style('type', {
+                        radius: function radius() {　//设置柱状图圆角
+                            return [3, 3, 3, 3]
+                        }
+                    });
+            chart.interaction("pan");
+            chart.scrollBar({
+                xStyle: {
+                    backgroundColor: "#e8e8e8",
+                    fillerColor: "#808080",
+                    offsetY: -2
+                }
+            });
+            chart.render();
+        }
+
+        $(".cms-selectItem").on("click", function () {
+            // 判断当前是否已经选中
+            if ($(this).hasClass("cms-selectedItem")) {
+                $(this).removeClass("cms-selectedItem");
+                $(this).find(".cms-select-itemFont").removeClass("cms-selected-itemFont");
+            } else {
+                // 删除其它选中
+                var allItem = $($(this).parents(".ui-list-info")[0]);
+                var selected = $(allItem).find(".cms-selectedItem");
+                if ($(selected).length > 0 && $(selected[0]).hasClass("cms-selectedItem")) {
+                    $(selected[0]).removeClass("cms-selectedItem");
+                    $(selected[0]).find(".cms-select-itemFont").removeClass("cms-selected-itemFont");
+                }
+                // 添加当前选中
+                $(this).addClass("cms-selectedItem");
+                $(this).find(".cms-select-itemFont").addClass("cms-selected-itemFont");
+            }
+        });
+
+
+        //图标tab切换
+        $('.sp-tab-switch > span').on('click', function () {
+            $(".sp_head_vHeads").empty();
+            var name = $(this).data('name');
+            if ($("#btn3").parent().hasClass('active')) {
+                $('.ui-actionsheet').removeClass('show');
+                $('.bt-select-popup').removeClass('active');
+                $('#sp_cycleDate').hide();
+            }
+            $(this).addClass('active').siblings('span').removeClass('active');
+            if (name == 'list') {
+                $("#sp-list").parent("div").show();
+                $("#sp-map").hide();
+                $("#sp_head_vHeads").html("数据列表");
+                // $('#sp_map_view').hide();
+                $('#sp_cycleDate span').removeClass('active');
+                // loadListFormData();
+                $("#showDate").hide();
+                $("#unit").hide();
+                $('#bt-loading').hide()
+            } else {
+                $("#sp-list").parent("div").hide();
+                $("#sp-map").show();
+                $("#sp-map").show();
+                $("#showDate").show();
+                $("#unit").show();
+                $('#bt-loading').show();
+                initChart();
+            }
+        });
+
+        // 表格行监听
+        $("#listData").on("click", ".dtl", function () {
+            var params = {};
+            params.loanType = $(this).data("loantype");
+            params.corpId = $(this).data("corpid");
+            params.remainTermId = $(this).data("remaintermid");
+            params.curId = $(this).data("curid");
+            params.url = "/mobile/report/cms/cmsExpireAnalysis/getMobileDtlData";
+            var data = BTAppBridge.jump(params);
+            uni.postMessage({
+                data:data
+            })
+        });
+
+        /**
+         * 提交查询
+         */
+        $(".bt-popup-submit").on("click", function () {
+            var linkId = $(this).data('link');
+            hidePopup($('#' + linkId));
+            refreshPage();
+        });
+
+
+        // 刷新数据
+        function refreshPage() {
+            console.log("777")
+            $('#bt-loading').show()
+            setTimeout(function () {
+                var data = BTAppBridge.post("/mobile/report/cms/cmsExpireAnalysis/getMobileData", getSubData(), 'refreshData');
+                uni.postMessage({
+                    data:data
+                })
+            }, 100);
+
+            /**
+             * 刷新数据
+             */
+            refreshData = function (data) {
+                console.log(data)
+                if (data.success) {
+                    $("#dtl1").empty();
+                    $("#dtl2").empty();
+                    createDataTable(data.obj);
+                    if ($("#mapImg").hasClass("active")) {
+                        initChart();
+                    }
+                }
+                $('#bt-loading').hide();
+            };
+        }
+
+        /**
+         * 获取提交参数
+         */
+        function getSubData() {
+            var params = {};
+            var corpIds = $("#corpIds").val();
+            var loanType = $("input[name = 'loanType']")[0].value;
+            var biRemainTerm = $("input[name = 'biRemainTerm']")[0].value;
+            var curId = $("input[name = 'curId']")[0].value;
+            var isConvert = $("input[name = 'isConvert']")[0].value;
+            var convertCurId = $("input[name = 'convertCurId']")[0].value;
+            var isInclude = $("input[name = 'isInclude']")[0].value;
+            params.corpId = corpIds;
+            params.loanType = loanType;
+            params.expireAnalysis = biRemainTerm;
+            params.curId = curId;
+            params.isConvert = isConvert;
+            params.convertCurId = convertCurId;
+            params.isInclude = isInclude;
+            return params;
+        }
+
+        function createDataTable(data) {
+            var html1 = "";
+            var html2 = "";
+            $.each(data, function (index,item) {
+                html1 += "<tr>\n" +
+                        "<td>" + item.corpName + "</td>\n" +
+                        "</tr>";
+                html2 += "<tr>\n" +
+                        "<td>" + (isEmpty(item.loanTypeName) ? "" : item.loanTypeName) + "</td>\n" +
+                        "<td>" + (isEmpty(item.expireAnalysis) ? "" : item.expireAnalysis) + "</td>\n" +
+                        "<td>" + (isEmpty(item.curName) ? "" : item.curName) + "</td>";
+                if(index < data.length - 1) {
+                    html2 += "<td style='text-align: right;color: #3D8EFF'><span class=\"dtl\" data-loanType = \"" + (isEmpty(item.loanType) ? "" : item.loanType) + "\" data-corpId = \"" + item.corpId + "\" data-remainTermId = \"" + (isEmpty(item.remainTermId) ? "" : item.remainTermId) + "\" data-curId = \"" + item.curId + "\" " +
+                            "style='text-align: right'>" + bt.money.format(item.money) + "</span></td>"
+                }else {
+                    html2 += "<td style='text-align: right;'><span>" + bt.money.format(item.money) + "</span></td>"
+                }
+                html2 += "<td style='text-align: right'>" + bt.money.format(item.convertMoney) + "</td></tr>"
+            });
+            $("#dtl1").append(html1);
+            $("#dtl2").append(html2);
+            adjustHeight();
+            initTableSize();
+        }
+
+        /**
+         * 为空判断
+         * @param stringData
+         * @returns {boolean}
+         */
+        function isEmpty(stringData) {
+            if (null == stringData || stringData == "" || stringData == undefined || stringData == " ") {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * 非空判断
+         * @param stringData
+         * @returns {boolean}
+         */
+        function isNotEmpty(stringData) {
+            return !isEmpty(stringData)
+        }
+    })(document, window);
+</script>
+
+</body>
+</html>

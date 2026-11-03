@@ -1,0 +1,133 @@
+<!DOCTYPE html>##还款方式不是其它
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" id="billCode" name="billCode" value="$!{repayPlan.billCode}">##单号
+    <input type="hidden" id="loanRate" name="loanRate" value="$!{repayPlan.loanRate}">##利率
+    <input type="hidden" id="loanDate" name="loanDate" value="$!{repayPlan.loanDate}">##发放日期(开始日期)
+    <input type="hidden" id="repayDate" name="repayDate" value="$!{repayPlan.repayDate}">##还款日期(结束日期)
+    <input type="hidden" id="loanMoney" name="loanMoney" value="$!{repayPlan.loanMoney}">##发放金额
+    <input type="hidden" id="internalSign" name="internalSign"
+           value="$!{repayPlan.internalSign}">##内部标记 内部标志:A1 -内部贷款录入  A2 -- 内部贷款发放 B1 -银行借款录入  B2 -- 银行借款发放
+    <input type="hidden" id="repayType" name="repayType" value="$!{repayPlan.repayType}">##还款方式id
+    <input type="hidden" id="planId" name="planId" value="$!{repayPlan.planId}">##还款计划id
+    <input type="hidden" id="rateBase" name="rateBase" value="$!{repayPlan.rateBase}">##利息测算基数
+    <input type="hidden" id="capitalFrequencyType" value="$!{repayType.capitalFrequencyType}">
+    <div style="text-align: center;width: 100%;background-color: #d3d6dc;padding-bottom: 5px;padding-top: 5px;margin-bottom: 8px">#springMessage('table.cmsPrecativeLoanRepay.repaymentScheduleId')</div>
+    <div style="width: 100%;">
+        ##        利息按剩余本金
+        #if($!{repayType.capitalAndInterest} == "1")
+            ##            时间周期
+            #if($!{repayType.capitalFrequencyType} == "D")
+                #if($!{repayType.capitalFrequency} != "num")
+                    <div class="layui-inline">#springMessage('table.RepaymentSchedule.beginDate')</div>
+                    <div class="layui-inline">
+                        <input type="text" data-min="$!date.format('yyyy-MM-dd',$!{repayStartDate})"
+                               data-max="$!{repayPlan.repayDate}" id="repayBeginDate" name="repayBeginDate" value="$!{repayPlan.repayBeginDate}"
+                               class="layui-input bt-biz-dateType" data-type="date" data-biz-name="repayBeginDate" >
+                    </div>
+                #end
+
+            #elseif($!{repayType.capitalFrequencyType} == "P")
+                <div class="layui-inline">
+                    <button class="layui-btn layui-btn-small" type="button" onclick="addRow(1,1)">#springMessage('common.button.add')</button>
+                </div>
+            #end
+        #elseif($!{repayType.capitalAndInterest} == "2")
+            ##            等额本息
+            <div class="layui-inline">#springMessage('table.RepaymentSchedule.beginDate')</div>
+            <div class="layui-inline">
+                <input type="text" data-min="$!date.format('yyyy-MM-dd',$!{repayStartDate})" value="$!{repayPlan.repayBeginDate}"
+                       data-max="$!{repayPlan.repayDate}" name="repayBeginDate" id="repayBeginDate"
+                       class="layui-input bt-biz-dateType" data-type="date" data-biz-name="repayBeginDate">
+            </div>
+        #elseif($!{repayType.capitalAndInterest} == "3")
+            ##            分别自定义
+            #if($!{repayType.capitalFrequencyType} == "P" || $!{repayType.interestFrequencyType} == "P")
+                ##                利息或本金有计划
+                #if($!{repayType.capitalFrequencyType} == "P" && $!{repayType.interestFrequencyType} != "P")
+                    <button class="layui-btn layui-btn-small" type="button" onclick="addRow(1,0)">#springMessage('common.button.add')</button>
+                #elseif($!{repayType.capitalFrequencyType} != "P" && $!{repayType.interestFrequencyType} == "P")
+                    <button class="layui-btn layui-btn-small" type="button" onclick="addRow(0,1)">#springMessage('common.button.add')</button>
+                #else
+                    <button class="layui-btn layui-btn-small" type="button" onclick="addRow(1,1)">#springMessage('common.button.add')</button>
+                #end
+            #elseif($!{repayType.capitalFrequencyType} == "D")
+                #if($!{repayType.capitalFrequency} != "num")
+                    ##                利息或本金按周期
+                    <div class="layui-inline">#springMessage('table.RepaymentSchedule.beginDate')</div>
+                    <div class="layui-inline">
+                        <input type="text" data-min="$!date.format('yyyy-MM-dd',$!{repayStartDate})" value="$!{repayPlan.repayBeginDate}"
+                               data-max="$!{repayPlan.repayDate}" name="repayBeginDate" id="repayBeginDate"
+                               class="layui-input bt-biz-dateType" data-type="date" data-biz-name="repayBeginDate">
+                    </div>
+                #end
+            #end
+        #end
+        #if(($!{repayType.capitalAndInterest} == "1" && ($!{repayType.capitalFrequencyType} == "D" || $!{repayType.capitalFrequencyType} == "C")) || $!{repayType.capitalAndInterest} == "2"
+        || ($!{repayType.capitalAndInterest} == "3" && ($!{repayType.capitalFrequencyType} == "D" || $!{repayType.capitalFrequencyType} == "C" || $!{repayType.interestFrequencyType} == "D")))
+            <div class="layui-inline">
+                <button class="layui-btn layui-btn-small" type="button" onclick="calRepayPlan()">#springMessage('cms.provide.inerest.cal')</button>
+            </div>
+        #end
+        #if($!{repayType.capitalFrequencyType} == "P" || $!{repayType.interestFrequencyType} == "P")
+            <div class="layui-inline">
+                <button class="layui-btn layui-btn-small" type="button" onclick="importExcel()">#springMessage('common.button.imports')</button>
+            </div>
+        #end
+    </div>
+    <table class="layui-table self-adaption  layui-table-border" id="repayPlanTB">
+        <thead>
+        <tr>
+            <th>#springMessage('table.createRepayPlan.prediceRepayDate')</th> ##预计还款日
+            <th>#springMessage('table.createRepayPlan.repaymentMoney')</th>    ##还款本金
+            <th>#springMessage('table.createRepayPlan.repaymentIst')</th> ##还款利息
+            <th>#springMessage('table.createRepayPlan.currentRepayMoney')</th>    ##本期还款金额
+            <th>#springMessage('table.createRepayPlan.surplusMoney')</th> ##剩余本金
+            <th>#springMessage('table.createRepayPlan.isRepay')</th>    ##是否已还
+            <th>#springMessage('table.createRepayPlan.rmk')</th> ##备注
+            <th>#springMessage('common.table.thead.operation')</th> ##操作
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+        <tfoot>
+        <tr>
+            <td>#springMessage('table.interet.sum')</td>
+
+            <td>
+                <input type="text" style="border:none;" data-name="repaymentMoneySum"
+                       data-biz-name="repaymentMoneySum" readonly="readonly" data-decimal="2"
+                       autocomplete="off" class="layui-input bt-biz-moneyType">
+            </td>
+            <td>
+                <input type="text" style="border:none;"  data-name="repaymentIstSum"
+                       data-biz-name="repaymentIstSum" readonly="readonly" data-decimal="2"
+                       autocomplete="off" class="layui-input bt-biz-moneyType">
+            </td>
+            <td>
+                <input type="text" style="border:none;" data-name="currentRepayMoneySum"
+                       data-biz-name="currentRepayMoneySum" readonly="readonly" data-decimal="2"
+                       autocomplete="off" class="layui-input bt-biz-moneyType">
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        </tfoot>
+    </table>
+    <div style="width: 100%;text-align: center;margin-top: 10px">
+        <button class="layui-btn layui-btn-small" lay-submit="" lay-filter="save">#springMessage(
+            'common.button.save')</button>
+        <button class="layui-btn layui-btn-small" type="button" onClick="doClose()">#springMessage(
+            'common.button.close')</button>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/basedata/tbCreditPeriod/makRepayPlan.js?_btv=${resourceVersion}"></script>
+</html>

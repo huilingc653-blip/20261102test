@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+	<colgroup>
+	<col width="20%">
+	<col width="30%">
+	<col width="20%">
+	<col width="30%">
+	</colgroup>
+		<tr>
+		##单位
+			<td class="textRight">#springMessage('table.fcChargeRule.netId')</td>
+			<td>
+               <div class="bt-biz-corp" data-name="eqs_netId" data-biz-type="net" data-type="select"></div>
+			</td>
+			##业务种类
+			<td  class="textRight">#springMessage('table.fcChargeRule.raceCode')</td>
+			<td>
+	         	<div class="layui-input-inline">              
+	                <div class=bt-biz-selectType data-name="eqs_raceCode" data-biz-name="raceCode" data-width="280px"
+	                		data-search="true" data-textField="sysRaceName" data-valueField="sysRaceCode" data-url="${basePath}/paramconfig/fcbusinessruledefine/json" >
+	                </div>
+              	</div>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="4" align="center">
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+            	<button type="reset" class="layui-btn layui-btn-primary layui-btn-small">#springMessage("common.button.reset")</button>
+            	<!-- <button class="layui-btn layui-btn-small" lay-submit="false" onClick="add()">#springMessage('common.button.add')</button> -->
+			</td>
+		</tr>
+	</table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcChargeRule.raceCode')</th>
+         <th>#springMessage('table.fcChargeRule.netId')</th>
+        <th>#springMessage('table.fcChargeRule.voucherType')</th>
+        <th>#springMessage('table.fcChargeRule.debitSubjCode')</th>
+        <th>#springMessage('table.fcChargeRule.creditSubjCode')</th>
+        <th>#springMessage('table.fcChargeRule.summary')</th>
+        <th>#springMessage('table.fcChargeType.curCode')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','datatable','corp','selectType'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.corp.init();
+        bt.selectType.init();
+        $.fn.serializeObject = function() {
+            var o = {};
+            var a = this.serializeArray();
+            $.each(a, function() {
+                if (o[this.name] !== undefined) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]];
+                    }
+                    o[this.name].push(this.value || '');
+                } else {
+                    o[this.name] = this.value || '';
+                }
+            });
+            return o;
+        };
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'rtlip',
+            colReorder: true,
+            order: [1,'asc'],
+            ajax: {
+                'url': basePath+"/paramconfig/fcchargerule/datatablelist"
+            },
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            buttons: [
+                      {
+                          text: bt.lang('common.button.add'),
+                          action: function ( e, dt, node, config ) {
+                              add();
+                          }
+                      }
+                  ],
+            columns: [
+                {data:"raceCode",className:"center",bSortable:true},
+                {data:"netId",className:"center",bSortable:true},
+                {data:"voucherType",className:"center",bSortable:false},
+                {data:"debitSubjCode",className:"center",bSortable:false},
+                {data:"creditSubjCode",className:"center",bSortable:false},
+                {data:"summary",className:"center",bSortable:false},
+                {data:"curName",className:"center",bSortable:false},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                    var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">#springMessage("common.button.view")</a>\
+                    <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">#springMessage("common.button.edit")</a>\
+                    <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">#springMessage("common.button.delete")</a>';
+                    return html;
+                }}
+            ]
+
+        });
+    });
+    function add(){
+    	if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/paramconfig/fcchargerule/add");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['950px', '630px'],
+            maxmin: true,
+            content: basePath + "/paramconfig/fcchargerule/add",
+            end:function(){
+                //location.reload();
+            }
+        });
+    }
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/paramconfig/fcchargerule/view/" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/paramconfig/fcchargerule/view/" + data.id
+        });
+    }
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/paramconfig/fcchargerule/update?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['950px', '630px'],
+            maxmin: true,
+            content: basePath + "/paramconfig/fcchargerule/update?id=" + data.id,
+            end:function(){
+                location.reload();
+            }
+        });
+    }
+    function del(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            $.post(basePath + "/paramconfig/fcchargerule/delete/" + data.id, function(result){
+                location.reload();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+</script>

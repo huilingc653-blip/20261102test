@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+	<style>
+		table tbody td,table thead th{
+			word-break: keep-all;
+			white-space:nowrap;
+		}
+		.required{
+			color: red;
+		}
+
+		.layui-form-item{
+			text-align: center;
+		}
+
+	</style>
+</head>
+<body>
+<div class="layui-field-box">
+	<div class="input150-container">
+		<table id="editTable" class="layui-table layui-form" style="width: 100%">
+			<thead>
+			<tr>
+				<th ><span class="required">*</span>#springMessage('table.fcBankBill.bankAcc')</th><!-- 银行账号 -->
+				#*<th ><span class="required">*</span>#springMessage('table.account.or.erpSubject')</th><!-- 内部账号/erp企业科目 -->*#
+				<th ><span class="required">*</span>#springMessage('table.fcBankBill.curId')</th><!-- 币别 -->
+				<th ><span class="required">*</span>#springMessage('table.fcBankBill.tallyDate')</th><!-- 发生日期 -->
+				<th ><span class="required">*</span>#springMessage('table.fcBankBill.debitMoney')</th><!-- 借方金额 -->
+				<th ><span class="required">*</span>#springMessage('table.fcBankBill.creditMoney')</th><!-- 贷方金额 -->
+				<th ><span class="required">*</span>#springMessage('table.fcBankBill.redblueSign')</th><!-- 红蓝标识 -->
+				<th>#springMessage('table.fcBankBill.billNo')</th><!-- 票据号 -->
+				<th>#springMessage('table.fcBankBill.voucherNo')</th><!-- 凭证号 -->
+				<th>#springMessage('table.fcBankBill.compareSign')</th><!-- 对账标识 -->
+				<th>#springMessage('common.table.thead.operation')</th>
+			</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+	<div class="layui-form-item">
+		<div class="layui-input-block">
+			<button class="layui-btn" id="submitBut">#springMessage('common.button.submit')</button>
+		</div>
+	</div>
+</div>
+	#parse("views/common/footer.vm")
+</body>
+<script>
+	bt.use(['jquery','form','selectTable','btdate','moneynum','bttable','dicts','dateType','moneyType'],function(){
+		$ = bt.jquery;
+		form = bt.form();
+		dicts = bt.dicts.init();
+		dateType = bt.dateType.init();
+		moneyType = bt.moneyType.init();
+		rowMR=0;
+		//可编辑表格初始化
+		initPrintMRTable = function(){
+			bt.bttable.init({
+				elem: "#editTable",
+				url: null,
+				scrollX : true,
+				scrollY : "500px",
+				buttons: [
+					{
+						text: '<i class="layui-icon">&#xe642;</i>'+bt.lang('common.addTr'),
+						action:function($button){
+							addAttr();
+						}
+					}
+				],
+				columns:[],
+				delRowCallback:function(data,$tr){
+						$tr.remove();
+				},
+				tableInitCallback:function(){
+
+				}
+			});
+		}
+		initPrintMRTable();
+		addAttr();
+		//提交
+		$("#submitBut").on("click",function(){
+			//bt.loading.show();//显示加载中
+			$('button.addBtn').addClass('layui-btn-disabled')
+			var trs = $("#editTable > tbody").children('tr:visible');
+			if(trs.length > 0){
+				var data = new Object();
+				trs.each(function(i,tr){
+					var tds = $(tr).children('td');
+					tds.each(function(index,td){
+						var $input = $(td).find('[name]');
+						var name = $input.attr('name');
+						if(typeof(name) != "undefined"){
+							name = name.substring(0,name.indexOf("_"));
+							var text ;
+							if(name == "redblueSign"){
+								text = dicts.get($input[0].name).val();
+							}else{
+								text = $input.val();
+							}
+							data["accList["+ i +"]."+ name ] = text;
+							/*if(name == "bankAcc"){
+                                name =## $input[1].name;
+			 					name = name.substring(0,name.indexOf("_"));
+			 					text =## $input[1].value;
+			 					data["accList["+ i +"]."+ name ] = text;
+			 				}*/
+						}
+
+						/* if($input[1] !== undefined && flag){
+		 					var name = $input[1].name;
+		 					if(typeof(name) != "undefined"){
+			 					name = name.substring(0,name.indexOf("_"));
+				 				var text = $input[1].value;
+				 				data["accList["+ i +"]."+ name ] = text;
+			 				}
+		 				} */
+					});
+				});
+				var action =  "/finacial/check/fcbankbill/save";
+				$.post(basePath + action,data,function(result){
+					if(result.success){
+						bt.navtab.refreshParent();
+						bt.navtab.closeCurrent();
+						parent.layer?parent.layer.closeAll():layer.closeAll();
+					}else{
+						var lang  = bt.lang(result.msg,result.params);
+						$('button.addBtn').addClass('layui-btn')
+					}
+					//bt.loading.hide(); //关闭加载中
+					parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+				},'JSON');
+			}else{
+				layer.alert("#springMessage('finacial.check.manager.msg.nulldata')");
+				//bt.loading.hide(); //关闭加载中
+				return false;
+			}
+		});
+	});
+
+	//非空校验
+	function doValidater(){
+		if($("#editTable > tbody > tr").length < 1){
+			return true;
+		}
+		var lastBankAcc = $("#editTable>tbody>tr:last input[name^='bankAcc']")[0].value;
+		var lastCurId = $("#editTable > tbody > tr:last input[name^='curId']")[0].value;
+		var lastTallyDate = $("#editTable > tbody > tr:last input[name^='tallyDate']")[0].value;
+		if($.trim(lastBankAcc) == "" || $.trim(lastCurId) ==="" || $.trim(lastTallyDate) == "" ){
+			return false ;
+		}
+		return true;
+	};
+
+	function validateAcc(data , obj){
+		//10-10 去掉前台页面金额校验
+
+		/* var dataName = $(obj).attr("data-name");
+		var signType = dataName.slice( 0 ,dataName.indexOf("y")+1);
+		var index = dataName.slice( dataName.indexOf("x")+1);
+		var tallyDate = $("#tallyDate_index"+index).val();
+		var bankAcc = $("#bankAcc_index"+index).val();
+		var curId = $("#curId_index"+index).val();
+		if(!bankAcc){
+			layer.msg("#springMessage('table.fcBankBill.bankAccNotNull')");
+			moneyType.get(dataName).val(0);
+			return false;
+		}
+		if(!tallyDate){
+			layer.msg("#springMessage('table.fcBankBill.tallyDateNotNull')");
+			moneyType.get(dataName).val(0);
+			return false;
+		}
+		var otherName;
+		if(signType == 'debitMoney'){
+			otherName = 'creditMoney';
+		}else{
+			otherName = 'debitMoney';
+		}
+		var temdebit = moneyType.get(otherName+"_index"+index).val();
+		if( data == 0){
+			if(temdebit ==""){
+				return false;
+			}
+			if(temdebit == 0){
+				layer.msg("借贷方不能都为0");
+				return false;
+			}
+		}else if(data > 0){
+			if(temdebit ==""){
+				return false;
+			}
+			if(temdebit > 0){
+				layer.msg("借贷方不能都不为0");
+				return false;
+			}
+		} */
+	}
+
+	function addAttr(){
+		//非空校验
+		//去掉前台页面新增行必填数据校验
+		/* if(!doValidater()){
+			layer.msg("#springMessage('table.fcBankBill.dataNotNull')");
+			return false;
+		} */
+		var $lastTr = $("#editTable>tbody>tr");
+		var bank_Acc = '<td><div class="layui-inline"><input type="text" name="bankAcc_index' + rowMR + '" id="bankAcc_index' + rowMR + '" class="layui-input text" autocomplete="off">'
+				//+ '<input type="hidden" name="account_index' + rowMR + '" id="account_index' + rowMR + '" >'
+				+ '<table id="example' + rowMR + '">'
+				+ '	<thead>'
+				+ '    	<tr>'
+				+ '        	<th>#springMessage('table.fcBankBill.bankAcc')</th>'
+				+ '			<th>#springMessage('table.fcCheckInit.bankName')</th>'
+				+ '			<th>#springMessage('table.fcBankBill.curId')</th>'
+				+ '    	</tr>'
+				+ '    </thead>'
+				+ '</table>'
+				+ '</div></td>';
+		var html='<tr row="'+rowMR+'">';
+		html+= bank_Acc;
+		/*html+='<td><input class="layui-input" id="account_index'+ rowMR +'" name="account_index'+ rowMR +'" /></td>';*/
+		html+='<td><input id="curId_index'+ rowMR +'" name="curId_index'+ rowMR +'" class="layui-input" type="hidden" readonly="readonly"/>';
+		html+='<input id="curName_index'+ rowMR +'" name="curName_index'+ rowMR +'" class="layui-input" type="text" readonly="readonly"/></td>';
+		html+='<td><input type="text" name="tallyDate_index'+ rowMR +'" data-biz-name="tallyDate_index'+ rowMR +'" id="tallyDate_index'+ rowMR +'" class="layui-input bt-input-inline bt-biz-dateType" autocomplete="off"></td>';
+		html+='<td><input type="text" data-biz-name="debitMoney_index'+ rowMR +'" data-name="debitMoney_index'+ rowMR +'" class="layui-input bt-biz-moneyType" data-decimal="2" data-minus="true" data-callback="validateAcc"></td>';
+		html+='<td><input type="text" data-biz-name="creditMoney_index'+ rowMR +'" data-name="creditMoney_index'+ rowMR +'" class="layui-input bt-biz-moneyType" data-decimal="2" data-minus="true" data-callback="validateAcc"></td>';
+		html+='<td><div class="bt-biz-dict" data-type="radio" data-group="Finacial.RedBlueSign" data-defaultvalue="B"  data-name="redblueSign_index'+ rowMR +'" data-biz-name="redblueSign_index'+ rowMR +'"></td>';
+		html+='<td><input type="text" autocomplete="off" class="layui-input" id="billNo_index'+ rowMR +'" name="billNo_index'+ rowMR +'" /></td>';
+		html+='<td><input type="text" autocomplete="off" class="layui-input" id="voucherNo_index'+ rowMR +'" name="voucherNo_index'+ rowMR +'" /></td>';
+		html+='<td><div class="bt-biz-dict" data-type="select" data-group="finacial.CompareSign" data-defaultvalue="0" data-name="compareSign_index'+ rowMR +'" data-biz-name="compareSign_index'+ rowMR +'" data-disabled="true"></td>';
+		html+='<td><input id="bankAccId_index'+ rowMR +'" name="bankAccId_index'+ rowMR +'" class="layui-input" type="hidden" /><button data-type="del" class="layui-btn layui-btn-mini">'+bt.lang("common.button.delete")+'</button></td>';
+		html+='</tr>';
+		$("#editTable>tbody").append(html);
+		bt.dicts.init();
+		dateType.init();
+		moneyType.init();
+		initSelectAccount(rowMR);
+		if($lastTr.length  > 0){
+			var index = rowMR - 1;
+			$("#bankAcc_index"+rowMR).val($("#bankAcc_index"+index).val());
+			$("#bankAccId_index"+rowMR).val($("#bankAccId_index"+index).val());
+			$("#curId_index"+rowMR).val($("#curId_index"+index).val());
+			$("#curName_index"+rowMR).val($("#curName_index"+index).val());
+			$("#account_index"+rowMR).val($("#account_index"+index).val());
+		}
+		rowMR++;
+	}
+
+	function initSelectAccount(row){
+		var cls="";
+		if(row!= undefined){
+			cls=row
+		}
+		bt.use(['jquery','form','selectTable'],function(){
+			bt.selectTable.init({
+				elem: "#example"+cls,
+				url: basePath+"/finacial/check/fcbankbill/queryBank",
+				scrollX: true,
+				scrollY:"200px",
+				searchInput:"#bankAcc_index"+cls,
+				columns: [
+					{data:"bankAcc",},
+					{data:"bankName",},
+					{data:"curName",},
+					//{data:"account",},
+				],
+				clickCallback:function(data){
+					//设置账户名称
+					$("#bankAcc_index"+cls).val(data.bankAcc);
+					$("#bankAccId_index"+cls).val(data.bankAccId);
+					$("#curId_index"+cls).val(data.curId);
+					//$("#account_index"+cls).val(data.account);
+					$("#curName_index"+cls).val(data.curName);
+				}
+			});
+		});
+	}
+</script>
+</html>

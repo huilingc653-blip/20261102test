@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+<head>
+    <script>
+        var basePath = "${basePath}";
+    </script>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no">
+    <title>银行账户余额</title>
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css" />
+    <link href="${basePath}/static/mui/css/Hui.css?_btv=" rel="stylesheet" />
+    <link href="${basePath}/static/mui/css/mui.min.css?_btv=" rel="stylesheet" />
+    <link href="${basePath}/static/mui/css/icons-extra.css?_btv=" rel="stylesheet" />
+    <link href="${basePath}/static/mui/css/style.css?_btv=" rel="stylesheet" />
+    <script src="${basePath}/static/plugins/frozen/js/zepto.min.js"></script>
+    <script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/js/touch.js"></script>
+    <style>
+        html,body{
+            -webkit-overflow-scrolling : touch !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        .ui-form-item{
+            background: #6a91f8;
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+
+        .ui-dialog .ui-form-item{
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+        .ui-dialog .ui-form-item select{
+            direction: rtl;
+        }
+        .ui-select-group{
+            position: absolute;
+            right: 0;
+        }
+        .bg {
+            height: 100px;
+            background-color: #6a91f8;
+            background-image: url("${basePath}/static/images/bg/bg_shade.png");
+            background-position: bottom;
+            background-repeat: no-repeat;
+            background-size:auto;
+        }
+        .demo-item, #container{
+            height: 600px;
+        }
+        .abBillEmpty{
+            width: 100%;
+            height: 20px;
+            background-color: #dfe3ec;
+        }
+        .no_data{
+            width: 100%;
+            height:600px;
+            display: none;
+            text-align: center;
+        }
+        .no_data img{
+            margin-top: 40px;
+        }
+        .no_data label{
+            display: block;
+        }
+    </style>
+</head>
+<body style="height: 100%;width:100%; margin: 0">
+<div class="ui-form" style="width: 100%">
+    <input type="hidden" id="userId" value="${userId}">
+    <form id="inputForm">
+        <div class="bg">
+            <div style="text-align:center;">
+                <span><font size="2" color="white">余额日期:<span id="dateRange"></span></font></span><br/>
+            </div>
+            <div style="text-align:center;padding-top:10px;">
+                <ul class="ui-row-flex">
+                    <li class="ui-col ui-flex ui-flex-pack-center">
+                        <span><font size="2" color="white">单位：</font> </span>
+                        <span><font size="2" color="white" id="corpName"></font></span>
+                    </li>
+                </ul>
+            </div>
+            <div style="text-align:center;padding-top:10px;">
+                <span><font size="2" color="white">余额统计:<span id="totalBalHtml"></span></font></span><br/>
+            </div>
+        </div>
+
+        <div class="ui-dialog ui-dialog-function" id="dialog1">
+            <div class="ui-dialog-cnt">
+                <div class="ui-dialog-bd">
+                    <form action="">
+                        <div class="ui-form-item ui-border-b">
+                            <label>单位选择</label>
+                            <div class="ui-select-group">
+                                <div class="ui-select">
+                                    <select id="corpId" name="corpId">
+                                        #foreach($corp in $corpList)
+                                            <option value='${corp.id}'>${corp.name}</option>
+                                        #end
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui-form-item ui-border-b">
+                            <label>开始日期</label>
+                            <div class="ui-select-group">
+                                <input type="date" class="form-control" id="startDate" name="startDate" value="${beginDate}" max=""/>
+                            </div>
+                        </div>
+                        <div class="ui-form-item">
+                            <label>结束日期</label>
+                            <div class="ui-select-group">
+                                <input type="date" class="form-control" id="endDate" name="endDate" value="${endDate}" max=""/>
+                            </div>
+                        </div>
+                        <div class="ui-form-item ui-border-b">
+                            <label>银行账号</label>
+                            <div class="ui-select-group">
+                                <div class="ui-select">
+                                    <select id="bankAcc" name="bankAcc">
+                                        <option value='' >全部</option>
+                                        #foreach($bank in $bankList)
+                                            <option value='$!{bank.id}' >$!{bank.bankAcc}($!{bank.curName})</option>
+                                        #end
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui-form-item ui-border-b">
+                            <label>币别</label>
+                            <div class="ui-select-group">
+                                <div class="ui-select">
+                                    <select id="curId" name="curId">
+                                        #foreach($cur in $curList)
+                                            <option value='$!{cur.id}' >$!{cur.curName}</option>
+                                        #end
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="ui-dialog-ft">
+                    <button type="button" id="buttonOK">确定</button>
+                    <button type="button" id="buttonCancel">取消</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="mobile-container">
+    <ul class="mui-table-view" id="mulTable">
+    </ul>
+</div>
+</body>
+<script  type="text/javascript">
+    $(function(){
+        initDate();
+        tu();
+    });
+
+    //弹框事件
+    window.searchAction = function(){
+        $("#dialog1").addClass("show");
+    }
+    //弹框确认按钮的点击事件
+    $("#buttonOK").click(function(){
+        $('.ui-dialog').removeClass("show");
+        tu();
+    });
+    $('#buttonCancel').click(function(){
+        $('.ui-dialog').removeClass("show");
+    });
+
+    function initDate() {
+        //得到当前时间
+        var date = new Date();
+        //得到当前年份
+        var sYear = date.getFullYear()-1;
+
+        var eYear = date.getFullYear();
+
+        //得到当前月份
+        //注：
+        //  1：js中获取Date中的month时，会比当前月份少一个月，所以这里需要先加一
+        //  2: 判断当前月份是否小于10，如果小于，那么就在月份的前面加一个 '0' ， 如果大于，就显示当前月份
+        var month = date.getMonth()+1 < 10 ? "0"+(date.getMonth()+1) : (date.getMonth()+1);
+        //得到当前日子（多少号）
+        var day = date.getDate() < 10 ? "0"+date.getDate() : date.getDate();
+        if($('#startDate').val() == ""){
+            $('#startDate').val(eYear+"-"+month+"-"+day);
+        }
+        //设置input标签的max属性
+        $("#startDate").attr("max",eYear+"-"+month+"-"+day);
+        if($('#endDate').val() == ""){
+            $("#endDate").val(eYear+"-"+month+"-"+day);
+        }
+    }
+
+    function tu(){
+        var startDate = $("#startDate").val();
+        var endDate = $("#endDate").val();
+
+        var corpId = $("#corpId option").eq($("#corpId").attr("selectedIndex")).val(); //获取选中的值
+
+        var corpName = $("#corpId option").eq($("#corpId").attr("selectedIndex")).text(); //获取选中的文本值
+
+        var range = startDate + '~' + endDate;
+        var userId = $("#userId").val();
+        var bankAccId = $("#bankAcc").val();
+        $("#corpName").html(corpName);
+        $("#dateRange").html(range);
+        var curId = $("#curId option").eq($("#curId").attr("selectedIndex")).val();
+        var url = "/api/bankacc/mobileBalList";
+        setTimeout(function () {
+            BTAppBridge.post(url,{"corpId":corpId,"beginDate":startDate,"endDate":endDate,"userId":userId,"bankAccId":bankAccId,"curId":curId},'postPieData');
+        },100);
+    }
+    postPieData = function(data) {
+        if(data){
+            $("#mulTable").html(data);
+        }else{
+            $("#mulTable").html("");
+        }
+        $("#totalBalHtml").html($("#totalBal").val());
+    }
+    var mformat = function(val){
+        //金额转换 分->元 保留2位小数 并每隔3位用逗号分开 1,234.56
+        var str = val.toFixed(2) + '';
+        var intSum = str.substring(0,str.indexOf(".")).replace( /\B(?=(?:\d{3})+$)/g, ',' );//取到整数部分
+        var dot = str.substring(str.length,str.indexOf("."))//取到小数部分搜索
+        var ret = intSum + dot;
+        return ret;
+    };
+</script>
+</html>

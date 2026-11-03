@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        table .layui-input {
+            width: 148px;
+        }
+    </style>
+</head>
+<body style="padding: 0 10px">
+<form class="layui-form ignore-required-icon" method="post" id="inputForm">
+    <input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+    <input id="corpId" name="corpId" type="hidden" value="$!{fbsBudgetPage.corpId}">
+    <input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetPage.timeType}">
+    <input id="beginDate" name="beginDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})">
+    <input id="endDate" name="endDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})">
+    <input id="target" name="target" type="hidden" value="$!{target}">
+    <div class="layui-collapse" lay-filter="collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title"></h2>
+            <div class="layui-colla-content layui-show">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight">#springMessage('table.fbsBudget.corpId')</td>
+            <td>$!{fbsBudgetPage.corpName}</td>
+        ##周期类型
+            <td class="textRight">#springMessage('table.fbsBudget.timeType')</td>
+            <td>$dictTag.get("fbs.timeType",$!{fbsBudgetPage.timeType})</td>
+        </tr>
+        <tr>
+        ##开始日期
+            <td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+            <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})</td>
+        ##结束日期
+            <td class="textRight">#springMessage('table.fbsBudget.endDate')</td>
+            <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})</td>
+        </tr>
+        <tr>
+        ##币种
+            <td class="textRight">#springMessage('table.fbsBudgetDetail.curId')</td>
+            <td>$!{fbsBudgetPage.curName}</td>
+        ##科目显示级别
+            <td class="textRight"><div class="noprint">#springMessage('fbs.item.level.show')</div></td>
+            <td>
+                <div class="noprint">
+                    <div class="bt-biz-dict" data-type="select" data-group="fbs.item.level"
+                         data-defaultvalue="$!{level}" data-name="level" data-biz-name="level"
+                         data-callback="chooseLevel"></div>
+                </div>
+                #if($!{collectFlag} == "1")
+                    <button class="layui-btn" type="button" onclick="dtlView();" >#springMessage('common.button.dtlView')</button>
+                #end
+            </td>
+        </tr>
+        </tbody>
+    </table>
+            </div>
+        </div>
+    </div>
+    <div style="display:inline-block;width:100%;">
+        <div id="maingrid1" data-biz-name="chooseLevel"></div>
+    </div>
+<div style="width: 100%;overflow-x: scroll;margin-bottom: 10px;display: none;">
+<table id="appTable" class="layui-table" style="width:100%;">
+    <thead>
+    <tr>
+        <th rowspan="2">#springMessage('table.fbsBudgetYear.number')</th>
+        <th rowspan="2">#springMessage('table.fbsBudgetYear.itemCode')</th>
+        <th rowspan="2">#springMessage('table.fbsBudgetYear.itemName')</th>
+        #foreach($month in $months)
+            #if($!month.childList)
+                #set($weekSize = $!month.childList.size())
+                #if($!{weekSize} > 1)
+                    #set($weekSize = ${weekSize}+1)
+                #end
+                <th colspan="$!{weekSize}">$month.paternal#springMessage('table.fbsbudget.month')</th>
+            #else
+                <th rowspan="2">$month.paternal#springMessage('table.fbsbudget.month')</th>
+            #end
+        #end
+            <th rowspan="2">#springMessage('table.fbsBudgetPeriod.rmk')</th>
+            <th rowspan="2">#springMessage('table.fbsBudgetYear.dtl')</th>
+    </tr>
+    <tr>
+        #foreach($month in $months)
+            #if($!month.childList)
+                #foreach($week in $month.childList)
+                    <th >#springMessage('table.fbsBudgetYear.the')$week#springMessage('table.fbsBudgetPeriod.weeks')</th>
+                #end
+                <th>$month.paternal#springMessage('table.fbsbudget.month')</th>
+            #end
+        #end
+    </tr>
+    </thead>
+    <tbody>
+        #set($length = $rollMonthList.size())
+        #foreach($date in $rollMonthList)
+            #set($i = 0)
+            #set($key = 1)
+            #set($b = $!{key} - 1)
+        <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}"
+            data-tt-subject-sort="$!{date.itemCode}">
+            <td>$!{velocityCount}</td>
+            <td data-name="itemCode">$!{date.itemCode}</td>
+            <td data-name="itemName">$!{date.itemName}</td>
+            #set( $weekNumber = $months.size() +1 )
+            #foreach($weekDateList in $date.childWeekBudget)
+                #set($i = $!{i} + 1)
+                #foreach($weekDate in $weekDateList)
+                    <td align="right" data-name="bMoney$weekNumber">
+                        <div name="bMoneyDiv">$!number.formatNumeric($!{weekDate.bMoney})</div>
+                    </td>
+                    #set($weekNumber = $weekNumber+1)
+                #end
+                <td align="right" data-name="bMoney$key">
+                    $!number.formatNumeric($!{date.bMoney.get($!{b})})
+                </td>
+                #set($key = $!{key} + 1)
+                #set($b = $!{b} + 1)
+            #end
+            #foreach($month in $months)
+                #if( $!{key} >$!{i} && $!{key} <= ${months.size()})
+                    <td align="right" data-name="bMoney$key">
+                        $!number.formatNumeric($!{date.bMoney.get($!{b})})
+                    </td>
+                    #set($b = $!{b} + 1)
+                    #set($key = $!{key} + 1)
+                #end
+                #set($i = $!{i} - 1)
+            #end
+            <td data-name="rmk">$!{date.rmk}</td>
+            <td data-name="dtl" align="center">
+                #if($!{date.item.isWrite} == "1" && $!{date.item.isBeginPeriod} != "1" && $!{date.item.isEndPeriod} != "1")
+                    <a class="" href="#" onclick="viewDtl('$!{fbsBudgetPage.id}','$!{date.id.get(0)}')">#springMessage('common.button.dtl.view')</a>
+                #end
+            </td>
+        </tr>
+        #end
+    </tbody>
+    </table>
+    </div>
+    <!-- 附件上传 -->
+    <input id="attachmentId" name="attachmentId" type="hidden" value="$!{fbsBudgetPage.attachmentId}">
+    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+    <!-- 日志 -->
+    <div id="tagMsg"></div>
+</form>
+    #parse("views/common/footer.vm")
+    #if($!{showNetAmount} == "1")
+        #set($btnPrependHtml = '<button type="button" class="layui-btn" id="showNetAmount" onclick="showNetAmount()">'+"#springMessage('fbsBudget.button.viewNetAmount')"+'</button>')
+        #workFlowHtml($!{btnPrependHtml})
+    #else
+        #workFlowHtml()
+    #end
+    #workFlowScript()
+</body>
+<script>
+    var dicts,tree;
+    bt.use(['form', 'layedit', 'btdate', 'moneyType', 'toLigerTree', 'btUpload','dicts'], function () {
+        var $ = bt.jquery, form = bt.form();
+        dicts = bt.dicts.init();
+        tree = bt.toLigerTree.init2({
+            elem: '#appTable',
+            newElem: '#maingrid1',
+            rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+            isDoubleHeader: true,//是否有双表头
+            allowHideColumn: true,
+            resize:false,
+            height: "80%",
+            fixedLeftColumns: 2,
+            columnName:'itemCode',
+            onAfterShowData:function(currentData){
+                var level = dicts.get('level').val();
+                for(var i=0;i<currentData.Rows.length;i++){
+                    var row=currentData.Rows[i];
+                    if(row.children && row.children.length>0){
+                        if(level == 0 || level == ""){
+
+                        }else if(level == 1){
+                            this.collapse(row);
+                            collapseChild(row.children,this);
+                        }else if(level == 2 || level == 3){
+                            var row2 = row.children;
+                            for(var j = 0,len2 = row2.length;j< len2;j++){
+                                if(row2[j].children && row2[j].children.length){
+                                    if(level == 2){
+                                        this.collapse(row2[j]);
+                                        collapseChild(row2[j].children,this);
+                                    }else if(level == 3){
+                                        var row3 = row2[j].children;
+                                        for(var k = 0,len3 = row3.length;k< len3;k++){
+                                            if(row3[k].children && row3[k].children.length){
+                                                this.collapse(row3[k]);
+                                                collapseChild(row3[k].children,this);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        function collapseChild(node,treeObj){
+            for(var j = 0,len2 = node.length;j< len2;j++){
+                if(node[j].children && node[j].children.length){
+                    treeObj.collapse(node[j]);
+                    var child = node[j].children;
+                    collapseChild(node[j].children,treeObj);
+                }
+            }
+        }
+        var up = bt.btUpload.init({
+            elem: "#uploader",
+            auto: false,
+            hasDelete: false,
+            hasUpload: false,
+            isExpand: true,
+            gid: $("#attachmentId").val()
+        });
+        /**
+         * 查看本期明细
+         */
+        dtlView = function () {
+            var timeType = $("#timeType").val();
+            var corpId = $("#corpId").val();
+            var beginDate = $("#beginDate").val();
+            var endDate = $("#endDate").val();
+            beginDate = bt.date.format(beginDate, "yyyy-MM-dd");
+            endDate = bt.date.format(endDate, "yyyy-MM-dd");
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/budget/fbsbudget/curView/" + corpId + "/" + timeType + "/" + beginDate + "/" + endDate + "/input");
+                return;
+            }
+        };
+        /**
+         * 生成日志列表
+         * @return
+         */
+            $genMsgHtml= function() {
+            var url=basePath + "/budget/fbsmessage/list/"+$('#id').val()+"/"+$("#busName").val();
+            if($("#target").val() == "superadd"){
+                url=basePath + "/budget/fbsmessage/list/"+$('#superaddId').val()+"/"+$("#busName").val();
+            }
+            $.ajax({
+                url:url,
+                method: 'GET',
+                async:false,
+                success: function (json) {
+                    $("#tagMsg").html("");
+                    $("#tagMsg").html(json);
+                    form.render();
+                }
+            });
+        }
+            $genMsgHtml();
+
+        /**
+         * 查看收支净额
+         */
+        showNetAmount = function (){
+            parent.layer.open({
+                type: 2,
+                area: ['1020px', '530px'],
+                maxmin: true,
+                content: basePath + "/budget/fbsbudget/showNetAmount/" + $('#id').val()
+            });
+        }
+    });
+
+    //查看明细
+    function viewDtl(id,detailId){
+        var action = "/budget/fbsbudgetdetail/view?budgetId=" + id + "&detailId=" + detailId;
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + action);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + action
+        });
+    };
+    var data;
+    chooseLevel = function () {
+        var level = dicts.get('level').val();
+        if(data == null) {
+            data = tree.get('chooseLevel').getData();//获取数据的方法；
+        }
+        tree.get('chooseLevel').loadData();
+    }
+</script>
+</html>

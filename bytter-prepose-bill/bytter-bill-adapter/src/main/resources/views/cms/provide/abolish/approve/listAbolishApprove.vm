@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="laiui-form">
+<table class="layui-table">
+	<tbody>
+		<tr>
+			<!-- ##单位
+			<td class="textRight"><label class="layui-form-label">#springMessage('table.nisBillhead.corpId'):</label></td>
+			<td width="20%">
+				<div class="layui-input-inline">
+					<div class="bt-biz-corp" data-biz-type="corp" data-type="selectTree" data-name="eqs_corpId" data-scope="all"></div>
+				</div>
+			</td> -->
+
+			##借款单号
+			<td class="textRight"  width="15%">#springMessage('table.cmsProvideLoanInfo.billCode'):</td>
+			<td width="35%">
+				<input type="text" name="eqs_billCode" class="layui-input">
+				<input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+				<input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}"/>
+			</td>
+			##借款金额
+			<td class="textRight"  width="15%">#springMessage('table.cmsProvideLoanInfo.plMoney'):</td>
+			<td width="35%">
+				<div class="layui-form-item">
+    				<div class="layui-inline">
+      	  				<input data-name="geg_plMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="t2" data-min="100"  type="text">
+       					<span class="date-mid">~</span>
+       					<input data-name="leg_plMoney" class="layui-input bt-input-inline  bt-biz-moneyType" id="t2" data-min="100"  type="text">
+   					</div>
+				</div>
+			</td>
+		</tr>
+
+		<tr>
+			##借款日期
+			<td class="textRight">#springMessage('table.cmsProvideLoanInfo.plDate'):</td>
+			<td>
+				<div class="layui-form-item">
+					<div class="layui-inline">
+    					<input name="ged_plDate" class="layui-input bt-input-inline bt-biz-dateType" data-endId="led_plDate"  type="text">
+   	 					<span class="date-mid">~</span>
+    					<input id="led_plDate" name="led_plDate" class="layui-input bt-input-inline bt-biz-dateType"  type="text">
+					</div>
+				</div>
+			</td>
+
+			##到期日期
+			<td class="textRight">#springMessage('table.fcAcc.deadlineDate'):</td>
+			<td>
+				<div class="layui-form-item">
+					<div class="layui-inline">
+    					<input name="ged_repayDate" class="layui-input bt-input-inline bt-biz-dateType" data-endId="led_repayDate" type="text">
+   	 					<span class="date-mid">~</span>
+    					<input id="led_repayDate" name="led_repayDate" class="layui-input bt-input-inline bt-biz-dateType"  type="text">
+					</div>
+				</div>
+			</td>
+		</tr>
+
+		<tr>
+			##if($shiro.hasPermission("cms:provide:deferred:query"))
+			<td colspan="6" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+				<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+			</td>
+			##end
+		</tr>
+	</tbody>
+</table>
+</form>
+
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+    	<th>#springMessage('table.abBillTransfer.applyCorp')</th>
+    	<th>#springMessage('table.cmsProvideLoanInfo.bankId')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.billCode')</th>
+        <th>#springMessage('table.fcAcc.contractNo')</th>
+       <!--  <th>#springMessage('table.ePrecativeLoanBill.loanAcc')</th> -->
+        <!-- <th>#springMessage('table.fcAccbookHis.enrolTime')</th> -->
+        <th>#springMessage('table.btBankAccCur.cur')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.plMoney')</th>
+       <!--  <th>#springMessage('table.cmsProvideLoanSend.money')</th> -->
+        <th>#springMessage('table.cmsProvideLoanInfo.plDate')</th>
+        <th>#springMessage('table.fcAcc.deadlineDate')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.repayType')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.plClass')</th>
+        <!-- <th>#springMessage('table.cmsProvideLoanInfo.plType')</th> -->
+        <th>#springMessage('table.cmsProvideLoanInfo.plTerm')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+
+    </tr>
+    </thead>
+</table>
+#workFlowHtml()
+#parse("views/common/footer.vm")
+#workFlowScript()
+</body>
+<script type="text/javascript">
+bt.use(['form','datatable','corp','moneyType','dateType'], function(){
+    $ = bt.jquery,form = bt.form();
+    //单位
+    bt.corp.init();
+    //时间
+    bt.dateType.init();
+    //借款金额
+    bt.moneyType.init();
+
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        searchForm:{
+            formElem:"#searchForm",
+            formFilter:"search"
+        },
+        checkbox:true,
+        colReorder: true,
+        ajax: {
+            'url': basePath+"/cms/provide/abolish/listDataAbolishApproveTable"
+        },
+        buttons:[],
+        columns: [
+           	{data:"corpName",bSortable:false,className:"center"},
+            {data:"bankName",bSortable:false,className:"center"},
+            {data:"billCode",bSortable:true},
+            {data:"contractNo",bSortable:false},
+           // {data:"plAccount",bSortable:true},
+            /* {data:"infoCreateDate",bSortable:true}, */
+            {data:"curName",bSortable:false},
+            {data:"plMoney",bSortable:true,className:"textRight",render: function(data,type,full,meta){
+          		var plMoney = bt.money.format(full.plMoney);
+          		return plMoney;
+          	}},
+           /*  {data:"money",bSortable:true,className:"textRight",render : function(data,type,full,meta){
+          		var money = bt.money.format(full.money);
+          		return money;
+          	}}, */
+            {data:"plDate",bSortable:true},
+            {data:"repayDate",bSortable:true},
+            {data:"repayTypeName",bSortable:false},
+            {data:"plClass",bSortable:false,render : function(data,type,full,meta){
+            	return full.plClassName;
+            }},
+           /*  {data:"plType",bSortable:true,render : function(data,type,full,meta){
+            	return full.plTypeName;
+            }}, */
+            {data:"plTerm",bSortable:false,render :function(data,type,full,meta){
+         		var term = full.plTerm +  full.ternUnitName;
+                return term;
+         	}},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+            	var html='';
+            	if($("#flowStatus").val()=='todo'){
+            		html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+            	}
+				if($("#flowStatus").val() == 'pass'){
+					html += '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a><span class="text-explode">|</span>';
+					html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+				}else {
+					html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+				}
+                return html;
+            }}
+        ],
+        summary:{
+            pageSum: true,//小计功能开启
+            selectSum: true,//已选汇总功能开启
+            //groupColumn: 'curName',//分类汇总列参数
+            format: {
+                decimal: 2
+            },
+            sumList: [
+                {
+                    colNum: '6', //汇总列序号
+                    dataName: 'plMoney' //汇总列借款金额
+                }
+            ]
+        }
+    });
+});
+
+/*审核*/
+function approve(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(bt.navtab){
+		bt.navtab.addNavtab(bt.lang('common.button.approve') ,basePath + "/cms/provide/abolish/viewAbolishApprove?businessId=" + data.id + "&taskId=" + data.taskId);
+		return false;
+    }
+    parent.layer.open({
+		type: 2,
+		area: ['850px', '530px'],
+		maxmin: true,
+		content: basePath + "/cms/provide/abolish/viewAbolishApprove?businessId=" + data.id + "&taskId=" + data.taskId
+    });
+}
+
+function view(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	parent.layer.open({
+		type: 2,
+		area: ['850px', '530px'],
+		maxmin: true,
+		content: basePath + "/cms/provide/abolish/view?infoBillCode=" + data.billCode + "&struts=" + 0
+	});
+}
+</script>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form input150-container" >
+		<input id="countType" name="countType" value="$!{countType}" type="hidden">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+					
+					##统计方式
+                    <td width="13%" class="textRight">#springMessage('accebill.statistical')</td>
+                    <td width="20%">
+        			<DIV class=layui-form>
+        			<DIV class=bt-biz-dict data-type="radio"  data-name="countType" data-callback="countTypeChange" 
+        			#if($!{countType} && $!{countType} ne "") data-defaultvalue="$!{countType}" #else data-defaultvalue="0"  #end
+					data-required="true" data-biz-name="countType"  data-group="AB_BILL_STATISTICAL"></DIV>
+        			</DIV>
+                    </td>
+					
+					##持票单位
+					<td width="13%" class="textRight">#springMessage('table.abVoucherinfoVice.corpId')</td>
+					<td width="20%">
+						<div class="layui-input-inline">
+							<div class="bt-biz-corp"
+								data-tree-type="check"
+								data-biz-type="corp"
+                                data-biz-name="corpId"
+								data-defaultvalue="$!corpId"
+                                data-type="selectTree"
+                                data-name="corpId"
+                                data-scope="all"
+								data-resource="bill:accebill:collectionaccountreport:corpop"
+        						##data-callbackData="corpCallback"
+								>
+        					</div>
+                        </div>
+                    </td>					
+                    ##票据类型
+                    <td width="13%" class="textRight">#springMessage('table.abVoucherinfo.billType')</td>
+                    <td width="20%">
+						<div class="bt-biz-dict" data-group="AB_BILL_TYPE" data-biz-name="billType" data-name="billType" data-type="select" data-defaultvalue="$!billType"></div>
+                    </td>
+				</tr>
+				<tr>
+					   ##业务日期范围
+					    
+							 <td class="textRight" id="dateLabel">#springMessage('accebill.date.range')</td>
+                            <td >
+								<div id="dateDiv">
+									 <div class="layui-inline">
+                                <input type="text" name="startDate" data-name="startDate" class="layui-input bt-biz-dateType" data-required="true"
+                                       data-biz-name="startDate" data-endid="endDate" data-type= #if($countType=="1") "date" #else "month" #end value="$!{startDate}" data-callback="">
+                            </div>
+                            ~
+                            <div class="layui-inline">
+                                <input type="text" name="endDate"　data-name="endDate" class="layui-input bt-biz-dateType" data-required="true"
+                                       data-biz-name="endDate" id="endDate" data-type= #if($countType=="1") "date" #else "month" #end value="$!{endDate}" data-callback="">
+                            </div>
+								</div>
+                      
+                            </td>
+                        </div>                          					
+					
+					##承兑人
+                    <td class="textRight">#springMessage('table.abVoucherinfo.acceptor')</td>
+                    <td >
+                       
+						<div class="layui-input-inline">
+                                <input type="text" name="acceptor" id="acceptor" value="$!acceptor"
+                                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.acceptor')">
+                            </div>
+                    </td>
+					
+						##流通介质
+                    <td class="textRight">#springMessage('table.abVoucherinfo.billFlag')</td>
+                    <td>
+						<div class="bt-biz-dict" data-group="AB_BILL_FLAG" data-biz-name="billFlag" data-name="billFlag" data-type="select" data-defaultvalue="$!billFlag"></div>
+                    </td>	           
+				</tr>
+				#if($shiro.hasPermission("bill:accebill:collectionaccountreport:corpop"))
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                      <button class="layui-btn"  lay-submit="" type="button" onclick="checkForm()">#springMessage('common.button.search')</button>
+                        <button type="button" class="layui-btn layui-btn-primary" onclick="resetData()">#springMessage('common.button.reset')</button>
+                    </td>
+				</tr>
+				#end
+            </tbody>
+        </table>
+    </form>
+
+#if($shiro.hasPermission("bill:accebill:collectionaccountreport:corpop"))
+#if($!querySign eq "1")	
+<table  id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+		<th>#springMessage('table.abVoucherinfo.acceptor')</th>
+		#foreach($date in $dateList)		
+		<th>#springMessage($!{date})</th>	
+		#end
+		<th>#springMessage('table.datatable.subtotal')</th>		
+    </tr>
+    </thead>	
+</table>
+#end
+#end
+
+<form id="dataForm" class="layui-form">
+	##业务办理日期
+	<div class=layui-inline>
+		<idv class=date-single></div>
+	</div>
+</form>
+
+#parse("views/common/footer.vm")
+</body>
+
+<script language="javascript" type="text/javascript">
+var countType;
+var billTable={},dicts;
+var corp;
+bt.use(['form','datatable','moneyType','dateType','corp','select','dateType','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    corp=bt.corp.init();
+    bt.moneyType.init();
+    bt.dateType.init();
+    dicts=bt.dicts.init();
+	dateType = bt.dateType.init();
+ 	countType=$("#countType").val();
+	
+	setTimeout(function() {
+    	//生成列表
+        datatable = bt.datatable.init({
+    		paging:false,
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:false,
+            order: [0,'asc'],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/bill/accebill/abbillCollectionAccountReport/datatable?countType="+countType
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    columns: ':not(:first):not(:last)',
+                    text: bt.lang('common.button.theadHide'),
+                }
+            ]
+            ,columns: [
+                {data:"acceptor",bSortable:true},
+                #if($!dateList)
+                    #foreach($date in $dateList)					
+                            {data:"$!date",title:"$!date",className:'textRight',bSortable:false,render: function (data, type, full, meta) {
+    							return bt.money.format(data);
+    							
+                            }},
+                    #end
+               #end
+                {data:"sumMoney",className:'textRight',bSortable:false,render: function (data, type, full, meta) {
+                    return bt.money.format(data);
+                }}
+            ],
+            fixedColumns:{
+    		leftColumns:1,
+            rightColumns:1
+            },
+    		  summary:{
+                    pageSum:true,
+                    sumList: [
+                        #if($!dateList)
+    						#foreach($date in $dateList)
+                                #set($colNum=$!{velocityCount} + 1)
+                                {
+                                    colNum: '$!{velocityCount}',
+                                    dataName: '$!date'
+                                },
+                            #end
+                            {
+                                colNum: '$!{colNum}',
+                                dataName: 'sumMoney'
+                            }
+                        #end
+                    ]
+                }
+            });
+	},1000);
+
+	});
+	
+    //统计方式回调
+    function countTypeChange(data) {
+    	countType = data.value;
+    	$("#countType").val(countType);
+    	dateType.get("startDate").val("");
+        dateType.get("endDate").val("");
+		//按月统计
+		var html = '<div class="layui-inline">'
+                    +'<input type="text" name="startDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="t3" '
+                    +'data-callback="checkDate" data-type="month" data-biz-name="startDate"/>'
+                    +'<span class="date-mid">~</span>'
+                    +'<input type="text" name="endDate" class="layui-input bt-input-inline bt-biz-dateType" id="t3"'
+                    + 'data-callback="checkDate" data-type="month" data-biz-name="endDate"/>'
+                    +'</div>';		
+		
+		if(!isNull(countType)&&countType=="1"){//日
+		html=html.replace(/data-type="month"/g,'data-type="date"');
+		}	
+		 $('#dateDiv').html(html);
+		bt.dateType.init();
+    }
+    	
+	//重置
+    function resetData(){
+        dicts.get("countType").val("0");
+        dateType.get("startDate").val("");
+        dateType.get("endDate").val("");
+        dicts.get("billType").val("");
+        dicts.get("billFlag").val("");
+        corp.get('corpId').val("");
+        $("#acceptor").val("");
+		countTypeChange({value:"0"});
+    }
+	
+    /**
+     * 判断是否null
+     * 
+     * @param data
+     */
+    function isNull(data) {
+    	return (data == "" || data == undefined || data == null || data == " ") ? true : false;
+    }
+	
+	/**
+     * 日期验证
+     */
+	function checkDate(){
+	  var startDate = dateType.get("startDate").val();
+      var endDate = dateType.get("endDate").val();
+	  if(isNull(startDate)||isNull(endDate)){
+	  return;
+	  }
+	  //日期范围不能超出30天(按日统计)
+      if(countType=='1'){
+      if(bt.date.getBetweenDay(startDate,endDate)+1>30){
+           layer.alert(bt.lang("accebill.abbillCollectionAccountReport.dayOut"),{icon:7});
+           return;
+        }
+        }else{
+    	//月份不得大于12个月(按月统计)
+    	if(bt.date.getBetweenMonth(startDate,endDate)>12){
+                layer.alert(bt.lang("accebill.abbillCollectionAccountReport.monthOut"),{icon:7});
+                return;
+            }
+    	} 
+	}
+	
+	/**
+     * 表单提交验证
+     */
+      function checkForm(){
+      countType=dicts.get("countType").val();
+      var startDate = dateType.get("startDate").val();
+      var endDate = dateType.get("endDate").val();
+      var corpId= corp.get("corpId").val();
+      var billFlag = dicts.get("billFlag").val();
+      var billType = dicts.get("billType").val();
+      var acceptor = window.encodeURI(window.encodeURI($("#acceptor").val()));
+      //判断有没有选择统计方式
+      if(isNull(countType)){ 
+      return;
+      }
+      //判断有没有输入日期
+      if(isNull(startDate)||isNull(endDate)){
+      parent.layer.msg(bt.lang("bill.accebill.month.choice"), {icon: 2});//请选择日期范围
+      return;
+      }
+      //日期范围不能超出30天(按日统计)
+      if(countType=='1'){
+      if(bt.date.getBetweenDay(startDate,endDate)+1>30){
+           layer.alert(bt.lang("accebill.abbillCollectionAccountReport.dayOut"),{icon:7});
+           return;
+        }
+        }else{
+    	//月份不得大于12个月(按月统计)
+		var date1 = new Date(startDate.replace(/-/,"/")+"/01");
+		var date2 = new Date(endDate.replace(/-/,"/")+"/01");
+    	if(bt.date.getBetweenMonth(date1,date2)>12){
+                layer.alert(bt.lang("accebill.abbillCollectionAccountReport.monthOut"),{icon:7});
+                return;
+            }
+    	}    
+		
+      location.replace(basePath + "/bill/accebill/abbillCollectionAccountReport/list?querySign=1&countType="+countType+
+      "&startDate="+startDate+"&endDate="+endDate+"&corpId="+corpId+"&billType="+billType+"&billFlag="+billFlag+"&acceptor="+acceptor);
+      }
+
+</script>
+</html>

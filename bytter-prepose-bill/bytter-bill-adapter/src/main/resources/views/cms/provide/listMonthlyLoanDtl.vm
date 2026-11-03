@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="queryFlag" name="queryFlag" value="">
+    <input type="hidden" id="defaultStartRepayDate" value="$!date.format('yyyy-MM-dd',$!{queryParam.defaultStartRepayDate})">
+    <input type="hidden" id="defaultEndRepayDate" value="$!date.format('yyyy-MM-dd',$!{queryParam.defaultEndRepayDate})">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.corpId')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-biz-name="corpId"
+                         data-resource="cms:provide:info:monthlyLoan"
+                         data-scope="all"
+                         data-tree-type="check"
+                         data-defaultvalue="$!{queryParam.corpId}">
+                    </div>
+                </div>
+            </td>
+            ##借款银行账号
+            <td class="textRight">#springMessage('银行账号')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" class="layui-input onlinePaymentAcc" name="sendAccNo"
+                           data-biz-name="onlinePaymentAcc" id="onlinePaymentAcc" value="$!{queryParam.sendAccNo}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##借款到期日期
+            <td class="textRight">#springMessage('table.cmsProvideLoanSend.repayDate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" class="layui-input bt-biz-dateType" name="startRepayDate"
+                           data-biz-name="startRepayDate"
+                           data-endid="endRepayDate" value="$!date.format('yyyy-MM-dd',$!{queryParam.startRepayDate})">
+                </div>
+                <div class="layui-inline">
+                    <span class="date-mid">~</span>
+                </div>
+                <div class="layui-inline">
+                    <input type="text" class="layui-input bt-biz-dateType" name="endRepayDate"
+                           data-biz-name="endRepayDate"
+                           id="endRepayDate" value="$!date.format('yyyy-MM-dd',$!{queryParam.endRepayDate})">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('贷款品种')</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-name="plClass"
+                     data-biz-name="plClass"
+                     data-url="${basePath}/cms/provide/loaninfo/queryLoanTypeList"
+                     data-valuefield="code"
+                     data-textfield="name"
+                     data-value="$!{queryParam.plClass}"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="search">#springMessage(
+                    'common.button.search')</button>
+                <button type="button" class="layui-btn layui-btn-primary"
+                        onClick="resetMonthlyLoanDtl()">#springMessage('common.button.reset')</button>
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="excel">#springMessage(
+                    'common.button.exports')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('区域')</th><!-- 银行名称 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.corpId')</th><!-- 单位名称 -->
+        <th>#springMessage('贷款品种')</th><!-- 贷款品种 -->
+        <th>#springMessage('贷款银行名称')</th><!-- 贷款银行名称 -->
+        <th>#springMessage('银行账号')</th><!-- 还款账号 -->
+        <th>#springMessage('table.cmsProvideLoanSend.money')</th><!-- 本次发放金额-->
+        <th>#springMessage('已还金额')</th><!-- 已还金额-->
+        <th>#springMessage('待还金额')</th><!-- 待还金额-->
+        <th>#springMessage('贷款年限')</th><!-- 贷款年限 -->
+        <th>#springMessage('table.cmsProvideLoanSend.sendDate')</th><!-- 借款发放日期 -->
+        <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th><!-- 借款到期日期 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.plRate')</th><!-- 借款利率 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.latestRate')</th><!-- 最新利率 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.rmk')</th><!-- 备注 -->
+        <th>#springMessage('确认人')</th><!-- 确认人 -->
+    </tr>
+    </thead>
+    <tbody>
+        #foreach($item in $!queryList)
+            #if($!{item.corpName} == '-1')
+            <tr style="font-weight: 700">
+                <td colspan="3" align="center">$!{item.plClassName}</td>
+                <td></td>
+                <td></td>
+                <td align="right">$number.formatNumeric($!{item.sendMoney})</td>
+                <td align="right">$number.formatNumeric($!{item.sumRepayMoney})</td>
+                <td align="right">$number.formatNumeric($!{item.sumUnRepayMoney})</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            #elseif($!{item.corpName} == '合计' || $!{item.corpName} == '总部' || $!{item.corpName} == '地区')
+            <tr style="font-weight: 700">
+                <td colspan="3" align="center">$!{item.corpName}</td>
+                <td></td>
+                <td></td>
+                <td align="right">$number.formatNumeric($!{item.sendMoney})</td>
+                <td align="right">$number.formatNumeric($!{item.sumRepayMoney})</td>
+                <td align="right">$number.formatNumeric($!{item.sumUnRepayMoney})</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            #else
+            <tr>
+                <td align="center">$!{item.cellName}</td>
+                <td align="center">$!{item.corpName}</td>
+                <td align="center">$!{item.plClassName}</td>
+                <td align="center">$!{item.bankName}</td>
+                <td align="center">$!{item.sendAccNo}</td>
+                <td align="right">$number.formatNumeric($!{item.sendMoney})</td>
+                <td align="right">$number.formatNumeric($!{item.sumRepayMoney})</td>
+                <td align="right">$number.formatNumeric($!{item.sumUnRepayMoney})</td>
+                <td align="center">$!{item.plTerm}</td>
+                <td align="center">$!{item.sendDate}</td>
+                <td align="center">$!{item.repayDateStr}</td>
+                <td align="right">
+                    #if($!{item.plRate})
+                        $rateTag.show($!{item.plRate}, 2)
+                    #end
+                </td>
+                <td align="right">
+                    #if($!{item.latestRate})
+                        $rateTag.show($!{item.latestRate}, 2)
+                    #end
+                </td>
+                <td align="center">$!{item.rmk}</td>
+                <td align="center">$!{item.sendUser}</td>
+            </tr>
+            #end
+        #end
+    </tbody>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    var $, form, moneyFun, selectTable, corp, dateType, selectType;
+    bt.use(['form', 'datatable', 'corp', 'moneyType', 'dateType', 'selectType', 'dicts', 'selectTableType'], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        moneyFun = bt.moneyType.getFun();
+        corp = bt.corp.init();//单位
+        dateType = bt.dateType.init();//日期
+        selectType = bt.selectType.init();//下拉框
+        bt.moneyType.init();//金额
+        bt.dicts.init();//数据字典
+
+        /**判断字符串是否为空*/
+        bt.empty = function (ms) {
+            if (typeof (ms) == "undefined" || ms == null || ms === "" || ms === "null") {
+                return true;
+            }
+            return false;
+        }
+
+        //监听查询
+        form.on('submit(search)', function (data) {
+            var action = basePath + "/cms/provide/loaninfo/monthlyLoanDtl";
+            $("#queryFlag").val('1');// 首次进入时。到期日期需要默认值，后续点击查询，到期日期区间为空，也无需判断
+            $("#searchForm").attr("action", action);
+            $("#searchForm").attr("method", "post");
+            $("#searchForm").submit();
+        });
+
+        //监听导出
+        form.on('submit(excel)', function (data) {
+            if (!checkTables()) {
+                layer.alert(bt.lang("common.message.notData"));
+                return false;
+            }
+            data.field.queryFlag = '1';
+            var url = basePath + "/cms/provide/loaninfo/exportMonthlyLoanDtl";
+            DownLoadFile({url: url, data: data.field, method: 'post'});
+            return false;
+        });
+
+        initBankAccTable();
+    });
+
+    function initBankAccTable() {
+        selectTable = bt.selectTableType.init({
+            elem: ".onlinePaymentAcc",
+            type: 'get',
+            paging: true,
+            url: basePath + "/cms/provide/loaninfo/queryPaymentAccList",
+            columns: [
+                {data: "bankAcc", title: bt.lang("table.btBankAcc.bankAcc")},
+                {data: "accName", title: bt.lang("table.btBankAcc.accName")},
+                {data: "bankName", title: bt.lang("table.btBankAcc.bankName")}
+            ],
+            clickCallback: function (severData, data) {
+                $("#onlinePaymentAcc").val(severData.bankAcc);
+            },
+            handleDeleteCallback: function () {
+                clearOnlineAcc();
+            }
+        });
+    }
+
+    //清空还款账号信息
+    function clearOnlineAcc() {
+        $("#onlinePaymentAcc").val("");
+    }
+
+    // 重置
+    function resetMonthlyLoanDtl() {
+        corp.get("corpId").val('');
+        $("#onlinePaymentAcc").val('');
+        dateType.get("startRepayDate").val($("#defaultStartRepayDate").val());
+        dateType.get("endRepayDate").val($("#defaultEndRepayDate").val());
+        selectType.get("plClass").val('');
+    }
+
+    function DownLoadFile(options) {
+        var config = $.extend(true, {method: 'post'}, options);
+        var _iframe = $('<iframe id="down-file-iframe" style="display: none"/>');
+        var _form = $('<form target="_self" method="post" />');
+        _form.attr('action', config.url);
+        for (var key in config.data) {
+            _form.append('<input type="hidden" name="' + key + '" value="' + config.data[key] + '" />');
+        }
+        _iframe.append(_form);
+        $(document.body).append(_iframe);
+        _form[0].submit();
+        _iframe.remove();
+        return false;
+    }
+
+    /**表格不为空验证*/
+    function checkTables() {
+        var isreturn = true;
+        //获取所有tr
+        var trs = $("#appTable").find("tr");
+        if (trs.length <= 1) {
+            isreturn = false;
+        }
+        return isreturn;
+    }
+</script>
+</html>

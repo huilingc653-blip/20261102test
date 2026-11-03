@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        form .layui-input{
+            width: 150px;
+        }
+    </style>
+</head>
+<body style="padding-bottom: 50px;">
+<form class="layui-form ignore-required-icon " method="post" id="fbsDtlForm">
+    <!-- 科目明细是否必须录入 -->
+    <input type="hidden" id="isWriteDetail" name="isWriteDetail" value="$!{inputItem.isWriteDetail}">
+    <input type="hidden" id="isApprove" name="isApprove" value="$!{isApprove}">
+    <input type="hidden" id="canBMoney" name="canBMoney" value="$!{canBMoney}">
+    <input type="hidden" id="dtlCol" name="dtlCol" value="$dtlColValueList">
+    <input type="hidden" id="natualCurId" name="natualCurId" value="$!{currencyTag.getNatualCurrency().id}">
+    <!-- 折合人民币 -->
+    #set($natualCurId = $!{currencyTag.getNatualCurrency().id})
+    <div class="layui-block">
+        <div style="color: red;font-size: 13px;margin-bottom: 10px;">#springMessage('fbs.budget.detail.message.save')</div>
+        <button class="layui-btn"  type="button" onclick="importExcel()">#springMessage('common.button.imports')</button>
+        <button class="layui-btn" onclick="addTr();" type="button">#springMessage('table.fc_charge_type_dtl.adddtl')</button>
+        <button class="layui-btn" type="button" onclick="deleteALl()">#springMessage('common.button.batchDelete')</button>
+    </div>
+    <table id="dtlTable" class="layui-table " style="width:100%;">
+        <thead>
+        <tr>
+            <th><input type="checkbox" lay-filter="check" lay-skin="primary" value="all"/></th>
+            <th>#springMessage('common.table.thead.operation')</th>
+            <th><span style="color: red">*</span>#springMessage('fbs.budget.input.message.itmename')</th>
+            #if($flag == "input")
+                <th><span style="color: red">*</span>#springMessage('fbs.budget.input.message.inputmoney')</th>
+            #else
+                <th>#springMessage('fbs.budget.input.message.inputmoney')</th>
+                <th>#springMessage('table.fbsBudgetYear.bsuperMoney')</th>
+                <th><span style="color: red">*</span>#springMessage('table.fbsBudgetYear.btempMoney')</th>
+            #end
+            #*<th><span style="color: red">*</span>#springMessage('table.fbsBudgetDetail.natualMoney')</th>
+            <th><span style="color: red">*</span>#springMessage('table.fbsBudgetDetail.curId')</th>*#
+            <th><span style="color: red">*</span>#springMessage('table.fbsBudgetDetail.vestingDate')</th>
+            #foreach($data in $dtlColList)
+                #if($data != "")
+                 <th>$!{data}</th>
+                #end
+            #end
+        </tr>
+        </thead>
+        <tbody>
+        <input type="hidden" id="detailId" name="detailId" value="$!{budgetDtl.id}"/>
+        <input type="hidden" id="budgetId" name="budgetId" value="$!{budget.id}"/>
+        <input type="hidden" id="flag" name="flag" value="$!{flag}"/>
+        <input type="hidden" id="itemCode" value="$!{budgetDtl.itemCode}"/>
+        <input type="hidden" id="itemName" value="$!{budgetDtl.itemName}"/>
+        <input type="hidden" id="timeType" value="$!{budget.timeType}"/>
+        <input type="hidden" id="beginDate" value="$!{beginDate}"/>
+        <input type="hidden" id="endDate" value="$!{endDate}"/>
+        <input type="hidden" id="delFlag" value=""/>
+            #foreach($data in $dataList)
+                #set($row = $!{velocityCount})
+            <tr row="$row">
+                <td>
+                    <input type="checkbox" value="$!{data.id}" lay-skin="primary" #if(!$!{data.id} && $flag == "input")disabled="disabled" #end/>
+                </td>
+                <td>
+                    #if($!{data.id} && $!{data.id}!="")
+                        <a href="javascript:void (0)" onclick="deleteDtl(this,'$!{data.id}');" id="del$!{velocityCount}">#springMessage('common.button.delete')</a>
+                    #end
+                </td>
+                <input type="hidden" name="id" value="$!{data.id}"/>
+                <td>($!{budgetDtl.itemCode})$!{budgetDtl.itemName}</td>
+                #if($flag == "input")
+                    <td data-name="bMoneyTd">
+                        <input type="text" data-name="bMoney" data-id="bMoney$!{velocityCount}" data-biz-name="bMoney$!{velocityCount}" lay-verify="required|nozero" data-row="$!{velocityCount}"
+                               class="layui-input bt-input-inline  bt-biz-moneyType ignore-required-icon"  value="$!{data.bMoney}" data-callback="bMoneyCallBack">
+                    </td>
+                #else
+                    <td data-name="bMoneyTd">
+                        <input type="text" data-name="bMoney" data-id="bMoney$!{velocityCount}" data-biz-name="bMoney$!{velocityCount}" readonly="readonly" data-row="$!{velocityCount}"
+                               class="layui-input bt-input-inline bt-biz-moneyType ignore-required-icon"  value="$!{data.bMoney}">
+                    </td>
+                    <td data-name="bMoneyTd">
+                        <input type="text" data-name="bsuperMoney" data-id="bsuperMoney$!{velocityCount}" readonly="readonly" data-row="$!{velocityCount}"
+                               class="layui-input bt-input-inline bt-biz-moneyType ignore-required-icon"  value="$!{data.bsuperMoney}">
+                    </td>
+                    <td data-name="btempMoneyTd">
+                        <input type="text" data-name="btempMoney" data-id="btempMoney$!{velocityCount}" data-biz-name="btempMoney$!{velocityCount}" lay-verify="required" data-row="$!{velocityCount}"
+                               data-minus="true" class="layui-input bt-input-inline bt-biz-moneyType ignore-required-icon"  value="$!{data.btempMoney}" data-callback="btempMoneyCallBack">
+                    </td>
+                #end
+                #*<td>
+                    <input type="text" data-name="tempNatualMoney" data-biz-name="tempNatualMoney$row" data-id="tempNatualMoney$row"
+                           lay-verify="required" data-row="$!{velocityCount}" readonly="readonly" value="#if($!{data.tempNatualMoney})$!{data.tempNatualMoney} #else 0 #end"
+                           class="layui-input bt-input-inline  bt-biz-moneyType" >
+                </td>
+                <td>
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-selectType" data-name="curId" data-biz-name="curId$row"
+                             data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id" data-textfield="curName" data-required="true"
+                            #if($flag == "add" && ($!{data.bMoney} ||  $!{data.bsuperMoney})) data-disabled="true" #end
+                            #if($!{data.curId}) data-defaultvalue="$!{data.curId}" #else data-defaultvalue="$!{natualCurId}" #end
+                             data-selecttext="false" data-callback="curCallback"></div>
+                    </div>
+                </td>*#
+                <td>
+                    <div class="layui-inline">
+                        <input type="hidden" name="defVestingDate" value="$!date.format('yyyy-MM-dd',$!{data.vestingDate})" >
+                        <input type="text" name="vestingDate" lay-verify="required" class="layui-input bt-biz-dateType"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end
+                               data-type="date" value="$!date.format('yyyy-MM-dd',$!{data.vestingDate})" data-min="$!{beginDate}" data-max="$!{endDate}">
+                    </div>
+                </td>
+                #foreach($col in $dtlColValueList)
+                    #if($col == "settlType")
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-group="settlType" data-defaultvalue="0" data-value="$!{data.settlType}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) data-disabled="true" #end
+                                 data-name="settlType" data-biz-name="settlType" data-selecttext="false" data-more="true" ></div>
+                        </td>
+                    #end
+                    #if($col == "corpName")
+                        <td>
+                            <input type="text" class="layui-input" name="corpName" value="$!{data.corpName}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                    #if($col == "purpose")
+                        <td>
+                            <input type="text" class="layui-input" name="purpose" value="$!{data.purpose}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                    #if($col == "wishPayday")
+                        <td>
+                            <div class="layui-inline">
+                                <input type="text" name="wishPayday" class="layui-input bt-biz-dateType" data-type="date"
+                                    #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end
+                                       value="$!date.format('yyyy-MM-dd HH:mm:ss ',$!{data.wishPayday})">
+                            </div>
+                        </td>
+                    #end
+                    #if($col == "payerAcc")
+                        <td>
+                            <input type="text" class="layui-input" name="payerAcc" value="$!{data.payerAcc}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                    #if($col == "payeeAccName")
+                        <td>
+                            <input type="text" class="layui-input" name="payeeAccName" value="$!{data.payeeAccName}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                    #if($col == "payeeAcc")
+                        <td>
+                            <input type="text" class="layui-input" name="payeeAcc" value="$!{data.payeeAcc}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                    #if($col == "payeeBank")
+                        <td>
+                            <input type="text" class="layui-input" name="payeeBank" value="$!{data.payeeBank}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                    #if($col == "contract")
+                        <td>
+                            <input type="text" class="layui-input" name="contract" value="$!{data.contract}"
+                                #if($flag == "add" &&($!{data.bMoney} ||  $!{data.bsuperMoney})) readonly="readonly" #end />
+                        </td>
+                    #end
+                #end
+            </tr>
+            #end
+        </tbody>
+    </table>
+
+    <p>
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="submit" id="saveBut">#springMessage('common.button.save')</button>
+            <button class="layui-btn" type="button" onclick="view();">#springMessage('table.fbsbudget.detail.viewsuperdetail')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+</script>
+<script src="${basePath}/static/modules/budget/fbsBudgetDetail.list.js?_btv=${resourceVersion}"></script>
+</html>

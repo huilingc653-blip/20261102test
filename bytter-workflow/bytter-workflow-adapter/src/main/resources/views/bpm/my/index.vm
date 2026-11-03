@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding: 0px;
+            margin: 0px;
+            background:#fff;
+        }
+
+        .task-left{
+            position: fixed;
+            width: 300px;
+            min-height: 100%;
+            border-right:1px solid #d3d3d3;
+            padding: 0 20px;
+        }
+        .task-left a{
+            color: #000000 !important;
+        }
+
+        .task-left-header{
+            height:60px;
+            line-height: 60px;
+            border-bottom: 1px solid #d3d3d3;
+        }
+
+        .task-right{
+            position: fixed;
+            left:300px;
+            right: 0;
+            min-height: 100%;
+        }
+        .task-right .layui-tab{
+            margin: 0;
+        }
+        .task-right .layui-tab-title .layui-this{
+            color:#f00;
+        }
+        .layui-tab-title .layui-this:after{
+
+        }
+        .layui-nav-itemed>a{
+            background-color:#fff !important;
+
+        }
+        .layui-nav-bar{
+            display: none;
+        }
+
+        .task-type-header{
+            height:60px;
+            line-height: 60px;
+            border-bottom: 1px solid #d3d3d3;
+        }
+    </style>
+</head>
+<body>
+<div class="line">
+    <div class="task-left">
+        <div class="task-type-header">asdasda</div>
+    </div>
+    <div class="task-right">
+        <div class="layui-tab layui-tab-brief">
+            <ul class="layui-tab-title task-type-header">
+                <li class="layui-this">待办任务</li>
+                <li>进行中</li>
+                <li>已完成</li>
+                <li>我创建的</li>
+            </ul>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show">
+                    <table id="todoTask" class="dataTable">
+                        <thead>
+                        <tr>
+                            <th>流程名称</th>
+                            <th>启动时间</th>
+                            <th>发起者</th>
+                            <th>节点名称</th>
+                            <th>执行时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="layui-tab-item">
+                    <table id="runningTask" class="layui-table">
+                        <thead>
+                        <tr>
+                            <th>流程名称</th>
+                            <th>开始时间</th>
+                            <th>启动者</th>
+                            <th>当前节点</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="layui-tab-item">
+                    <table id="finishedTask" class="layui-table">
+                        <thead>
+                        <tr>
+                            <th>流程名称</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <th>启动者</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                    </table>
+
+                </div>
+                <div class="layui-tab-item">
+                    <table id="startByMySelf" class="layui-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>业务代码</th>
+                            <th>流程定义ID</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+<script>
+    layui.use(['element','datatable','jquery'], function(){
+        var element = layui.element(); //导航的hover效果、二级菜单等功能，需要依赖element模块
+        var $ = bt.jquery;
+        //监听导航点击
+        element.on('nav(task-left)', function(elem){
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+
+
+        var todoTaskTable = bt.datatable.init({
+            elem: "#todoTask",
+            ajax: {
+                url: basePath + "/bpm/my/todoList",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {data: "processDefinitionName", orderable: false},
+                {data: "startTime"},
+                {data: "username", orderable: false},
+                {data: "taskVO.name", orderable: false},
+                {data: "taskVO.createTime"},
+                {data: null, orderable: false, render: function (data, type, full, meta) {
+                    var html = '';
+                    if(full.taskVO.assignee){
+                        html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="complete-task">办理</a>'
+
+                    }else{
+                        html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="claim-task">签收</a>';
+                    }
+
+                    html += '<span class="text-explode">|</span>';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="watch-task">查看节点</a>';
+
+                    html += '<span class="text-explode">|</span>';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="watch-detail">查看明细</a>';
+                    return html;
+                }},
+
+            ]
+        });
+
+        //签收任务
+        todoTaskTable.on('click', '.claim-task', function (event) {
+            var data = todoTaskTable.row($(this).data('row')).data();
+            $.get(basePath + "/bpm/task/claim/" + data.taskVO.id, function (result) {
+                todoTaskTable.draw();
+
+            }, 'JSON');
+            event.stopPropagation();
+        });
+
+        //反签收
+        todoTaskTable.on('click', '.claim-task', function (event) {
+            var data = todoTaskTable.row($(this).data('row')).data();
+            $.get(basePath + "/bpm/task/claim/" + data.taskVO.id, function (result) {
+                todoTaskTable.draw();
+
+            }, 'JSON');
+            event.stopPropagation();
+        });
+
+        //处理任务
+        todoTaskTable.on('click', '.complete-task', function (event) {
+            var data = todoTaskTable.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '330px'],
+                content: basePath + "/bpm/task/view/" + data.taskVO.id,
+            })
+
+            event.stopPropagation();
+        });
+
+        todoTaskTable.on('click', '.watch-task', function (event) {
+            var data = todoTaskTable.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '330px'],
+                content: basePath + "/bpm/processInstance/trace/" + data.id,
+            });
+            event.stopPropagation();
+        });
+
+        todoTaskTable.on('click', '.watch-detail', function (event) {
+            var data = todoTaskTable.row($(this).data('row')).data();
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '330px'],
+                content: basePath + "/bpm/processInstance/detail/" + data.id,
+            });
+            event.stopPropagation();
+        });
+
+
+        var runningTask = bt.datatable.init({
+            elem: "#runningTask",
+            ajax: {
+                url: basePath + "/bpm/my/running",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {data: "processDefinitionName", orderable: false},
+                {data: "startTime", orderable: false},
+                {data: "startUserId", orderable: false},
+                {data: null, orderable: false,render:function(data, type, full, meta){
+                    return full.currentTask.name
+                }},
+                {data: null, orderable: false, render: function (data, type, full, meta) {
+                    var html = '';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="detail">查看明细</a>'
+                    return html;
+                }},
+
+            ]
+        });
+
+
+
+        var finishedTask = bt.datatable.init({
+            elem: "#finishedTask",
+            ajax: {
+                url: basePath + "/bpm/my/finished",
+            },
+            scrollY:        '200px',
+            scrollX:true,
+            scrollCollapse: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {data: "processDefinitionName", orderable: false},
+                {data: "startTime", orderable: false},
+                {data: "endTime"},
+                {data: "startUserId", orderable: false},
+                {data: null, orderable: false, render: function (data, type, full, meta) {
+                    var html = '';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="detail">查看明细</a>'
+                    return html;
+                }},
+
+            ]
+        });
+
+        var startByMySelf = bt.datatable.init({
+            elem: "#startByMySelf",
+            ajax: {
+                url: basePath + "/bpm/my/startByMySelf",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {data: "id", orderable: false},
+                {data: "businessKey", orderable: false},
+                {data: "processDefinitionId", orderable: false},
+                {data: "startTime", orderable: false},
+                {data: "endTime"},
+                {data: null, orderable: false, render: function (data, type, full, meta) {
+                    var html = '';
+                    html+='<a href="javascript:void(0);" data-row="' + meta.row + '" class="detail">查看明细</a>'
+                    return html;
+                }},
+
+            ]
+        });
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <table class="layui-table">
+        <tbody>
+
+        <tr class="bold info">
+            <td colspan="2">
+            </td>
+        </tr>
+        #foreach($key in $keys)
+        <tr>
+            <td style="width: 40%">$!{key}</td>
+            <td data-key="$!{key}">
+##                查看详细
+                <a class="btn btn-link no-padding btn-details">#springMessage('sys.monitor.lookDetails')</a>
+##                  删除
+                <a class="btn btn-link no-padding btn-delete">#springMessage('common.button.delete')</a>
+            </td>
+        </tr>
+        #end
+        </tbody>
+    </table>
+    #parse("views/common/footer.vm")
+    <script>
+        $(".btn-details").click(function() {
+            var td = $(this).closest("td");
+            var key = td.data("key");
+            var url = "${basePath}/sys/monitor/ehcache/$!{cacheName}/" + key + "/details";
+            $.getJSON(url, function(data) {
+                var detail = td.find(".detail");
+                if(detail.length) {
+                    detail.remove();
+                }
+                detail = $("<div class='detail alert alert-block alert-info in fade'><button type='button' class='close' data-dismiss='alert'>&times;</button></div>");
+
+                var detailInfo = "";
+                detailInfo += "命中次数:" + data.hitCount;
+                detailInfo +=" | ";
+                detailInfo += "大小:" + data.size;
+                detailInfo +=" | ";
+                detailInfo += "最后创建/更新时间:" + data.latestOfCreationAndUpdateTime;
+                detailInfo +=" | ";
+                detailInfo += ",最后访问时间:" + data.lastAccessTime;
+                detailInfo +=" | ";
+                detailInfo += "过期时间:" + data.expirationTime;
+                detailInfo +=" | ";
+                detailInfo += "timeToIdle(秒):" + data.timeToIdle;
+                detailInfo +=" | ";
+                detailInfo += "timeToLive(秒):" + data.timeToLive;
+                detailInfo +=" | ";
+                detailInfo += "version:" + data.version;
+
+                detailInfo +="<br/><br/>";
+                detailInfo +="值:" + data.objectValue;
+
+                detail.append(detailInfo);
+                td.append(detail);
+
+                td.find(".alert").alert();
+
+            });
+        });
+
+        $(".btn-delete").click(function() {
+
+            var td = $(this).closest("td");
+            var key = td.data("key");
+            var url = "${basePath}/sys/monitor/ehcache/${cacheName}/" + key + "/delete";
+            $.get(url, function(data) {
+                td.closest("tr").remove();
+            });
+
+        });
+
+        $(".btn-clear").click(function() {
+            $.app.confirm({
+                title: "确认清空缓存",
+                message: "确认清空整个缓存吗？",
+                ok: function () {
+                    $.app.waiting("正在执行..");
+                    var url = "${basePath}/sys/monitor/ehcache/${cacheName}/clear";
+                    $.get(url, function(data) {
+                        $.app.waitingOver();
+                        window.location.reload();
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

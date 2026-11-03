@@ -1,0 +1,2 @@
+UPDATE FC_SUBJECT SET acc_type = RTRIM(acc_type) WHERE acc_type IS NOT NULL;
+COMMIT;

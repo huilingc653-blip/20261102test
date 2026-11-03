@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<input type="hidden" id="corpId" value="$!{corpId}">
+	<input type="hidden" id="startTime" value="$!{startTime}">
+	<input type="hidden" id="endTime" value="$!{endTime}">
+	<input type="hidden" id="type" value="$!{type}">
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+  		<thead>
+   			<tr>
+        		<th>#springMessage('table.fbsBudget.net')</th>##网点
+       			<th>#springMessage('table.fbsBudget.corpId')</th>##单位
+        		<th>#springMessage('table.innerAccChanging.acc')</th>##内部账户##
+	   			<th>#springMessage('table.innerAccChanging.accName')</th>##内部账户名称##	
+        		<th>#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+       			<th>#springMessage('table.btBankAcc.accType')</th>##账户类别
+        		<th>#springMessage('table.fcAcc.accOpenTime')</th>##开户日期
+       			<th>#springMessage('fcAccBalanceQuery.onlineBalance')</th>##当前账面余额
+       			<th>#springMessage('fcAccBalanceQuery.availableBalance')</th>##当前可用余额
+       			<th>#springMessage('fcAccBalanceQuery.overdraftMoney')</th>##当前可透支余额
+       			<th>#springMessage('table.ratBkrationDisDetail.freezeMoney')</th>##当前冻结金额
+       			<th>#springMessage('table.fcFreeze.unfreezeMoney.yes')</th>##当解冻金额
+       			<th>#springMessage('table.innerAccChanging.detail')</th>##变动详情
+       			
+    		</tr>
+  		</thead>
+	</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','dateType','corp','datatable','bttable'], function(){
+	 bt.corp.init();
+	 bt.dateType.init();
+	 corpId = $("#corpId").val();
+	 startTime = $("#startTime").val();
+	 endTime = $("#endTime").val();
+	 type = $("#type").val();
+	 
+	 btTable = bt.bttable.init({
+		 elem:"#appTable",
+		 url:basePath+"/netbank/report/innerAccChanging/detailDatatable",
+		 urldata:{"corpId":corpId,"startTime":startTime,"endTime":endTime,"type":type},
+		 columns:[
+		          {data:"netName",bSortable:true,className:"center"},
+		          {data:"corpName",bSortable:true,className:"center"},
+		          {data:"blnctrAcc",bSortable:true,className:"center"},	
+		          {data:"accName",bSortable:true,className:"center"},
+		          {data:"curName",bSortable:true,className:"center"},
+		          {data:"accType",bSortable:true,className:"center",
+		          	render: function (data, type, full, meta ) {
+		                   return  bt.dict("InnerAccount.AccType",data.accType);
+		            }
+		          },
+		          {data:"accOpenTime",bSortable:true,className:"center"},
+		          {data:"checkBalance",bSortable:true,className:"textRight",
+		            	render: function (data, type, full, meta ) {
+		                    return bt.money.format(data.checkBalance);
+		          }},
+		          {data:"availableBalance",bSortable:true,className:"textRight",
+		            	render: function (data, type, full, meta ) {
+		                    return bt.money.format(data.availableBalance);
+		          }},
+		          {data:"overdraftMoney",bSortable:true,className:"textRight",
+		            	render: function (data, type, full, meta ) {
+		          	        return bt.money.format(data.overdraftMoney);
+		          }},	
+		          {data:"wfMoney",bSortable:true,className:"textRight",
+		            	render: function (data, type, full, meta ) {
+		                    return bt.money.format(data.wfMoney);
+		          }},
+		          {data:"freezeMoney",bSortable:true,className:"textRight",
+		            	render: function (data, type, full, meta ) {
+		                    return bt.money.format(data.freezeMoney);
+		          }},
+		          {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+		        	  if($("#type").val() == 'acc'){
+		        	 		var  html ='<a class="" href="#" data-row="'+data.row+'" onclick="showView(\''+data.id+'\',\''+$("#type").val()+'\')">'+bt.lang("详情")+'</a>';
+		        	  }else if($("#type").val()  == 'history'){
+		        			var  html ='<a class="" href="#" data-row="'+data.row+'" onclick="showView(\''+data.hId+'\',\''+$("#type").val()+'\',\''+data.accState+'\')">'+bt.lang("详情")+'</a>';
+		        	  }else if($("#type").val()  == 'freeze'){
+		        		    var  html ='<a class="" href="#" data-row="'+data.row+'" onclick="showView(\''+data.feId+'\',\''+$("#type").val()+'\',\''+data.blnctrAcc+'\')">'+bt.lang("详情")+'</a>';
+		        	  }else if($("#type").val()  == 'thaw'){
+		        		    var  html ='<a class="" href="#" data-row="'+data.row+'" onclick="showView(\''+data.feId+'\',\''+$("#type").val()+'\',\''+data.blnctrAcc+'\')">'+bt.lang("详情")+'</a>';
+		        	  }else{
+		        		 	var  html ='<a class="" href="#" data-row="'+data.row+'" onclick="showView(\''+data.id+'\',\''+$("#type").val()+'\')">'+bt.lang("详情")+'</a>';
+		        	  }
+		        	  return html;
+		          }}
+		 ]
+	 });
+	 
+});
+
+function showView(id,type1,param){
+	if(type1 === 'acc'){
+		if(id){
+			if(bt.navtab){
+				 bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/inneraccount/fcacc/view/" + id +"/v");
+			     return;
+	        }
+			parent.layer.open({
+			     type: 2,
+			     area: ['850px', '530px'],
+			     maxmin: true,
+			     content: basePath + "/inneraccount/fcacc/view/"+id+"/v"
+			});
+		}
+	}else if(type1 === 'history'){
+		if(id){
+			 if (bt.navtab) {
+		       	 bt.navtab.addNavtab(bt.lang('common.view.data'),  basePath + "/inneraccount/fcaccchange/view/" + id +"/" + param +"/v");//data.accState
+		       	 return;
+		  	 }
+		   	 parent.layer.open({
+		         type: 2,
+		       	 area: ['850px', '530px'],
+		       	 maxmin: true,
+		         content: basePath + "/inneraccount/fcaccchange/view/" + id+"/" + param+"/v"
+		    });
+		}
+	}else if(type1 === 'writeoff'){
+		if(id){
+			 if (bt.navtab) {
+		       	 bt.navtab.addNavtab(bt.lang('common.view.data'),  basePath +"/inneraccount/fcacc/view/" + id +"/v");
+		       	 return;
+		  	 }
+			 parent.layer.open({
+			        type: 2,
+			        area: ['850px', '530px'],
+			        maxmin: true,
+			        content: basePath + "/inneraccount/fcacc/view/" + id+"/v"
+			    });
+		}
+	}else if (type1 === 'freeze'){
+		if(id){
+			 if(bt.navtab){
+			        bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/inneraccount/fcfreeze/updateOrView?id="+id+"&blnctrAcc="+param+"&opType=V");//blnctrAcc
+			        return;
+			 }
+			 parent.layer.open({
+				    type: 2,
+				    area: ['850px', '530px'],
+				    maxmin: true,
+				    content: basePath + "/inneraccount/fcfreeze/updateOrView?id="+id+"&blnctrAcc="+param+"&opType=V",
+			});
+		}
+	}else if(type1 === 'thaw'){
+		if(id){
+			if(bt.navtab){
+		        bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/inneraccount/fcUnfreeze/updateOrView?id="+id+"&blnctrAcc="+param+"&opType=V");//blnctrAcc
+		        return;
+		 	}
+			parent.layer.open({
+			    type: 2,
+			    area: ['850px', '530px'],
+			    maxmin: true,
+			    content: basePath + "/inneraccount/fcUnfreeze/updateOrView?id="+id+"&blnctrAcc="+param+"&opType=V",
+			});
+		}
+	} 
+	
+}
+</script>

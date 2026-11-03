@@ -1,0 +1,19 @@
+--修改内容:增加字段
+DECLARE VN_COUNT NUMBER;
+VC_STR VARCHAR2(2000);
+BEGIN
+  --查看该表中该字段是否存在
+SELECT COUNT(*)
+INTO VN_COUNT
+FROM user_tab_columns
+WHERE TABLE_NAME = 'CMS_INL_REPAY'
+  and column_name = 'REAL_INTEREST';
+--如果小于1则说明不存在，则新增此字段
+IF VN_COUNT < 1 THEN
+    VC_STR := 'alter table CMS_INL_REPAY add REAL_INTEREST NUMBER(15,2)';
+EXECUTE IMMEDIATE VC_STR;
+VC_STR := 'comment on column CMS_INL_REPAY.REAL_INTEREST is ''实付利息''';
+EXECUTE IMMEDIATE VC_STR;
+END IF;
+END;
+/

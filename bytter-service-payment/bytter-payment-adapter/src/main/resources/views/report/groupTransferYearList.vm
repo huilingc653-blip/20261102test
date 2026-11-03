@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.nisAllocationReport.corpName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-name="ins_corpId"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-resource="report:groupTransfer:year"></div>
+                </div>
+            </td>
+            <td class="textRight">年度</td>
+            <td width="20%">
+                <input type="text" name="queryYear" class="layui-input bt-input-inline bt-biz-dateType" data-biz-name="queryYear"
+                       value="$!{queryYear}" lay-verify="required" data-type="year">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" id="btnSearch" type="button">#springMessage('common.button.search')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="search" id="oldSearch" style="display: none">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead id="appTableThead">
+    <tr>
+        <th></th>
+        <th colspan="4">资金上划</th>
+        <th colspan="4">资金下拨</th>
+        <th colspan="5">资金留存</th>
+    </tr>
+    <tr>
+        <th>年/月</th>
+        <th class="queryYear">$!{queryYear}年</th>
+        <th class="beforeYear">$!{beforeYear}年</th>
+        <th>环比</th>
+        <th>同比</th>
+        <th class="queryYear">$!{queryYear}年</th>
+        <th class="beforeYear">$!{beforeYear}年</th>
+        <th>环比</th>
+        <th>同比</th>
+        <th class="queryYear">$!{queryYear}年</th>
+        <th class="beforeYear">$!{beforeYear}年</th>
+        <th>环比</th>
+        <th>同比</th>
+        <th>留存率</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form','datatable','corp','moneyType','dateType','selectType','dicts','mulselect','rateType'], function(){
+        $ = bt.jquery,form = bt.form(),moneyFun = bt.moneyType.getFun();
+        bt.moneyType.init();//金额
+        var dateTypes = bt.dateType.init();//日期
+        bt.mulselect.init();
+        bt.corp.init();
+        var moneyFun = bt.moneyType.getFun();
+
+        var datatable = bt.datatable.init({
+            elem: "#appTable",
+            // isInitData: false,
+            paging: false,
+            colReorder: true,
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            checkbox:false,
+            ajax: {
+                'url': basePath+"/report/nisAllocationReq/yearDatatable"
+            },
+            ignoreButtons: ['state','print'],// state取消表格保存按钮
+            exportFile: {
+                customPrint: {
+                    header: function () {
+                        var thead = $("#appTableThead").html();
+                        var printHtml = "<tr><th colspan='14' style='text-align:center;'>集团资金划拨年度分析表</th></tr>";
+                        printHtml = printHtml.concat(thead);
+                        //console.log(printHtml)
+                        return printHtml;
+                    },
+                },
+            },
+            columns: [
+                {data:"transTime",bSortable:false,className:"center"},
+                {data:"thisUpAmt",bSortable:false,className:"textRight",render: function (data, type, full, meta) {
+                        return moneyFun.format(full.thisUpAmt);
+                    }},
+                {data:"beforeUpAmt",bSortable:false,className:"textRight",render: function (data, type, full, meta) {
+                        return moneyFun.format(full.beforeUpAmt);
+                    }},
+                {data:"upChainRatio",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.upChainRatio, 'percent', 2, ',');
+                    }},
+                {data:"upRatio",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.upRatio, 'percent', 2, ',');
+                    }},
+                {data:"thisDownAmt",bSortable:false,className:"textRight",render: function (data, type, full, meta) {
+                        return moneyFun.format(full.thisDownAmt);
+                    }},
+                {data:"beforeDownAmt",bSortable:false,className:"textRight",render: function (data, type, full, meta) {
+                        return moneyFun.format(full.beforeDownAmt);
+                    }},
+                {data:"downChainRatio",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.downChainRatio, 'percent', 2, ',');
+                    }},
+                {data:"downRatio",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.downRatio, 'percent', 2, ',');
+                    }},
+                {data:"thisRemainAmt",bSortable:false,className:"textRight",render: function (data, type, full, meta) {
+                        return moneyFun.format(full.thisRemainAmt);
+                    }},
+                {data:"beforeRemainAmt",bSortable:false,className:"textRight",render: function (data, type, full, meta) {
+                        return moneyFun.format(full.beforeRemainAmt);
+                    }},
+                {data:"remainChainRatio",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.remainChainRatio, 'percent', 2, ',');
+                    }},
+                {data:"remainRatio",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.remainRatio, 'percent', 2, ',');
+                    }},
+                {data:"remainRate",bSortable:false,className:"center",render:function (data,type,full,meta){
+                        return bt.rateType.getFun().format(full.remainRate, 'percent', 2, ',');
+                    }}
+            ],
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: false,
+                sumTextCol:0,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '1',
+                        dataName: 'thisUpAmt'
+                    },{
+                        colNum: '2',
+                        dataName: 'beforeUpAmt'
+                    },{
+                        colNum: '5',
+                        dataName: 'thisDownAmt'
+                    },{
+                        colNum: '6',
+                        dataName: 'beforeDownAmt'
+                    },{
+                        colNum: '9',
+                        dataName: 'thisRemainAmt'
+                    },{
+                        colNum: '10',
+                        dataName: 'beforeRemainAmt'
+                    }
+
+                ]
+            }
+
+        });
+
+
+
+        // 查询
+        $("#btnSearch").click(function(){
+            var queryYear = dateTypes.get("queryYear").val();
+            if (bt.empty(queryYear)){
+                parent.layer.alert("请选择查询年度！", {icon:2})
+                return;
+            }
+            var beforeYear = Number(queryYear) - 1;
+            $(".queryYear").html(queryYear+"年");
+            $(".beforeYear").html(beforeYear+"年");
+
+            // 触发查询
+            $("#oldSearch").trigger("click");
+        });
+
+
+        /**判断字符串是否为空*/
+        bt.empty = function(ms){
+            if(typeof(ms) == "undefined" || ms == null || ms == "" || ms == "null"){
+                return true;
+            }
+            return false;
+        }
+    });
+
+</script>
+</html>

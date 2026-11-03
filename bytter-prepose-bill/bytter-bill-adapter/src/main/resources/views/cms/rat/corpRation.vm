@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="get">
+	<table class="layui-table" id="table" lay-skin="line" lay-even="">
+	<thead>
+		<tr>
+			<td width="155" >#springMessage('common.corp.search')：</td>
+			<td style="font-weight:100" width="150" id="rCode"><input type="text" name="code" value="$!{code}" id="code"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.ratBkration.corpId')"></td>
+			<td>
+				<button class="layui-btn" id="send">#springMessage('common.button.search')</button>
+				<button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+
+			</td>
+		<tr>
+	</thead>
+	<thead>
+	<tr>
+		<td colspan="3"><font color=red>#springMessage('table.ratCorp.explain')</font></td>
+	<tr>
+	</thead>
+</table>
+</form>
+<form class="layui-form" method="post">
+    <table class="layui-table" id="corp-table" lay-skin="line" lay-even="">
+       	<thead>
+        <tr><th colspan="3" align="center">#springMessage('table.ratCorp.choose')</th></tr>
+        <tr>
+            <th width="20"><input type="checkbox" name="" lay-skin="primary" lay-filter="checkallcorp">&nbsp;&nbsp;#springMessage('common.check.all')
+            	#springMessage('common.ratCorp.corp')
+            </th>
+            <th></th>
+            <th width="200">#springMessage('common.ratCorp.corpStatus')</th>
+        </tr>
+        </thead>
+        <tbody>
+        #foreach($corp in $corpDTO)
+        <tr data-tt-id="$!{corp.id}" class="ttt" data-tt-parent-id="$!{corp.parentId}">
+            #if(!$corp.ratGroup || $corp.ratGroup == 0)
+            	<td width=500><input type="checkbox" name="corpIds" class="corpIds"
+						 lay-skin="primary" value="${corp.id}" lay-filter="checknet"/>&nbsp;&nbsp;(${corp.code})&nbsp;&nbsp;${corp.name}</td>
+				#if($corp.type==0)
+        		<td><input type="checkbox" class="checkAll" name="checkAll" id="${corp.id}" lay-skin="primary"   lay-filter="checknet">&nbsp;&nbsp;#springMessage('common.check.all')</td>
+        		#else
+        		<td></td>
+        		#end
+				<td><span style="color:red;">#springMessage('common.ratCorp.ratGroup0')</span></td>
+            #else
+            	<td width=500><input type="checkbox" name="corpIds" class="corpIds"
+						 lay-skin="primary" value="${corp.id}" checked="true" lay-filter="checknet"/>&nbsp;&nbsp;(${corp.code})&nbsp;&nbsp;${corp.name}</td>
+                #if($corp.type==0)
+        		<td><input type="checkbox" class="checkAll"  id="${corp.id}" name="checkAll" lay-skin="primary" lay-filter="checknet">&nbsp;&nbsp;#springMessage('common.check.all')</td>
+        		#else
+        		<td></td>
+        		#end
+                <td ><span name="hasCredit">#springMessage('common.ratCorp.ratGroup1')</span></td>
+            #end
+        </tr>
+        #end
+        <tr align="center">
+        	<td colspan=3>
+        	<div class="layui-input-block">
+        	<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+        	</div>
+        	</td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+    <script>
+	    var action = "/cms/rat/ratbkration/saveRatCorp";
+        layui.use(['form','jquery','treeTable','checkboxs'], function(){
+            $ = layui.jquery;form = bt.form();
+            bt.treeTable.init({elem:"#corp-table",column:0});
+            //全选
+            form.on('checkbox(checkallcorp)', function(data){
+            	var checked = data.elem.checked;
+            	var checkboxs = $("#corp-table").children("tbody").find("input[type='checkbox']");
+            	bt.each(checkboxs,function(){
+
+            		$(this).prop("checked",checked)
+
+            	})
+            	form.render("checkbox")
+          	});
+
+          	//监听提交
+    		form.on('submit(submit)', function(data) {
+    			var corpIds = [];
+				var hasCredits = [];//已授信的单位和网点统计个数统计
+    			$('form').find('input[name="corpIds"]:checked').each(function(){
+    				corpIds.push($(this).val());
+    			});
+				$('form').find('span[name="hasCredit"]').each(function(){
+    				hasCredits.push($(this).val());
+    			});
+
+    			if(corpIds.length > 0){
+    				data.field.corpIds = corpIds;
+
+    			   $.post(basePath + action,data.field, function(result) {
+    				if (result.success) {
+    					parent.layer ? parent.layer.closeAll() : layer.closeAll();
+    				}
+    				location.reload();
+    				parent.layer ? parent.layer.alert(result.msg, {
+    					icon : result.success ? 1 : 2
+    				}) : layer.alert(result.msg, {
+    					icon : result.success ? 1 : 2
+    				});
+    			}, 'JSON');
+    			}else{
+				    corpIds.push("");
+    				data.field.corpIds = corpIds;
+				  if(hasCredits.length>0){//已存在授信网点或单位，现更改状态为“非集团统一授信主体”
+						   $.post(basePath + action,data.field, function(result) {
+    				if (result.success) {
+    					parent.layer ? parent.layer.closeAll() : layer.closeAll();
+    				}
+    				location.reload();
+    				parent.layer ? parent.layer.alert(result.msg, {
+    					icon : result.success ? 1 : 2
+    				}) : layer.alert(result.msg, {
+    					icon : result.success ? 1 : 2
+    				});
+    			    }, 'JSON');
+				 }else{//界面无授信网点或单位，输出提示信息
+				    layer.alert(bt.lang("sys.accountGrant.corpUnSelect"), {icon:5});
+    				}
+    			}
+				return false;
+    		});
+    		form.render();
+        //生成列表
+
+        $("#send").click(function(){
+        	var code = $("#code").val();
+	    	var action =basePath + "/cms/rat/ratbkration/queryCorp";
+	    	$("#searchForm").attr("action",action);
+	    	$("#searchForm").submit();
+	    });
+        //获取有效的网点单位
+          $.ajax({
+				url:basePath+"/cms/rat/ratbkration?getlistEffectiveCorp",
+				method:'POST',
+				data:{},
+				dataType:'json',
+				success:function(data){
+					if(data){
+						$.each(data.obj,function(i,tem){
+							var pid = data.obj[i].parentId;
+							var cid = data.obj[i].id;
+						// if(data.obj[i].type ==0){
+							if($("#"+cid).length){ // 如果有全选按钮
+							//全选checkbox
+							$("#"+cid).attr("data-parent-id",cid);
+							$("input[value='"+cid+"']").attr("data-child-id",cid);
+							var sid = $("tr[data-tt-parent-id ='"+cid+"']").data("tt-id");
+							if(pid){
+								//全选checkbox
+								$("#"+cid).attr("data-child-id",pid);
+							}
+						}else{
+							$("input[value='"+cid+"']").attr("data-child-id",pid);
+						}
+
+
+					});
+					}
+				}
+			});
+      form.on("checkbox(checknet)",function(data){
+    	  //控件左边的checkbox选中时，全部被选中或不选中
+	 	  var cid = $(data.elem).data("child-id");
+	 	  var checked = data.elem.checked;
+	 	  getCorp(cid);
+	 	  //右边全选时，左边相应的要被全选中或不全不选中
+	 	  var pid = $(data.elem).data("parent-id");
+	 	  getNet(pid,checked);
+	 	  form.render("checkbox")
+      })
+      function getNet(pid,checked){
+    	  if (pid){
+    		  var checkboxschild = $("#corp-table ").find("input[data-child-id ='"+pid+"']") ;
+    		  bt.each(checkboxschild,function(){
+    			  $(this).prop("checked",checked);
+    			  var pidchild = $(this).data("parent-id");
+    			  if(pidchild){
+    				  getNet(pidchild,checked)
+    			  }
+    		  })
+      	}
+      }
+      function getCorp(cid){
+    	  var checkedboxsLen = $("#corp-table ").find("input[data-child-id ='"+cid+"']:checked").length;
+    	  var checkboxsLen = $("#corp-table ").find("input[data-child-id ='"+cid+"']").length;
+    	  if(checkedboxsLen == checkboxsLen ){
+    		  $("#corp-table ").find("input[data-parent-id ='"+cid+"']").prop("checked",true)
+    	  }else{
+    		  $("#corp-table ").find("input[data-parent-id ='"+cid+"']").prop("checked",false)
+    	  }
+    	  var cidparent = $("#corp-table ").find("input[data-parent-id ='"+cid+"']").data("child-id");
+    	  if(cidparent){
+    		  getCorp(cidparent)
+    	  }
+    }
+
+	//监听重置
+	resetCode = function(){
+	    var inputs = $('#rCode').find('input');
+	    inputs.each(function(){
+	        $(this).val("");
+	    })
+	}
+ 	});
+
+    </script>
+</body>
+</html>

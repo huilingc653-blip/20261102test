@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+#parse("views/common/head.vm")
+#parse("views/flow/flow.vm")
+</head>
+<body>
+<form class="layui-form layui-form-pane">
+	<input type="hidden" id="taskId" name= "taskId" value="$!{taskId}">
+	<input type="hidden" id="billNo" value="$!{tpPaymentPage.billNo}"/>
+	<input id="bankaccOver" name="bankaccOver" type="hidden" value="$!{bankaccOver}">
+	<input type="hidden" id="balance" name="balance" data-name="balance" data-biz-name="balance"
+		   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{tpPaymentPage.balance}">
+	<input type="hidden" id="payMoney" name="payMoney" data-name="payMoney" data-biz-name="payMoney"
+		   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{tpPaymentPage.payMoney}">
+	<input type="hidden" name="wishPayday" class="layui-input bt-biz-dateType" value="$!{tpPaymentPage.wishPayday}"
+		   data-type="date" data-name="wishPayday" data-biz-name="wishPayday">
+</form>
+	#parse("views/ttpay/viewTpPayment.vm")
+	#paymentWorkFlowHtml()
+	#paymentWorkFlowScript()
+<script>
+	bt.use(['form','jquery', 'moneyType', 'dateType'], function(){
+		var $ = bt.jquery,form = bt.form();
+		var moneyType=bt.moneyType.init();
+		var moneyFun = bt.moneyType.getFun();
+		var dateType = bt.dateType.init();
+		var dateFun = bt.dateType.getFun();
+		bt.workFlow.beforeSubmit = function(submitData){
+			if(submitData.workflowPass=="1") {
+				var nowDate = bt.date.format(new Date(), 'yyyy-MM-dd');
+				var wishPayday = dateType.get("wishPayday").val();//期望支付日期
+				var billNo = $("#billNo").val();
+				if (bt.date.compare(wishPayday, nowDate) > 0) {
+					parent.layer.confirm(bt.lang('nis.message.wishpayday.pass', [billNo]), function () {
+						debugger;
+						bt.workFlow.submit(submitData, true);
+					}, function () {
+					});
+					return false;
+				}
+			}
+			var taskIds = [];
+			taskIds.push($("#taskId").val());
+			bt.workFlow.taskList = taskIds;
+			return true;
+		}
+		bt.workFlow.afterSubmit = function(){
+			parent.layer?parent.layer.closeAll():layer.closeAll();
+		}
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+package com.byttersoft.billbank.dao;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.jdbc.Work;
+import org.hibernate.transform.Transformers;
+import com.bytter.core.base.BaseCommonDao;
+import com.bytter.core.utils.StringUtils;
+import com.bytter.bill.domain.billbank.util.EntityTableFieldInfo;
+import com.bytter.bill.domain.billbank.util.StringUtil;
+public class BaseDao<T, PK extends Serializable> extends BaseCommonDao<T, PK> implements java.io.Serializable {
+    /**
+     * 根据SQL查询出结果集，并转换对于实体、带缓存
+     * <br>
+     * <b>作者：</b>zhoul<br>
+     * <b>日期：</b>2017年6月23日<br>
+     *
+     * @param sql       SQL
+     * @param first     开始记录
+     * @param maxResult 最大记录
+     * @param params    参数
+     * @return 结果集
+     */
+    public List listBySQL(String sql, Integer first, Integer maxResult, final Map<String, ?> params) {
+        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+        if (params != null) {
+            sqlQuery.setProperties(params);
+        }
+        if(first!=null && maxResult!=null){
+            sqlQuery.setFirstResult(first);
+            sqlQuery.setMaxResults(maxResult);
+        }
+        sqlQuery.setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP);
+        List list=sqlQuery.list();
+        List<Map<String,Object>> newList=new ArrayList<Map<String,Object>>();
+        if(list!=null&&list.size()>0){
+            for(Object obj:list){
+                if(obj instanceof Map){
+                    Map<String,Object> mapInfo=(Map)obj;
+                    Map<String,Object> mapInfoNew=new HashMap<String,Object>();
+                    for(Entry<String,Object> entry:mapInfo.entrySet()){
+                        mapInfoNew.put(entry.getKey().toLowerCase(), entry.getValue());
+                        mapInfoNew.put(entry.getKey().toUpperCase(), entry.getValue());
+                    }
+                    newList.add(mapInfoNew);
+                }
+            }
+        }
+        return newList;
+    }
+    public List listBySQL(String sql, final Map<String, ?> params) {
+//		SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+//		if (params != null) {
+//			sqlQuery.setProperties(params);
+//		}
+//		sqlQuery.setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP);
+        return this.listBySQL(sql, null, null, params);
+    }
+    
+	/* 通过hibnate完成数据库的更新与删除 */
+	@SuppressWarnings("rawtypes")
+	public int updateDelByHql(String hql, Map params) {
+		Query query = getSession().createQuery(hql);
+		if (params != null)
+			query.setProperties(params);
+		return query.executeUpdate();
+	}
+	
+    /**
+     * 批量jdbc新增操作
+     *
+     * @param infoList 新增对象
+     * @return
+     */
+    public int batchJdbcSave(final List<?> infoList) {
+        this.getSession().doWork(new Work() {
+            @Override
+            public void execute(Connection conn) throws SQLException {
+                if (infoList != null && infoList.size() > 0) {
+                    Object obj = infoList.get(0);
+                    EntityTableFieldInfo entityInfo = EntityTableFieldInfo.getEntityTableFieldInfo(obj.getClass());
+                    String sql = entityInfo.getInsetSql();
+                    if (StringUtil.isNotEmpty(sql)) {
+                        PreparedStatement ps = conn.prepareStatement(sql);
+                        for (int i = 0; i < infoList.size(); i++) {
+                            obj = infoList.get(i);
+                            int index = 0;
+                            for (Entry<String, String> entry : entityInfo.getTableField().entrySet()) {
+                                Object value = entityInfo.getValueByEntity(obj, entry.getKey());
+                                if (value instanceof Date) {
+                                    Timestamp dateValue = new Timestamp(((Date) value).getTime());
+                                    ps.setTimestamp(++index, dateValue);
+                                } else {
+                                    ps.setObject(++index, value);
+                                }
+                            }
+                            ps.addBatch();
+                        }
+                        ps.executeBatch();
+                    }
+                }
+            }
+        });
+        return infoList.size();
+    }
+}

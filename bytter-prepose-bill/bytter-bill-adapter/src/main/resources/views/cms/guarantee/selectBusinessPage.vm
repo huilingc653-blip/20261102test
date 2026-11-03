@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+        .layui-input{
+            width:160px;
+            table-layout:fixed
+        }
+    </style>
+</head>
+<body>
+    <div style="height: 100%">
+        <input type="hidden" id="sysCode" value="$!{sysCode}">
+        <div>
+            <div class="ratDiv" style="display: none">##银行授信
+                <form id="ratSearch" class="layui-form">
+                    <input type="hidden" name="nis_id" value="$!{businessIds}">##将已经选择过的单据id传递到后台
+                    <input type="hidden" name="eqs_curCode" value="$!{curId}">
+                    <input type="hidden" name="ins_corpId" value="$!{corpId}">
+                    <input type="hidden" name="ged_sDate" value="$!date.format('yyyy-MM-dd',$!{startDate})">
+                    <input type="hidden" name="led_eDate" value="$!date.format('yyyy-MM-dd',$!{endDate})">
+                    <table class="layui-table">
+                        <tr>
+                        ##授信合同号
+                            <td class="textRight">#springMessage('table.ratBkration.contractNo')</td>
+                            <td class="rCode">
+                                <div class="layui-input-inline">
+                                    <input type="text" name="likes_contractNo" autocomplete="off" class="layui-input">
+                                </div>
+                            </td>
+                        ##估计授信时间
+                            <td class="textRight">#springMessage('table.ratBkration.ratDate')</td>
+                            <td width="40%">
+                                <div class="layui-inline layui-input-inline">
+                                    <input type="text" name="ratDate" id="ratDate" class="layui-input bt-input-inline bt-biz-dateType"
+                                           data-type="date" data-biz-name="ratDate">
+                                </div>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="text-align: center;">
+                                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+                <table id="ratTable" class="layui-table layui-form" style="width:100%" >
+                    <thead>
+                    <tr>
+                        <th>#springMessage('common.table.thead.operation')</th>
+                        <th>#springMessage('table.ratBkration.ratMode')</th>##授信模式
+                        <th>#springMessage('table.ratBkration.ratCode')</th>##授信编号
+                        <th>#springMessage('table.ratBkration.contractNo')</th>##授信合同号
+                        <th>#springMessage('table.ratBkration.corpId')</th>##授信单位
+                        <th>#springMessage('table.ratBkration.bankCode')</th>##银行信息
+                        <th>#springMessage('table.ratBkration.curCode')</th>##授信币种
+                        <th>#springMessage('table.ratBkration.money')</th>##授信额度
+                        <th>#springMessage('table.ratBkration.begindate')</th>##授信开始时间
+                        <th>#springMessage('table.ratBkration.enddate')</th>##授信结束时间
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="provideDiv" style="display: none">
+                <form id="provideSearch" class="layui-form">
+                    <input type="hidden" name="nis_id" value="$!{businessIds}">
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                        ##单位
+                            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.corpId')</td>
+                            <td>
+                                <input type="hidden" name="ins_corpId" value="$!{corpId}" >
+                                <input type="text" class="layui-input"  readonly="readonly" value="$!{corpName}" >
+                            </td>
+                        ##币别
+                            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.curId')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input type="hidden" name="eqs_curId" value="$!{curId}" >
+                                    <div class="bt-biz-selectType"  data-name="curId" data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id" data-textfield="curName" data-defaultvalue="$!{curId}" data-disabled="true"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##借款日期
+                            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.plDate')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input name="ged_plDate" data-endid="endPlDate" class="layui-input bt-biz-dateType" type="text" value="$!date.format('yyyy-MM-dd',$!{startDate})"  data-min="$!date.format('yyyy-MM-dd',$!{startDate})">
+                                </div>
+                                <div class="layui-inline">
+                                    <span class="date-mid">~</span>
+                                </div>
+                                <div class="layui-inline">
+                                    <input name="led_plDate" id="endPlDate" class="layui-input bt-biz-dateType" type="text">
+                                </div>
+                            </td>
+                        ##还款日期
+                            <td class="textRight">#springMessage('cms.provide.deferred.repayDate')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input name="ged_plReDate" data-endid="endPlReDate" class="layui-input bt-biz-dateType" type="text">
+                                </div>
+                                <div class="layui-inline">
+                                    <span class="date-mid">~</span>
+                                </div>
+                                <div class="layui-inline">
+                                    <input name="led_plReDate" id="endPlReDate" class="layui-input bt-biz-dateType" type="text" value="$!date.format('yyyy-MM-dd',$!{endDate})"data-max="$!date.format('yyyy-MM-dd',$!{endDate})">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##借款单号
+                            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.billCode')</td>
+                            <td>
+                                <input type="text" name="likes_infoBillCode" value=""  class="layui-input" placeholder="#springMessage('table.cmsProvideLoanInfo.billCode')" />
+                            </td>
+                        ##借款金额
+                            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.plMoney')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input data-name="geg_plMoney" data-moneyendid="endPlMoney" class="layui-input bt-biz-moneyType" type="text">
+                                </div>
+                                <div class="layui-inline">
+                                    <span class="date-mid">~</span>
+                                </div>
+                                <div class="layui-inline">
+                                    <input id="endPlMoney" data-name="leg_plMoney" class="layui-input bt-biz-moneyType" type="text">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" style="text-align: center;">
+                                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </form>
+                <table id="provideTable" class="layui-table layui-form" style="width:100%">##银行借款
+                    <thead>
+                    <tr>
+                        <th>#springMessage('common.table.thead.operation')</th>
+                        <th>#springMessage('table.cmsProvideLoanInfo.bankId')</th><!-- 银行名称 -->
+                        <th>#springMessage('table.cmsProvideLoanInfo.corpId')</th><!-- 单位名称 -->
+                        <th>#springMessage('table.cmsProvideLoanInfo.billCode')</th><!-- 申请单号 -->
+                        <th>#springMessage('table.cmsProvideLoanSend.billCode')</th><!-- 发放单号 -->
+                        <th>#springMessage('table.cmsProvideLoanSend.contractCode')</th><!-- 发放编码 -->
+                        <th>#springMessage('table.cmsProvideLoanSend.createDate')</th><!-- 录入日期-->
+                        <th>#springMessage('table.cmsProvideLoanInfo.curId')</th><!-- 币别-->
+                        <th>#springMessage('table.cmsProvideLoanInfo.plMoney')</th><!-- 借款金额-->
+                        <th>#springMessage('table.cmsProvideLoanSend.money')</th><!-- 本次发放金额-->
+                        <th>#springMessage('table.cmsProvideLoanInfo.plDate')</th><!-- 借款日期 -->
+                        <th>#springMessage('cms.provide.deferred.repayDate')</th><!-- 还款日期 -->
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="loanDiv" style="display: none">##内部贷款
+                <form id="loanSearch" class="layui-form" >
+                    <input type="hidden" id="relateCon" value="$!{relateCon}">
+                    <input type="hidden" name="nis_id" value="$!{businessIds}">
+                    <input type="hidden" name="eqs_curCode" value="$!{curId}">
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                            <td class="textRight">#springMessage('table.cmsLoanInfo.corp')</td>
+                            <td>
+                                <input type="hidden" name="ins_corpId" value="$!{corpId}" >
+                                <input type="text" class="layui-input"  readonly="readonly" value="$!{corpName}" >
+                            </td>
+                        ##贷款金额
+                            <td class="textRight">#springMessage('table.cmsLoanInfo.loanMoney')</td>
+                            <td>
+                                <input type="text" data-name="geg_loanMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="money">
+                                <span class="date-mid">~</span>
+                                <input type="text" data-name="leg_loanMoney" class="layui-input bt-input-inline  bt-biz-moneyType" id="money">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##贷款日期
+                            <td class="textRight">#springMessage('table.cmsLoanInfo.loanDate')</td>
+                            <td>
+                                <input type="text" name="ged_loanDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="startDate" value="$!date.format('yyyy-MM-dd',$!{startDate})" data-min="$!date.format('yyyy-MM-dd',$!{startDate})">
+                                <span class="date-mid">~</span>
+                                <input type="text" name="led_loanDate" class="layui-input bt-input-inline bt-biz-dateType" id="startDate" >
+                            </td>
+                        ##还款日期
+                            <td class="textRight">#springMessage('table.cmsLoanDeferred.matureDate')</td>
+                            <td>
+                                <input type="text" name="ged_repayDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="endDate" >
+                                <span class="date-mid">~</span>
+                                <input type="text" name="led_repayDate" class="layui-input bt-input-inline bt-biz-dateType" id="endDate" value="$!date.format('yyyy-MM-dd',$!{endDate})" data-max="$!date.format('yyyy-MM-dd',$!{endDate})">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##单据编号
+                            <td class="textRight">#springMessage('table.cmsLoanInfo.billCode')</td>
+                            <td>
+                                <input type="text" name="likes_infoBillCode" class="layui-input">
+                            </td>
+                        ##合同编号
+                            <td class="textRight">#springMessage('table.cmsLoanInfo.contractCode')</td>
+                            <td>
+                                <input type="text" name="likes_contractCode" class="layui-input" >
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" style="text-align: center;">
+                                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </form>
+                <table id="loanTable" class="layui-table layui-form" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('common.table.thead.operation')</th>
+                        <th>#springMessage('table.cmsLoanInfo.billCode')</th>##贷款流水号
+                        <th>#springMessage('table.cmsLoanInfo.net')</th><!--所属资金中心   -->
+                        <th>#springMessage('table.cmsLoanInfo.corp')</th><!--申请单位  -->
+                        <th>#springMessage('table.cmsLoanInfo.contractCode')</th>##贷款合同编号
+                        <th>#springMessage('table.cmsLoanInfo.createDate')</th><!--录入日期  -->
+                        <th>#springMessage('table.cmsLoanSend.billCode')</th><!--贷款发放单号  -->
+                        <th>#springMessage('table.fcAcc.curId')</th><!--币别  -->
+                        <th>#springMessage('table.cmsLoanInfo.loanMoney')</th><!--贷款金额  -->
+                        <th>#springMessage('table.cmsLoanSend.loanMoney')</th><!--本次发放金额  -->
+                        <th>#springMessage('table.cmsLoanInfo.loanDate')</th><!--贷款日期  -->
+                        <th>#springMessage('table.cmsLoanDeferred.matureDate')</th><!--到期日期  -->
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="accebillDiv" style="display: none">##承兑汇票
+                <form id="accebillSearch" class="layui-form">
+                    <input type="hidden" name="nis_viceId" value="$!{businessIds}">
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                        ##出票人
+                            <td class="textRight">#springMessage('table.abVoucherinfo.payer')</td>
+                            <td>
+                                <input type="hidden" name="ins_corpId" value="$!{corpId}" >
+                                <input type="text" class="layui-input"  readonly="readonly" value="$!{corpName}" >
+                            </td>
+                        ##流通介质
+                            <td class="textRight">#springMessage('table.abVoucherinfo.billFlag')</td>
+                            <td>
+                                <div class=layui-form>
+                                    <div class="bt-biz-dict" data-type="mulselect" data-name="ini_billFlag"
+                                         data-biz-name="billFlag"
+                                         data-defaultvalue="11"  data-group="AB_BILL_FLAG">
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##出票日期
+                            <td class="textRight" width="10%">#springMessage('table.abVoucherinfo.startDate')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input type="text" name="ged_startDate" data-biz-name="ged_startDate"
+                                           class="layui-input bt-biz-dateType" data-endid="billStartDate" data-type="date"
+                                           value="$!date.format('yyyy-MM-dd',$!{startDate})" data-min="$!date.format('yyyy-MM-dd',$!{startDate})"
+                                           >
+                                </div>
+                                <span class="date-mid">~</span>
+                                <div class="layui-inline">
+                                    <input type="text" name="led_startDate"
+                                           data-name="led_startDate"
+                                           class="layui-input bt-biz-dateType" id="billStartDate" data-type="date">
+                                </div>
+                            </td>
+                           ##到期日期
+                            <td class="textRight" width="12%">#springMessage('table.abVoucherinfo.endDate')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input type="text" name="ged_endDate" data-biz-name="ged_endDate"
+                                           class="layui-input bt-biz-dateType"
+                                           data-endid="billEndDate" data-type="date">
+                                </div>
+                                <span class="date-mid">~</span>
+                                <div class="layui-inline">
+                                    <input type="text" name="led_endDate" data-name="led_endDate"
+                                           class="layui-input bt-biz-dateType" id="billEndDate"
+                                           data-type="date"  value="$!date.format('yyyy-MM-dd',$!{endDate})" data-max="$!date.format('yyyy-MM-dd',$!{endDate})">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##票据类型
+                            <td class="textRight">#springMessage('table.abVoucherinfo.billType')</td>
+                            <td>
+                                <div class=layui-form>
+                                    <div class="bt-biz-dict" data-type="mulselect" data-name="ini_billType"
+                                         data-biz-name="billType"
+                                         data-defaultvalue="10"  data-group="AB_BILL_TYPE">
+                                    </div>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" style="text-align: center;">
+                                <div class="layui-inline">
+                                    <button class="layui-btn" lay-submit lay-filter="search"
+                                            type="button">#springMessage('common.button.search')</button>
+                                    <button type="reset" class="layui-btn layui-btn-primary"
+                                            data-callback="clearData">#springMessage('common.button.reset')</button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </form>
+                <table id="accebillTable" class="layui-table layui-form" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('common.table.thead.operation')</th>
+                        <th>#springMessage('table.abVoucherinfo.billFlag')</th>
+                        <th>#springMessage('bill.accebill.billType')</th>
+                        <th>#springMessage('table.abVoucherinfo.origNo')</th>
+                        <th>#springMessage('table.abVoucherinfo.payer')</th>
+                        <th>#springMessage('bill.accebill.payBank')</th>
+                        <th>#springMessage('bill.accebill.emitType')</th>
+                        <th>#springMessage('bill.accebill.emitGuandisSign')</th>
+                        <th>#springMessage('table.abVoucherinfo.startOrSignDate')</th>
+                        <th>#springMessage('table.abVoucherinfo.endDate')</th>
+                        <th>#springMessage('table.abVoucherinfo.payee')</th>
+                        <th>#springMessage('bill.accebill.money')</th>
+                        <th>#springMessage('table.abVoucherinfoVice.bailMoney')</th>
+                        <th>#springMessage('bill.accbill.payDate')</th>
+                        <th>#springMessage('bill.accebill.billAnomalies')</th>
+                        <th>#springMessage('bill.accebill.dueRemind')</th>
+                        <th>#springMessage('bill.accebill.bustype')</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="lcsDiv" style="display: none;">
+                <form id="lcsSearch" class="layui-form">
+                    <input type="hidden" name="nis_id" value="$!{businessIds}">
+                    <input type="hidden" name="eqs_issuingCurId" value="$!{curId}">
+##                    <input type="hidden" name="ins_corpId" value="$!{corpId}">
+                <table class="layui-table">
+                    <tr>
+                        <td class="textRight">#springMessage('international.credit.lcInter')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                                     data-name="eqs_lcInter" data-biz-name="lcInter" >
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="textRight">#springMessage('international.credit.applicant')</td>
+                        <td>
+                            <input type="hidden" name="eqs_applicant" value="$!{corpId}" >
+                            <input type="text" class="layui-input" value="$!{corpName}"  readonly="readonly" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('international.credit.issuingDate')</td>
+                        <td>
+                            <input style="display: inline-block;width: 30%" data-biz-name="ged_issuingDate" type="text" class="layui-input bt-biz-dateType" name="ged_issuingDate" value="$!date.format('yyyy-MM-dd',$!{startDate})" data-min="$!date.format('yyyy-MM-dd',$!{startDate})"/>
+                            <span class=date-mid>~</span>
+                            <input style="display: inline-block;width: 30%" data-biz-name="led_issuingDate" type="text" class="layui-input bt-biz-dateType" name="led_issuingDate" value="$!date.format('yyyy-MM-dd',$!{endDate})" data-max="$!date.format('yyyy-MM-dd',$!{endDate})"/>
+                        </td>
+                        <td class="textRight">
+                            #springMessage('international.credit.creditNo')
+                        </td>
+                        <td>
+                            <input type="text" class="layui-input" name="likes_creditNo" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('international.credit.contractNo')</td>
+                        <td>
+                            <input type="text" class="layui-input" name="likes_contractNo" />
+                        </td>
+
+                        <td class="textRight">
+                            #springMessage('international.credit.creditMoney')
+                        </td>
+                        <td>
+                            <div>
+                                <input style="display: inline-block;width: 30%" data-biz-name="geg_creditMoney" type="text" class="layui-input bt-biz-moneyType" name="geg_creditMoney"/>
+                                <span class=date-mid>~</span>
+                                <input style="display: inline-block;width: 30%" data-biz-name="leg_creditMoney" type="text" class="layui-input bt-biz-moneyType" name="leg_creditMoney"/>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" style="text-align: center">
+                            <button class="layui-btn" type="button" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                            <button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+                        </td>
+                    </tr>
+                </table>
+                </form>
+                <table id="lcsTable" class="layui-table layui-form" style="width: 100%">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('common.table.thead.operation')</th>
+                        <th>#springMessage('international.credit.issuingBank')</th>##开证银行
+                        <th>#springMessage('international.credit.reBank')</th>##代开证银行
+                        <th>#springMessage('international.credit.lcInter')</th>##信用证类型
+                        <th>#springMessage('international.credit.applicant')</th>##开证人
+                        <th>#springMessage('international.credit.beneficiary')</th>##受益人
+                        <th>#springMessage('international.credit.creditNo')</th>##信用证号
+                        <th>#springMessage('international.credit.reCreditNo')</th>##代开信用证号
+                        <th>#springMessage('international.credit.contractNo')</th>##合同号
+                        <th>#springMessage('international.credit.issuingDate')</th>##开证日期
+                        <th>#springMessage('international.credit.expiryDate')</th>##信用证有效期
+                        <th>#springMessage('international.payment.curName')</th>##开证币别
+                        <th>#springMessage('international.credit.creditMoney')</th>##开证金额
+                        <th>#springMessage('international.credit.delayDates')</th>##远期天数
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/cms/guarantee/businessSelect.list.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

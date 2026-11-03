@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post" id="myform">
+        <input  id="id" type="hidden" name="id" value="$!{cmsBondType.id}">
+        <input  id="id" type="hidden" name="createDate" value="$!{cmsBondType.createDate}">
+        <input  id="id" type="hidden" name="createBy" value="$!{cmsBondType.createBy}">
+    <table id="appTable" class="layui-table layui-form">
+        <tr>
+        ##类别编码
+            <td class="textRight" style="width: 50%">#springMessage('table.cmsLease.typeCode')</td>
+            <td style="width: 50%">
+                <div class="layui-input-inline">
+                    <input type="text" id="bondCode" name="bondCode" lay-verify="required|code"
+                           maxlength="4" class="layui-input" value="$!{cmsBondType.bondCode}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##类别名称
+            <td class="textRight">#springMessage('table.cmsLease.typeName')</td>
+            <td>
+                <input type="text" name="bondName" lay-verify="required" class="layui-input" value="$!{cmsBondType.bondName}">
+            </td>
+        </tr>
+        <tr>
+            ##备注
+            <td class="textRight">#springMessage('table.cmsLoanRepay.rmk')</td>
+            <td>
+                <input type="text" name="rmk" class="layui-input" value="$!{cmsBondType.rmk}">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"style="text-align: center">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    var dicts,form;
+    bt.use(["jquery","dicts"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        dicts = bt.dicts.init();
+
+        //自定义验证规则
+        form.verify({
+            code:function(value){
+                if(value.length>4){
+                    // 债券代码不能大于4个字符！
+                    return '债券代码不能大于4个字符！';
+                }
+                var pattern = /^[a-zA-Z0-9|-]*$/;
+                if(!pattern.test(value)){
+                    // 类型编码只能填写英文数字
+                    return '类型编码只能填写英文/数字';
+                }
+            }
+        });
+
+        //监听提交
+        form.on("submit(submit)", function(data){
+            console.log(data.field);
+            data.field.createDate = data.field.createDate.substring(0,10);
+            if (data.field.updateDate != "undefined" && data.field.updateDate != null) {
+                data.field.updateDate = data.field.updateDate.substring(0,10);
+            }
+            var action = "/cms/bond/type/modify";
+            bt.loading.show();
+            $.post(basePath + action,data.field,function(data){
+                parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                if (data.success) {
+                    if (!bt.navtab) {
+                        bt.navtab.refreshParentTable();
+                    } else {
+                        bt.navtab.closeCurrent();
+                        bt.navtab.refreshCurrent();
+                    }
+                } else {
+                    bt.loading.hide();
+                }
+            },'JSON');
+            return false;
+        });
+    });
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+        .inCenter{
+            text-align: center!important;
+        }
+        .addRow {
+            cursor: pointer;
+            color: rgb(0, 0, 204);
+        }
+
+        .noneElem {
+            display: none;
+        }
+
+        .input-bp input {
+            border: none;
+            width: 192px;
+        }
+        .input-bp span {
+            position: absolute;
+            right: 4px;
+            top: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="corpId" value="$!{inlRepay.borrowInCorp}">
+    <input type="hidden" id="billNo" value="$!{inlRepay.billNo}">
+    <input type="hidden" id="ProcessDate" value="$!{inlRepay.repayDate}">
+    <input type="hidden" id="curId" value="$!{inlRepay.curId}">
+    <table class="layui-table">
+        #parse("views/cms/inl/send/sendCommonInfo.vm")
+
+        ##############################内部资金拆借还款申请信息######################################################################
+
+        <tr>
+            ##            内部资金拆借还款申请信息
+            <td colspan="4" style="font-weight: bolder;text-align: center" class="textLeft">#springMessage('cms.inl.info.repayApp')
+            </td>
+        </tr>
+        <tr>
+            ##            还款金额
+            <td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayMoney')</td>
+            <td>
+                <div class="layui-inline">
+                    $!number.formatNumeric($!{inlRepay.totalMoney},'#,##0.00')
+                    <input type="hidden" class="layui-input bt-biz-moneyType" data-name="totalMoney" data-biz-name="totalMoney"
+                           data-toUp="upperRepayMoney" value="$!{inlRepay.totalMoney}">
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            ##            还款本金
+            <td class="textRight">#springMessage('table.createRepayPlan.repaymentMoney')</td>
+            <td>
+                <div class="layui-inline">
+                    $!number.formatNumeric($!{inlRepay.repayMoney},'#,##0.00')
+                </div>
+            </td>
+            ##            还款利息
+            <td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayAccrual')</td>
+            <td>
+                <div class="layui-inline">
+                    $!number.formatNumeric($!{inlRepay.repayInterest},'#,##0.00')
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##            还款日期
+            <td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayDate')</td>
+            <td>
+                <div class="layui-inline">
+                    $!date.format('yyyy-MM-dd',$!{inlRepay.repayDate})
+                </div>
+            </td>
+            ##            还款金额大写
+            <td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayMoney')#springMessage('table.bisAccDtl.moneyUpper')</td>
+            <td>
+                <div class="layui-inline">
+                    <div id="upperRepayMoney"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##            拆入方还款账户
+            <td class="textRight">#springMessage('cms.inl.info.borrowInRepayMoneyAcc')</td>
+            <td>
+                <div class="layui-inline">
+                    $!{inlRepay.borrowInAcc}
+                </div>
+            </td>
+            ##            拆出方收款账户
+            <td class="textRight">#springMessage('cms.inl.info.borrowOutReceiveMoneyAcc')</td>
+            <td>
+                <div class="layui-inline">
+                    $!{inlRepay.borrowOutAcc}
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##            备注
+            <td class="textRight">#springMessage('table.cmsLoanInfo.rmk')</td>
+            <td colspan="3">
+                $!{inlRepay.rmk}
+            </td>
+        </tr>
+        <tr>
+            ##            附件
+            <td class="textRight">#springMessage('cms.loan.attachment')</td>
+            <td colspan="3">
+                <input type="hidden" name="attachmentId" id="repayAttachmentId">
+                <div id="repayUploader" class="layui-input-inline" style="width:100%;"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <!--预算-->
+                ##    资金计划挂接参数
+                <input type="hidden" name="isBudget" id="isBudget" value="$!{config.inl.is_budget}">
+                <input id="inlRepayItem" name="inlRepayItem" type="hidden" value="$!{config.inl.repay_budget}">
+                <input id="defItemCode" name="defItemCode" type="hidden" value="$!{config.inl.repay_budget}">
+                <input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+                <input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+                <div id="tagItemDetail"></div>
+            </td>
+        </tr>
+    </table>
+</form>
+<!-- 这里填写新HTML的代码 -->
+    #parse("views/common/footer.vm")
+<script>
+    var form, moneyType, dateType, dicts, rateType;
+    bt.use(["jquery", "form", "btUpload", "moneyType", "dateType", "dicts", "rateType"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        moneyType = bt.moneyType.init();
+        dateType = bt.dateType.init();
+        rateType = bt.rateType.init();
+        dicts = bt.dicts.init();
+        var gid = $("#sendAttachmentId").val();
+        var repayAttachmentId = $("#repayAttachmentId").val();
+        var up = bt.btUpload.init({
+            elem: "#sendUploader",
+            hasUpload: false,
+            hasDelete: false,
+            isExpand: true,
+            auto: false,
+            gid: gid
+        });
+
+        var repayUpload = bt.btUpload.init({
+            elem: "#repayUploader",
+            hasUpload: false,
+            hasDelete: false,
+            isExpand: true,
+            auto: false,
+            gid: repayAttachmentId
+        });
+
+        // 资金计划挂接
+        renderBudget()
+
+    });
+
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param value
+     * @returns {boolean}
+     */
+    function isEmpty(value) {
+        if (value == null || value == "" || value == undefined || value == " ") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param value
+     * @returns {boolean}
+     */
+    function isNotEmpty(value) {
+        return !isEmpty(value);
+    }
+
+    /**
+     * 资金计划查看
+     */
+    function renderBudget(){
+        //判断支付结算是否挂接资金计划
+        var isBudget = $("#isBudget").val();
+        if(isBudget == "1"){
+            //判断直融业务是否挂资金计划
+            var inlRepayItem = $("#inlRepayItem").val();
+            if(inlRepayItem != null && inlRepayItem != ""){
+                genOtherHtml();
+            }else{
+                $("#tagItemDetail").html("");
+            }
+        }
+    }
+
+    function genOtherHtml() {
+        var url = basePath + "/budget/fbsBudgetProcess/getViewItemDetail";
+        var param = {
+            corpId: $("#corpId").val(),
+            itemCode: $("#inlRepayItem").val(),
+            billNo: $("#billNo").val(),
+            businessName: $("#businessName").val(),
+            processSysname: $("#processSysname").val(),
+            processDate: $("#ProcessDate").val(),
+            curId: $("#curId").val(),//币别
+            type: 'select',
+            date: (new Date()).getTime()
+        };
+        $.ajax({
+            url: url, method: 'POST', data: param, async: true, success: function (json) {
+                $("#tagItemDetail").html("");
+                $("#tagItemDetail").html(json);
+                form.render();
+            }
+        });
+    }
+</script>
+</body>
+</html>

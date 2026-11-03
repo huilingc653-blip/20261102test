@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .categoryTable .category-link {
+            float: left;
+            margin: 5px 10px;
+        }
+
+        .layui-badge {
+            background-color: #526DD9;
+        }
+
+        table tbody td a {
+            color: #666;
+        }
+
+        table tbody td a.active {
+            color: #0267B6;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <form class="layui-form">
+        <table class="layui-table dark-layui-table">
+            <tbody>
+            <tr>
+                ##展示方式
+                <td width="100" align="center">#springMessage('common.display.mode')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="radio" data-group="cycleTime" data-defaultvalue="week"
+                         data-name="cycleTime"
+                         data-biz-name="cycleTime" data-callback="cycleTimeCallBack"></div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <div class="container" id="container">
+        #if($categoryList.size()>0)
+            <table class="layui-table categoryTable dark-layui-table" lay-even>
+                #foreach($category in $categoryList)
+                    #if($category.children && $category.children.size()>0)
+                        <tr>
+                            <td width="100" align="center">$!{category.name}</td>
+                            <td>
+                                #foreach($categoryA in $category.children)
+                                    #foreach($todo in $todoCounts)
+                                        #if($categoryA.cateKey == $todo.cateKey)
+                                            <div class="category-link"><a href="javascript:void(0);"
+                                                                          data-url="$!{categoryA.url}">$!{categoryA.name}</a>&nbsp;<span
+                                                    class="layui-badge">$!{todo.num}</span></div>
+                                        #end
+                                    #end
+                                #end
+                            </td>
+                        </tr>
+                    #end
+                #end
+            </table>
+        #else
+            <div class="layui-container">
+                <div class="layui-row">
+                    <div class="layui-col-md6 layui-col-md-offset3">
+                        <h1 class="text-center" style="margin-top: 50px;">#springMessage(
+                            "common.msg.temporarily_no_data")</h1>
+                    </div>
+                </div>
+            </div>
+        #end
+    </div>
+
+</div>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery', 'form', 'dicts'], function () {
+        var $ = bt.jquery;
+        var form = bt.form();
+        var emptyHtml = '<div class="layui-container"><div class="layui-row"><div class="layui-col-md6 layui-col-md-offset3"><h1 class="text-center" style="margin-top: 50px;">'
+        emptyHtml += bt.lang("common.msg.temporarily_no_data")
+        emptyHtml += '</h1></div> </div> </div>'
+
+        // 获取数据
+        function getCategoryList(cycleTime) {
+            $.ajax(
+                    {
+                        url: basePath + "/bpm/my/finishCount",
+                        method: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json',
+                        data: JSON.stringify({'cycleTime': cycleTime}),
+                        success: function (data) {
+                            if (data.categoryList && data.categoryList.length) {
+                                createTable(data.categoryList, data.todoCounts)
+                            } else {
+                                $('#container').html(emptyHtml)
+                            }
+                        }
+                    });
+        }
+
+        // 创建数据表格
+        function createTable(categoryList, counts) {
+            var html = '';
+            var countsKeysObj = {}
+            for (var i = 0; i < counts.length; i++) {
+                countsKeysObj[counts[i].cateKey] = counts[i].num
+            }
+            html += '<table class="layui-table categoryTable dark-layui-table" lay-even style="margin-top: 0">'
+            for (var i = 0; i < categoryList.length; i++) {
+                var category = categoryList[i]
+                if (category.children && category.children.length) {
+                    html += '<tr><td width="100" align="center">' + category.name + '</td>'
+                    html += '<td>'
+                    for (var j = 0; j < category.children.length; j++) {
+                        var categoryChild = category.children[j]
+                        if (categoryChild.cateKey && categoryChild.cateKey && countsKeysObj[categoryChild.cateKey]) {
+                            html += '<div class="category-link"><a href="javascript:void(0);" data-url="' + categoryChild.url + '">' + categoryChild.name + '</a>&nbsp;<span class="layui-badge">' + countsKeysObj[categoryChild.cateKey] + '</span></div>'
+                        }
+                    }
+                    html += '</td></tr>'
+                }
+            }
+            html += '</table>'
+            $('#container').html(html)
+        }
+
+        // 监听 展示方式选择
+        cycleTimeCallBack = function (data) {
+            getCategoryList(data.value)
+        }
+        var dicts = bt.dicts.init();
+        $('#container').on('click', ".category-link a", function () {
+            var cycleTime = dicts.get('cycleTime').val();
+            var url = basePath + $(this).data("url") + '?flowStatus=pass&cycleTime=' + cycleTime;
+            if (!url) {
+                return;
+            }
+            var title = $(this).text();
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.field.approved') + '-' + title, url);
+            }
+            $(this).addClass('active')
+        });
+
+    });
+</script>
+</body>
+</html>

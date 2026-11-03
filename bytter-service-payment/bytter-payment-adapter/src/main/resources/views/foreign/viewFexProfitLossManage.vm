@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body style="padding-bottom: 50px;">
+<div class="layui-collapse">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">#springMessage('table.fexTranReq.tranProductInfo')</h2>
+        <div class="layui-colla-content layui-show">
+            <form class="layui-form" method="post">
+                <input type="hidden" name="id" value="$!{fexTranReq.id}">
+                <input type="hidden" name="tranType" id="tranType"  value="$!{tranType}">
+                <table class="layui-table layui-form">
+                    <tr>
+                        ##交易号码
+                        <td class="textRight" width="20%">#springMessage('table.fexTranReq.billNo')</td>
+                        <td width="30%">
+                            <div class="layui-inline">
+                                <span>$!{fexTranReq.billNo}</span>
+                            </div>
+                        </td>
+                        ##产品类型
+                        <td class="textRight" width="20%">#springMessage('table.choProduct.productType')</td>
+                        <td width="30%">
+                            <span>$dictTag.get("fex.tranApp.tranType",$!{fexTranReq.tranType})</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##单位
+                        <td class="textRight" width="20%">#springMessage('bi.money.map.corp')</td>
+                        <td width="30%">
+                            $!{fexTranReq.corpName}
+                        </td>
+                        ##交易货币对
+                        <td class="textRight">#springMessage('fex.tranApp.tranCurPair')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                $!{fexTranReqExt.tranCurPairBaseEnglishCode}/$!{fexTranReqExt.tranCurPairReferEnglishCode}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##买卖方向
+                        <td class="textRight" width="20%">#springMessage('fex.tranApp.busDirection')</td>
+                        <td width="30%">
+                            $dictTag.get("fex.tranApp.busDirection",$!{fexTranReq.busDirection})
+                        </td>
+                        ##损益币种
+                        <td class="textRight" width="20%">#springMessage('table.fexTranReq.profitLossCur')</td>
+                        <td>
+                            $!{fexProfitLossManage.curEnName}
+                        </td>
+                    </tr>
+                </table>
+                <h2 class="layui-colla-title">#springMessage('table.fexProfitLossManage.floatingProfitAndLossInfo')</h2>
+                <div class="layui-colla-content layui-show">
+                    <table class="layui-table layui-form">
+                        <tr>
+                            ##报价方式
+                            <td class="textRight" width="20%">#springMessage('fex.tranApp.quotationMethod')</td>
+                            <td width="30%">
+                                $!{fexProfitLossManage.quotationMethod}
+                            </td>
+                            ##报价时间
+                            <td class="textRight" width="20%">#springMessage('table.fexProfit.quotationDate')</td>
+                            <td width="30%">
+                                #if($fexProfitLossManage.quotationDate)
+                                    $date.format('yyyy-MM-dd HH:mm:ss', $fexProfitLossManage.quotationDate)
+                                #end
+                            </td>
+                        </tr>
+                        #if($!{corpDTO.curId} != $!{fexProfitLossManage.curId})
+                            <tr>
+                                ##折本位币报价方式
+                                <td class="textRight" width="20%">#springMessage('table.fexTranReq.convertQuotationMethod')</td>
+                                <td width="30%">
+                                    $!{fexProfitLossManage.convertCurEnCode}
+                                </td>
+                                ##折本位币报价时间
+                                <td class="textRight" width="20%">#springMessage('table.fexTranReq.convertQuotationDate')</td>
+                                <td width="30%">
+                                    #if($fexProfitLossManage.convertDate)
+                                        $date.format('yyyy-MM-dd HH:mm:ss', $fexProfitLossManage.convertDate)
+                                    #end
+                                </td>
+                            </tr>
+                            <tr>
+                                ##折本位币汇率
+                                <td class="textRight" width="20%">#springMessage('table.fexTranReq.convertBaseCurRate')</td>
+                                <td width="30%">
+                                    $!{fexProfitLossManage.convertRate}
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        #end
+                    </table>
+                </div>
+                <div style="text-align: center;height: 40px;line-height: 40px;">
+                    <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage('common.button.close')</button>
+                </div>
+            </form>
+        </div>
+        <h2 class="layui-colla-title">#springMessage('table.fexProfitLossManage.details')</h2>
+        <div class="layui-colla-content layui-show">
+            <table class="layui-table self-adaption layui-table-border" id="lifecycle1" style="margin-bottom:8px">
+                <thead>
+                <tr>
+                    <th>#springMessage('table.foreign.orderNumber')</th>##序号
+                    <th>#springMessage('table.fexTran.settleDate')</th>##结算日期
+                    <th>#springMessage('table.fexTranReq.positionMoney')</th>##持仓金额
+                    <th>#springMessage('table.fexTranReq.contractRate')</th>##合同汇率
+                    <th>#springMessage('table.fexProfit.valuationRate')</th>##参考汇率
+                    <th>#springMessage('table.fexProfit.floatMoney')</th>##浮动损益
+                    <th>#springMessage('table.fexProfit.convertFloatMoney')</th>##折本位币浮动损益
+                </tr>
+                </thead>
+                <tbody id="tableBody">
+                    #foreach($fexProfitLossManage in $fexProfitLossManageList)
+                    <tr data-key="$!{fexProfitLossManage.id}">
+                        <td align="center">$!{velocityCount}</td>
+                        <td>
+                            #if($!{fexProfitLossManage.settleDate})
+                            $!date.format('yyyy-MM-dd',$!{fexProfitLossManage.settleDate})
+                            #end
+                        </td>
+                        <td>$!number.formatNumeric($!{fexProfitLossManage.positionMoney})</td>
+                        <td>$!number.formatNumeric($!{fexProfitLossManage.contractRate},$rateFormat)</td>
+                        <td>$!number.formatNumeric($!{fexProfitLossManage.referenceInterestRate},$rateFormat)</td>
+                        <td class="floatMoney" align="right" data-value="$!{fexProfitLossManage.floatMoney}">$!number.formatNumeric($!{fexProfitLossManage.floatMoney})</td>
+                        <td class="convertFloatMoney" align="right" data-value="$!{fexProfitLossManage.convertFloatMoney}">$!number.formatNumeric($!{fexProfitLossManage.convertFloatMoney})</td>
+                    </tr>
+                    #end
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td style="text-align: center">#springMessage('table.interet.sum')</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td id="floatMoneySum" align="right" style="padding: 0 10px">
+                        $!number.formatNumeric($!{fexProfitLossManage.floatMoney})
+                    </td>
+                    <td id="convertFloatMoneySum" align="right" style="padding: 0 10px">
+                        $!number.formatNumeric($!{fexProfitLossManage.convertFloatMoney})
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+        <h2 class="layui-colla-title">#springMessage('table.fexProfitLossManage.realizedProfitAndLossInfo')</h2>
+        <div class="layui-colla-content layui-show">
+            <table class="layui-table self-adaption" id="lifecycle2" style="margin-bottom:8px">
+                <thead>
+                <tr>
+                    <th>#springMessage('table.foreign.orderNumber')</th>##序号
+                    <th>#springMessage('table.fexTranLifeCycle.billNo')</th>##生命周期号码
+                    <th>#springMessage('table.fexTranLifeCycle.lifeCycle')</th>##生命周期
+                    <th>#springMessage('table.fexTranLifeCycle.opDate')</th>##操作日期
+                    <th>#springMessage('table.fexProfit.realMoneyTotal')</th>##已实现损益
+                    <th>#springMessage('table.fexProfit.convertRealMoneyTotal')</th> ##折本位币已实现损益
+                </tr>
+                </thead>
+                <tbody id="tableBody2">
+                    #foreach($fexProfitLossManageDtl in $fexProfitLossManageDtlList)
+                    <tr>
+                        <td align="center">$!{velocityCount}</td>
+                        <td><a class="" href="#" onclick="viewFexTranLifeCycle('$!{fexProfitLossManageDtl.lifeCycleId}')">$!{fexProfitLossManageDtl.lifeCycleBillNo}</a></td>
+                        <td>$dictTag.get("fexProduct.options.lifeCycle",$!{fexProfitLossManageDtl.opType})</td>
+                        <td>$!date.format('yyyy-MM-dd',$!{fexProfitLossManageDtl.deliverlyDate})</td>
+                        <td class="realMoney" align="right" data-value="$!{fexProfitLossManageDtl.money}">$!number.formatNumeric($!{fexProfitLossManageDtl.money})</td>
+                        <td class="convertRealMoney" align="right" data-value="$!{fexProfitLossManageDtl.convertMoney}">$!number.formatNumeric($!{fexProfitLossManageDtl.convertMoney})</td>
+                    </tr>
+                    #end
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td style="text-align: center">#springMessage('table.interet.sum')</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td id="realMoneySum" align="right" style="padding: 0 10px">
+                        $!number.formatNumeric($!{fexProfitLossManage.realMoneyTotal})
+                    </td>
+                    <td id="convertRealMoneySum" align="right" style="padding: 0 10px">
+                        $!number.formatNumeric($!{fexProfitLossManage.convertRealMoneyTotal})
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+</form>
+</body>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/foreign/fexProfitLossManage.view.js?_btv=${resourceVersion}"></script>
+</html>

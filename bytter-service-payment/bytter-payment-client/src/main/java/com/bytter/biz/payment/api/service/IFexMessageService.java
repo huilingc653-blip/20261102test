@@ -1,0 +1,20 @@
+package com.bytter.biz.payment.api.service;
+/**
+ * 外汇管理日志接口类
+ * @author huangx
+ * @since 2019-07-19
+ */
+public interface IFexMessageService {
+    /**
+     * 写入日志信息表
+     *
+     * @param billId      外部引用ID
+     * @param messageType 日志类型（参考NisMessageConstant类）
+     * @param message     日志信息
+     * @param busType     业务类型（参考NisMessageConstant类）
+     * @param userCode    操作人代码
+     * @param userName    操作人名称
+     * @return true/false
+     */
+    boolean saveMessage(String billId, Integer messageType, String message, String busType, String userCode, String userName);
+}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+</head>
+<!-- 交单登记列表 -->
+<body>
+	<form action="" id="searchForm" class=layui-form>
+		<table class="layui-table ">
+			<tbody>
+				<tr>
+					<td class="textRight" width="25%">
+						##信用证类型
+						#springMessage('international.credit.lcInter'):
+					</td>
+					<td width="25%">
+						<div class="layui-inline">
+							<div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                                     data-name="eqs_lcInter" data-biz-name="lcInter" >
+							</div>
+						</div>
+					</td>
+					
+					##信用证号
+					<td  class="textRight" width="25%">#springMessage('international.credit.creditNo')：</td>
+					<td width="25%"><input type="text" class="layui-input" name="likes_creditNo" /></td>
+				<tr>
+				
+				<tr>
+					<td colspan="6" style="text-align: center;">
+						<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+	<table id="appTable" class="layui-table layui-form"
+		style="width: 100%;">
+		<thead>
+			<tr>
+                <th>#springMessage('table.nisPersonnelDetail.corpId')</th>##单位名称
+				<th>#springMessage('table.fcPredrawDtlTemp.orderNo')</th>##流水号
+				<th>#springMessage('international.credit.lcInter')</th>##信用证类型
+				<th>#springMessage('table.internation.arrival.com.no')</th>##到单号
+				<th>#springMessage('international.credit.creditNo')</th>##信用证号
+                <th>#springMessage('international.credit.issuingBank')</th>##开证银行
+				<th>#springMessage('table.internation.proceeds.money')</th>##收款金额
+				<th>#springMessage('table.ratBkrationRelief.curCode')</th>##币种
+				<th>#springMessage('international.credit.createDate')</th>##登记日期
+                <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>##到期日期
+				<th>#springMessage('common.table.status')</th>##单据状态
+				<th>#springMessage('common.table.thead.operation')</th>##操作
+			</tr>
+		</thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+	bt.use(['form','datatable','dateType','moneyType','corp','dicts'], function(){
+	    $ = bt.jquery,form = bt.form();
+	    //时间
+	    bt.dateType.init();
+	    bt.corp.init();
+        bt.dicts.init();
+
+
+        //生成列表
+	    datatable = bt.datatable.init({
+	        elem: "#appTable",
+	        dom: 'Brtlip',
+	        colReorder: true,
+	        ordering:false,
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+           /* buttons: [
+                {
+                    //hide: bt.isnotResource('netbank:netBank:nisBillHead:add'),
+                    text: bt.lang('交单登记'),
+                    action: function (e, dt, node, config) {
+                        add();
+                    }
+                }
+            ],*/
+	        ajax: {
+	            'url': basePath+"/international/credit/incomingletter/datatable"
+	        },
+	        searchForm:{
+	            formFilter:"search",
+	            formElem:"#searchForm"
+	        }
+	        , columns: [
+				{data: "corpName", bSortable: true, className: "center"},
+				{data: "arrivalCode", bSortable: true, className: "center"},
+				{
+					data: "lcInter", bSortable: true, className: "center",
+					render: function (data, type, full, meta) {
+						return bt.dict("letter_of_credit_inter", full.lcInter);
+					}
+				},
+				{data: "arrivalNo", bSortable: true, className: "center"},
+				{data: "creditNo", bSortable: true, className: "center"},
+                {data: "openingBankName", bSortable: true, className: "center"},
+                {
+					data: "payMoney", bSortable: true, className: "textRight",
+					render: function (data, type, full, mate) {
+						var payMoney = bt.money.format(full.payMoney);
+						return payMoney;
+					}
+				},
+				{data: "curName", bSortable: true, className: "center"},
+				{data: "createDate", bSortable: true, className: "center"},
+				{data: "paymentDate", bSortable: true, className: "center"},
+				{
+					data: "status", className: "center",
+					render: function (data, type, full, mate) {
+						return bt.dict("international.lcBillArrival.status", full.status);
+					}
+				},
+				{
+					data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+						var html = '';
+						html += '<a class="" href="#" data-row="' + meta.row + '" onclick="add(this)">' + bt.lang("table.internation.coming.receipt") + '</a> ';
+						return html;
+					}
+				}
+			],
+            summary:{
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                // selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '6',//汇总列序号
+                        dataName: 'payMoney',//汇总列数据
+                    }
+                ]
+            }
+	    });
+	 
+	});
+	
+	
+    function add(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('table.internation.coming.receipt'),basePath + "/international/credit/incomingletter/add/" +data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/incomingletter/add/"+data.id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+	
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/international/credit/arrivalletter/viewPerfectlyLoanInfo?infoBillCode=" + data.billCode + "&show=1");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/arrivalletter/viewPerfectlyLoanInfo?infoBillCode=" + data.billCode + "&show=1"
+        });
+    }
+
+    //日志列表
+    function listMsg(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.button.logInfo'), basePath + "/international/credit/lcprocessmsg/list?billCode=" + data.lcNo);
+                return;
+            }
+        }
+    }
+	
+	</script>
+</html>

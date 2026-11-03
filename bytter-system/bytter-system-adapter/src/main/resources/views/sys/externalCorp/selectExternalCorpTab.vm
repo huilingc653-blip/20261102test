@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+		.layui-tab{
+			margin:0px;
+		}
+        body{
+            padding-bottom:0;
+        }
+		.layui-tab-content {
+			padding-top:0px;
+		}
+	</style>
+</head>
+<body>
+<div class="layui-tab layui-tab-brief">
+	 	<ul class="layui-tab-title">
+			<li class="layui-this">#springMessage("sys.select.title.ExternalCorp")</li>
+			<li class="innerTab">#springMessage("sys.select.title.Corp")</li>
+		</ul>
+		<div class="layui-tab-content" style="height:512px">
+			<div class="layui-tab-item layui-show" style="height:100%" data-refresh="true">
+				<iframe id="ExternalCorpPage" name="ExternalCorpPage" src="" frameborder="0" style="width: 100%; height: 100%"></iframe>
+			</div>
+	        <div class="layui-tab-item" style="height:100%" data-refresh="true">
+	        	<iframe id="CorpPage" name="CorpPage" src="" frameborder="0" style="width: 100%; height: 100%"></iframe>
+	        </div>
+	    </div>
+	 </div>
+
+	<div class="layui-form-item layui-form-submit" id="buttonDiv">
+		<div class="layui-input-block">
+			<button type="button" id="submitId" class="layui-btn" onclick="submitData()">#springMessage('common.button.submit')</button>
+			<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+		</div>
+	</div>
+	 #parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['element', 'form'], function(){
+	var $ = bt.jquery,form = bt.form();
+	var element = bt.element();
+});
+
+var corpIdVal="",externalIdVal="";
+
+var corpIdValArray=new Array();
+var externalIdValArray=new Array();
+
+var getQueryParams=function(data){
+	if(data){
+		if(data.corpIdVal){
+			corpIdVal=data.corpIdVal;
+		}
+		if(data.externalIdVal){
+			externalIdVal=data.externalIdVal;
+		}
+		if(data.isView==1){
+			$("#submitId").hide();
+		}
+		var corpParamStr =  data.corpId  ? "&corpId=" + data.corpId : ""
+
+		$("#ExternalCorpPage").attr("src","${basePath}/sys/externalCorp/selectExternalCorpTab?opType=1&isView="+data.isView + corpParamStr);
+
+		$("#CorpPage").attr("src","${basePath}/sys/externalCorp/selectExternalCorpTab?opType=2&isView="+data.isView + corpParamStr);
+		initIdVal();
+	}
+}
+var initIdVal=function (){
+	if(corpIdVal){
+		if(corpIdVal.indexOf(",")>0) {
+			corpIdValArray = corpIdVal.split(",");
+		} else {
+			corpIdValArray.push(corpIdVal);
+		}
+	}
+	if(externalIdVal){
+		if(externalIdVal.indexOf(",")>0){
+			externalIdValArray=externalIdVal.split(",");
+		}else{
+			externalIdValArray.push(externalIdVal);
+		}
+	}
+}
+
+var opCorpIdValArray = function(data){
+	opIdValArray(data,'corpId');
+}
+
+var opExternalIdValArray = function(data){
+	opIdValArray(data,'external');
+}
+
+var getCorpIdValArray = function(){
+	return corpIdValArray.join(",");
+}
+
+var getExternalIdValArray = function(){
+	return externalIdValArray.join(",");
+}
+
+// 查找指定的元素在数组中的位置
+Array.prototype.indexOf = function(val) {
+	for (var i = 0; i < this.length; i++) {
+		if (this[i] == val) {
+			return i;
+		}
+	}
+	return -1;
+};
+
+// 通过索引删除数组元素
+Array.prototype.remove = function(val) {
+	var index = this.indexOf(val);
+	if (index > -1) {
+		this.splice(index, 1);
+	}
+};
+
+var opIdValArray = function(datas,type){
+	if(datas&&datas.length>0){
+		for(i=0;i<datas.length;i++){
+			if(datas[i].isSelect){
+				if("external"==type && externalIdValArray.indexOf(datas[i].id)<0){
+					externalIdValArray.push(datas[i].id);
+				}else if("corpId"==type && corpIdValArray.indexOf(datas[i].id)<0){
+					corpIdValArray.push(datas[i].id);
+				}
+			}else{
+				if("external"==type) {
+					externalIdValArray.remove(datas[i].id);
+				}else if("corpId"==type){
+					corpIdValArray.remove(datas[i].id);
+				}
+			}
+		}
+	}
+}
+
+var submitData = function(){
+	var len = corpIdValArray.length+externalIdValArray.length;
+	// if(!len){
+	// 	layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+	// 	return;
+	// }
+	var func=null;
+	var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+	var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+	if(isMultiIframes){
+		var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+		func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-externalCorp']['callback'];
+	} else {
+		func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-externalCorp']['callback'];
+	}
+	if(func){
+		var data={"corpIdVal":corpIdValArray.join(","),"externalIdVal":externalIdValArray.join(",")};
+		func(data);
+	}
+}
+
+var closeForms=function(){
+	parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+</script>
+</html>

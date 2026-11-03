@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form" method="post">
+	    <table class="layui-table">
+	    	<tbody>
+	    	<tr>
+	    		<td class="textRight" width="25%">#springMessage('table.report.corpId')</td>
+	    		<td width="25%">
+	    			<div class="bt-biz-corp"
+	    				 data-name="corpId"
+        				 data-type="selectTree"
+        				 data-value="$!{queryVO.corpId}"
+        				 data-tree-type="check"
+        				 data-checkkboxtype="{'Y':'ps','N':'s'}"
+						 data-resource="cms:report:loan:balancegather:query"
+        				 data-scope="all">
+        			</div>
+	    		</td>
+	    		<td class="textRight" width="25%">#springMessage('cms.report.cur')</td>
+	    		<td width="25%">
+	    			<div class="bt-biz-selectType" 
+	    				 data-name="curId" 
+	    				 data-biz-name="curId"
+	    				 data-value="$!{queryVO.curId}"
+	    				 data-url="${basePath}/basic/business/btcurrency/json" 
+	    				 data-valuefield="id"
+	    				 data-textfield="curName">
+	    			</div>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td class="textRight" width="25%">#springMessage('cms.report.loanType')</td>
+	    		<td width="25%">
+	    			<div class="bt-biz-dict" 
+	    				 data-name="loanSign" 
+	    				 data-type="select"
+	    				 data-value="$!{queryVO.loanSign}"
+	    				 data-group="Loan.Sign">
+	    			</div>
+	    		</td>
+	    		<td class="textRight" width="25%">#springMessage('cms.report.date')</td>
+	    		<td width="25%">
+	    			<div class="layui-inline">
+			   			<input name="startDate" data-biz-name="startDate" data-endid="endDate" value="$!date.format('yyyy-MM-dd',$!queryVO.startDate)" class="layui-input bt-biz-dateType" type="text">
+			   		</div>
+			   		<div class="layui-inline">
+					    <span class="date-mid">~</span>
+					</div>
+					<div class="layui-inline">
+					    <input name="endDate" id="endDate" data-biz-name="endDate" value="$!date.format('yyyy-MM-dd',$!queryVO.endDate)" class="layui-input bt-biz-dateType" type="text">
+				    </div>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td colspan="4" style="text-align: center;">
+	    			<button type="button" class="layui-btn" id="search">#springMessage('common.button.search')</button>
+	            	<button type="button" onclick="resetting();" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+	    		</td>
+	    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+<table id="balanceTable" class="layui-table" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.report.corpId')</th>
+        <th>#springMessage('cms.report.cur')</th>
+        <th>#springMessage('cms.report.loanType')</th>
+        <th>#springMessage('cms.report.beformMoney')</th>
+		<th>#springMessage('cms.report.earningMoney')</th>
+        <th>#springMessage('cms.report.defrayMoney')</th>
+        <th>#springMessage('cms.report.afterBalance')</th>
+    </tr>
+    </thead>
+    <tbody>
+    	#foreach($map in $balanceList)
+    		<tr>
+    			<td rowspan="$!{map.size}">$!{map.corpCode} $!{map.corpName}</td>
+    			#set ($curCount = 1 )
+    			#foreach($cur in $map.curList)
+   					#if($curCount != 1)<!-- 币别第二次或以后的 -->
+    					<tr><!-- 从新开头 -->
+					#end
+    				<td rowspan="$!{cur.dataList.size()}">
+    					<a class="" href="#" onclick="loadCorpCurData('$!{map.corpId}','$!{cur.curId}');">${cur.curName}</a>
+    				</td>
+    				#set ($balCount = 1 )
+    				#foreach($bal in $cur.dataList)
+	    				#if($balCount != 1)<!-- 第二次或以后的 -->
+	    					<tr><!-- 从新开头 -->
+	    				#end
+	    				<td>$dictTag.get("Loan.Sign",$!{bal.loanSign})</td>
+	    				<td align="right">$number.formatNumeric(${bal.beformMoney})</td>
+	    				<td align="right">
+	    					<a class="" href="#" onclick="loadDetail('$!{map.corpId}','$!{cur.curId}','$!{bal.loanSign}');">$number.formatNumeric(${bal.earningMoney})</a>
+	    				</td>
+	    				<td align="right">$number.formatNumeric(${bal.defrayMoney})</td>
+	    				#set ($afterBalance =${bal.beformMoney} + $!bal.earningMoney - $!bal.defrayMoney )
+	   					<td align="right">$number.formatNumeric(${afterBalance})</td>
+	    				#if($balCount != 1)<!-- 第二次或以后的 -->
+	    					</tr><!-- 结尾 -->
+	    				#end
+	    				#set ($balCount = $balCount + 1 ) <!-- 数据循环下标+1 -->
+	    				
+	    				#if($curCount == 1)<!-- 循环第一次 -->
+	    					</tr><!-- 结尾第一行 -->
+						#end
+						#set ($curCount = $curCount + 1 ) <!-- 币别循环下标+1 -->
+    				#end
+    			#end
+    	#end
+    </tbody>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+##<script >var basePath =""; </script>
+
+<script>
+bt.use(['form', 'datatable', 'dateType', 'selectType', 'corp' ,'dicts'], function () {
+    $ = bt.jquery, form = bt.form();
+    corp = bt.corp.init();
+    selectType = bt.selectType.init();
+    dateTypes = bt.dateType.init();
+    dicts = bt.dicts.init();//字典
+    
+    $("#search").bind("click",function(){
+    	$("#searchForm").attr("action",basePath+"/cms/report/cmsbalancegather/gatherList");
+    	$("#searchForm").submit();
+    })
+    
+});
+
+function initPie(corpId,curId) {
+	var myChartPie = echarts.init(document.getElementById('chartPie'));
+    myChartPie.showLoading();
+    //通过Ajax获取数据
+    var url = basePath + "/cms/report/cmsbalancegather/gatherPieList";
+    $.ajax({
+        type: "post",
+        async: false, //同步执行
+        url: url,
+        data: {"corpId":corpId,"curId":curId},
+        dataType: "json", //返回数据形式为json
+        success: function (result) {
+            var option = initChartPie(result.legend,  result.series ,result.title);
+            myChartPie.hideLoading();
+            myChartPie.setOption(option, true);
+
+           /*  function open(param) {
+                // 获取跳转的参数
+                var corpIndex = Math.ceil((param.dataIndex + 1) / 4);
+                var keyParam = result.xAxisData2[corpIndex - 1] + param.name + param.seriesName;
+                var openParam = (result.openParams)[keyParam].split(",");
+                var openUrl = basePath + "/report/allocation/open?corpId=" + openParam[0] + "&voucherFrom=" + openParam[1] + "&curId=" + openParam[2];
+                if (bt.navtab) {
+                    bt.navtab.addNavtab(bt.lang('table.nisAllocationReport.list'), openUrl);
+                    return;
+                }
+            } 
+            myChartPie.on('click', open);*/
+        }
+    });
+}
+
+function loadCorpCurData(corpId,curId){
+	//initPie(corpId,curId);
+	if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/report/cmsbalancegather/gatherViewPir?corpId=" + corpId + "&curId=" + curId);
+        return;
+    }
+}
+
+function loadDetail(corpId,curId,loanSign){
+	var start = dateTypes.get("startDate").val();
+	var end = dateTypes.get("endDate").val();
+	console.info(end);
+	if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/report/cmsbalancegather/detailList?corpId=" + corpId + "&loanSign=" + loanSign + "&curId=" + curId+"&startDate=" + start + "&endDate="+ end);
+        return;
+    }
+}
+
+function initChartPie(legend,  series ,title) {
+	option = {
+		 	title: title,
+            tooltip: {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)",
+                axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+                    type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                }
+            },
+            legend: {
+                data: legend,
+                bottom: 10,
+                left: 'center',
+            },
+		    toolbox: {
+		        show : true,
+		        feature : {
+		            mark : {show: true},
+		            dataView : {show: true, readOnly: false},
+		            restore : {show: true},
+		            saveAsImage : {show: true}
+		        }
+		    },
+	    	calculable : false,
+	    	series: JSON.parse(series)
+	   	};
+	return option;
+}
+
+function initChartLine(legend,  series) {
+	option = {
+		 	title: [{
+                show: true,
+                text: "line",
+            }],
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+                    type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                }
+            },
+            legend: {
+                data: legend,
+                top: 30,
+            }, 
+		    toolbox: {
+		        show : true,
+		        feature : {
+		            mark : {show: true},
+		            dataView : {show: true, readOnly: false},
+		            restore : {show: true},
+		            saveAsImage : {show: true}
+		        }
+		    },
+	    	calculable : false,
+	    	series: JSON.parse(series)
+	   	};
+	return option;
+}
+
+</script>
+</html>

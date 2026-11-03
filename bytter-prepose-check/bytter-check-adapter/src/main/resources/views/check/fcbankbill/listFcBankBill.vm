@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.fcBankBill.tallyDate')</td>
+            <td width="30%">
+                <div class="date-interval"></div>
+            </td>
+            <td  class="textRight">#springMessage('银行类型')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/json"
+                     data-name="eqs_bankTypeId" data-biz-name="bankTypeId" data-valueField="id"
+                     data-textField="typeName"></div>
+            </td>
+            <td class="textRight">#springMessage('table.fcBankBill.compareSign')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="finacial.CompareSign"
+                     data-name="eqs_compareSign" data-biz-name="compareSign" data-defaultvalue=" "></div>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align:right;">#springMessage('table.fbsBudget.corpId')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp" data-biz-name="corpId"
+                         data-resource="finacial:check:bank:interface:query"
+                         data-name="eqs_corpId" data-biz-type="corp" data-type="selectTree"></div>
+
+                </div>
+            </td>
+            <td style="text-align:right;">#springMessage("table.fcBankBill.bankAcc")</td>
+            <td>
+                <div class="layui-inline">
+                    <input name="likes_bankAcc" id="bankAcc" class="layui-input" type="text"
+                           data-biz-name="bankAcc" placeholder="#springMessage('table.fcBankBill.bankAcc')">
+                </div>
+            </td>
+            <!-- 凭证号 -->
+            <td class="textRight">#springMessage('table.fcAccbook.voucherNo')</td>
+            <td >
+                <input type="text" name="likes_voucherNo"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.fcAccbook.voucherNo')">
+            </td>
+        </tr>
+        <tr>
+            <!-- 借方发生额 -->
+            <td class="textRight">#springMessage('table.fcCompareAcc.debitMoney')</td>
+            <td >
+                <div class="layui-inline">
+                    <input type="text" data-name="geg_debitMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           data-moneyendid="t20" placeholder="#springMessage('table.fcCompareAcc.debitMoney')">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" data-name="leg_debitMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           id="t20" placeholder="#springMessage('table.fcCompareAcc.debitMoney')">
+                </div>
+            </td>
+            <!-- 贷方发生额 -->
+            <td class="textRight">#springMessage('table.fcCompareAcc.creditMoney')</td>
+            <td >
+                <div class="layui-inline">
+                    <input type="text" data-name="geg_creditMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           data-moneyendid="t21" placeholder="#springMessage('table.fcCompareAcc.creditMoney')">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" data-name="leg_creditMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           id="t21" placeholder="#springMessage('table.fcCompareAcc.creditMoney')">
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBankBill.bankAcc')</th>
+        <th>#springMessage('table.nisBillhead.curId')</th><!--币别  -->
+        <th>#springMessage('btBankType.typeName')</th>
+        <th>#springMessage('corporate.name')</th>
+        <th>#springMessage('table.fcBankBill.tallyDate')</th>
+        <th>#springMessage('table.fcBankBill.debitMoney')</th>
+        <th>#springMessage('table.fcBankBill.creditMoney')</th>
+        <th>#springMessage('table.fcBankBill.billNo')</th>
+        <th>#springMessage('table.fcBankBill.voucherNo')</th>
+        <th>#springMessage('table.fcBankBill.redblueSign')</th>
+        <th>#springMessage('table.fcBankBill.compareSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form', 'datatable', 'btdate', 'selectTable', 'jquery', 'money', 'selectType', 'dicts','bank','corp','moneyType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.selectType.init();
+        bt.moneyType.init();
+        bt.dicts.init();
+        bt.btdate.init({
+                    elem: ".date-interval",
+                    startname: "ged_tallyDate",
+                    endname: "led_tallyDate"
+                }
+        );
+        corp = bt.corp.init();
+        bt.bank.init({
+            elem:'#bankAcc',
+        });
+
+
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true, order: [1, 'desc'],
+            ajax: {
+                'url': basePath + "/finacial/check/fcbankbill/datatable"
+            }, searchForm: {
+                formFilter: "search",
+                formElem: "#searchForm"
+            },
+            buttons: [
+                {
+                    text: "#springMessage('common.button.add')",
+                    action: function (e, dt, node, config) {
+                        /* bt.navtab.addNavtab('测试',basePath + '/finacial/check/fcbankbill/add'); */
+                        add();
+                    }
+                }, {
+                    text: "#springMessage('common.button.batchDelete')",
+                    action: function (e, dt, node, config) {
+                        bt.loading.show();//显示加载中
+                        var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        if (len < 1) {
+                            layer.msg("#springMessage('table.fcBankBill.msg.chooseLeastOne')");
+                            bt.loading.hide(); //关闭加载中
+                            return;
+                        }
+                        var ids = "";
+                        var rowData = data.splice(0, len);
+                        for (var i = 0; i < rowData.length; i++) {
+                            if (ids == "") {
+                                ids += rowData[i].id;
+                            } else {
+                                ids += "," + rowData[i].id;
+                            }
+                        }
+                        ;
+                        parent.layer.confirm("#springMessage('finacial.paramConfig.fcSubject.msg.del')", function () {
+                            $.post(basePath + "/finacial/check/fcbankbill/batchDelete/", {ids: ids}, function (result) {
+                                location.reload();
+                                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                                bt.loading.hide(); //关闭加载中
+                            }, 'JSON');
+                        });
+                    }
+                }
+            ]
+            , columns: [
+                {data: "bankAcc", bSortable: true, className: 'center'},
+                {data:"curId",className:'center',bSortable:true, render: function (data, type, full, meta) {
+                        return full.curName;
+                    }
+                },
+                {data: "bankTypeName", bSortable: true, className: 'center'},
+                {data: "codeName", bSortable: true, className: 'center'},
+                {data: "tallyDate", bSortable: true, className: 'center'},
+                {
+                    data: "debitMoney", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        var debitMoney = bt.money.format(full.debitMoney);
+                        return debitMoney;
+                    }
+                },
+                {
+                    data: "creditMoney", bSortable: true, className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        var creditMoney = bt.money.format(full.creditMoney);
+                        return creditMoney;
+                    }
+                },
+                {data: "billNo", bSortable: true, className: 'center'},
+                {data: "voucherNo", bSortable: true, className: 'center'},
+                {
+                    data: "redblueSign", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        var redblueSign = bt.dict('Finacial.RedBlueSign', full.redblueSign);
+                        return redblueSign;
+                    }
+                },
+                {
+                    data: "compareSign", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        var compareSign = bt.dict('finacial.CompareSign', full.compareSign);
+                        return compareSign;
+                    }
+                },
+                {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                        if(full.compareSign == '0'){
+                            var html = '<a class="" href="#" data-row="' + meta.row + '" onclick="update(this)">' + bt.lang("common.button.edit") + '</a>\
+                            <a class="" href="#" data-row="' + meta.row + '" onclick="deleteColumn(this)">' + bt.lang("common.button.delete") + '</a>';
+                            return html;
+                        } else {
+                            return "";
+                        }
+                    }
+                }
+            ],
+            summary: {
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '5',//汇总列序号
+                        dataName: 'debitMoney',//汇总列数据
+                    },
+                    {
+                        colNum: '6',//汇总列序号
+                        dataName: 'creditMoney',//汇总列数据
+                    }
+                ]
+            }
+        });
+
+    });
+
+
+function add(){
+	 bt.navtab.addNavtab(bt.lang('common.button.add'),basePath + "/finacial/check/fcbankbill/add");
+}
+
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/finacial/check/fcbankbill/update?id=" + data.id,
+        end:function(){
+            datatable && datatable.draw();
+        }
+    });
+}
+
+    function deleteColumn(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'), function () {
+            $.post(basePath + "/finacial/check/fcbankbill/delete/" + data.id, function (result) {
+                datatable && datatable.draw();
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, 'JSON');
+        });
+    }
+
+</script>
+</html>

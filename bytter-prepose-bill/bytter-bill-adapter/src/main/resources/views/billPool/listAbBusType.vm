@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+     <form id="searchForm" class="layui-form input150-container">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+					##业务类型名称
+					<td class="textRight" width="15%">#springMessage('billPool.type.name')</td>
+					<td  width="85%">
+                         <div class="layui-input-inline">
+                            <input type="text" name="bustypeName" id="bustypeName"
+                                   autocomplete="off" value="$!{queryVO.bustypeName}" class="layui-input" placeholder="#springMessage('billPool.type.name')">
+                        </div>
+                    </td>
+				</tr>
+				 <tr>
+		            <td colspan="6" style="text-align: center;">
+		                <button class="layui-btn" type="button" onclick="search()">#springMessage('common.button.search')</button>
+		                <button class="layui-btn" type="button" onclick="resetFrom()">#springMessage('common.button.reset')</button>
+		            </td>
+		        </tr>
+            </tbody>
+        </table>
+        #if($shiro.hasPermission("abpool:type:resource:op"))
+         <div style="padding-top: 10px;">
+	    ##新增
+	        <button class="layui-btn" type="button" onclick="add()" >#springMessage('common.button.add')</button>
+	    ##删除
+	        <button class="layui-btn" type="button" onclick="deleteColumn()" >#springMessage('common.button.delete')</button>
+  			</div>
+		#end
+		#if($shiro.hasPermission("abpool:type:resource:op"))
+		<table id="appTable" class="layui-table layui-form" style="width:100%;">
+		    <thead>
+		    <tr style="padding-left: 10px">
+		    	<th><input type="checkbox" name="checkAll" lay-skin="primary"  lay-filter="checkAll"></th>
+		        <th>#springMessage('billPool.type.bustypeCode')</th>
+		        <th>#springMessage('billPool.type.name')</th>
+				<th>#springMessage('billPool.type.parentBusName')</th>
+				<th>#springMessage('billPool.type.bustypeLevel')</th>
+				<th>#springMessage('billPool.Pledgee.status')</th>
+				<th>#springMessage('common.table.thead.operation')</th>
+		    </tr>
+		    </thead>
+		    <tbody>
+		    	
+		    		#if(!$listInfo)
+		    			<tr>
+		    				<td colspan="7" align="center">#springMessage('common.msg.temporarily_no_data')</td>
+		    			</tr>
+		    		#else 
+				    	#foreach($info in $listInfo)
+		                <tr data-tt-id="$!{info.id}"  data-tt-parent-id="$!{info.parentId}" >
+		                    <td align="center"><input lay-skin="primary" type="checkbox" #if($!{info.validSign} == 1) disabled #end lay-filter="check" name="checkDetailId" value="$!{info.id}"></td>
+		                    <td>$!{info.bustypeCode}</td>
+		                    <td >
+		                        $!{info.bustypeName}
+		                    </td>
+		                    <td >$!{info.parentBusName}</td>
+		                    <td >$!{info.bustypeLevel}</td>
+		                    <td align="center">
+		                        $!dictTag.get('AB_POOL_VALID_SIGN', $!{info.validSign})
+		                    </td>
+		                    <td align="center">
+		                    ##修改
+		                        #if($!{info.validSign} != 1)
+		                            <a class="" href="#" onclick="update('$!{info.id}')">#springMessage("common.button.edit")</a>
+		                            <span class="text-explode">|</span>
+		                        #end
+		                    ##增加下级
+		                        <a class="" href="#" onclick="addNextLevel('$!{info.id}')">#springMessage("common.link.add")</a>
+		                        <span class="text-explode">|</span>
+		                    ##禁用启用
+		                        #if($info.validSign eq '1')
+		                            <a class="" href="#" onclick="operation('$!{info.id}','0')">#springMessage("common.button.disable")</a>
+		                        #else
+		                        <a class="" href="#" onclick="operation('$!{info.id}','1')">#springMessage("common.button.enable")</a>
+		                        #end
+		                    </td>
+		                </tr>
+		                #end
+		    		#end
+		    </tbody>
+		</table>
+		#end
+    </form>
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+var billTable={},corp,busTypeJson={};
+bt.use(['form','selectTree','treeTable','busType'],function(){
+	  $ = bt.jquery,form = bt.form();
+	  busTypeJson = bt.busType.init();
+	    bt.treeTable.init({
+	        elem: '#appTable',
+	        column: '1'
+	    });
+	
+	    //全选
+	    form.on('checkbox(checkAll)', function (data) {
+	       var child = $('input[name="checkDetailId"]');
+        	child.each(function (index, item) {
+            if(!item.disabled){
+                item.checked = data.elem.checked;
+                // 对选中的数据添加背景颜色
+                var trObj = $('tr[data-tt-id="' + item.value + '"]');
+                if(data.elem.checked){
+                    trObj.attr("style", "background-color:#d2efd3");
+                }else {
+                    trObj.removeAttr("style");
+                }
+            }
+       	 });
+       	 form.render('checkbox');
+	    });
+	    
+	    //全选
+	    form.on('checkbox(check)', function (data) {
+	    	var checkboxes = $('[lay-filter="check"]'),checkboxsQty = checkboxes.length;
+			bt.each($('[lay-filter="check"]'),function(){
+				if(this.disabled || this.checked ){
+					checkboxsQty= checkboxsQty-1
+				}
+			})
+			$('[lay-filter="checkAll"]')[0].checked = !checkboxsQty;
+			form.render('checkbox');
+	    });
+	    $(document).keyup(function(event){
+            if(event.keyCode == 13){
+            	search();
+            }
+        })
+});
+
+function resetFrom(){
+	$('#bustypeName').val("");
+}
+
+function search(){
+    var action =basePath + "/abpool/bustype/list";
+    $("#searchForm").attr("action",action);
+    $("#searchForm").submit();
+}
+
+function add(){
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '409px'],
+        maxmin: true,
+        resize: false,
+        content: basePath + "/abpool/bustype/addOrUpdate/"+null+"?opt=add",
+        end:function(){
+        	search();
+        }
+   });
+}
+
+function update(id){
+	    parent.layer.open({
+	        type: 2,
+	        area: ['850px', '409px'],
+	        maxmin: true,
+	        resize: false,
+	        content: basePath + "/abpool/bustype/addOrUpdate/" + id,
+	        end:function(){
+	        	search();
+	        }
+	  }); 
+}
+
+//增加下级
+function addNextLevel(id){
+	    parent.layer.open({
+	        type: 2,
+	        area: ['850px', '459px'],
+	        maxmin: true,
+	        resize: false,
+	        content: basePath + "/abpool/bustype/addNextLevel/" + id,
+	        end:function(){
+	        	search();
+	        }
+	  });  
+}
+
+
+//启用禁用
+function operation(id,order){
+	 var msg = order==0?"billPool.Pledgee.msg.taboo":"billPool.Pledgee.msg.enable";
+	  parent.layer.confirm(bt.lang(msg),function(){
+		    $.post(basePath + "/abpool/bustype/batchOpt",{"ids":id,"opt":order}, function(result){ 
+	        	parent.layer.alert(bt.lang(result.msg), {icon: result.success?1:2});
+	        	if(result.success){
+	        		search()
+	        	}
+	        },'JSON');
+	   });  
+}
+//批量删除
+function deleteColumn(){
+	if(!$('input[name="checkDetailId"]:checked').length){
+        layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+    	return;
+    }
+	 var ids;
+	 var msg='billPool.type.message.confirm.delete';
+	 $('input[name="checkDetailId"]:checked').each(function (index, item) {
+	       if(index === 0){
+	       		ids = item.value;
+	       }else {
+	       		ids += ','+item.value;
+	       }
+	       if($("tr[data-tt-parent-id='"+item.value+"']").length > 0){
+	           msg='billPool.type.message.delete.batch';
+	       }
+   });
+	parent.layer.confirm(bt.lang(msg),function(){
+        $.post(basePath + "/abpool/bustype/batchOpt",{"ids":ids,"opt":2}, function(result){ 
+        	parent.layer.alert(bt.lang(result.msg), {icon: result.success?1:2});
+        	if(result.success){
+        		search()
+        	}
+        },'JSON');
+    });
+}
+</script>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+
+<body>
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    	<thead>
+    	<tr>
+        	<th width="15%">#springMessage("table.abBillTransfer.applyCorp")</th>##申请单位
+			#if($!{cmsType} == "B2")
+        		<th width="8%">#springMessage("table.cmsProvideLoanInfo.bankId")</th>##借款银行
+			#end
+        	<th width="8%">#springMessage("table.abBillTransfer.allocatedCode.apply")</th>##申请单号
+    		<th width="10%">#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+            ##<th width="8%">#springMessage("table.abBillTransfer.applyMoney")</th>##申请金额
+        	<th width="8%">#springMessage("table.cmsProvideLoanSend.billCode")</th>##放款单号
+        	<th width="10%">#springMessage("table.cmsProvideLoanSend.money")</th>##发放金额
+        	<th width="10%">#springMessage('table.cms.loan.interest.money')</th>##计息金额###
+       	 	<th width="10%">#springMessage('table.fcAccbookHis.interestStartDate')</th>##起息日期
+            <th width="10%">#springMessage('table.interet.blnInstDate')</th>##止息日期
+			#if("$!{isRepay}" == "0")
+            	<th width="10%">#springMessage('table.provide.interestRate')</th>##计息利率
+                <th width="10%">#springMessage('table.cms.loan.interest.payable')</th>##应付利息
+			#else
+                <th width="10%">#springMessage('table.cmsProvideLoanRepay.onlineInterest')</th>##实付利息
+			#end
+            
+            
+			
+    	</tr>
+    	</thead>
+		
+		<tbody>
+                #set($yftotal = 0)
+                #set($sftotal = 0)
+				#foreach($item in $list)
+					<tr>
+						<td class="center">$!{item.corpName}</td>
+                        #if($!{cmsType} == "B2")
+                            <td class="center">$!{item.bankName}</td>
+                        #end
+                        <td class="center">$!{item.billCode}</td>
+                        <td class="center">$!{item.curName}</td>
+                        <td class="center">$!{item.sendBillCode}</td>
+                        <td class="textRight">$number.formatNumeric($!{item.sendMoney})</td>
+                        <td class="textRight">$number.formatNumeric($!{item.bearingMoney})</td>
+                        <td class="center">$!date.format('yyyy-MM-dd',$!{item.interestStartDate})</td>
+                        <td class="center">$!date.format('yyyy-MM-dd',$!{item.blnInstDate})</td>
+					#if("$!{isRepay}" == '0')
+						<td class="textRight">
+                            #if($!{item.loanRate})
+                                $!number.formatNumeric($math.mul($!{item.loanRate},100),"#0.0000")%
+                            #end
+
+                        </td>
+                        #set($yftotal = $yftotal+$!{item.yfInterest} )
+                        <td class="textRight">$number.formatNumeric($!{item.yfInterest})</td>
+                    #else
+                        #set($sftotal = $sftotal+$!{item.sfInterest} )
+                        <td class="textRight">$number.formatNumeric($!{item.sfInterest})</td>
+					#end
+					</tr>
+				#end
+			    
+                <tr>
+                    <td></td><td></td>
+                    #if($!{cmsType} == "B2")
+                        <td></td>
+                    #end
+                    <td class="center">#springMessage('table.interet.sum')</td>
+                    <td></td><td></td><td></td><td></td><td></td>
+                    #if("$!{isRepay}" == '0')
+                        <td></td>
+                        <td class="textRight">$number.formatNumeric($yftotal)</td>
+                    #else
+                        <td class="textRight">$number.formatNumeric($sftotal)</td>
+                    #end
+                </tr>
+		</tbody>
+	</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+
+bt.use(['form','datatable','dateType','dicts','corp','select','moneyType','selectType','jquery'], function(){
+	$ = bt.jquery,form = bt.form();
+	bt.dateType.init();
+	bt.selectType.init();
+	bt.dicts.init();
+	bt.moneyType.init();
+	bt.moneyType.getFun();
+	bt.corp.init();
+
+
+    form.on('submit(search)', function(data){
+        var action =basePath + "/cms/report/cmsloaninterestpayments/list";
+        $("#searchForm").attr("action",action);
+        $("#searchForm").submit();
+    });
+
+    $("#reset").click(function(){
+        reset();
+    });
+});
+
+
+function getDetails(sendBillCode,sign,cmsType){
+    if(sendBillCode){
+        if(bt.navtab){
+           // var startTime = bt.dateType.init().get('ged_accOpenTime').val();
+          //  var endTime = $("#date").val();
+            var url = basePath+"/cms/report/cmsloaninterestpayments/getDetails?sendBillCode="+sendBillCode+"&isRepay="+sign+"&cmsType="+cmsType+"&startDate="+$("#date1").val()+"&endDate="+$("#date2").val();
+            bt.navtab.addNavtab(bt.lang('common.view.data'),url);
+            return;
+        }
+    }
+}
+
+function reset(){
+    bt.dicts.init().get("cmsType").val("");
+    bt.dateType.init().get("searchStartDate").val("");
+    bt.dateType.init().get("searchEndDate").val("");
+    bt.corp.init().get("corpId").val("");
+    $("#bankName").attr("value","");
+    
+}
+
+
+</script>
+</html>

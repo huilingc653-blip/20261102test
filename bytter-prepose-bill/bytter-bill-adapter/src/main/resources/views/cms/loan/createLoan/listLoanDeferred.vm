@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+<input type="hidden" id="pageType" value="$!{pageType}">
+<input type="hidden" id="moreDeferred" value="$!{isMoreDeferred}">
+		<table class="layui-table">
+		<tr>
+			<td width="10%" class="textRight">#springMessage('table.cmsLoanSend.loanCode')</td>
+			<td width="20%">
+				<input type="text" name="likes_loanCode"
+		                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.cmsLoanSend.loanCode')">
+			</td>
+			<td width="70%">
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+				<button type="reset" class="layui-btn layui-btn-primary layui-btn-small">#springMessage("common.button.reset")</button>
+			</td>
+		</tr>
+		</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cmsLoanInfo.corp')</th><!--申请单位  -->
+        <th>#springMessage('table.cmsLoanInfo.net')</th><!--所属资金中心   -->
+        <th>#springMessage('table.cmsLoanSend.loanCode')</th><!--贷款单号  -->
+        <th>#springMessage('table.cmsLoanSend.billCode')</th><!--发放合同编号  -->
+        <th>#springMessage('table.cmsLoanSend.createDate')</th><!--录入日期  -->
+        <th>#springMessage('table.cmsLoanSend.curCode')</th><!--币别  -->
+        <th style="text-align: center;">#springMessage('table.cmsLoanSend.loanMoney')</th><!-- 贷款金额 -->
+        <th style="text-align: center;">#springMessage('table.cmsLoanSend.remainMoney')</th><!-- 贷款金额 -->
+        <th>#springMessage('table.cmsLoanSend.loanDate')</th><!--合同开始日  -->
+        <th>#springMessage('cms.common.deadlineDate')</th><!--合同到期日  -->
+        <th>#springMessage('table.cmsLoanSend.repayType')</th><!--还款方式  -->
+        <th>#springMessage('table.cmsLoanInfo.loanClass')</th><!--贷款种类  -->
+        <!-- <th>#springMessage('table.cmsLoanInfo.loanType')</th>担保方式  -->
+        <th>#springMessage('table.cmsLoanInfo.loanTerm')</th><!--贷款期限  -->
+        <th>#springMessage('table.cmsLoanSend.loanAcc')</th><!--贷款账号  -->
+       #if($!{isMoreDeferred}!=1)
+        <th>#springMessage('table.cmsLoanSend.lastDeferredDate')</th><!--上期贷款展期日期   -->
+        <th>#springMessage('table.cmsLoanSend.deferredReplayDate')</th><!--展期到期日期   -->
+        <th>#springMessage('table.cmsLoanSend.deferredNum')</th><!--展期次数   -->
+       #end
+        <th>#springMessage('table.cmsLoanSend.status')</th><!--状态  -->
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/loan/cmsLoanDeferred.list.js?_btv=${resourceVersion}"></script>
+</html>
+<script>
+bt.use(['form','datatable','moneyType','date'], function(){
+    $ = bt.jquery,form = bt.form(),moneyFun = bt.moneyType.getFun();
+    //生成列表
+    var datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        order: [[9,'asc']],
+        ajax: {
+            'url': basePath+"/cms/loan/cmsloansend/loanDeferredList"
+        },
+        searchForm:{
+            formElem:"#searchForm",
+            formFilter:"search"
+        },
+        buttons: [
+                  {
+                      extend: "colvis",
+                      text: bt.lang('common.button.theadHide'),
+                      columns: ':not(:first):not(:last)'
+                  }
+              ],
+        fixedColumns: {
+                  rightColumns:1//代表冻结右边一列
+              },
+        columns: [
+            {data:"corpName",className:'center',bSortable:false},
+            {data:"netName",className:'center',bSortable:false},
+            {data:"loanCode",className:'center',bSortable:true},
+            {data:"billCode",className:'center',bSortable:true},
+            {data:"createDate",className:'center',bSortable:true},
+            {data:"curName",className:'center',bSortable:false},
+            {data:"loanMoney",className:'textRight',bSortable:true,
+            	render: function ( data, type, full, meta ) {
+                    return moneyFun.format(full.loanMoney);
+                }
+            },
+            {data:"remainMoney",className:'textRight',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+                    return moneyFun.format(moneyFun.sub(full.loanMoney,full.repayedMoney));
+                }
+            },
+            {data:"loanDate",className:'center',bSortable:true},
+            {data:"repayDate",className:'center',bSortable:true},
+            {data:"repayTypeName",className:'center',bSortable:false},
+            {data:"loanClass",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+                    return bt.dict("cms.LoanClass",full.loanClass);
+                }
+            },
+            /*{data:"loanType",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+                    return bt.dict("Cms.PlType.A",full.loanType);
+                }
+            },*/
+            {data:"loanTerm",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+            		if(full.ternUnit==2){
+            			return full.loanTerm + bt.lang("cms.loan.ternUnit.day");
+            		}else if(full.ternUnit==1){
+            			return full.loanTerm + bt.lang("cms.loan.ternUnit.month");
+            		}else{
+            			return full.loanTerm;
+            		}
+                }
+            },
+            {data:"provideLoanAcc",className:'center',bSortable:false},
+         #if($!{isMoreDeferred}!=1)
+            {data:"lastDeferredDate",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+            		return full.lastDeferredDate==null?"":bt.date.format(full.lastDeferredDate);
+                }
+            },
+            {data:"deferredReplayDate",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+            		return full.deferredReplayDate==null?"":bt.date.format(full.deferredReplayDate);
+                }
+            },
+            {data:"deferredNum",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+            		if(full.deferredNum>0){
+            			return "<a href='javascript:void(0)' onclick='deferredInfolist(\""+full.billCode+"\")' ><u>"+full.deferredNum+"</u></a>";
+            		}else{
+            			return full.deferredNum;
+            		}
+                }
+            },
+         #end
+            {data:"bizStatus",className:'center',bSortable:false,
+            	render: function ( data, type, full, meta ) {
+                    return bt.dict("cms.bizStatus",full.bizStatus);
+                }
+            },
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+            	var	html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+            	if(bt.isResource('cms:loan:cmsloandeferred:edit',full.corpId)){
+	            	if(full.status!=103){
+	            		html = '<a class="" href="#" data-row="'+meta.row+'" onclick="addLoanDeferred(this)">'+bt.lang("cms.loanDeferred.add")+'</a><span class="text-explode">|</span>' +html;
+	            	}
+            	}
+            	html +='<span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("common.button.logInfo")+'</a>';
+                return html;
+            }}
+        ],
+        summary:{
+            pageSum: true,//小计功能开启
+            selectSum: false,//已选汇总功能开启
+            //groupColumn: 'curName',//分类汇总列参数
+            outerData: true,
+            format: {
+                decimal: 2
+            },
+            sumList: [
+                {
+                    colNum: '7', //汇总列序号
+                    dataName: 'loanMoney' //汇总列发放金额
+                },
+                {
+                    colNum: '8', //汇总列序号
+                    dataName: 'remainMoney' //汇总列贷款余额
+                }
+            ]
+        }
+    });
+});
+</script>

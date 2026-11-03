@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input id="eqi_busType" name="eqi_busType" type="hidden" value="$!{busType}">
+	<input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}"/>
+	<table class="layui-table">
+        <tbody>
+            <tr>
+                ##单位
+                <td class="textRight">#springMessage('table.choBankFinance.corpId')</td>
+                <td>
+                    <div class="layui-inline">
+                    	<div class="bt-biz-corp"
+                            data-biz-type="corp"
+                            data-type="selectTree"
+                            data-name="likes_corpId"
+                            data-scope="all"
+							data-callback="bt.corpCallback"></div>
+                    </div>
+                </td>
+				##付款账号
+                <td class="textRight">#springMessage('table.choBankFinance.currentAcc')</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <input type="text" name="likes_payerAcc" id="payerAcc" data-biz-name="payerAcc"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.choBankFinance.currentAcc')">
+    					<table id="payerAccTable" class="hide">
+    						<thead>
+    							<tr>
+    								<th>#springMessage('table.choBankFinance.acc')</th>
+    								<th>#springMessage('table.choBankFinance.accName')</th>
+    								<th>#springMessage('table.choBankFinance.accBank')</th>
+    								<th>#springMessage('table.choBankFinance.curId')</th>
+    							</tr>
+    						</thead>
+    					</table>
+					</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+					<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</form>	
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.choBankFinance.billNo')</th>
+        <th>#springMessage('table.choBankFinance.currentAcc')</th>
+        <th>#springMessage('table.choBankFinance.payerAccName')</th>
+        <th>#springMessage('table.choBankFinance.payerBank')</th>
+        <th>#springMessage('table.choBankFinance.corpId')</th>
+        <th>#springMessage('table.choBankFinance.curId')</th>
+        <th>#springMessage('table.choBankFinance.payMoney')</th>
+        <th>#springMessage('table.choBankFinance.interestRate')</th>
+        <th>#springMessage('table.choBankFinance.interestStartDate')</th>
+        <th>#springMessage('table.choBankFinance.deadlineDate')</th>
+        <th>#springMessage('table.btBankAcc.isOnline')</th>
+        <th>#springMessage('table.choBankFinance.purpose')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead> 
+</table>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+</body>
+<script>
+    bt.use(['form','datatable','select','corp','dicts','selectTable','moneyType','rateType'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.dicts.init();
+        var moneyType = bt.moneyType.init();
+        var moneyFun = bt.moneyType.getFun();
+        var rateType = bt.rateType.getFun();
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:true,
+            order: [1,'desc'],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/chowmatistic/chobankfinance/dataTableApprove"
+            },
+            buttons: [
+            ],
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            }
+            ,columns: [
+                {data:"billNo",bSortable:true},
+                {data:"payerAcc",bSortable:true},
+                {data:"payerAccName",bSortable:true},
+                {data:"payerBank",bSortable:true},
+                {data:"corpName",bSortable:true},
+                {data:"curName",bSortable:true},
+                {data:"payMoney",bSortable:true,className:'textRight',
+                    render: function ( data, type, full, meta ) {
+                        return bt.money.format(full.payMoney);
+                    }
+                },
+                {data:"interestRate",bSortable:true,className:'textRight',
+                    render: function ( data, type, full, meta ) {
+                        return rateType.format(full.interestRate);
+                    }
+                },
+                {data:"interestStartDate",bSortable:true},
+                {data:"deadlineDate",bSortable:true},
+                {data:"isOnline",bSortable:true,className:'center',
+                    render: function ( data, type, full, meta ) {
+                        return bt.dict("sf_yn",full.isOnline);
+                    }
+                },
+                {data:"purpose",bSortable:true},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+					var html='';
+                	if($("#flowStatus").val()=='todo'){
+                		html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                	}
+                    if($("#flowStatus").val() == 'pass'){
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a><span class="text-explode">|</span>';
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                    }else {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                    }
+                    return html;
+                }}
+            ],
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: true,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '7',
+                        dataName: 'payMoney'
+                    }
+                ]
+            }
+        });
+
+        //付款账号
+        var payerAccInit = bt.selectTable.init({
+            elem: "#payerAccTable",
+            url: basePath+"/chowmatistic/chobankfinance/getBankAcc",
+            urldata: {corpId: $("input[name='corpId']").val(), busType: $("#busType").val()},
+            scrollX: true,
+            scrollY:"200px",
+            searchInput:"#payerAcc",
+            paging:true,
+            columns: [
+                {data:"bankAcc",},
+                {data:"accName",},
+                {data:"bankName",},
+                {data:"curName",}
+            ],
+            clickCallback:function(data){
+                if(data){
+                    $('#payerAcc').val(data.bankAcc);
+                    $('#payerAccId').val(data.id);
+                    $('#curId').val(data.curId);
+                }else{
+                    $('input.text').val('');
+                }
+            }
+        });
+
+        //单位回调函数
+        bt.corpCallback = function(id){
+            //重新加载付款账号
+            payerAccInit.get("payerAcc").reload({corpId: id, busType: $("#busType").val()});
+
+            //获取单位用途
+            $.ajax({
+                url: basePath+"/basic/business/btpurpose?getPurpose",
+                method: 'POST',
+                data: {corpId: id,sysBusType:4},
+                dataType: 'json',
+                success: function(data){
+                    $("#purpose").empty();
+                    if(data && data.obj &&  data.obj.length>0){
+                        $.each(data.obj,function(index,item){
+                            $("#purpose").append("<option value="+item.purpose+">"+item.purpose+"</option>");
+                        });
+                    }else{
+                        $("#purpose").append("<option value=''></option>");
+                    }
+                    form.render();
+                }
+            });
+        }
+
+        //初始化单位
+        bt.corp.init();
+    });
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/chowmatistic/chobankfinance/view/" + data.id
+        });
+    }
+</script>
+<script src="${basePath}/static/modules/chowmatistic/choBankFinanceApprove.list.js?_btv=${resourceVersion}"></script>
+</html>

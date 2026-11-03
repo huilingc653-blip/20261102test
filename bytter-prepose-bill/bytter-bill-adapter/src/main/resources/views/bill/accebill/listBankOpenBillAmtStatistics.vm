@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="defaultStartDate" value="$!date.format('yyyy-MM-dd',$!{defaultStartDate})">
+    <input type="hidden" id="defaultEndDate" value="$!date.format('yyyy-MM-dd',$!{defaultEndDate})">
+    <table class="layui-table layui-table-border">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.btBankAccDtl.corp')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-tree-type="check"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-biz-name="corpId"
+                         data-scope="all"
+                         data-defaultvalue="$!{form.corpId}">
+                    </div>
+                </div>
+            </td>
+            ##日期
+            <td class="textRight">#springMessage('bill.accebill.query.date')</td>
+            <td>
+                <div class="layui-inline">
+                    <input class="layui-input bt-biz-dateType" type="text" data-endid="queryDate"
+                           name="startQueryDate" data-name="startQueryDate" data-biz-name="startQueryDate"
+                           data-type="date" lay-verify="required" value="$!{form.startQueryDate}"/>
+                </div>
+                ~
+                <div class="layui-inline">
+                    <input class="layui-input bt-biz-dateType" type="text" id="queryDate"
+                           name="endQueryDate" data-name="endQueryDate" data-biz-name="endQueryDate"
+                           data-type="date" lay-verify="required" value="$!{form.endQueryDate}"/>
+                </div>
+            </td>
+            ##银行类型
+            <td class="textRight">#springMessage('table.eBankBill.bankType')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType"
+                         data-url="${basePath}/basic/business/btbanktype/json"
+                         data-method="get"
+                         data-valuefield="id"
+                         data-textfield="typeName"
+                         data-name="bankTypeId"
+                         data-biz-name="bankTypeId"
+                         data-inputvalue="inputvalue"
+                         data-search="true"
+                         data-defaultvalue="$!{form.bankTypeId}">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <div class="layui-inline">
+                    <button type="button" class="layui-btn" lay-submit lay-filter="search" >#springMessage('common.button.search')</button>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="resetBankOpenBillAmtStatistics()">#springMessage('common.button.reset')</button>
+                    <button type="button" class="layui-btn" lay-submit="" lay-filter="excel">#springMessage('common.button.exports')</button>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis">
+    <thead>
+    <tr>
+        <th>序号</th>
+        <th>#springMessage('bill.accebill.query.region')</th>
+        <th>#springMessage('table.report.bankName')</th>
+        <th>#springMessage('table.ratBkrationDisDetail.ratMoneySum')</th>
+        <th>#springMessage('bill.accebill.among.open')</th>
+        <th>#springMessage('bill.accebill.among.lowRisk')</th>
+        <th>#springMessage('bill.accebill.contract.endDate')</th>
+        <th>#springMessage('bill.accebill.loanMoney')</th>
+        <th>#springMessage('bill.accebill.unexpiredBillMoney')</th>
+        <th>#springMessage('bill.accebill.leftQuota')</th>
+        <th>#springMessage('bill.accebill.unexpiredBailMoney')</th>
+        <th>#springMessage('bill.accebill.payTotal')</th>
+        <th>#springMessage('bill.accebill.among.ebankTotal')</th>
+        <th>#springMessage('bill.accebill.among.openBillTotal')</th>
+        <th>#springMessage('bill.accebill.open.threeMonth')</th>
+        <th>#springMessage('bill.accebill.open.sixMonth')</th>
+        <th>#springMessage('bill.accebill.lowRisk.threeMonth')</th>
+        <th>#springMessage('bill.accebill.lowRisk.sixMonth')</th>
+        <th>#springMessage('bill.accebill.businessBill.threeMonth')</th>
+        <th>#springMessage('bill.accebill.businessBill.sixMonth')</th>
+        <th>#springMessage('bill.accebill.billTotalRate')</th>
+        <th>#springMessage('bill.accebill.sixMonthBillRate')</th>
+        <th>#springMessage('bill.accebill.useBillMoneyByBill')</th>
+        <th>#springMessage('bill.accebill.useBillMoneyByBank')</th>
+        <th>#springMessage('bill.accebill.openUnexpiredBillMoney')</th>
+        <th>#springMessage('bill.accebill.lowRiskUnexpiredBillMoney')</th>
+    </tr>
+    </thead>
+    <tbody>
+        #if($!{resultList} && $!resultList.size() > 0)
+            #foreach($result in $!resultList)
+                #if($!{result.corpId} == '-1')
+                <tr style="font-weight: 700">
+                    <td></td>
+                    ##区域：二级单位
+                    <td align="center">$!{result.secondLevCorpName}</td>
+                    <td align="center">$!{result.bankName}</td>
+                    ##授信总额
+                    <td align="right">$number.formatNumeric($!{result.ratMoneySum})</td>
+                    ##其中：敞口
+                    <td align="right">$number.formatNumeric($!{result.openMoneySum})</td>
+                    ##中：低风险
+                    <td align="right">$number.formatNumeric($!{result.lowRiskMoneySum})</td>
+                    ##合同到期日
+                    <td></td>
+                    ##流贷金额
+                    <td align="right">$number.formatNumeric($!{result.loanMoney})</td>
+                    ##本月止未到期开票金额
+                    <td align="right">$number.formatNumeric($!{result.unexpiredBillMoney})</td>
+                    ##本月末授信剩余额度
+                    <td align="right">$number.formatNumeric($!{result.leftQuota})</td>
+                    ##本月止保证金余额
+                    <td align="right">$number.formatNumeric($!{result.unexpiredBailMoney})</td>
+                    ##支付总额
+                    <td align="right">$number.formatNumeric($!{result.payTotalMoney})</td>
+                    ##其中：电汇总额
+                    <td align="right">$number.formatNumeric($!{result.ebankMoney})</td>
+                    ##其中：开票总额
+                    <td align="right">$number.formatNumeric($!{result.openBillTotalMoney})</td>
+                    ##敞口：三个月
+                    <td align="right">$number.formatNumeric($!{result.openBillThreeMonth})</td>
+                    ##敞口：六个月
+                    <td align="right">$number.formatNumeric($!{result.openBillSixMonth})</td>
+                    ##低风险：三个月
+                    <td align="right">$number.formatNumeric($!{result.lowRiskThreeMonth})</td>
+                    ##低风险：六个月
+                    <td align="right">$number.formatNumeric($!{result.lowRiskSixMonth})</td>
+                    ##商承：三个月
+                    <td align="right">$number.formatNumeric($!{result.businessBillThreeMonth})</td>
+                    ##商承：六个月
+                    <td align="right">$number.formatNumeric($!{result.businessBillSixMonth})</td>
+                    ##开票占比
+                    <td align="right"></td>
+                    ##6个月银承占比
+                    <td align="right"></td>
+                    ##敞口额度已使用总额（票面口径）
+                    <td align="right">$number.formatNumeric($!{result.useBillMoneyByBill})</td>
+                    ##敞口额度已使用总额（银行口径）
+                    <td align="right">$number.formatNumeric($!{result.useBillMoneyByBank})</td>
+                    ##本月未到期（其中：敞口）
+                    <td align="right">$number.formatNumeric($!{result.openUnexpiredBillMoney})</td>
+                    ##本月未到期（其中：低风险）
+                    <td align="right">$number.formatNumeric($!{result.lowRiskUnexpiredBillMoney})</td>
+                </tr>
+                #else
+                <tr>
+                    ##序号
+                    <td align="center">$!{result.serialNum}</td>
+                    ##区域：单位名称
+                    <td align="center">$!{result.corpName}</td>
+                    <td align="center">$!{result.bankName}</td>
+                    ##授信总额
+                    <td align="right">$number.formatNumeric($!{result.ratMoneySum})</td>
+                    ##其中：敞口
+                    <td align="right">$number.formatNumeric($!{result.openMoneySum})</td>
+                    ##中：低风险
+                    <td align="right">$number.formatNumeric($!{result.lowRiskMoneySum})</td>
+                    ##合同到期日
+                    <td>$!date.format('yyyy-MM-dd',$!{result.contractEndDate})</td>
+                    ##流贷金额
+                    <td align="right">$number.formatNumeric($!{result.loanMoney})</td>
+                    ##本月止未到期开票金额
+                    <td align="right">$number.formatNumeric($!{result.unexpiredBillMoney})</td>
+                    ##本月末授信剩余额度
+                    <td align="right">$number.formatNumeric($!{result.leftQuota})</td>
+                    ##本月止保证金余额
+                    <td align="right">$number.formatNumeric($!{result.unexpiredBailMoney})</td>
+                    ##支付总额
+                    <td align="right">$number.formatNumeric($!{result.payTotalMoney})</td>
+                    ##其中：电汇总额
+                    <td align="right">$number.formatNumeric($!{result.ebankMoney})</td>
+                    ##其中：开票总额
+                    <td align="right">$number.formatNumeric($!{result.openBillTotalMoney})</td>
+                    ##敞口：三个月
+                    <td align="right">$number.formatNumeric($!{result.openBillThreeMonth})</td>
+                    ##敞口：六个月
+                    <td align="right">$number.formatNumeric($!{result.openBillSixMonth})</td>
+                    ##低风险：三个月
+                    <td align="right">$number.formatNumeric($!{result.lowRiskThreeMonth})</td>
+                    ##低风险：六个月
+                    <td align="right">$number.formatNumeric($!{result.lowRiskSixMonth})</td>
+                    ##商承：三个月
+                    <td align="right">$number.formatNumeric($!{result.businessBillThreeMonth})</td>
+                    ##商承：六个月
+                    <td align="right">$number.formatNumeric($!{result.businessBillSixMonth})</td>
+                    ##开票占比
+                    <td align="right">
+                        #if($!{result.openBillPercent})
+                            $rateTag.show($!{result.openBillPercent}, 2)
+                        #end
+                    </td>
+                    ##6个月银承占比
+                    <td align="right">
+                        #if($!{result.sixMonthBankBillPercent})
+                            $rateTag.show($!{result.sixMonthBankBillPercent}, 2)
+                        #end
+                    </td>
+                    ##敞口额度已使用总额（票面口径）
+                    <td align="right">$number.formatNumeric($!{result.useBillMoneyByBill})</td>
+                    ##敞口额度已使用总额（银行口径）
+                    <td align="right">$number.formatNumeric($!{result.useBillMoneyByBank})</td>
+                    ##本月未到期（其中：敞口）
+                    <td align="right">$number.formatNumeric($!{result.openUnexpiredBillMoney})</td>
+                    ##本月未到期（其中：低风险）
+                    <td align="right">$number.formatNumeric($!{result.lowRiskUnexpiredBillMoney})</td>
+                </tr>
+                #end
+            #end
+        #else
+        <tr>
+            <td colspan="26" align="center">暂无数据</td>
+        </tr>
+        #end
+    </tbody>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/bill/accebill/bankOpenBillAmtStatistics.list.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bill/accebill/abCollapseElement.list.base.js?_btv=${resourceVersion}"></script>
+</html>

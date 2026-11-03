@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="interestRateType" name="interestRateType" type="hidden" value="1">
+    <input type="hidden" name="id" value="$!{depositRateVO.id}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ## 类型编码
+            <td class="textRight">#springMessage('table.depositRateType.code')</td>
+            <td width="35%">$!{depositRateVO.rateTypeCode}</td>
+        ##类型名称
+            <td class="textRight">#springMessage('table.depositRateType.name')</td>
+            <td width="35%">$!{depositRateVO.rateTypeName}</td>
+        </tr>
+        <tr>
+        ##存款类型
+            <td class="textRight">#springMessage('table.depositRateType.depositType')</td>
+            <td >$!dictTag.get("pricing.deposit.type",$!{depositRateVO.depositClass})</td>
+            ##币别
+            <td class="textRight">#springMessage('table.depositRate.curCode')</td>
+            <td>$!{depositRateVO.curName}</td>
+        </tr>
+        <tr>
+        ##生效日期
+            <td class="textRight">#springMessage('table.depositRate.timeOfTakeEffect')</td>
+            <td>$!date.format('yyyy-MM-dd',$!{depositRateVO.timeOfTakeEffect})</td>
+        ##存款账户标识
+            <td class="textRight">#springMessage('table.depositRateType.depAccSign')</td>
+            <td width="40%">
+                #if($!{depositRateVO.depositAccSign})
+                    #set($depositAccSign=$!{depositRateVO.depositAccSign})
+                #else
+                    #set($depositAccSign=2)##为空时默认为资金池内部账户
+                #end
+                $!dictTag.get("pricing.depAccSign",$!{depositAccSign})
+            </td>
+        </tr>
+            #if($!{depositRateVO.depositClass}=="04")##活期利率
+            <tr>
+            ##基准利率/基础利率
+                <td class="textRight">#springMessage('table.depositRate.referenceRate')/#springMessage('table.depositRate.baseRate')</td>
+                #if($!{depositRateVO.referenceRateType})
+                    <td>
+                        $!dictTag.get("reference.RateType",$!{depositRateVO.referenceRateType})
+                    </td>
+                #else
+                    <td>
+                        $!dictTag.get("reference.RateType",0)##为空时默认基准利率
+                    </td>
+                #end
+                #if($!{depositRateVO.referenceRateType}=="0")
+                    <td class="textRight">#springMessage('table.depositRate.referenceRate')</td> ##基准利率
+                #else
+                    <td class="textRight">#springMessage('table.depositRate.baseRate')</td> ##基础利率
+                #end
+                #set($rate=$!{depositRateVO.rate}*100)
+                <td>$!number.formatDoubles($!rate,4)%</td>
+            </tr>
+            <tr>
+                #if($!{depositRateVO.referenceRateType}=="1")##基础利率
+                ##浮动范围上限（BP）
+                    <td class="textRight">#springMessage('table.LoanRate.Upper.limit.of.floating.range')(BP)</td>
+                    <td>$!number.formatDoubles($!{depositRateVO.rateUpLimit},4)</td>
+                ##浮动范围下限（BP）
+                    <td class="textRight" >#springMessage('table.LoanRate.Lower.limit.of.floating.range')(BP)</td>
+                    <td>$!number.formatDoubles($!depositRateVO.rateDownLimit,4)</td>
+                #else##默认基准利率
+                ##浮动范围上限（%）
+                    <td class="textRight">#springMessage('table.LoanRate.Upper.limit.of.floating.range')(%)</td>
+                    <td>$!number.formatDoubles($!{depositRateVO.rateUpLimit},4)</td>
+                ##浮动范围下限（%）
+                    <td class="textRight" >#springMessage('table.LoanRate.Lower.limit.of.floating.range')(%)</td>
+                    <td>$!number.formatDoubles($!depositRateVO.rateDownLimit,4)</td>
+                #end
+            </tr>
+                #else
+                <tr class="rateShow" >
+                ##利率
+                    <td class="textRight">#springMessage('table.depositRate.interestRate')</td>
+                    #set($rate=$!{depositRateVO.rate}*100)
+                    <td>$!number.formatDoubles($!rate,4)%</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+        #end
+
+        ##备注
+        <tr>
+            <td class="textRight">#springMessage('table.depositRateType.remark')</td>
+            <td colspan="3">$!{depositRateVO.remark}</td>
+        </tr>
+        <tr>
+        ##打回原因
+            <td class="textRight">#springMessage('table.depositRate.refuseWhy')</td>
+            <td colspan="3">
+	            <textarea id="refuseWhy" style="min-height:70px" class="layui-textarea"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="pass">#springMessage('common.button.reCheckPass')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="back">#springMessage('common.button.reCheckBack')</button>
+                <button class="layui-btn" type="button" onClick="closecurrent()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    var form;
+    bt.use(['form','layedit'], function(){
+        var $ = bt.jquery;
+        form = bt.form();
+        bt.empty = function(ms){
+            if(typeof(ms) == "undefined" || ms == null || ms == ""){
+                return true;
+            }
+            return false;
+        }
+        //监听提交
+        form.on('submit', function(data){
+            var handleType;
+            var nm = $(this).attr("lay-filter");
+            if(nm == "pass"){
+                handleType= "2";
+            }else if(nm == "back"){
+                handleType= "-1";
+            }
+            var action = "/pricing/depositRate/interestRateReCheck/checkBatch?ids=" + data.field.id+"&handleType="+handleType;
+            if(handleType=="-1"){//复核打回时提示
+                var refuseWhy=$("#refuseWhy").val();
+                if (bt.empty(refuseWhy)) {
+                    parent.layer.alert(bt.lang('common.message.config.please'));
+                } else {
+                    data.field.returndeScribe =refuseWhy;
+                            parent.layer.confirm(bt.lang('common.message.confirm.back'), function () {
+                                $.post(basePath + action, data.field, function (result) {
+                                    parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                                    if (result.success) {
+                                        if (bt.navtab) {
+                                            bt.navtab.closeCurrent();
+                                        }
+                                    }
+                                }, 'JSON');
+                            });
+                }
+            }else if(handleType=="2"){//复核通过时提示
+                parent.layer.confirm(bt.lang('common.message.confirm.check'),function(){
+                    $.post(basePath + action,data.field,function(result){
+                        parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                        if(result.success){
+                            if(bt.navtab){
+                                bt.navtab.closeCurrent();
+                            }
+                        }
+                    },'JSON');
+                });
+            }
+            return false;
+        });
+    });
+    //关闭当前页面
+    function closecurrent(){
+        if(!bt.navtab){
+            parent.layer?parent.layer.closeAll():layer.closeAll();
+        } else {
+            bt.navtab.closeCurrent();
+        }
+        return false;
+    }
+</script>
+</html>

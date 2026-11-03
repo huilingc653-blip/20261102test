@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form ignore-required-icon" method="post">
+						<input id="id" name="id" type="hidden" value="$!{fcChargeTypePage.id}">
+						<input id="bankTypes" name="bankTypes" type="hidden" value="$!{bankTypes}">
+		<table class="layui-table">
+			<tr>
+				<td class="textRight">#springMessage('table.fcChargeType.chargeTypeCode')</td>
+				<td>
+				##费用代码
+					<input type="text" id="chargeTypeCode" name="chargeTypeCode" 
+						lay-verify="required" autocomplete="off" class="layui-input" maxlength="4"
+						placeholder="#springMessage('table.fcChargeType.chargeTypeCode')"
+						value="$!{fcChargeTypePage.chargeTypeCode}">
+				</td>
+				<td class="textRight">#springMessage("table.fcChargeType.chargeTypeName")</td>
+				<td>
+				##费用名称
+					<input type="text" id="chargeTypeName" name="chargeTypeName"
+						lay-verify="required" autocomplete="off" class="layui-input"
+						placeholder="#springMessage('table.fcChargeType.chargeTypeName')"
+						value="$!{fcChargeTypePage.chargeTypeName}">
+				</td>
+			</tr>
+			<!-- <tr>
+				<td class="textRight">#springMessage('table.fcChargeType.curCode')</td>
+				<td>
+				##币别
+					<div type="list" field="curCode" fieldHref="${basePath}/basic/business/btcurrency/json" dictField="id" dictText="curName" defaultVal="$!{fcChargeTypePage.curCode}"></div>
+				</td>
+				<td class="textRight">#springMessage('table.chargeTypeBankTypeRel.bankType')</td>
+				<td>
+				##银行类别
+					<div class="demo-selectTree-checkbox"></div>
+				</td>
+			</tr>
+			<tr>
+			##加急标志
+				<td class="textRight">#springMessage('table.fcChargeType.emergencySign')</td>
+				<td>
+						#set ($mymap = {"field":"emergencySign","type":"radio","typeGroupCode":"emergency_sign","defaultVal":"$!{fcChargeTypePage.emergencySign}","title":"#springMessage('table.fcChargeType.emergencySign')"})
+						#set ($formB = $dictSelect.instance($mymap))
+						${formB.html()}
+				</td>
+			##跨行标志
+				<td class="textRight">#springMessage('table.fcChargeType.difBank')</td>
+				<td>
+						#set ($mymap = {"field":"difBank","type":"radio","typeGroupCode":"nisBillhead.difBank","defaultVal":"$!{fcChargeTypePage.difBank}","title":"#springMessage('table.fcChargeType.difBank')"})
+						#set ($formB = $dictSelect.instance($mymap))
+						${formB.html()}
+				</td>
+			</tr> -->
+			<tr>
+			<!-- ##地域标志
+				<td class="textRight">#springMessage('table.fcChargeType.areaSign')</td>
+				<td>
+						#set ($mymap = {"field":"areaSign","type":"radio","typeGroupCode":"nisBillhead.areaSign","defaultVal":"$!{fcChargeTypePage.areaSign}","title":"#springMessage('table.fcChargeType.areaSign')"})
+						#set ($formB = $dictSelect.instance($mymap))
+						${formB.html()}
+				</td> -->
+			##收取费用
+				<td class="textRight">#springMessage('table.fcChargeType.charge')</td>
+				<td colspan="3">
+					<input type="text" id="charge" name="charge" autocomplete="off"
+								class="layui-input has-minus" data-type="number"   placeholder="#springMessage('table.fcChargeType.charge')" value="$!{fcChargeTypePage.charge}">			
+				</td>
+			</tr>
+		</table>				
+				<hr>
+			<table id="dttable" class="layui-table">
+				<thead>
+					<tr>
+						<th><span style="color:red">*</span>#springMessage('table.fc_charge_type_dtl.min_range_money')</th>
+						<th><span style="color:red">*</span>#springMessage('table.fc_charge_type_dtl.max_range_money')</th>
+						<th>#springMessage('table.fc_charge_type_dtl.calc_type')</th>
+						<th><span style="color:red">*</span>#springMessage('table.fc_charge_type_dtl.fix_percent')</th>
+						<th>#springMessage('table.fc_charge_type_dtl.max_charge')</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+				<tfoot>
+						<tr>
+							<td colspan="6" align="center">
+							<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+	                    	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+	                    	<button class="layui-btn"  onClick="doClose()">#springMessage('common.button.close')</button>
+							</td>
+						</tr>
+					</tfoot>
+			</table>
+			<table>
+				<tbody>
+						<!-- 模板 start 点击“增加明细”按钮时按照这列来生成下一行-->
+					<tr id="template" style="display: none;">
+						<td><input class="layui-input bt-input-inline  bt-biz-moneyType"  type="text" data-decimal="2"  
+							data-biz-name="minRangeMoney_index"  data-name="minRangeMoney_index" data-min="0" lay-verify=""/></td>
+						<td><input class="layui-input bt-input-inline  bt-biz-moneyType"  type="text" data-decimal="2" 
+							data-biz-name="maxRangeMoney_index"  data-name="maxRangeMoney_index" data-min="0" data-callback="moneyMaxVerify" lay-verify=""/></td>
+						</td>
+						<td>
+							<div class="bt-biz-dict" data-group="chargeTypeDtls.calcType" data-biz-name="calcType_index" data-name="calcType_index" data-type="select" data-defaultvalue="10" data-callback="setNextDetail"></div>
+						</td>
+						<td>
+							<input type="text" data-biz-name="fixChargeMoney_index" data-name="fixChargeMoney_index" name="fixChargeMoney_index" class="layui-input layui-input-inline" data-type="number_index" lay-verify="" />
+                            <label id="percentAttr_index" class="layui-input-inline" style="display:none">%</label>
+						</td>
+						<td><input type="text" data-name="maxCharge_index" name="maxCharge_index" class="layui-input" data-type="number_index"  />
+						</td>
+						<td>
+							<button data-type="del" class="layui-btn layui-btn-mini">#springMessage("common.button.delete")</button>
+						</td>
+					</tr>
+					<!-- 模板 end -->
+				</tbody>
+			</table>
+            
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','layedit','moneynum','btdate','select','bttable','dicts','selectTree','moneyType'], function(){
+		var $ = bt.jquery,form = bt.form(),moneynum = bt.moneynum,moneyType=bt.moneyType.init();
+		
+		//格式化金额
+		moneynum.init({elem:$('[data-type="number"]'),decimal:2,minus:false});
+		
+		//初始化银行类别树
+		bt.selectTree.init({
+	        url:basePath+"/paramconfig/fcchargetype/bannkTypeTree",
+	        elem:".demo-selectTree-checkbox",
+	        name:'bankId',
+	        checkType:'check',
+	        selected:$("#bankTypes").val(),
+	        fontCss:function(treeId, treeNode){
+	        	if($("#bankTypes") && $("#bankTypes").val().indexOf(treeNode.id)>= 0){
+	        		return {color:"blue"};
+	        	}else{
+	        		return {color:""};
+	        	}
+            },
+            placeholder:bt.lang('table.chargeTypeBankTypeRel.bankType')
+	    });
+		//初始化币别下拉框
+		$.each($("div[type='list']"),function(i,item){
+			bt.select.init({
+				elem: "[field='"+$(item).attr("field")+"']",
+				name: $(item).attr("field"),
+				defaultVal: $(item).attr("defaultVal"),
+				valueField: $(item).attr("dictField"),
+				textField: $(item).attr("dictText"),
+				search: true,
+				disabled: false,
+				url: $(item).attr("fieldhref")
+			});
+		});
+		//初始化表格数据
+		bt.bttable.init({
+			elem: "#dttable",
+			url: basePath + "/paramconfig/fcchargetype/listFcChargeTypeDtls",
+			urldata:{"fcChargeTypeId":$("#id").val()},	
+			scrollX:true,
+			buttons: [
+						{
+							text: '<i class="layui-icon">&#xe654;</i>'+bt.lang('common.addTr'),
+							action: function(e, dt, node, config){
+								$addTr();
+							}
+						}
+					],
+			columns:[{
+				data:"minRangeMoney",
+				render:function(data, row){
+				    if (row == 0) {
+                        var reInfo = '<input data-name="minRangeMoney_index' + row + '" data-biz-name="minRangeMoney_index' + row + '" name="minRangeMoney_index' + row + '" value="' + (isNull(data.minRangeMoney) ? "" : data.minRangeMoney) + '" lay-verify="required" class="layui-input bt-input-inline  bt-biz-moneyType" data-type="number_index' + row + '" />';
+                    }else{
+                        var reInfo = '<input data-name="minRangeMoney_index' + row + '" data-biz-name="minRangeMoney_index' + row + '" name="minRangeMoney_index' + row + '" value="' + (isNull(data.minRangeMoney) ? "" : data.minRangeMoney) + '" lay-verify="required" class="layui-input bt-input-inline  bt-biz-moneyType" data-type="number_index' + row + '" readonly/>';
+					}
+					return reInfo;
+				}
+			},{
+				data:"maxRangeMoney",
+				render:function(data, row){
+					var reInfo='<input data-name="maxRangeMoney_index'+row+'" data-biz-name="maxRangeMoney_index'+row+'" name="maxRangeMoney_index'+row+'" value="'+(isNull(data.maxRangeMoney)?"":data.maxRangeMoney)+'" lay-verify="required" class="layui-input bt-input-inline  bt-biz-moneyType" data-type="number_index'+row+'" data-callback="moneyMaxVerify"/>';
+					return reInfo;
+				}
+			},{
+				data:"calcType",
+				render:function(data, row){
+					var reInfo='<div class="bt-biz-dict" data-group="chargeTypeDtls.calcType" data-biz-name="calcType_index" data-name="calcType_index'+row+'" data-type="select" data-defaultvalue="'+data.calcType+'" data-callback="setNextDetail"></div>';
+					return reInfo;
+				}
+			},{
+				data:"fixChargeMoney",
+				render:function(data, row){
+					if(data.calcType=="10"){
+						var reInfo='<input data-name="fixChargeMoney_index'+row+'" name="fixChargeMoney_index'+row+'" value="'+(isNull(data.fixChargeMoney)
+						?"":data.fixChargeMoney)+'" class="layui-input layui-input-inline" data-type="number_index'+row+'" type="text" lay-verify="required"/>';						
+						reInfo+='<label id="percentAttr_index" class="layui-input-inline" style="display:none">%</label>';
+						return reInfo;
+					}else{
+						var reInfo='<input data-name="fixChargeMoney_index'+row+'" name="fixChargeMoney_index'+row+'" value="'+(isNull(data.percent)
+						?"":data.percent)+'" class="layui-input layui-input-inline" data-type="number_index'+row+'" type="text" lay-verify="required"/>';						
+						reInfo+='<label  id="percentAttr_index" class="layui-input-inline" style="display:inline">%</label>';
+						return reInfo;
+					}
+				}
+			},{
+				data:"maxCharge",
+				render:function(data, row){
+					var reInfo='<input data-name="maxCharge_index'+row+'" name="maxCharge_index'+row+'" value="'+(isNull(data.maxCharge)?"":data.maxCharge)+'" class="layui-input" data-type="number_index'+row+'" type="text"/>';
+					return reInfo;
+				}
+			},{
+				data:null,
+				render:function(data, row){
+					var reInfo='<button data-type="del" class="layui-btn layui-btn-mini">'+bt.lang("common.button.delete")+'</button>';
+					return reInfo;
+				}
+			}],
+			delRowCallback:function(data,$tr){
+		    	$tr.remove();//删除行				
+		    },            
+	        tableInitCallback:function(data){ 
+			bt.moneyType.render();
+	    	   i = data.length-1;
+	    	   var trs = $("#dttable").children("tbody").children("tr");
+	           //遍历行数据,设置下拉框和数字格式化
+	           trs.each(function(index,tr){
+		    	   bt.dicts.init('CalcType_index'+index);
+				  	$(tr).find("td[name^='fixChargeMoney']").find("label").attr("id","percentAttr_index"+index);
+		    	   bt.moneynum.init({elem:$("[data-type='number_index"+index+"']"),decimal:2,minus:false});
+	           });
+           }
+		});
+		
+	
+		
+		
+		//格式化数字
+		$.each($("input[decimal]"),function(i,item){
+			if($(item).attr("decimal")!=""){
+				bt.moneynum.setnum({trigger:$(item),decimal:$(item).attr('decimal')*1});
+			}
+		});
+		//时间
+		$.each($("div[type='date']"),function(i,item){
+			bt.btdate.init({
+				elem: "[field='"+$(item).attr("field")+"']",
+				name: $(item).attr("field"),
+				start: $(item).attr("defaultVal"),
+				format: "YYYY-MM-DD",
+				istime: false
+			});
+		});
+		$.each($("div[type='datetime']"),function(i,item){
+			bt.btdate.init({
+				elem: "[field='"+$(item).attr("field")+"']",
+				name: $(item).attr("field"),
+				start: $(item).attr("defaultVal"),
+				format: "YYYY-MM-DD hh:mm:ss",
+				istime: true
+			});
+		});
+
+		//监听提交
+        form.on('submit(submit)', function(data){
+            if (checkMaxMinAll()){
+                return false;
+			}
+        	var dataInfo={
+        			id:data.field.id,
+					areaSign:data.field.areaSign,
+					charge:data.field.charge,
+					chargeTypeCode:data.field.chargeTypeCode,
+					chargeTypeName:data.field.chargeTypeName,
+					curCode:data.field.curCode,
+					difBank:data.field.difBank,
+					emergencySign:data.field.emergencySign
+			};
+			
+			var trs = $("#dttable > tbody").children('tr:visible');
+			if(trs.length > 0){
+		 		trs.each(function(i,tr){				
+		 			var calcType = "";
+		 			var tds = $(tr).children('td');
+		 			tds.each(function(index,td){
+		 				var $input = $(td).find('[name]');						
+		 				var name = $input.attr('name');
+		 				if(typeof(name) != "undefined"){//设置费用明细数据
+		 					name = name.substring(0,name.indexOf("_"));
+			 				var text = $input.val();
+			 				 if(name=="calcType"){
+			 					calcType = text;
+			 				}
+			 				if(name=="fixChargeMoney"){
+			 					if(calcType=="10"){
+			 						dataInfo["chargeTypeDtls["+i+"].fixChargeMoney"]=text;
+			 					}else{
+			 						dataInfo["chargeTypeDtls["+i+"].percent"]=text;
+			 					}
+			 				}else{
+			 					dataInfo["chargeTypeDtls["+i+"]."+name]=text;
+			 				} 
+		 				}
+		 			});
+		 		});
+			}
+			/* var bankId = data.field.bankId.split(",");
+			for(var i=0;i<bankId.length;i++){
+				dataInfo["bankTypeRels["+ i +"].bankType" ] = bankId[i];//设置银行类别数据
+			} */
+            if($("#minRangeMoney_index1").val() == undefined){
+                layer.alert(bt.lang("fin.paramconfig.charge.dtls.null"));
+                return false;
+            }
+			
+            var action = "/paramconfig/fcchargetype/modify";
+            $.post(basePath + action,dataInfo,function(result){
+            	parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                if(result.success){
+                	if(!bt.navtab){
+                        parent.layer?parent.layer.closeAll():layer.closeAll();
+                    } else {
+                    	bt.navtab.closeCurrent();
+                    }
+                }
+            },'JSON');
+            return false;
+        });
+		
+	
+		
+     	 //关闭窗口
+        doClose = function(){
+        	if(bt.navtab){
+    			bt.navtab.closeCurrent();
+    		}
+        }
+
+		});
+		var i = 0;
+		var sign="0";
+		var html = $("#template").html().replace(/lay-verify=""/g,'lay-verify="required"');
+		$addTr = function(){//增加行
+		
+			i++;
+			var index = "_index" + i;
+			var reg = new RegExp("_index","g");
+			var tds = html.replace(reg,index);
+	 		var $tr = $('<tr>'+ tds +'</tr>');
+	 		$("#dttable > tbody").append($tr);
+	 		bt.dicts.init('CalcType_index'+i);
+	 		bt.moneynum.init({elem:$("[data-type='number_index"+i+"']"),decimal:2,minus:false});
+			bt.moneyType.render();
+			var length=$("#dttable tbody tr").length-1;//获取当前行的索引
+			if(length>0){//当行数大于0的时候，才将当前最小值设置为上一笔最大值			    		
+    		var lastMaxId=$("#dttable tbody tr:eq("+(--length)+") td:eq(1)").find("input").attr("data-id");//上一笔最大金额id    		
+    		var nowMinId="minRangeMoney_index"+i;//当前最小金额id   		
+	   		var maxMoney=$("#"+lastMaxId).val();//上一笔的最大金额
+    		if(!isNull(maxMoney)){
+    		bt.moneyType.get(nowMinId).val(bt.money.add(maxMoney, 0.01));
+    		}
+    		if (i > 1) {
+				bt.moneyType.get(nowMinId).attr("readOnly", "readOnly");
+			}
+    		}
+		}
+	
+        //输入最大值时的验证
+        function moneyMaxVerify(data,el){
+        if(isNull(data)){
+        return;
+        }
+		var length=$(el).parent().parent().parent().find("tr").length;//总行数
+		var nowIndex=$(el).parent().parent().prevAll().length;//当前行
+	
+		var minRangeMoneyId =$("#dttable tbody tr:eq("+nowIndex+") td:eq(0)").find("input").attr("data-id");
+		
+        var minMoney=bt.moneyType.get(minRangeMoneyId).val();
+        var maxMoney=data;
+        //如果输入的最大值比最小值小，则给予提示
+        if(bt.money.sub(maxMoney, minMoney)<=0){
+        parent.layer.msg(bt.lang("cms.fcChargeType.compareNum"), {icon: 2});
+        setTimeout(function() {
+                 $(el).focus();
+                    }, 0);
+        
+        return;
+        }
+      
+        try
+        {
+		var nextMinRangeMoneyId =$("#dttable tbody tr:eq("+(++nowIndex)+") td:eq(0)").find("input").attr("data-id");
+        bt.moneyType.get(nextMinRangeMoneyId).val(bt.money.add(maxMoney, 0.01));
+        }catch(err){}
+        bt.moneyType.render();
+        }
+
+    //检查每行的最小值与最大值关系
+    function checkMaxMinAll() {
+        var length=$("#dttable tbody").find("tr").length;//总行数
+		for (var i=0;i<length;i++) {
+            var minRangeMoneyId = $("#dttable tbody tr:eq("+ i +") td:eq(0)").find("input").attr("data-id");//第i行最小值
+            var minMoney = bt.moneyType.get(minRangeMoneyId).val();
+            var maxRangeMoneyId = $("#dttable tbody tr:eq("+ i +") td:eq(1)").find("input").attr("data-id");//第i行最大值
+            var maxMoney = bt.moneyType.get(maxRangeMoneyId).val();
+            //如果输入的最大值比最小值小，则给予提示
+            if (bt.money.sub(maxMoney, minMoney) <= 0) {
+                parent.layer.msg(bt.lang("cms.fcChargeType.compareNum"), {icon: 2});
+                setTimeout(function() {
+                    $("#dttable tbody tr:eq("+ i +") td:eq(0)").find("input").focus();
+                }, 0);
+                return true;
+            }
+        }
+        return false;
+    }
+    	/** 
+        * 判断是否为空 true：空 false:不为空
+        * @param data 
+        */
+        function isNull(data){
+        	if(data == 0){
+        		return false;
+        	}else{
+       			return (data == "" || data == undefined || data == null) ? true : false; 
+        	}
+        }
+  	  //按比例：20，固定值：10
+		function setNextDetail(data){
+		var calcTypeId=data.elem.name;
+		var id=calcTypeId.split("_")[1]; 
+		var percentId="percentAttr_"+id;
+		if(data.value=="10"){
+		$("#"+percentId).hide();
+		}else{
+		$("#"+percentId).show();
+		}
+		}
+</script>

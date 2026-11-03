@@ -1,0 +1,144 @@
+#* 
+*公共审批基础页面
+*#
+<form class="layui-form layui-form-pane">
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.billInfo.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.origNo')</td>
+                        <td width="30%">
+                            $!{info.origNo}
+                            <input id="origNo" name="origNo" value="$!{info.origNo}" type="hidden"/>
+                        </td>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.billFlag')</td>
+                        <td width="30%">$!{info.billFlagName}</td>
+                    </tr>
+                    <tr>
+                        ##申请单位
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.applyCorp')</td>
+                        <td width="30%">
+                            $!{info.applyCorpName}
+                        </td>
+                        ##票据单位
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfoVice.corpId')</td>
+                        <td width="30%">$!{info.corpName}</td>
+                    </tr>
+                    <tr>
+                        ##业务单位
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.busCorp')</td>
+                        <td width="30%">
+                            $!{info.busCorpName}
+                        </td>
+                        ##业务人员
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.busPersonnel')</td>
+                        <td width="30%">$!{info.busPersonnel}</td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.billMoney')</td>
+                        <td width="30%">$number.formatNumeric($!{info.billMoney})</td>
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.billType')</td>
+                        <td width="30%">$!{info.billTypeName}</td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.startDate')</td>
+                        <td width="30%">$!date.format('yyyy-MM-dd',$!{info.startDate})</td>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.endDate')</td>
+                        <td width="30%">$!date.format('yyyy-MM-dd',$!{info.endDate})</td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.payer')</td>
+                        <td width="30%">$!{info.payer}</td>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.payeracc')</td>
+                        <td width="30%">$!{info.payeracc}</td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.acceptor')</td>
+                        <td width="30%">$!{info.acceptor}</td>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.acceptoracc')</td>
+                        <td width="30%">$!{info.acceptoracc}</td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.payee')</td>
+                        <td width="30%">$!{info.payee}</td>
+                        <td width="20%" class="textRight">#springMessage('table.abVoucherinfo.payeeacc')</td>
+                        <td width="30%">$!{info.payeeacc}</td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('bill.accebill.bankType')</td>
+                        <td width="30%">$!{bankTypeName}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;" colspan="6">
+                            <button type="button" class="layui-btn"
+                                    onclick="billInfo('$!{info.id}','$!{info.aid}','$!{info.billFlag}')">#springMessage(
+                                'common.button.billinfo')</button>
+                            #if($!info.oldDraftId)
+                                <button type="button" class="layui-btn" onclick="billInfoByVvid('$!{info.oldDraftId}')">#springMessage('bill.accebill.electronbill.oldinfo')</button>
+                            #end
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        #set($vmPage = "views/bill/accebill/approve/viewApproveAbBill"+${info.briefId}+".vm")
+        #parse($vmPage)
+    </div>
+    #if($isAttachmentShow)
+        #set($attachmentVmPage = "views/bill/accebill/attachmentInfo.vm")
+        #parse($attachmentVmPage)
+    #end
+    <!--商票贴现授信额度占用-->
+    #if($isApprove && $!{isEnabled})##贴现挂银行授信
+        <h2 class="layui-colla-title">#springMessage('bill.accebill.bank.relateRat.title')</h2>
+        #set($ratBkrationPage=$ratUrationTag.getRatCommonDTOByBillId('accebill',${billId}))
+        #parse("views/cms/rat/bkration/viewCommonRatUration.vm")
+    #end
+</form>
+#parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery', 'element'], function () {
+        $ = bt.jquery;
+    });
+    /**
+     * 进行票据信息查看
+     * @param id 签收表ID
+     * @param type front正面，back背面
+     */
+    var billInfo = function (id, aid, billFlag) {
+        var $ = bt.jquery;
+        var accId;
+        if (id) {
+            accId = id;
+        } else {
+            accId = aid;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['900px', '700px'],
+            maxmin: true,
+            content: basePath + "/bill/accebill/abvoucherinfo/batchBillEcdsInfoView?accIds=" + accId
+        });
+    }
+
+    /**
+     * 进行票据信息查看
+     * @param vid 票据主ID
+     * @param type front正面，back背面
+     */
+    var billInfoByVvid=function(vvid){
+        parent.layer.open({
+            type: 2,
+            area: ['900px', '700px'],
+            maxmin: true,
+            content: basePath + "/bill/accebill/abvoucherinfo/batchBillEcdsInfoView?vvid=" + vvid
+        });
+    }
+</script>
+#if($isAttachmentShow)
+<script src="${basePath}/static/modules/bill/accebill/attachmentInfo.base.js?_btv=${resourceVersion}"></script>
+#end

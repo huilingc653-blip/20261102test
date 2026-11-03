@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        /
+        /
+        这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" method="post" id="myform">
+        <input  id="id" type="hidden" name="id" value="$!{leaseItemTypeVO.id}">
+    <table id="appTable" class="layui-table layui-form">
+        <tr>
+        ##类别编码
+            <td class="textRight" style="width: 50%">#springMessage('table.cmsLease.typeCode')</td>
+            <td style="width: 50%">
+                <div class="layui-input-inline">
+                    <input type="text" id="id" name="code" lay-verify="required" class="layui-input" value="$!{leaseItemTypeVO.code}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##类别名称
+            <td class="textRight">#springMessage('table.cmsLease.typeName')</td>
+            <td>
+                <input type="text" name="name" lay-verify="required" class="layui-input" value="$!{leaseItemTypeVO.name}">
+            </td>
+        </tr>
+        <tr>
+            ##备注
+            <td class="textRight">#springMessage('table.cmsLoanRepay.rmk')</td>
+            <td>
+                <input type="text" name="rmk" class="layui-input" value="$!{leaseItemTypeVO.rmk}">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"style="text-align: center">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="false" onClick="doClose()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    var dicts,form;
+    bt.use(["jquery","dicts"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        dicts = bt.dicts.init();
+
+//监听提交
+        form.on("submit(submit)", function(data){
+            if (!validate($("#id").val(),$("#code").val())) {
+                layer.alert(bt.lang("df.costCode.alreadyExists"),{icon: 2});
+                return false;
+            }
+            console.log(data.field);
+            var action = "/cms/lease/baseData/updatedate";
+            bt.loading.show();
+            $.post(basePath + action,data.field,function(data){
+                parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                if (data.success) {
+                    if (!bt.navtab) {
+                        bt.navtab.refreshParentTable();
+                    } else {
+                        bt.navtab.closeCurrent();
+                        bt.navtab.refreshCurrent();
+                    }
+                } else {
+                    bt.loading.hide();
+                }
+            },'JSON');
+            return false;
+        });
+
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+
+    function validate(id,code,rmk,name) {
+        var result = false;
+        $.ajax({
+            url: basePath + "/cms/lease/baseData/validate",
+            data: {
+                id:id,
+                code: code,
+                name: name,
+                rmk: rmk
+            },
+            type: "post",
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                result = data.success;
+            }
+        });
+        return result;
+    }
+</script>
+</body>
+</html>

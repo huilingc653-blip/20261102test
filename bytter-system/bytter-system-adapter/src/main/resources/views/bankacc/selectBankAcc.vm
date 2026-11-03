@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input id="ins_corpId" name="ins_corpId" type="hidden" value="$!{params.corpId}">
+        <input id="eqi_status" name="eqi_status" type="hidden" value="$!{params.status}">
+        <input id="eqs_curId" name="eqs_curId" type="hidden" value="$!{params.curId}">
+        <input id="selectedId" type="hidden" value="$!{params.id}">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                <td class="textRight">#springMessage('table.btBankAccApp.bankAcc')</td>
+                <td>
+                    <input type="text" name="likes_bankAcc"
+                           autocomplete="off" class="bank layui-input" placeholder="#springMessage('table.btBankAccApp.bankAcc')">
+                </td>
+                <td class="textRight">#springMessage('table.btBankAcc.accName')</td>
+                <td>
+                    <input type="text" name="likes_accName"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.accName')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('table.btBankAcc.accType')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select"
+                         data-group="btBankAcc.accType" data-name="eqs_accType" data-biz-name="accType"></div>
+                </td>
+                <td class="textRight">#springMessage('table.btBankAccApp.bankTypeId')</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-mulselectType" data-url="${basePath}/basic/business/btbanktype/json"
+                             data-method="get"
+                             data-valuefield="id" data-textfield="typeName"
+                             data-name="ins_bankTypeId" data-inputvalue="inputvalue"
+                             data-search="true"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis" >
+        <thead>
+        <tr>
+            <th>#springMessage('table.btBankAccApp.bankAcc')</th>
+            <th>#springMessage('table.btBankAccApp.accName')</th>
+            <th>#springMessage('table.btBankAccApp.accType')</th>
+            <th>#springMessage('table.btBankAccApp.corpId')</th>
+            <th>#springMessage('table.btBankAccApp.bankTypeId')</th>
+            <th>#springMessage('table.btBankAccApp.bankName')</th>
+            <th>#springMessage('table.btBankAccApp.curId')</th>
+        </tr>
+        </thead>
+    </table>
+    <br />
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+    	<div class="layui-input-block">
+    	<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+#parse("views/common/footer.vm")
+<script type="text/javascript">
+var dataTable={};
+bt.use(['form','jquery','select','datatable','mulselect','selectType','dicts',], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.mulselect.init();
+    bt.selectType.init();
+    bt.dicts.init();
+	//生成列表
+    dataTable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:true,
+        order: [3,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/bankacc/btbankaccquery/datatable"
+        },
+        buttons: [
+            {
+                text:bt.lang('common.button.select'),
+                action: function ( e, dt, node, config ) {
+                    var datas = dt.rows('.selected').data();
+                    bt.selectOp(datas);
+                }
+            }
+        ]
+        ,columns: [
+            {data: "bankAcc", bSortable: true},
+            {data: "accName", bSortable: true},
+            {data: "accType", bSortable: true,
+                render: function ( data, type, full, meta ) {
+                    return bt.dict("btBankAcc.accType",full.accType);
+                }
+            },
+            {data: "corpName", bSortable: true},
+            {data: "bankTypeName", bSortable: true},
+            {data: "bankName", bSortable: true},
+            {data: "curName", bSortable: false}
+        ],
+        btInitComplete: function () {
+            setTimeout(function () {
+                bt.datatable.onCheckRow('#appTable', {
+                    key: 'id',
+                    value: $("#selectedId").val().split(","),
+                    checked: true
+                })
+            }, 300)
+        },
+        jumpPageSelect: true,//跨页选择
+    });
+	bt.selectOp = function(datas){
+		var len = datas.length;
+        if(!len){
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+        	return;
+        }
+		var rowDatas = datas.splice(0,len);
+        var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+        var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-bankAccInfo']['callback'];
+        if(func){
+			var data={"data":rowDatas};
+            func(data);
+        }
+	}
+});
+var closeForms=function(){
+	parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		##业务类型：0主体单位，1交易对手
+		<input type="hidden" name="busType" value="0">
+		<input type="hidden" name="id" value="$!{vo.id}" />
+		<input type="hidden" name="sort" value="$!{vo.sort}" />
+		<input type="hidden" name="createBy" value="$!{vo.createBy}" />
+		<input type="hidden" name="createDate" value="$!{vo.createDate}" />
+		<input type="hidden" id="rowIndex" value="$!{vo.fexCorpBankAccDtl.size()}">
+		<table class="layui-table">
+			<thead>
+				<tr>
+					<th class="textLeft" colspan="6" >#springMessage("table.fexBankAcc.rule")</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					##单位
+					<td class="textRight">#springMessage("table.fexForeign.corpId")</td>
+					<td>
+						<div class="layui-inline">
+							<div class="bt-biz-corp"
+								 data-biz-type="corp"
+								 data-type="selectTree"
+								 data-name="corpId"
+								 data-biz-name="corpId"
+								 data-scope="all"
+								 data-callback="bt.corpCallback"
+								 ##data-beforeInit="beforeInitCorp"
+								 data-resource="foreign:fex:corp:bankacc:apply"
+								 data-defaultvalue="$!{vo.corpId}"
+								 placeholder="#springMessage('common.placeholder.select')"></div>
+						</div>
+					</td>
+					##交易类型
+					<td class="textRight">#springMessage("table.fexBankAcc.tranType")</td>
+					<td>
+						<div class="layui-inline">
+							<div class="bt-biz-dict" data-type="select" data-name="tranType" data-biz-name="tranType" data-displayData="7,8,9,2,4"
+								 data-group="fexCorp.tranType" data-defaultvalue="$!{vo.tranType}" data-callback="tranTypeCallback"></div>##data-required="true"
+						</div>
+					</td>
+					##产品
+					<td class="textRight">#springMessage("table.fexBankAcc.proId")</td>
+					<td>
+						<div class="layui-inline">
+							<div class="bt-biz-selectType" data-biz-name="proId" data-name="proId"
+								 data-url="${basePath}/foreign/fexproduct/listProductAndGroup?tranType=$!{vo.tranType}"
+								 data-valueField="id" data-textField="proName" data-defaultvalue="$!{vo.proId}"
+								  ></div>##data-beforeInitResiveData="beforeInitPro"  data-required="true"
+						</div>
+					</td>
+				</tr>
+				<tr>
+					##交易对手
+					<td class="textRight">#springMessage("table.fexForeign.copt")</td>
+					<td>
+						<input type="hidden" name="oppId" id="oppId" value="$!{vo.oppId}">##数据源id
+						<input type="hidden" id="oppCorpName" name="oppCorpName" value="$!{vo.oppCorpName}">##对手名称
+						<input type="hidden" id="oppCorpId" name="oppCorpId" value="$!{vo.oppCorpId}">
+						<input type="hidden" id="cotpNameEn" name="cotpNameEn" value="$!{vo.cotpNameEn}">##对手英文名称
+
+							<div class="layui-inline" id="oppCorpNameDiv" #if($!{vo.tranType}) style="display: none" #end>##无选择时候展示
+								<input class="layui-input"  onclick="oppCorpNameClick()" readonly="readonly" type="text"/>
+							</div>
+
+						<div class="layui-inline" id="externalDiv" #if($!{vo.tranType}!="4") style="display: none" #end>##客商组件
+							<input class="layui-input" id="eOppCorpName" readonly="readonly" type="text" #if($!{vo.tranType}=="4") value="$!{vo.oppCorpName}" #end/>
+							<div class="bt-div-search">
+								## 客商组件
+								<button type="button" class="bt-biz-allExternalCorp" data-beforeClick="bt.cotpExternalBeforeClick"  data-callback="cotpExternalCallback">
+									<i class="layui-icon">&#xe615;</i>
+								</button>
+							</div>
+						</div>
+						<div class="layui-inline" id="corpDiv" #if($!{vo.tranType}!="3") style="display: none" #end>##单位下拉树
+							<div class="bt-biz-corp"
+								 data-biz-type="corp"
+								 data-type="selectTree"
+								 data-name="cOppCorpName"
+								 data-biz-name="cOppCorpName"
+								 data-scope="all"
+								#if($!{vo.tranType}=="3") data-defaultvalue="$!{vo.oppId}" #end
+								 data-callbackData="oppCorpTreeCallback"
+							></div>
+						</div>
+						<div class="layui-inline" id="bankDiv" #if($!{vo.tranType}!="1" && $!{vo.tranType}!="2") style="display: none" #end>##银行组件
+							<input class="layui-input" id="bOppCorpName" readonly="readonly" type="text" #if($!{vo.tranType}=="1" || $!{vo.tranType}=="2") value="$!{vo.oppCorpName}" #end />
+							<div class="bt-div-search">
+								## 客商组件
+								<button type="button" class="bt-biz-allBankInfo"  data-callback="bankCallback">
+									<i class="layui-icon">&#xe615;</i>
+								</button>
+							</div>
+						</div>
+					</td>
+					##收付方向
+					<td class="textRight">#springMessage("table.fexBankAcc.cdSign")</td>
+					<td>
+						<div class="layui-inline">
+							<div class="bt-biz-dict" data-type="select" data-name="cdSign" data-biz-name="cdSign"
+								 data-group="fexCorp.cdSign" data-defaultvalue="$!{vo.cdSign}" ></div>
+						</div>
+					</td>
+					##现金流类型
+					<td class="textRight">#springMessage("table.fexBankAcc.cashFlowType")</td>
+					<td>
+						<div class="layui-inline">
+							<div class="bt-biz-dict" data-type="select" data-name="cashFlowType" data-biz-name="cashFlowType"
+								 data-group="fexCorp.cashFlowType" data-defaultvalue="$!{vo.cashFlowType}" ></div>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					##币种
+					<td class="textRight">#springMessage('table.fexForeign.curId')</td>
+					<td>
+						<div class="layui-inline">
+							<div class="bt-biz-selectType" data-name="curId" data-url="${basePath}/basic/business/btcurrency/json" data-defaultvalue="$!{vo.curId}"
+								data-beforeInitResiveData="beforeInitCur" data-valuefield="id" data-textfield="englishCode" data-callback="curCallback"  data-biz-name="curId" ></div>
+						</div>
+					</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+			</tbody>
+		</table>
+        <table class="layui-table ignore-required-icon isDown" id="editTable" width="100%">
+        	<thead>
+				<tr>
+					<th colspan="7">
+						<span style="float: left">#springMessage("table.fexBankAcc.defaultAcc")</span>
+						<span style="float: right">
+							 <button type="button" class="layui-btn" lay-filter="add" id="add">#springMessage('common.addTr')</button>
+						</span>
+					</th>
+				</tr>
+		   		<tr>
+					<th  width="15%">#springMessage("table.fexBankAcc.effectDate")</th>
+					<th  width="15%">#springMessage("table.fexForeign.bank")</th>
+					<th  width="15%">#springMessage("table.fexForeign.bankAcc")</th>
+					<th  width="15%">#springMessage("table.fexForeign.cotpAccName")</th>
+					<th  width="15%">#springMessage("table.fexForeign.curId")</th>
+                    <th  width="15%">#springMessage("table.fexBankAcc.voucherTypeId")</th>
+                    <th  width="15%">#springMessage("common.table.thead.operation")</th>
+				</tr>
+		    </thead>
+            <tbody>
+				#foreach($dtl in $!{vo.fexCorpBankAccDtl})
+					#set($vcount = $velocityCount - 1)
+				<tr data-row="$vcount">
+					##生效日期
+					<td class="center">
+						<div class="layui-inline">
+							<input type="text" name="fexCorpBankAccDtl[$vcount].effectDate"  data-biz-name="${vcount}effectDate" class="layui-input bt-input-inline bt-biz-dateType"
+								   value="$!date.format('yyyy-MM-dd',$!{dtl.effectDate})" lay-verify="required" style="width: 140px" data-callback="changeDate">
+						</div>
+					</td>
+					##银行类型
+					<td class="center">
+						<div class="layui-inline">
+							<div data-name="fexCorpBankAccDtl[$vcount].bankType" class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/json" data-valueField="id" data-required="true"
+								 data-biz-name="fexCorpBankAccDtl[$vcount].bankType" data-width="150px" data-textField="typeName" data-search="true" data-callback="bankTypeCallback" data-defaultvalue="$!{dtl.bankType}"></div>
+						</div>
+					</td>
+					##银行账号选择
+					<td class="center">
+						<div class="layui-inline">
+							<input type="text" id="bankTab$vcount"  data-name="bankTab$vcount" data-biz-name="bankTab$vcount" accountType="2,3" data-defaultcorp="${vo.corpId}" data-bankTypeId="$!{dtl.bankType}" lay-verify="required"
+								   data-curId="$!{vo.curId}" value="$!{dtl.bankAcc}" class="layui-input bt-biz-accountTable" data-resource="netbank:bankAcc:bisAccBal:apply" data-callback="accountCallBack"/>
+							##银行账号
+							<input type="hidden" name="fexCorpBankAccDtl[$vcount].bankAcc" id="bankAcc$vcount" value="$!{dtl.bankAcc}" />
+						</div>
+					</td>
+					##账户名称
+					<td class="center">
+						<div class="layui-inline">
+							##账户名称
+							<input type="text" id="accName$vcount" name="fexCorpBankAccDtl[$vcount].accName" class="layui-input" readonly="true" value="$!{dtl.accName}"/>
+							##账户id
+							<input type="hidden" name="fexCorpBankAccDtl[$vcount].accId" id="accId$vcount" value="$!{dtl.accId}" class="layui-input"/>
+						</div>
+					</td>
+					##币种
+					<td class="center">
+						<div class="layui-inline">
+							<input type="text" id="curName$vcount"  style="width: 140px" readonly="true" class="layui-input" value="$!{dtl.curName}"/>
+							<input type="hidden" id="curId$vcount" name="fexCorpBankAccDtl[$vcount].curId" class="layui-input" value="$!{dtl.curId}"/>
+						</div>
+					</td>
+					##默认支付方式
+					<td class="center">
+						<div class="layui-inline">
+							<div type="list" data-name ="fexCorpBankAccDtl[$vcount].voucherTypeId" class="bt-biz-selectType" data-url="${basePath}/netbank/fcvouchertype/getFcVoucherTypeForForeign" data-width="150px"
+								 data-valueField="id" data-textField="voucherName"  data-biz-name="fexCorpBankAccDtl[$vcount].voucherTypeId"  data-search="true" data-defaultvalue="$!{dtl.voucherTypeId}"></div>
+						</div>
+					</td>
+					##删除按钮
+					<td class="center">
+						<button data-type="del" type="button" class="layui-btn layui-btn-mini">#springMessage("common.button.delete")</button>
+					</td>
+				</tr>
+				#end
+            </tbody>
+        </table>
+        <div class="layui-form-item">
+			<div class="layui-input-block" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" id="submit" value="11">#springMessage('common.button.submit')</button>
+				<button class="layui-btn" lay-submit="" id="temp" value="0">#springMessage('common.button.temp')</button>
+				<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+			</div>
+		</div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/foreign/fexBankAcc/fexCorpBankAcc.add.js?_btv=${resourceVersion}"></script>
+</html>

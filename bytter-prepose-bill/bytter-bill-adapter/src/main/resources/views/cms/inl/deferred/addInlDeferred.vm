@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+        .inCenter{
+            text-align: center!important;
+        }
+        .addRow {
+            cursor: pointer;
+            color: rgb(0, 0, 204);
+        }
+
+        .noneElem {
+            display: none;
+        }
+
+        .input-bp input {
+            border: none;
+            width: 192px;
+        }
+        .input-bp span {
+            position: absolute;
+            right: 4px;
+            top: 1px;
+        }
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+    #parse("views/common/footer.vm")
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        #parse("views/cms/inl/send/sendCommonInfo.vm")
+
+        ##############################内部资金拆借展期申请信息######################################################################
+
+        <tr>
+            ##            内部资金拆借展期申请信息
+            <td colspan="4" style="font-weight: bolder;text-align: center" class="textLeft">#springMessage('cms.inl.info.deferredInfo')
+                <input type="hidden" name="corpId" value="$!{inlInfo.borrowInCorp}">
+                <input type="hidden" name="inlInfoId" value="$!{inlInfo.id}">
+                <input type="hidden" name="inlSendId" value="$!{inlSend.id}">
+            </td>
+        </tr>
+
+        <tr>
+            ##            上次展期到期日期
+            <td class="textRight">#springMessage('table.lastTime.deferredRepayDate')</td>
+            <td>
+                <div class="layui-inline">
+                    $!date.format('yyyy-MM-dd',$!{lastDeferredDate})
+                    <input type="hidden" class="layui-input bt-biz-dateType" id="lastDeferredDate"
+                           #if(${lastDeferredDate})
+                                value="$!date.format('yyyy-MM-dd',$!{lastDeferredDate})"
+##                            #else
+##                                value="$!{inlSend.endDate}"
+                           #end
+                           name="lastDeferredDate" data-endId="nowDeferredDate">
+                </div>
+            </td>
+            ##            展期次数
+            <td class="textRight">#springMessage('table.cmsLoanSend.deferredNum')</td>
+            <td>
+                <div class="layui-inline">
+                    $!{deferredCount}
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##            展期到期日期
+            <td class="textRight">#springMessage('table.cmsLoanSend.deferredReplayDate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" class="layui-input bt-biz-dateType"
+                           data-callback="calTerm" data-biz-name="nowDeferredDate"
+                           id="nowDeferredDate" lay-verify="required" name="nowDeferredDate">
+                </div>
+            </td>
+            ##            展期期限
+            <td class="textRight">#springMessage('table.cmsPrecativeLoanDeferred.deferredLimt')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" class="layui-input" name="term" id="term" readonly="readonly">
+                </div>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="PrecativeLoanInfo.ternUnit"
+                         data-value="D" data-callback="calTerm"
+                         data-name="unit" data-biz-name="unit"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##            展期利率
+            <td class="textRight">#springMessage('cms.inl.info.deferredRate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" class="layui-input bt-biz-rateType" lay-verify="required"
+                           data-name="deferredRate" data-biz-name="deferredRate">
+                </div>
+            </td>
+            <td class="textRight"></td>
+            <td>
+                <div class="layui-inline">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##            备注
+            <td class="textRight">#springMessage('table.cmsLoanInfo.rmk')</td>
+            <td colspan="3">
+                <textarea name="rmk" class="layui-textarea"></textarea>
+            </td>
+        </tr>
+        <tr>
+            ##            附件
+            <td class="textRight">#springMessage('cms.loan.attachment')</td>
+            <td colspan="3">
+                <input type="hidden" name="attachmentId" id="deferredAttachmentId">
+                <div id="deferredUploader" class="layui-input-inline" style="width:100%;"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4"style="text-align: center">
+                <button class="layui-btn" type="button" lay-submit="submit" value="11" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" type="button" onclick="doClose()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<script>
+    var form, moneyType, dateType, dicts, rateType;
+    bt.use(["jquery", "form", "btUpload", "moneyType", "dateType", "dicts", "rateType"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        moneyType = bt.moneyType.init();
+        dateType = bt.dateType.init();
+        rateType = bt.rateType.init();
+        dicts = bt.dicts.init();
+        var gid = $("#sendAttachmentId").val();
+        var deferredAttachmentId = $("#deferredAttachmentId").val();
+        var up = bt.btUpload.init({
+            elem: "#sendUploader",
+            hasUpload: false,
+            hasDelete: false,
+            isExpand: true,
+            auto: false,
+            gid: gid
+        });
+
+        var deferredUpload = bt.btUpload.init({
+            elem: "#deferredUploader",
+            isExpand: true,
+            auto: false,
+            gid: deferredAttachmentId
+        });
+
+        // 资金计划挂接
+        // renderBudget()
+
+        form.on("submit(submit)", function (data) {
+            var action = "/inl/deferred/save";
+            bt.loading.show();
+            data.field.status = 11;
+            data.field.attachmentId = deferredUpload.getGroupId();
+            jQuery.ajaxSettings.traditional = true;
+            $.post(basePath + action, data.field, function (data) {
+                parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                if (data.success) {
+                    if (!bt.navtab) {
+                        bt.navtab.refreshParentTable();
+                    } else {
+                        bt.navtab.closeCurrent();
+                    }
+                } else {
+                    bt.loading.hide();
+                }
+            }, 'JSON');
+            return false;
+        });
+    });
+
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+
+
+    /**
+     * 开始日期/到期日期回调
+     * 计算拆借期限
+     */
+    function calTerm() {
+        var sendEndDate = $("#infoEndDate").val();
+        var endDate = dateType.get("nowDeferredDate").val();
+        var unit = dicts.get("unit").val();
+        if (isNotEmpty(sendEndDate) && isNotEmpty(endDate)) {
+            if ("D" == unit) {
+                $("#term").val(bt.date.getBetweenDay(sendEndDate, endDate));
+            } else {
+                $("#term").val(bt.date.getBetweenMonth(sendEndDate, endDate));
+            }
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param value
+     * @returns {boolean}
+     */
+    function isEmpty(value) {
+        if (value == null || value == "" || value == undefined || value == " ") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param value
+     * @returns {boolean}
+     */
+    function isNotEmpty(value) {
+        return !isEmpty(value);
+    }
+</script>
+</body>
+</html>

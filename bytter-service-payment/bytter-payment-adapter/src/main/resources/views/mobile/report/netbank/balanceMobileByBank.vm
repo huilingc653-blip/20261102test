@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+    #set($basePath=$springMacroRequestContext.contextPath)
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <title>按银行统计余额</title>
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css" />
+    <link rel="stylesheet1" href="${basePath}/static/plugins/frozen/css/base.css" />
+    <link rel="stylesheet" href="${basePath}/static/css/mobile/index.css" />
+
+    <style>
+        .bar {
+            width: 100%;
+            height: 60px;
+            background-color: #fff;
+        }
+
+        .ui-btn-wrap {
+            font-size: 14px;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 500;
+            color: rgba(51, 51, 51, 1);
+            margin-left: 0;
+            padding-top: 0.15rem;
+        }
+
+        /* 弹框选择 */
+        .bt-select-popup {
+            position: relative;
+            margin-right: 6px;
+        }
+
+        .ui-actionsheet {
+            display: none
+        }
+
+        .ui-actionsheet .show {
+            display: block;
+        }
+
+        .ui-actionsheet.show .ui-actionsheet-cnt {
+            transition: none;
+        }
+
+        .ui-actionsheet .ui-actionsheet-cnt {
+            transition: none;
+        }
+
+        .bt-select-popup button {
+            border: none;
+            width: 1.3rem;
+            height: 0.32rem;
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 600;
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-select-popup.active button {
+            color: #2988FF;
+            background-color: #E9F1FF;
+        }
+
+        .bt-select-popup.active:after {
+            color: #2988FF;
+        }
+
+        .bt-select-popup:after {
+            position: absolute;
+            top: 55%;
+            right: 0.15rem;
+            margin-top: -4px;
+            width: 0;
+            height: 0;
+            border-top: 6px solid;
+            border-right: 5px solid transparent;
+            border-left: 5px solid transparent;
+            color: #a6a6a6;
+            content: "";
+            pointer-events: none;
+        }
+
+        .ui-btn-wrap {
+            font-size: 14px;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 500;
+            color: rgba(51, 51, 51, 1);
+            margin-left: 0;
+            padding-top: 0.15rem;
+        }
+
+        .ui-btn-corp {
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            margin-right: 0.08rem;
+        }
+
+        .btn-corp {
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 600;
+            line-height: 1;
+            color: rgba(102, 102, 102, 1);
+            padding-top: 0.06rem;
+        }
+
+        .bt-date-btn input {
+            border: none;
+            width: 0.58rem;
+            height: 0.32rem;
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            width: 0.36rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 600;
+            color: rgba(102, 102, 102, 1);
+            padding-right: 0.04rem;
+        }
+
+        .popup-block * {
+            font-size: 0.14rem;
+        }
+
+        .bt-card {
+            background-color: #fff;
+        }
+
+        .bt-card .active {
+            color: #2988FF;
+            font-weight: 700;
+        }
+
+        .bt-card-header {
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 700;
+            color: rgba(51, 51, 51, 1);
+            line-height: 0.35rem;
+            height: 0.35rem;
+            padding-left: 0.1rem;
+            text-align: left;
+        }
+
+        .bt-card-body {
+            padding-bottom: 0.15rem;
+        }
+
+        .bt-card-item {
+            height: 0.34rem;
+            background: rgba(240, 240, 240, 1);
+            border-radius: 0.18rem;
+            line-height: 0.34rem;
+            text-align: center;
+            margin: 0.05rem 0.1rem 0.05rem 0;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-card-body .ui-col:nth-last-child(1) .bt-card-item {
+            margin-right: 0;
+        }
+    </style>
+</head>
+
+<body>
+<!-- <input type="hidden" id="initCorpId" value="$!{initCorpId}" /> -->
+<section id="tab">
+    <div class="ui-btn-wrap">
+        <div class="bt-select-popup" style="margin: 0px 0.5rem">
+            <div class="ui-btn-corp">
+                <button class="btn-corp" id="btnje">金额单位(<span id="dw">万元</span>)</button>
+            </div>
+        </div>
+        <div class="popup-block">
+            <div class="ui-actionsheet" id="actionsheet1" style="top:4.85rem;" data-link="btnje">
+                <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 0.55rem;">
+                    <section class="bt-popup-container">
+                        <div class="bt-card" id="isExpireCard">
+                            <div class="bt-card-header">
+                                金额单位
+                                <input type="hidden" id="isExpireStr" name="isExpireStr" value="">
+                            </div>
+                            <div class="bt-card-body">
+                                <div class="ui-row-flex ui-whitespace">
+                                    <div class="ui-col ui-col">
+                                        <div class="bt-card-item active" data-value="10000">万元</div>
+                                    </div>
+                                    <div class="ui-col ui-col">
+                                        <div class="bt-card-item" data-value="100000000">亿元</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="bt-popup-bottom">
+                        <button type="button" id="clearValue1" class="bt-popup-reset resetBtn">重置</button>
+                        <button type="button" id="submitValue1" class="bt-popup-submit submitBtn">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div>
+    <h2 style="margin-left: 0.3rem;margin-top: 0.1rem;">银行类行统计</h2>
+    <div id="myChart" style="width: 100%;height: 500px"></div>
+</div>
+</body>
+
+<script src="${basePath}/static/modules/cms/images/f2.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/modules/mobile/webViewAppScriptBridage.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/modules/mobile/webViewApp.js?_btv=${resourceVersion}"></script>
+<script>
+    window.getInitAccountBal = (data)=>{
+        window.initAccountBal(data)
+    }
+    (function (doc, win) {
+
+        function addSheet($this, id) {
+            if ($this.parent().hasClass('active')) {
+                hideSheet($this);
+                return
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+                $this.parent().addClass('active');
+            $(id).addClass('show');
+        }
+
+        //弹框选择
+        function hideSheet($this) {
+            $('.ui-actionsheet').removeClass('show');
+                $this.parent().removeClass('active');
+        }
+
+        $("#btnje").click(function () {
+            addSheet($(this), '#actionsheet1')
+        });
+
+        var ACTIVE = 'active';
+
+        function initCard(id, value) {
+            if (!id) {
+                return
+            }
+            var $card = $(id);
+            var hiddenInput = $card.find('.bt-card-header input');
+            var items = $card.find('.bt-card-item');
+            items.removeClass(ACTIVE);
+            hiddenInput.val('');
+            //设置选中值
+            if (value) {
+                hiddenInput.val(value);
+            }
+            initBankTypeBar()
+
+            $(id).on('click', '.bt-card-item', function () {
+                var value = '';
+                    $card.find('.bt-card-item').removeClass(ACTIVE);
+                $(this).addClass(ACTIVE);
+                value = $(this).data('value');
+                hiddenInput.val(value);
+                if (value == '100000000') {
+                    $("#dw").html('亿元');
+                } else {
+                    $("#dw").html('万元');
+                }
+            })
+        }
+
+        //点击确定
+        $('.submitBtn').on('click', function () {
+            var btn = $(this).parents('.ui-actionsheet').removeClass('show')
+                    .data('link');
+            $('#' + btn).removeClass('active');
+            $('.bt-select-popup').removeClass('active');
+            //确认提交
+            initBankTypeBar()
+        })
+
+        //点击重置
+        $('#clearValue1').on('click', function () {
+            initCard('#isExpireCard', '10000');
+            $("#dw").html('万元');
+        })
+
+        var colorList = [
+            '#4E6DEC',
+            '#E85A83',
+            '#FFC760',
+            '#FDA669',
+            '#72CEF4',
+            '#6DC789',
+            '#EB9999',
+            '#ECDA6C',
+            '#93C8EF',
+            '#B84BF2'
+        ];
+        function initBankTypeChart(data) {
+            var legendData1 = [];
+            var names = data.names
+            names.forEach(function (item, i) {
+                legendData1.push(item)
+            });
+            var option = {
+                color: colorList,
+                legend: {
+                    left: 'center',
+                    // orient: "vertical",
+                    padding: [10, 0, 0, 10],
+                    formatter: function (name) {
+                        if (name.length > 6) return name.slice(0, 6) + "... "
+                        else return name //返回出图例所显示的内容
+                    },
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#333',
+                    },
+                    bottom: 10,
+                    // top: '55%',
+                    itemGap: 20,
+                    itemWidth: 12,   // 设置图例图形的宽
+                    itemHeight: 12,  // 设置图例图形的高
+                    data: legendData1,
+                    icon: "roundRect",
+                },
+                grid: {
+                    right: 0,
+                    left: 0,
+                    containLabel: true,
+                },
+                series: [
+                    {
+                        type: "pie",
+                        radius: ["30%", "45%"],
+                        center: ["50%", "45%"],
+                        right: 0,
+                        bottom: "10px",
+                        minShowLabelAngle:30,
+                        label: {
+                            normal: {
+                                // 是否显示标签
+                                show: true,
+                                // 标签的位置
+                                position: 'outside',
+                                alignTo: 'edge',     // 标签对齐到边缘，有利于减少重叠
+                                margin: 40,           // 边缘距离
+                                // 标签的文本样式
+                                textStyle: {
+                                    fontSize: 10
+                                },
+                                // 标签的格式化
+                                formatter: '{c}\n {d}%\n {b}'
+                            }
+                        },
+                        labLine: {
+                            show: true, // 是否显示引导线
+                            length: 10, // 引导线第一段的长度
+                            length2: 15, // 引导线第二段的长度
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: function (colors) {
+                                    return colorList[colors.dataIndex % colorList.length];
+                                }
+                            },
+                        },
+                        data: data.bals,
+                    },
+                ]
+            };
+            return option
+        }
+        var chart = echarts.init(document.getElementById('myChart'));
+
+        var initBankTypeBar = function () {
+            var params = {
+                moneyType: $("#isExpireStr").val(),
+                groupBy: 'bankType'
+            }
+            var url = "/mobile/report/fundsbalancestatistics/createBankAccBalBar";
+            setTimeout(function () {
+                var data = BTAppBridge.post(url, params, 'initAccountBal');
+                uni.postMessage({
+                    data: data
+                });
+            }, 100);
+        };
+        initAccountBal = function (data) {
+            var option = initBankTypeChart(data);
+            chart.setOption(option)
+        }
+        //初始化
+        initCard('#isExpireCard', '10000');
+    })(document, window);
+
+</script>
+
+</html>

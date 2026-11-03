@@ -1,0 +1,117 @@
+#* 
+*6203 票据下拨申请单
+*#
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form layui-form-pane">
+		<div class="layui-collapse">
+    	<div class="layui-colla-item">
+    	<h2 class="layui-colla-title">#springMessage('bill.accebill.transferdownapply.title')</h2>
+    	<div class="layui-colla-content layui-show">
+    		<table class="layui-table">
+    		<tbody>
+    			##申请单号          table.abBillTransfer.allocatedCode.apply
+                ##申请单位          table.abBillTransfer.applyCorp
+    		<tr>
+    			<td width="20%" class="textRight">#springMessage('table.abBillTransfer.allocatedCode.apply')</td>
+    			<td width="30%">$!{info.allocatedCode}</td>
+    			<td width="20%" class="textRight">#springMessage('table.abBillTransfer.applyCorp')</td>
+    			<td width="30%">$!{info.recordCorpName}</td>
+            </tr>
+    			##申请单位账号  table.abBillTransfer.applyBankAcc
+                ##申请金额          table.abBillTransfer.applyMoney
+    		<tr>
+    			<td width="20%" class="textRight">#springMessage('table.abBillTransfer.applyBankAcc')</td>
+    			<td width="30%">$!{info.recevieBankacc}</td>
+    			<td width="20%" class="textRight">#springMessage('table.abBillTransfer.applyMoney')</td>
+    			<td width="30%">#if($!{info.allocationMoney})$number.formatNumeric($!{info.allocationMoney})#else 0.00 #end </td>
+            </tr>
+    			##申请原因          table.abBillTransfer.applyReason
+                ##业务办理日期  table.abVoucherinfo.Business.date
+    		<tr>
+    			<td width="20%" class="textRight">#springMessage('table.abBillTransfer.applyReason')</td>
+    			<td width="30%">$!{info.allocationReason}</td>
+    			<td width="20%" class="textRight">#springMessage('table.abVoucherinfo.Business.date')</td>
+    			<td width="30%">$!date.format('yyyy-MM-dd',$!{info.businessDate})</td>
+            </tr>
+				##上级中心单位   table.abBillTransfer.applyReason
+			<tr>
+				<td width="20%" class="textRight">#springMessage('table.abBillTransfer.netCorpName')</td>
+				<td width="30%">$!{netCorpName}</td>
+				<td width="20%" class="textRight"></td>
+				<td width="30%"></td>
+			</tr>
+			<!-- 附件上传 -->
+			#*<tr>
+				<td colspan="4">
+					<input id="attachmentId" name="attachmentId" type="hidden" value="$!{info.enclosure}">
+					<div id="uploader" class="layui-input-inline" style="width:100%"></div>
+				</td>
+			</tr>*#
+            </tbody>
+            </table>
+			#set($vmPage = "views/bill/accebill/attachmentInfo.vm")
+			#parse($vmPage)
+        </div>
+			#if(!$isApprove)
+                <h2 class="layui-colla-title">#springMessage('bill.logInfo.title')</h2>
+                <table class="layui-table layui-form dark-layui-table" style="width: 100%;">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('table.abLog.createDate')</th>
+                        <th>#springMessage('table.abLog.createBy')</th>
+                        <th>#springMessage('table.abLog.createName')</th>
+                        <th>#springMessage('table.abBackbillinfo.origNo')</th>
+                        <th>#springMessage('table.abLog.logType')</th>
+                        <th>#springMessage('table.abLog.briefId')</th>
+                        <th>#springMessage('table.abLog.msg')</th>
+                    </tr>
+                    </thead>
+                    <body>
+						#if($!abLogList)
+							#foreach($logInfo in $abLogList)
+                            <tr>
+                                <td>$!date.format('yyyy-MM-dd HH:mm:ss',$!{logInfo.createDate})</td>
+                                <td>$!{logInfo.createBy}</td>
+                                <td>$!{logInfo.createName}</td>
+                                <td>$!{abEmitBillVo.origNo}</td>
+                                <td>$!{logInfo.logTypeName}</td>
+                                <td>$!{logInfo.briefIdName}</td>
+                                <td>#springMessage($!{logInfo.msg})</td>
+                            </tr>
+							#end
+						#end
+                    </body>
+                </table>
+			#end
+        </div>
+		</div>
+	</form>
+	#if(!$!isApprove)
+<br />
+<br />
+<div class="layui-form-item layui-form-submit" id="buttonDiv">
+	<div class="layui-input-block">
+	<button type="button" class="layui-btn" onclick="bt.trackFlowByBusinessId('$!{info.aid}')">#springMessage('common.button.trackFlow')</button>
+	<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+    </div>
+</div>
+	#end
+	#parse("views/common/footer.vm")
+	</body>
+<script type="text/javascript">
+    bt.use(['btUpload'], function() {
+        var uploader = bt.btUpload.init({
+            elem: "#uploader",
+            auto: false,
+            hasDelete: false,
+            hasUpload: false,
+            gid: $("#attachmentId").val()
+        });
+    });
+</script>
+</html>

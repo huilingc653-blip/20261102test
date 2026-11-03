@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"/>
+    <meta charset="UTF-8">
+    <title>#springMessage("table.guaContract.useInfo")</title>##担保合同使用情况
+    <link rel="stylesheet" href="${basePath}/static/mobile/plugins/fixedTable/table.min.css"/>
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css"/>
+    <link rel="stylesheet" href="${basePath}/static/css/mobile/index.css"/>
+
+    <style>
+        th {
+            font-size: 0.12rem;console.log
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(51, 51, 51, 1);
+            line-height: 14px;
+        }
+        td{
+            font-size:0.12rem;
+            font-family:PingFangSC-Medium,PingFang SC;
+            font-weight:500;
+            color:rgba(102,102,102,1);
+            line-height:12px;
+        }
+
+        .data-table td {
+            height: 0.75rem;
+        }
+
+        .data-table .t_r table{
+            width: 12rem;
+        }
+
+
+    </style>
+</head>
+<body>
+<input type="hidden" id="contractId" value="$!{contractId}">
+<section class="ui-container">
+    <div class="ui-btn-wrap" >
+        <div class="bt-select-popup">
+            <input type="text" value="日期选择" id="btn1" readonly="readonly" style="width:1.87rem;">
+        </div>
+        <div class="bt-select-popup">
+            <input type="text" value="状态" id="btn2" readonly="readonly" style="width:1.1rem;">
+        </div>
+        <div class="popup-block">
+            <div class="ui-actionsheet" id="actionsheet2" style="height:calc(100%-1.0rem);top:1.0rem;" data-link="btn2">
+                <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 0.5rem;">
+                    <section class="bt-popup-container">
+                        <div class="bt-card" id="statusDiv">
+                            <div class="bt-card-header">
+                                状态
+                                <input type="hidden" name="status" id="status">
+                            </div>
+                            <div class="bt-card-body">
+                                <div class="ui-row-flex ui-whitespace">
+                                    <div class="ui-col ui-col"><div class="bt-card-item active" data-name="暂存" data-value="1" >在审使用</div></div>
+                                    <div class="ui-col ui-col"><div class="bt-card-item" data-name="待审批" data-value="2">已使用</div></div>
+                                    <div class="ui-col ui-col" ><div class="bt-card-item" data-name="审批打回" data-value="3">释放</div></div>
+                                </div>
+                                <div class="ui-row-flex ui-whitespace">
+                                    <div class="ui-col ui-col"><div class="bt-card-item" data-name="审批通过" data-value="0">暂存</div></div>
+                                    <div class="ui-col ui-col" ></div>
+                                    <div class="ui-col ui-col" ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="bt-popup-bottom">
+                        <button type="button" id="clearValue" class="bt-popup-reset">重置</button>
+                        <button type="button" class="bt-popup-submit" id="curBtSubmit">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<div style="" class="container" style="height: calc(100vh - 1.5rem);">
+</div>
+<div class="ui-tab" >
+    <div class="ui-tab-nav-wrap">
+        <ul class="ui-tab-nav ui-tab-nav-multi ui-border-b " style="width: 11rem">
+            <li class="current"><span id="rat">#springMessage("table.guaContract.ratUseInfo")</span></li>##授信使用担保情况
+            <li><span id="provide">#springMessage("table.guaContract.CmsProvideLoanUseInfo")</span></li>##银行借款使用担保情况
+            <li><span id="loan">#springMessage("table.guaContract.CmsLoanUseInfo")</span></li>##内部贷款使用担保情况
+            <li><span id="accebill">#springMessage("table.guaContract.billUseInfo")</span></li>##承兑汇票使用担保情况
+            <li><span id="lcs">#springMessage("table.guaContract.lcUseInfo")</span></li>##国际结算使用担保情况
+        </ul>
+    </div>
+</div>
+<div style="height: calc(100% - 1.8rem)">
+    <div class="data-table" id="dataTable"></div>
+</div>
+</body>
+<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js" charset="utf-8"></script>
+<script src="${basePath}/static/js/iscroll-probe.min.js"></script>
+<script src="${basePath}/static/mobile/plugins/fixedTable/table.min.js"></script>
+<script src="${basePath}/static/mobile/plugins/LCalendar/LCalendar.js"></script>
+<script src="${basePath}/static/mobile/js/popup.js"></script>
+<script src="${basePath}/static/plugins/web-view/webView.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/webViewScriptBridage.js?_btv=${resourceVersion}"></script>
+<script>
+
+    window.getContractUseList = (data)=>{
+        console.log("担保")
+        postData(data)
+    }
+
+    window.getSeachDateList = (data)=>{
+        console.log("日期搜索")
+        searchActionCallback(data)
+    }
+    //用于存储页面查询参数
+    const searchParams = {
+        datePickData: {
+            startDate: null,
+            endDate: null,
+        }
+    };
+    //时间处理方法
+    function timestampToTime(timestamp) {
+        var date = new Date(timestamp);//时间戳为10位需*1000，时间戳为13位的话不需乘1000
+        Y = date.getFullYear() + '.';
+        M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '.';
+        var D = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate());
+        return Y + M + D;//时分秒可以根据自己的需求加上
+    }
+    (function (doc, win) {
+        var sysCode ="rat";
+        var ACTIVE = 'active';
+
+
+        $('.ui-tab-nav > li').on('click', function (e) {
+            sysCode=e.target.id
+            $(this).addClass('current').siblings('li').removeClass('current');
+            $('.ui-tab-content>li').removeClass('bt-show');
+            $('.ui-tab-content li').eq($(this).index()).addClass('bt-show');
+            loadData();
+        });
+
+        function loadData() {
+            var contractId= $('#contractId').val();
+            var startDate=searchParams.datePickData.startDate;
+            var endDate=searchParams.datePickData.endDate;
+            var status=$("#status").val();
+
+            var params={
+                contractId:contractId,
+                sysCode:sysCode,
+                startDate:startDate,
+                endDate:endDate,
+                status:status
+            };
+            // //通过Ajax获取数据
+            var url = "/cms/guarantee/guaContractOccup/contractUseList";
+            setTimeout(function () {
+               var data = BTAppBridge.post(url,params,'postData');
+               console.log('初始化'+ JSON.stringify(data))
+               uni.postMessage({
+                   data:data
+               })
+            },100);
+
+            // $.ajax({
+            //     type:"post",
+            //     url:url,
+            //     async:true,
+            //     data:params,
+            //     dataType:"json",
+            //     success:function(res){
+            //         setDataDiv(res);
+            //         initTableSize();
+            //     },
+            //     error:function(jqXHQ){
+            //         alert("发生错误:"+jqXHQ.status);
+            //     }
+            // });
+
+            postData = function (result) {
+                setDataDiv(result);
+                initTableSize();
+            }
+        }
+        //设置页面数据
+        function setDataDiv(data) {
+            var dataHtml,dataTable1="",dataTable2="";
+            var head1,head2;
+            console.log(sysCode)
+            switch (sysCode) {
+                case "provide":
+                    head1='<th>#springMessage("table.cmsProvideLoanInfo.billCode")</th>';//借款单号
+                    head2='<th>#springMessage("table.cmsProvideLoanInfo.bankId")</th>'+##借款银行+
+                            '<th>#springMessage("table.cmsProvideLoanInfo.contractNo")</th>'+##借款合同号+
+                            '<th>#springMessage("table.ratBkrationRelief.curCode")</th>'+##币种+
+                            '<th>#springMessage("table.cmsProvideLoanInfo.plMoney")</th>'+##借款金额+
+                            '<th>#springMessage("cms.provide.deferred.repayDate")</th>'+##还款日期+
+                            '<th>#springMessage("table.guaContract.applyDate")</th>'+##使用时间+
+                            '<th>#springMessage("common.table.status")</th>';##状态
+                    break;
+                case "loan":
+                    head1='<th>#springMessage("table.cmsLoanInfo.billCode")</th>';//贷款流水号
+                    head2='<th>#springMessage("table.cmsLoanInfo.loanGenre")</th>'+##贷款类型
+                            '<th>#springMessage("table.cmsLoanInfo.contractCode")</th>'+##贷款合同编号
+                            '<th>#springMessage("table.ratBkrationRelief.curCode")</th>'+##币种
+                            '<th>#springMessage("table.cmsLoanInfo.loanMoney")</th>'+##贷款金额
+                            '<th>#springMessage("table.cmsLoanInfo.loanDate")</th>'+##贷款日期
+                            '<th>#springMessage("table.cmsLoanDeferred.matureDate")</th>'+##还款日期
+                            '<th>#springMessage("table.guaContract.applyDate")</th>'+##使用时间
+                            '<th>#springMessage("common.table.status")</th>';##状态';
+                    break;
+                case "accebill":
+                    head1='<th>#springMessage("accBill.applay.billCode")</th>';//开票申请编号
+                    head2='<th>#springMessage("table.abVoucherinfo.billType")</th>'+##票据类型
+                            '<th>#springMessage("table.btBankAccApp.circulationMode")</th>'+##流通方式
+                            '<th>#springMessage("table.abVoucherinfo.origNo")</th>'+##票据号码
+                            '<th>#springMessage("table.abVoucherinfo.billMoney")</th>'+##票据金额
+                            '<th>#springMessage("table.abVoucherinfo.payer")</th>'+##出票人
+                            '<th>#springMessage("table.abVoucherinfo.payee")</th>'+##收票人
+                            '<th>#springMessage("table.abVoucherinfo.acceptor")</th>'+##承兑人
+                            '<th>#springMessage("table.abVoucherinfo.startDate")</th>'+##出票日期
+                            '<th>#springMessage("cms.common.deadlineDate")</th>'+##到期日期
+                            '<th>#springMessage("table.guaContract.applyDate")</th>'+##使用时间
+                            '<th>#springMessage("common.table.status")</th>';##状态'
+                    break;
+                case "lcs":
+                    head1='<th>#springMessage("international.credit.applicant")</th>';//开证人
+                    head2='<th style="width:150px">#springMessage("international.credit.beneficiary")</th>'+##受益人
+                            '<th>#springMessage("international.credit.issuingBank")</th>'+##开证银行
+                            '<th>#springMessage("table.ratUrationApply.lcNo")</th>'+##信用证号
+                            '<th>#springMessage("international.credit.lcInter")</th>'+##信用证类型
+                            '<th>#springMessage("international.lc.creditMoney")</th>'+##信用证金额
+                            '<th>#springMessage("table.guaContractInfo.contractCode")</th>'+##合同编号
+                            '<th>#springMessage("international.credit.issuingDate")</th>'+##开证日期
+                            '<th>#springMessage("international.credit.expiryDate")</th>'+##信用证有效期
+                            '<th>#springMessage("table.guaContract.applyDate")</th>'+##使用时间
+                            '<th>#springMessage("common.table.status")</th>';##状态'
+                    break;
+                default:
+                    head1='<th>#springMessage("table.ratBkration.ratCode")</th>';//授信编号
+                    head2='<th>#springMessage("table.ratBkration.contractNo")</th>'+##授信合同号
+                            '<th>#springMessage("table.ratBkration.ratMode")</th>'+##授信模式
+                            '<th>#springMessage("table.ratBkration.money")</th>'+##授信额度
+                            '<th>#springMessage("table.ratBkration.begindate")</th>'+##授信开始时间
+                            '<th>#springMessage("table.ratBkration.enddate")</th>'+##授信结束时间
+                            '<th>#springMessage("table.guaContract.applyDate")</th>'+##使用时间
+                            '<th>#springMessage("common.table.status")</th>';##状态
+
+            }
+            dataTable1+='<div class="t_l"><table><tbody><tr><th>';
+            dataTable1+=head1;
+            dataTable1+='</th></tr></tbody> </table>'
+            dataTable1+= '<div class="t_l_freeze" >';
+            dataTable1+='<table width="100%">';
+            dataTable1+=' <tbody>';
+            switch (sysCode) {
+                case "provide":
+                    for(var i=0;i<data.length;i++) {
+                        dataTable1+='<tr>';
+                        dataTable1+='<td align="center" class="td">'+data[i].billCode+'</td>';
+                        dataTable1+='</tr>';
+                    }
+                    break;
+                case "loan":
+                    for(var i=0;i<data.length;i++) {
+                        dataTable1+='<tr>';
+                        dataTable1+='<td align="center" class="td">'+data[i].billCode+'</td>';
+                        dataTable1+='</tr>';
+                    }
+                    break;
+                case "accebill":
+                    for(var i=0;i<data.length;i++) {
+                        dataTable1+='<tr>';
+                        dataTable1+='<td align="center" class="td">'+data[i].appNo+'</td>';
+                        dataTable1+='</tr>';
+                    }
+                    break;
+                case "lcs":
+                    for(var i=0;i<data.length;i++) {
+                        dataTable1+='<tr>';
+                        dataTable1+='<td align="center" class="td">'+data[i].applicantName+'</td>';
+                        dataTable1+='</tr>';
+                    }
+                    break;
+                default:
+                    for(var i=0;i<data.length;i++) {
+                        dataTable1+='<tr>';
+                        dataTable1+='<td align="center" class="td">'+data[i].itemNo+'</td>';
+                        dataTable1+='</tr>';
+                    }
+            }
+
+            dataTable1+='</tbody>';
+            dataTable1+='</table>';
+            dataTable1+='</div></div>';
+
+            dataTable2+='<div class="t_r"><div class="t_r_t"><table><tbody><tr>';
+            dataTable2+=head2;
+            dataTable2+='</tr></tbody></table></div>';
+            dataTable2+='<div class="t_r_content"> <table width="100%" ><tbody>';
+            switch (sysCode) {
+                case "provide":
+                    for(var i=0;i<data.length;i++) {
+                        var contractNo=data[i].contractNo;
+                        if(contractNo==null){
+                            contractNo="";
+                        }
+                        dataTable2+='<tr>';
+                        dataTable2+='<td align="center" class="td">'+data[i].bankName+'</td>';
+                        dataTable2+='<td align="center" class="td">'+contractNo+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].curName+'</td>';
+                        dataTable2+='<td align="right" class="td">'+moneyFormat(data[i].plMoney)+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].repayDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].useDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].statusName+'</td>';
+                        dataTable2+='</tr>';
+                    }
+                    break;
+                case "loan":
+                    for(var i=0;i<data.length;i++) {
+                        var contractCode=data[i].contractCode;
+                        if(contractCode==null){
+                            contractCode="";
+                        }
+                        dataTable2+='<tr>';
+                        dataTable2+='<td align="center" class="td">'+data[i].loanGenre+'</td>';
+                        dataTable2+='<td align="center" class="td">'+contractCode+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].curName+'</td>';
+                        dataTable2+='<td align="right" class="td">'+moneyFormat(data[i].loanMoney)+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].loanDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].repayDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].useDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].statusName+'</td>';
+                        dataTable2+='</tr>';
+                    }
+                    break;
+                case "accebill":
+                    for(var i=0;i<data.length;i++) {
+                        var origNo=data[i].origNo;
+                        if(origNo==null){
+                            origNo="";
+                        }
+                        dataTable2+='<tr>';
+                        dataTable2+='<td align="center" class="td">'+data[i].billTypeName+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].billFlagName+'</td>';
+                        dataTable2+='<td align="center" class="td">'+origNo+'</td>';
+                        dataTable2+='<td align="right" class="td">'+moneyFormat(data[i].billMoney)+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].payer+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].payee+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].acceptor+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].startDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].endDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].useDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].statusName+'</td>';
+                        dataTable2+='</tr>';
+                    }
+                    break;
+                case "lcs":
+                    for(var i=0;i<data.length;i++) {
+                        var creditNo=data[i].creditNo;
+                        if(creditNo==null){
+                            creditNo="";
+                        }
+                        dataTable2+='<tr>';
+                        dataTable2+='<td align="center" class="td" style="width:150px">'+data[i].beneficiary+'</td>';
+                        dataTable2+='<td align="center" class="td" >'+data[i].bankName+'</td>';
+                        dataTable2+='<td align="center" class="td">'+creditNo+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].lcInterName+'</td>';
+                        dataTable2+='<td align="right" class="td">'+moneyFormat(data[i].creditMoney)+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].contractNo+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].issuingDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].expiryDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].useDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].statusName+'</td>';
+                        dataTable2+='</tr>';
+                    }
+                    break;
+                default:
+                    for(var i=0;i<data.length;i++) {
+                        var ratConNo=data[i].ratContractNo;
+                        if(ratConNo==null){
+                            ratConNo="";
+                        }
+                        dataTable2+='<tr>';
+                        dataTable2+='<td align="center" class="td">'+ratConNo+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].ratModeName+'</td>';
+                        dataTable2+='<td align="right" class="td">'+moneyFormat(data[i].money)+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].beginDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].endDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].useDate+'</td>';
+                        dataTable2+='<td align="center" class="td">'+data[i].statusName+'</td>';
+                        dataTable2+='</tr>';
+                    }
+            }
+
+            dataTable2+='</tbody></table></div></div>';
+            dataHtml=dataTable1+dataTable2;
+            var balDiv = document.getElementById("dataTable");
+            balDiv.innerHTML = dataHtml;
+        }
+
+        //金额格式化
+        function moneyFormat(val){
+            if(val=='' || val==null){
+                return 0.00;
+            }
+            //金额转换 元 保留2位小数 并每隔3位用逗号分开 1,234.56
+            var str = val.toFixed(2) + '';
+            var intSum = str.substring(0,str.indexOf(".")).replace( /\B(?=(?:\d{3})+$)/g, ',' );//取到整数部分
+            var dot = str.substring(str.length,str.indexOf("."))//取到小数部分搜索
+            var ret = intSum + dot;
+            return ret;
+        }
+
+        loadData();
+
+        function addSheet($this,id){
+            if( $this.parent().hasClass('active')){
+                hideSheet($this);
+                return
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+                $this.parent().addClass('active');
+            $(id).addClass('show');
+        }
+
+        function hideSheet($this){
+            $('.ui-actionsheet').removeClass('show');
+                $this.parent().removeClass('active');
+        }
+
+        $("#btn1").click(function(){
+            openDatePickerPage();
+        });
+
+        $("#btn2").click(function(){
+            addSheet($(this),'#actionsheet2')
+        });
+
+
+        $('.popup-block').on('click','.bt-popup-item',function(){
+            var linkId = $(this).parents('.ui-actionsheet').data('link');
+            $(this).addClass('active');//添加文字选中样式
+            hideSheet($('#'+linkId));
+            $('#'+linkId).val($(this).text())
+        })
+
+        var ACTIVE = 'active';
+        function test(value){
+            console.log(value)
+        }
+
+        function initCard(id,value,clickCallback){
+            if(!id){
+                return
+            }
+            var $card = $(id);
+            var hiddenInput = $card.find('.bt-card-header input');
+            //设置选中值
+            if(value){
+                var items = $card.find('.bt-card-item');
+                items.removeClass(ACTIVE);
+                for( var i=0;i < items.length; i++ ){
+                    if(value === $(items[i]).data('value')){
+                        $(items[i]).addClass(ACTIVE);
+                        break
+                    }
+                }
+            }
+
+            $(id).on('click','.bt-card-item',function(){
+                var statusName='';
+                if($(this).hasClass(ACTIVE)){
+                    $(this).removeClass(ACTIVE);
+                } else {
+                    $(id).find('.bt-card-item').removeClass(ACTIVE);
+                    $(this).addClass(ACTIVE);
+                    status = $(this).data('value');
+                    statusName=$(this).data('name');
+
+                }
+                hiddenInput.val(status);
+                $("#btn2").val(statusName);
+                return false;
+            })
+        }
+
+        //初始化
+        initCard('#statusDiv','',test);
+
+
+        //更多弹出框重置
+        $("#curBtRest").click(function () {
+            $('#status').val('');
+            $('#btn1').val('');
+            $('#btn2').val('');
+            searchParams.datePickData.startDate=null;
+            searchParams.datePickData.endDate=null;
+            $('.bt-card-item').removeClass('active');
+        });
+
+        //更多弹出框提交
+        $("#curBtSubmit").click(function () {
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+            loadData();
+        });
+
+        //日期
+        function openDatePickerPage() {
+           var data = BTAppBridge.openDatePickerPage && BTAppBridge.openDatePickerPage('searchActionCallback');
+           uni.postMessage({
+               data:data
+           })
+        }
+
+        //时间提交
+        $("#submitDateValue").click(function () {
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+            loadData();
+        });
+
+        /**
+         * 日期选择
+         * @param data
+         */
+        window.searchActionCallback = function (data) {
+            if (data.datePickData) {
+                var dateObj = data.datePickData;
+                var startDate = dateObj.startDate;
+                var endDate = dateObj.endDate;
+                var startTemp = timestampToTime(parseInt(startDate));
+                var endTemp = timestampToTime(parseInt(endDate));
+                var dateStr=startTemp+"-"+endTemp;
+                $("#btn1").val(dateStr);
+                searchParams.datePickData.startDate=startTemp;
+                searchParams.datePickData.endDate=endTemp;
+            }
+            loadData();
+        }
+
+    })(document, window);
+</script>
+</html>

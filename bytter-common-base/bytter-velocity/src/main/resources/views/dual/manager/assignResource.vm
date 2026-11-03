@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        .ztree {
+            overflow: auto;
+            height: 480px;
+        }
+        .resource-node{
+            float: left;
+        }
+        .resource-node span.button.center_docu,.resource-node span.button.bottom_docu{
+            background-position: 25px -25px!important;
+        }
+        .border-bottom-line{
+            border-bottom: 1px solid #ddd;
+        }
+        .header-box{
+            height: 40px;
+            line-height: 40px;
+        }
+        .header-title{
+            border-left: 4px solid #1E9FFF;
+            font-size: 18px;
+            padding-left: 6px;
+        }
+    </style>
+</head>
+<body>
+<h3>“$!{user.username}”用户进行“$!{corp.name}”网点/单位特殊权限复核</h3>
+<h5><span style="color: #669900">绿色</span>为新增，<span style="color: #ff0000">红色</span>为删除</h5>
+<form class="layui-form">
+    <input type="hidden" id="userId" value="$!{user.id}"/>
+    <input type="hidden" id="corpId" value="$!{corp.id}"/>
+    <div class="layui-row layui-col-space20">
+        <div class="layui-col-xs12">
+            <div class="margin-bottom padding-bottom border-bottom-line header-box">
+                <div class="float-left">
+                    <span class="header-title">菜单资源</span>
+                </div>
+                <div class="float-right">
+                    <a href="javascript:void(0);" id="checkedAll">全选</a>
+                    <span class="text-explode">|</span>
+                    <a href="javascript:void(0);" id="menuExpandAll">全部展开</a>
+                    <span class="text-explode">|</span>
+                    <a href="javascript:void(0);" id="menuCollapseAll">全部收起</a>
+                </div>
+            </div>
+            <div class="ztree" id="menuTree"></div>
+        </div>
+    </div>
+    <input type="hidden" name="newMenuIds" value="$!{newMenuIds}" />
+    <input type="hidden" name="newResourcesIds" value="$!{newResourcesIds}" />
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn" id="sumitData">#springMessage('common.button.submit')</button>
+        </div>
+    </div>
+</form>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(['jquery','form', 'ztree','ztreeCheck','ztreeEdit'], function () {
+        var layer = parent.layer?parent.layer:bt.layer,
+        $ = bt.jquery;
+        var userId = $('#userId').val();
+        var currentCorpId = $('#corpId').val();
+
+        //菜单构造器
+        var MenuTree = function () {
+            this.obj = null;
+            this.nodeList = [];
+        }
+        MenuTree.prototype.init = function (options) {
+            var that = this;
+            var setting = {
+                data: {
+                    simpleData: {
+                        enable: true,
+                        idKey: "id",
+                        pIdKey: "parentId"
+                    }
+                },
+                check: {
+                    enable: false,
+                    chkStyle: "checkbox",
+                    chkboxType: { "Y": "ps", "N": "ps" }
+                },
+                callback: {
+                    beforeClick: function () {
+                        return false;
+                    },
+                    beforeCheck:function(){
+                        return false;
+                    }
+                },
+                view: {
+                    fontCss: that.getFont,
+                    nameIsHTML: true
+                }
+            }
+            $.get(basePath+"/sys/user/menuAndResource",{userId:userId,corpId:currentCorpId},function(result){
+                result = that.filter(result);
+                that.obj = $.fn.zTree.init($("#menuTree"), setting, result);
+                that.obj.expandAll(true);
+
+                var newMenuIds = $('input[name="newMenuIds"]').val();
+                var newResourcesIds = $('input[name="newResourcesIds"]').val();
+                var hiddenMenuIds = that.getNodeByType(result,true);
+                var hiddenResourcesIds = that.getNodeByType(result,false);
+                //设置显示状态
+                //根据是否设置勾选节点
+                var nodes = that.obj.transformToArray(that.obj.getNodes());
+
+                for(var i = 0;i<nodes.length;i++){
+                    var node = nodes[i];
+                    if(node.isMenu){
+                        var resultTemp = that.checkNewOrOld(node,newMenuIds,hiddenMenuIds);
+                        if(resultTemp===1 || resultTemp===2){
+                            that.obj.checkNode(node, true, false);
+                        }else{
+                            that.obj.checkNode(node, false, false);
+                        }
+                    }else{
+                        var resultTemp = that.checkNewOrOld(node,newResourcesIds,hiddenResourcesIds);
+                        if(resultTemp===1 || resultTemp===2){
+                            that.obj.checkNode(node, true, false);
+                        }else{
+                            that.obj.checkNode(node, false, false);
+                        }
+                    }
+                }
+            },"JSON");
+
+        }
+
+        MenuTree.prototype.getFont = function (treeId, node) {
+            return node.font ? node.font : {};
+        }
+        MenuTree.prototype.zTreeOnNodeCreated = function (event, treeId, treeNode) {
+            if(!treeNode.isMenu){
+                $('#'+treeNode.tId).addClass('resource-node');
+            }
+        }
+        //type = true菜单 false资源
+        MenuTree.prototype.getNodeByType = function(childNodes,type){
+            var temp = '';
+            for(var i=0;i<childNodes.length;i++){
+                if(childNodes[i].isChecked && ((childNodes[i].isMenu && type) || (!childNodes[i].isMenu && !type))){
+                    temp += childNodes[i].id + ',';
+                }
+            }
+            return temp;
+        }
+        MenuTree.prototype.getFullParents = function(tempArray,childNodes,ids){
+            for(var i=0;i<childNodes.length;i++){
+                if(ids.indexOf(childNodes[i].id)!==-1){
+                    tempArray.push(childNodes[i]);
+                }
+            }
+
+        }
+        MenuTree.prototype.filter = function (childNodes) {
+            var that = this;
+            if (!childNodes) {
+                return null
+            }
+            var newMenuIds = $('input[name="newMenuIds"]').val();
+            var newResourcesIds = $('input[name="newResourcesIds"]').val();
+            var tempArray = [];
+            // that.getFullParents(tempArray,childNodes,newMenuIds);
+            // that.getFullParents(tempArray,childNodes,newResourcesIds);
+            // childNodes = tempArray;
+            var hiddenMenuIds = that.getNodeByType(childNodes,true);
+            var hiddenResourcesIds = that.getNodeByType(childNodes,false);
+            for (var i = 0, l = childNodes.length; i < l; i++) {
+                childNodes[i].name = childNodes[i].name.replace(/\.n/g, '.');
+                childNodes[i].fixedName = childNodes[i].name;
+                var node = childNodes[i];
+                if(node.isMenu){
+                    var styleObj = {'color':''};
+                    var resultMenu = that.checkNewOrOld(node,newMenuIds,hiddenMenuIds);
+                    if(resultMenu!==0){
+                        if(resultMenu === 1){
+                            styleObj = {'color':'#669900'};
+                        }else if(resultMenu === -1){
+                            styleObj = {'color':'#FF0000',"text-decoration":"line-through"};
+                        }
+                        childNodes[i].font = styleObj;
+                    }
+                }else{
+                    var styleObj = {'color':'#9966FF'};
+                    var resultResource = that.checkNewOrOld(node,newResourcesIds,hiddenResourcesIds);
+                    if(resultResource!==0){
+                        if(resultResource === 1){
+                            styleObj = {'color':'#669900'};
+                        }else if(resultResource === -1){
+                            styleObj = {'color':'#FF0000',"text-decoration":"line-through"};
+                        }
+                        childNodes[i].font = styleObj;
+                    }
+                }
+                tempArray.push(childNodes[i]);
+            }
+            return tempArray;
+        }
+
+        MenuTree.prototype.getCheckedData = function(){
+            var temp = {
+                resources:[],
+                menus:[]
+            };
+            var nodes = menuTree.obj.getCheckedNodes(true);
+            for(k in nodes){
+                var node = nodes[k];
+                if(node.isMenu){
+                    temp.menus.push(node.id);
+                }else{
+                    temp.resources.push(node.id);
+                }
+            }
+            return temp;
+        }
+
+        MenuTree.prototype.searchNode = function () {
+            var input = $(this).val();
+            clearTimeout(menuTree.timer);
+            menuTree.timer = setTimeout(function(){
+                menuTree.nodeList = menuTree.obj.getNodesByParamFuzzy('name', input);
+                if (menuTree.nodeList.length ==0 || input === ""){
+                    menuTree.nodeList =  menuTree.obj.transformToArray(menuTree.obj.getNodes());
+                    menuTree.updateNodes(false,input);
+                    return;
+                }
+                menuTree.updateNodes(true,input);
+            },200)
+
+        }
+        MenuTree.prototype.updateNodes = function (highlight, inputValue) {
+            for( var i=0, l=menuTree.nodeList.length; i<l; i++) {
+                var name = menuTree.nodeList[i].fixedName;
+                if(!highlight){
+                    menuTree.obj.expandNode(menuTree.nodeList[i].getParentNode(), true, false, false);
+                    menuTree.nodeList[i].name = name;
+                }else{
+                    menuTree.nodeList[i].name = name.replace(inputValue,'<b style="background: #ffff00">'+inputValue+'</b>');
+                }
+                menuTree.obj.updateNode(menuTree.nodeList[i]);
+            }
+        }
+
+        //检测菜单是否为新增，是返回1,否返回-1,都存在返回2，没有返回0
+        MenuTree.prototype.checkNewOrOld = function(node, newMenuIds, oldMenuIds){
+            if(oldMenuIds.indexOf(node.id)==-1 && newMenuIds.indexOf(node.id)>=0){
+                return 1;
+            }
+            if(oldMenuIds.indexOf(node.id)>=0 && newMenuIds.indexOf(node.id)==-1){
+                return -1;
+            }
+            if(oldMenuIds.indexOf(node.id)>=0 && newMenuIds.indexOf(node.id)>=0){
+                return 2;
+            }
+            return 0;
+        }
+
+        //初始化单位网点树
+        var menuTree = new MenuTree();
+        menuTree.init();
+
+        $("#checkedAll").click(function(){
+            menuTree.obj.checkAllNodes(true);
+        });
+        $("#menuCollapseAll").click(function(){
+            menuTree.obj.expandAll(false);
+        });
+        $("#menuExpandAll").click(function(){
+            menuTree.obj.expandAll(true);
+        });
+
+        $('#menuSearch').bind("propertychange", menuTree.searchNode).bind("input", menuTree.searchNode);
+
+    })
+</script>
+</body>
+</html>

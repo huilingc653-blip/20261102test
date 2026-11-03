@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" action="">
+    <table class="layui-table">
+        <tr>
+            <input type="hidden" id="corpParentId" value="$!{corp.parentId}">
+            <td class="text-right" width="20%">#springMessage('table.sysCorp.parentId')</td>
+            <td width="30%">
+                $!{parentCorp}
+            </td>
+            <td class="text-right" width="20%">#springMessage('table.sysCorp.code')</td>
+            <td width="30%">$!{corp.code}</td>
+        </tr>
+        <tr>
+			<td class="text-right">#springMessage('table.sysCorp.name')</td>
+            <td >
+                <input type="hidden" name="id" value="$!{corp.id}">
+                $!{corp.name}
+            </td>
+            <td class="text-right">#springMessage('table.sysCorp.accountLicence')</td>
+            <td>$!{corp.accountLicence}</td>
+         </tr>
+        <tr>
+			<td class="text-right">#springMessage('sys.sysCorp.nameEn')</td>
+            <td colspan="3">
+                $!{corp.nameEn}
+            </td>
+        </tr>
+		 <tr>
+            <td class="text-right">#springMessage('table.sysCorp.headPerson')</td>
+            <td>$!{corp.headPerson}</td>
+			<td class="text-right">#springMessage('table.sysCorp.useAccountCode')</td>
+			<td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="userAccountCode"
+                         data-defaultValue="$!{corp.userAccountCode}"
+                         data-checkkboxtype='{ "Y": "", "N": "" }'
+                         data-disabled="true"
+                         data-placeholder="#springMessage('table.sysCorp.useAccountCode')"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-right">#springMessage('sys.region')</td>
+            <td>
+                <div class="layui-input-inline bt-biz-region" id="province" data-group="corp" data-name="province" data-change="city" data-defaultvalue="$!{corp.province}" data-disabled="true"></div>
+                <div class="layui-input-inline bt-biz-region"  id="city" data-group="corp" data-name="city" data-defaultvalue="$!{corp.city}" data-disabled="true"></div>
+            </td>
+			<td class="text-right">#springMessage('table.sysCorp.status')</td>
+            <td><input type="checkbox" #if(!$corp.status || $corp.status==1) checked #end name="status" lay-skin="switch" lay-text="YES|NO" disabled></td>
+        </tr>
+        <tr>
+            <td class="text-right">#springMessage('common.button.center')</td>
+            <td><input type="checkbox" #if(!$corp || $corp.type==0) checked #end name="type" lay-skin="switch" lay-text="YES|NO" disabled></td>
+			<td class="text-right">#springMessage('table.sysCorp.listedCompany')</td>
+            <td><input type="checkbox" #if(!$corp.listedCompany || $corp.listedCompany==1) checked #end name="listedCompany" lay-skin="switch" lay-filter="switchTest" lay-text="YES|NO" disabled></td>
+            
+        </tr>
+        <tr>
+            <td class="text-right">#springMessage('sys.sysCorp.unitAttribute')</td>
+            <td>
+				<div class="bt-biz-dict" data-group="sys_corp_attribute_type" data-name="unitAttribute" data-type="select" data-defaultvalue="$!{corp.unitAttribute}" data-required="true" data-callback="unitAttributeFun" data-disabled="true"></div>
+            </td>
+            <td class="text-right">#springMessage("sys.sysCorp.unitCm")</td>
+            <td >
+                <div class="bt-biz-cell"
+                     data-tree-type="check"
+                     data-biz-name="unitCmBiz"
+					 ##data-required="#if($corp && $corp.unitAttribute eq '02') required #end"
+					 data-required="#if($corp&&$corp.unitAttribute eq '02')true#end"
+                     data-type="selectTree"
+                     data-name="unitCm"
+                     data-disabled="true"
+                     data-defaultvalue="$!{corp.unitCm}"
+                     data-placeholder="#springMessage('sys.sysCorp.unitCm')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-right">#springMessage('table.sysCorp.curId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-required="true" #if($!{corp.curId}) data-disabled="true" #end
+                     data-name ="curId" data-biz-name ="curId"  data-valueField="id" data-textField="curName" data-defaultvalue="$!{corp.curId}"></div>
+            </td>
+            <td class="text-right">#springMessage("common.message.sort")</td>
+            <td >
+                <input type="text" name="sort"  autocomplete="off" placeholder="#springMessage("common.message.sort")" class="layui-input" value="$!{corp.sort}" readonly>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-right">#springMessage('table.sysCorp.address')</td>
+            <td colspan="3">
+                <textarea placeholder="#springMessage('table.sysCorp.address')" class="layui-textarea" name="address" readonly>$!{corp.address}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-right">#springMessage('sys.sysCorp.addressEn')</td>
+            <td colspan="3">
+                <textarea placeholder="#springMessage('sys.sysCorp.addressEn')" class="layui-textarea" name="addressEn" readonly>$!{corp.addressEn}</textarea>
+            </td>
+        </tr>
+    </table>
+
+    <div onclick="divclick();" style="text-align: center">
+        <i class="layui-icon" style="margin-right: 10px" id="otherInfoIcon">&#xe602;</i>#springMessage(
+        'cms.loan.OtherInfo')</div>
+    <div id="otherInfo" style="display: none">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                ## 是否启用限额管理
+                <td class="textRight">#springMessage('table.sysCorp.enable.limit')</td>
+                <td>
+                    <input type="checkbox" #if($corp.isLimitQuota==1) checked #end name="isLimitQuota" lay-skin="switch" lay-text="YES|NO" disabled>
+                </td>
+                ## 日累计支付限额
+                <td class="textRight">#springMessage('table.sysCorp.day.limit')</td>
+                <td>
+                    #if($!{corp.dayLimitQuota})
+                        $number.formatNumeric($!{corp.dayLimitQuota})
+                    #else
+                        0.00
+                    #end
+                </td>
+            </tr>
+            <tr>
+                ## 月累计支付限额
+                <td class="textRight">#springMessage('table.sysCorp.month.limit')</td>
+                <td>
+                #if($!{corp.monthLimitQuota})
+                    $number.formatNumeric($!{corp.monthLimitQuota})
+                #else
+                    0.00
+                #end
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/sys/organtype/orgtCorp.view.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

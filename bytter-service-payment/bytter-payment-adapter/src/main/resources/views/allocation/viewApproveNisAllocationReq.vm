@@ -1,0 +1,171 @@
+#*
+*公共审批基础页面
+*#
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/waphead.vm")
+    <style>
+        .rmk-css {
+            font-size: 14px;
+            float: right;
+            right: 0;
+            position: relative;
+            display: inline-block;
+            max-width: 170px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+<input type="hidden" id="id" name="id" value="$!{nisAllocationReqPage.id}">
+<input type="hidden" id="payeeAccId" name="payeeAccId" value="$!{nisAllocationReqPage.payeeAccId}">
+<input type="hidden" id="payerAccId" name="payerAccId" value="$!{nisAllocationReqPage.payerAccId}">
+<input type="hidden" id="status" name="status" value="$!{nisAllocationReqPage.status}">
+<input type="hidden" id="createBy" name="createBy" value="$!{nisAllocationReqPage.createBy}">
+<input type="hidden" id="updateBy" name="updateBy" value="$!{nisAllocationReqPage.updateBy}">
+<input type="hidden" id="updateDate" name="updateDate" value="$!{nisAllocationReqPage.updateDate}">
+<input type="hidden" id="createDate" name="createDate" value="$!{nisAllocationReqPage.createDate}">
+<input type="hidden" id="type" name="type" value="$!{nisAllocationReqPage.type}">
+<input type="hidden" id="corpId" name="corpId" value="$!{nisAllocationReqPage.corpId}">
+<input type="hidden" id="money" name="money" value="$!{nisAllocationReqPage.money}">
+<input type="hidden" id="curId" name="curId" value="$!{nisAllocationReqPage.curId}">
+<input id="attachmentId" name="attachmentId" type="hidden" value="$!{nisAllocationReqPage.attachmentId}">
+<!--挂接计划执行 系统参数 -->
+<input type="hidden" id="wishPayday" name= "wishPayday" value="$!{nisAllocationReqPage.wishPayday}">
+<input type="hidden" id="billNo" name= "billNo" value="$!{nisAllocationReqPage.billNo}">
+<input id="busType" name="busType" type="hidden" value="$!{busType}">
+<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+
+<ul class="mui-table-view" id="mulTable">
+    <li class="mui-table-view-cell">
+        #springMessage('table.nisAllocationReq.billNo')
+        <span class="mui-badge mui-badge-inverted">
+            $!{nisAllocationReqPage.billNo}
+        </span>
+    </li>
+##    #set($vmPage = "views/allocation/mobile/approveNisAllocationReq"+${nisAllocationReqPage.type}+".vm")
+##    #parse($vmPage)
+    #parse("views/allocation/approveNisAllocationReqMobile.vm")
+    <li class="mui-table-view-cell">
+        #springMessage('table.nisAllocationReq.curId')
+        <span class="mui-badge mui-badge-inverted">
+            $!{nisAllocationReqPage.curName}
+        </span>
+    </li>
+    <li class="mui-table-view-cell">
+        #springMessage('table.nisAllocationReq.purpose')
+        <span class="mui-badge mui-badge-inverted">
+            $!{nisAllocationReqPage.purpose}
+        </span>
+    </li>
+    <li class="mui-table-view-cell">
+        #springMessage('table.nisAllocationReq.money')
+        <span class="mui-badge mui-badge-inverted">
+            $!number.formatNumeric($!{nisAllocationReqPage.money})
+        </span>
+    </li>
+    <li class="mui-table-view-cell">
+        #springMessage('table.nisAllocationReq.wishPayday')
+        <span class="mui-badge mui-badge-inverted">
+            $!date.format('yyyy-MM-dd',$!{nisAllocationReqPage.wishPayday})
+        </span>
+    </li>
+    <li class="mui-table-view-cell">
+        #springMessage('table.nisAllocationReq.isQuick')
+        <span class="mui-badge mui-badge-inverted">
+            $dictTag.get("sf_yn",$!{nisAllocationReqPage.isQuick})
+        </span>
+    </li>
+    <li class="mui-table-view-cell">
+        #springMessage('table.settlement.rmk')
+        <span class="mui-badge-inverted rmk-css">
+            $!{nisAllocationReqPage.rmk}
+        </span>
+    </li>
+    ##	资金调拨类型 10-上划 11-下拨 12-请款 13-头寸调拨 14-上缴 15-查询
+    ##	上划下拨不显示跨行标志和地域标志
+    #if($!{nisAllocationReqPage.type} != 10 && $!{nisAllocationReqPage.type} != 11)
+        <li class="mui-table-view-cell">
+            #springMessage('table.nisAllocationReq.difBank')
+            <span class="mui-badge mui-badge-inverted">
+                $dictTag.get("nisBillhead.difBank",$!{nisAllocationReqPage.difBank})
+            </span>
+        </li>
+        <li class="mui-table-view-cell">
+            #springMessage('table.nisAllocationReq.areaSign')
+            <span class="mui-badge mui-badge-inverted">
+                $dictTag.get("nisBillhead.areaSign",$!{nisAllocationReqPage.areaSign})
+            </span>
+        </li>
+    #end
+    ## 挂接资金计划
+    #if($!{budgetSel} == 1)
+        #set($fbsBudgetItemDetail = $fbsBudgetTag.getViewItemDetailMobile($!{nisAllocationReqPage.billNo}, "", $!{businessName}, $!{processSysname},$!{nisAllocationReqPage.corpId}, $!{nisAllocationReqPage.wishPayday}))
+        #parse("views/budget/fbsbudget.vm")
+    #end
+</ul>
+    #parse("views/common/wapfooter.vm")
+</body>
+
+    #if($!{nisAllocationReqPage.type} == 13)
+    <script type="application/javascript">
+        // 初始化收款人信息
+        $.ajax({
+            url: basePath + "/bankacc/btbankacc?getBankAccById",
+            method: 'POST',
+            data: {id: $("#payeeAccId").val(), curId: $("#curId").val()},
+            dataType: 'json',
+            success: function (result) {
+                var data = result.obj;
+                initFcAccBalance(data.bankAcc, "payeeFcAccBalance");
+                $("#payeeProvCity").text(data.provName + "  " + data.cityName);
+            }
+        });
+        // 初始化付款人信息
+        $.ajax({
+            url: basePath + "/bankacc/btbankacc?getBankAccById",
+            method: 'POST',
+            data: {id: $("#payerAccId").val(), curId: $("#curId").val()},
+            dataType: 'json',
+            success: function (result) {
+                var data = result.obj;
+                initFcAccBalance(data.bankAcc, "payerFcAccBalance");
+                $("#payerProvCity").text(data.provName + "  " + data.cityName);
+            }
+        });
+
+        /**
+         * 设置内部账户余额
+         * @param bankAcc
+         * @param initId
+         */
+        function initFcAccBalance(bankAcc, initId) {
+            // 加载付款账户单位
+            $.ajax({
+                url: basePath + "/inneraccount/fconlineledger?getByBankAcc",
+                method: 'POST',
+                data: {bankAcc: bankAcc, curId: $("#curId").val()},
+                dataType: 'json',
+                success: function (result) {
+                    var data = result.obj;
+                    if (null == data) {
+                        $("#" + initId).text("0.00");
+                    } else {
+                        $("#" + initId).text(data.checkBalance);
+                    }
+                }
+            });
+        }
+
+        window.onload=function () {
+            var attachmentId = $("#attachmentId").val();
+            setTimeout(function () {
+                BTAppBridge.initAttachmentByGroupId && BTAppBridge.initAttachmentByGroupId(attachmentId);
+            },100);
+        }
+    </script>
+    #end
+</html>

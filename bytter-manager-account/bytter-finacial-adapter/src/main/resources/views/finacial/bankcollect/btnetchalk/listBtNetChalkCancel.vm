@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+<input type="hidden" id="opType" value="$!{opType}">
+	<table class="layui-table">
+		<tbody>
+        	<tr>
+        		##交易日期
+				<td class="textRight">#springMessage('table.btNetChalk.transTime')</td>
+				<td width="40%">
+						<div class="date-interval"></div>
+				</td>
+				##收款单位CORP_ID
+			 	<td class="textRight">#springMessage('table.btNetChalk.corpId')</td>
+			 	<td width="40%">
+					 <div class="bt-biz-corp"  
+						  data-biz-type="net" 
+						  data-type="selectTree" 
+						  data-name="ins_corpId"
+						  data-tree-type="check"
+						  data-scope="all"
+                          data-resource="fcl:btnetchalk:common:query"></div>
+				</td> 
+			</tr>
+			<tr>
+				##本方账号 BANK_ACC	
+				<td class="textRight">#springMessage('table.btNetChalk.bankAcc')</td>
+				<td >
+                     <input type="text" name="likes_bankAcc" id="bankAcc"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.btNetChalk.bankAcc')">  
+				</td>
+				##币别代码
+				<td class="textRight">#springMessage('table.btNetChalk.curId')</td>
+				<td >
+		         	<div class="layui-input-inline">
+		         		<div class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json" 
+		         				data-valuefield="id" data-textfield="curName" data-name="eqs_curId" data-search="true"></div>
+                   	</div>
+				</td>	
+			</tr>
+        	<tr>
+				##摘要
+				<td class="textRight">#springMessage('table.btNetChalk.purpose')</td>
+				<td>
+					<input type="text" name="likes_purpose" autocomplete="off" class="layui-input">
+				</td>
+        		 ##金额
+				<td class="textRight">#springMessage('table.btNetChalk.money')</td>
+				<td >
+					<input type="text" data-name="geg_money" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="t2"  data-max="300">
+       				<span class="date-mid">~</span>
+       				<input type="text" data-name="leg_money" class="layui-input bt-input-inline  bt-biz-moneyType" id="t2" >
+				</td> 
+			</tr>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+		<tr>
+	        <th>#springMessage('table.btNetChalk.transTime')</th>
+	        <th>#springMessage('table.btNetChalk.estate')</th>
+	        <th>#springMessage('table.btNetChalk.bankName')</th>
+	        <th>#springMessage('table.btNetChalk.corpId')</th>
+	        <th>#springMessage('table.btNetChalk.bankAcc')</th>
+	        <th>#springMessage('table.btNetChalk.cntAccount')</th>
+	        <th>#springMessage('table.btNetChalk.accName')</th>
+	        <th>#springMessage('table.btNetChalk.curId')</th>
+	        <th>#springMessage('table.btNetChalk.money')</th>
+	        <th>#springMessage('table.btNetChalk.purpose')</th>
+	        <th>#springMessage('table.btNetChalk.oppAccNo')</th>
+	        <th>#springMessage('table.btNetChalk.oppBankName')</th>
+	        <th>#springMessage('table.btNetChalk.orderNo')</th>
+    	</tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','btdate','bttable','datatable','mulselect','corp','moneyType','selectType'], function(){
+    var $ = bt.jquery,form = bt.form();
+    var tt = bt.mulselect.init();
+    bt.corp.init();
+    var moneyType = bt.moneyType.init();
+    var moneyFun = bt.moneyType.getFun();
+    bt.selectType.init();
+	bt.btdate.init({
+	    elem:".date-interval",
+	    startname:"ged_transTime",
+	    endname:"led_transTime"
+	    }
+	);
+	//生成列表
+	datatable = bt.datatable.init({
+	    elem: "#appTable",
+	    dom: 'Brtlip',
+	    colReorder: true,
+	    checkbox:true,
+        order: [0,'desc'],
+	    mulselect:true,
+	    selectCss:true,
+	    ajax: {
+	    	'url': basePath+"/finacial/bankCollect/btnetchalk/datatable?type="+ $("#opType").val()
+	    },searchForm:{
+	        formFilter:"search",
+	        formElem:"#searchForm"
+	    },
+	    buttons: [{
+	    	 text: bt.lang("common.button.recover"),
+	         action: function ( e, dt, node, config ) {
+				bt.loading.show();//显示加载中
+        	 	var data = dt.rows('.selected').data();
+	     	    var len = data.length;
+	     	    if(len<1){
+	     	    	layer.msg("#springMessage('table.fcBankBill.msg.chooseLeastOne')");
+	     	    	bt.loading.hide(); //关闭加载中
+	     	    	return;
+	     	    }
+	     	    var ids="";
+	     	 	var rowData = data.splice(0,len);
+	     	 	for(var i=0;i<rowData.length;i++){
+	     	 		if (ids == "") {
+	     				ids += rowData[i].id + "-" + rowData[i].dataFrom;
+	     			} else {
+	     				ids += "," + rowData[i].id + "-" + rowData[i].dataFrom;
+	     			}
+	     	 	}
+	         	$.post(basePath + "/finacial/bankCollect/btnetchalk/recoveryBtNetChalk/",{ids:ids}, function(result){
+	         		bt.loading.hide(); //关闭加载中
+	         		datatable.draw();
+	             },'JSON');
+	         }
+	    	
+	    }],
+	    columns: [
+	        {data:"transTime",bSortable:false,className:'center'},
+			{
+				data: "estate", bSortable: false, className: "center",
+				render: function (data, type, full, meta) {
+					return bt.dict("btNetChalk.estate", full.estate == null ? 0 : full.estate);
+				}
+			},
+            {data:"bankName",bSortable:false,className:'center'},
+            {data:"corpName",bSortable:false,className:'center'},
+            {data:"bankAcc",bSortable:false,className:'center'},
+            {data:"cntAccount",bSortable:false,className:'center'},
+            {data:"accName",bSortable:false,className:'center'},
+            {data:"curName",bSortable:false,className:'center'},
+            {data:"money",bSortable:false,className:"textRight",
+            	render: function ( data, type, full, meta ) {
+            		var money = moneyFun.format(full.money);
+                    return money;
+            	}	
+            },
+            {data:"purpose",bSortable:false,className:'center'},
+            {data:"oppAccNo",bSortable:false,className:'center'},
+            {data:"oppBankName",bSortable:false,className:'center'},
+            {data:"orderNo",bSortable:false,className:'center'}
+	    ]
+	});
+});
+</script>
+</html>

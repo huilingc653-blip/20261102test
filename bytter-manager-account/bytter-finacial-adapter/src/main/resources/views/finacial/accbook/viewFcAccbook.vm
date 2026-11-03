@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+	<style type="text/css">
+		table{font-size: 12px;}
+		body{
+			background-color: #fff;
+		}
+		.voucher-title {
+			font-weight: bold;
+			font-size: 22px;
+			text-decoration: underline;
+			text-align: center;
+		}
+
+		.layui-table > thead th, .layui-table td {
+			position: static;
+		}
+	</style>
+</head>
+<body>
+<form class="layui-form layui-form-pane" method="post">
+	<input id="id" name="accbook.id" type="hidden" value="$!{voucher.accbook.id}">
+	<input id="netId" name="accbook.netId" type="hidden" value="$!{voucher.accbook.netId}">
+	<input id="orderNo" name="accbook.orderNo" type="hidden" value="$!{voucher.accbook.orderNo}">
+	<input id="voucherNo" name="accbook.voucherNo" type="hidden" value="$!{voucher.accbook.voucherNo}">
+	<input id="operatorCode" name="accbook.operatorCode" type="hidden" value="$!{voucher.accbook.operatorCode}">
+	<div id="print">
+		<div class="voucher-title">
+		##记账凭证
+			<div style="float:center;">
+				<label >#springMessage('table.fcAccbook.tallyTitle')</label>
+			</div>
+			#if($!{invalidFlag})
+				<div style="float:right;">
+					<label align="right" style="color: red;font-weight:bold; ">#springMessage('table.fcAccbook.invalidFlag')</label>
+				</div>
+
+			#end
+		</div>
+		<table style="width: 100%; " class="layui-table " >
+			<tr>
+			##业务种类
+				<td align="right" width="12%">#springMessage('table.fcAccbook.busRaceId')：</td>
+				<td width="18%">$!{voucher.accbook.raceName}</td>
+			##币别
+				<td align="right" width="12%">#springMessage('table.fbsBudgetDetail.curId')：</td>
+				<td width="20%">$!{voucher.accbook.curName}</td>
+			##附件数
+				<td align="right" width="12%">#springMessage('table.fcAccbook.affixAmount')：</td>
+				<td width="20%">$!{voucher.accbook.affixAmount}</td>
+			</tr>
+			<tr>
+			##流水号
+				<td align="right">#springMessage('table.fcAccbook.orderNo')：</td>
+				<td >$!{voucher.accbook.orderNo}</td>
+			##凭证号
+				<td align="right">#springMessage('table.fcAccbook.voucherNo')：</td>
+				<td >$!{voucher.accbook.voucherNo}</td>
+			##制单日期
+				<td align="right">#springMessage('table.fcAccbook.enrolTime')：</td>
+				<td >$!date.format('yyyy-MM-dd',$!voucher.accbook.enrolTime)</td>
+			</tr>
+		</table>
+	## 凭证表格数据
+		<table id="dataTable" style="width: 100%; " class="layui-table breakRow layui-table-border">
+			<thead>
+			<tr>
+				<th style="text-align: center;" colspan="2">#springMessage('table.fcAccbookDtl.summaryContent')</th>
+				<th style="text-align: center;" colspan="3">#springMessage('table.fcAccbookDtl.account')</th>
+				<th style="text-align: center;" colspan="2">#springMessage('table.fcAccbookDtl.accName')</th>
+				<th style="text-align: center;">#springMessage('table.fcAccbookDtl.origVoucherNo')</th>
+				<th style="text-align: center;">#springMessage('table.fcAccbookDtl.debitMoney')</th>
+				<th style="text-align: center;">#springMessage('table.fcAccbookDtl.creditMoney')</th>
+				<th style="text-align: center;">#springMessage('finacial.common.cashFlow.item')</th>#*现金流项目*#
+			</tr>
+			</thead>
+			<tbody>
+				#foreach($bookDtl in $!{voucher.bookDtls})
+					#set($vcount = $velocityCount - 1)
+				<tr>
+					<td colspan="2">
+						$!{bookDtl.summaryContent}
+					</td>
+					<td colspan="3">
+						$!{bookDtl.subjectName}
+						<br>
+						$!{bookDtl.account}
+					</td>
+					<td colspan="2">
+						$!{bookDtl.accName}
+					</td>
+					<td>$!{bookDtl.origVoucherNo}</td>
+					<td align="right">
+						$number.formatNumeric($!{bookDtl.debitMoney})
+					</td>
+					<td align="right">
+						$number.formatNumeric($!{bookDtl.creditMoney})
+					</td>
+					<td>
+						$!{bookDtl.cashFluxName}
+					</td>
+				</tr>
+				#end
+			</tbody>
+			<tr>
+				<td rowspan="5" align="center">#springMessage('table.fcAccbook.rmk')</td>
+				<td >#springMessage('table.fcAccbook.voucherType')</td>
+				<td colspan="3">$!{voucher.accbook.voucherName}</td>
+				<td >#springMessage('table.fcAccbook.tallyDate')</td>
+				<td >$!date.format('yyyy-MM-dd',$!voucher.accbook.tallyDate)</td>
+				<td style="text-align: right;" rowspan="2">#springMessage('table.interet.sum')：</td>
+				<td style="text-align: right;" rowspan="2"><span id='debitTot' val="0">$!{debitTotStr}</span></td>
+				<td style="text-align: right;" rowspan="2"><span id='creditTot' val="0">$!{debitTotStr}</span></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td >#springMessage('table.fcAccbook.emergencySign')</td>
+				<td >$dictTag.get('Accbook.EmergencySign',$!{voucher.accbook.emergencySign})</td>
+				<td >#springMessage('table.fcAccbookExt.tradeRate')</td>
+				<td >$!{voucher.bookExt.tradeRate}</td>
+				<td >#springMessage('table.fcAccbook.interestStartDate')</td>
+				<td > $!date.format('yyyy-MM-dd',$!voucher.accbook.interestStartDate)</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td >#springMessage('table.fcAccbookExt.externalCorp') </td>
+				<td colspan="3">$!{voucher.bookExt.externalCorp}</td>
+				<td >#springMessage('table.fcAccbookExt.externalAcc')</td>
+				<td colspan="4">$!{voucher.bookExt.externalAcc}</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td >#springMessage('table.fcAccbookExt.paysysbankcode') </td>
+				<td colspan="3">$!{voucher.bookExt.externalBank}</td>
+				<td >#springMessage('table.fcAccbookExt.prov')</td>
+				<td >$!{voucher.bookExt.prov}</td>
+				<td >#springMessage('table.fcAccbookExt.city')</td>
+				<td colspan="2">$!{voucher.bookExt.city}</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td >#springMessage('table.fcAccbook.rmk') </td>
+				<td colspan="9">$!{voucher.accbook.rmk}</td>
+			</tr>
+			<tr>
+				##附件
+				<td>#springMessage('cms.loan.attachment')</td>
+				<td colspan="10">
+					<input id="attachmentId" name="attachmentId" type="hidden" value="$!{voucher.accbook.attachmentId}"/>
+					<div id="uploader" class="layui-input-inline" style="width:100%"></div>
+				</td>
+			</tr>
+			#if(${voucher.accbook.voucherState} == 'F' || ${voucher.accbook.voucherState} == 'M')
+				<tr>
+					<td align="center">#springMessage('table.fcAccbookExt.backReason') </td>
+					<td colspan="10" style="word-wrap: break-word;">
+						$!{voucher.bookExt.backReason}
+					</td>
+				</tr>
+			#end
+		</table>
+	</div>
+	#if($!{opType} == "true")
+		<table class="layui-table no-print">
+			<tbody>
+			<tr>
+				<td width="10%" align="center" colspan="3">
+					<button class="layui-btn layui-btn-mini" lay-submit="" lay-filter="submit">#springMessage('common.button.revert')</button>
+				##打印
+					<button type="button" class="layui-btn layui-btn-mini" onclick="print()">#springMessage('common.button.print')</button>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	#end
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+	bt.use(['form','btUpload','layedit'], function(){
+		var $ = bt.jquery,form = bt.form();
+		var up = bt.btUpload.init({
+			elem: "#uploader",
+			auto: false,
+			hasDelete: false,
+			hasUpload: false,
+			gid: $("#attachmentId").val()
+		});
+		//监听提交
+		form.on('submit(submit)', function(data){
+			parent.layer ? parent.layer.closeAll() : layer.closeAll();
+			return false;
+		});
+	});
+	function print() {
+		var LODOP=getLodop();
+		$(".no-print").hide();
+		LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Width:90%");
+		LODOP.ADD_PRINT_HTM('9mm','0mm','RightMargin:0mm',"BottomMargin:9mm",document.documentElement.innerHTML);
+		$(".no-print").show();
+		LODOP.PREVIEW();
+	}
+</script>
+</html>

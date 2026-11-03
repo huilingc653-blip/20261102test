@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <div>
+        <div>
+            <div>#springMessage('table.cmsBond.bondIssueNum')</div>
+            <div class="layui-inline" style="margin-left: 90px;margin-top: -20px">
+                <div class="bt-biz-selectType" data-name="bondIssueNum" data-biz-name="bondIssueNum"
+                     data-inputValue="false"
+                     #if($!{showSign} ne '0')
+                     data-url="${basePath}/cms/bond/issue/listValidBondIssueNum/$!{registerId}"
+                     #else
+                     data-url="${basePath}/cms/bond/extend/listValidBondIssueNum/$!{registerId}"
+                     #end
+                     data-valuefield="bondIssueNum"
+                     data-callback="bt.typeCallBack"
+                     data-textfield="bondIssueNum" data-required="true"
+                     data-defaultvalue="$!{bondIssueNum}"></div>
+            </div>
+        </div>
+        <input id="issueId" name="issueId" type="hidden" value="$!{issueId}">
+        <input id="bondIssueNum" name="bondIssueNum" type="hidden" value="$!{bondIssueNum}">
+        <table id="appTable" class="layui-table layui-form" style="width:100%;">
+            <thead>
+            <tr>
+                <th>#springMessage('table.cmsBond.bondIssueNum')</th> ##债券发行编号
+                <th>#springMessage('table.cmsBond.repayDate')</th>    ##还款日期
+                <th>#springMessage('table.cmsBond.planRepayDate')</th> ##计划还款日
+                <th>#springMessage('table.cmsBond.repayMoney')</th>    ##还款本金值
+                <th>#springMessage('table.cmsBond.remainMoney')</th> ##剩余本金值
+                <th>#springMessage('table.cmsBond.repayAmount')</th> ##本次还款金额
+                <th>#springMessage('table.cmsBond.repayRate')</th>    ##本次偿还站发行总额比例%
+                <th>#springMessage('table.cmsBond.rmk')</th> ##备注
+                #if($!{showSign} ne '0')
+                    <th>#springMessage('common.table.thead.operation')</th>
+
+                #else
+                    <th>#springMessage('table.cmsBond.isRepay')</th>    ##是否已还
+                #end
+            </tr>
+            </thead>
+            <tbody id="cmsBondRepayPlanBody">
+                #foreach($cmsBondRepayPlanDtlVo in $list)
+                <tr class="bondIssueNum_$!{cmsBondRepayPlanDtlVo.bondIssueNum}" style="display: none;">
+                    <td align="center">$!{cmsBondRepayPlanDtlVo.bondIssueNum}</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{cmsBondRepayPlanDtlVo.repayDate})</td>
+                    <td align="center">$!date.format('yyyy-MM-dd',$!{cmsBondRepayPlanDtlVo.planRepayDate})</td>
+                    <td class="textRight">$number.formatNumeric($!{cmsBondRepayPlanDtlVo.repayMoney})</td>
+                    <td class="textRight">$number.formatNumeric($!{cmsBondRepayPlanDtlVo.remainMoney})</td>
+                    <td class="textRight">$number.formatNumeric($!{cmsBondRepayPlanDtlVo.repayAmount})</td>
+                    <td class="textRight">$rateTag.show($!{cmsBondRepayPlanDtlVo.repayRate}, 2)</td>
+                    <td align="center">$!{cmsBondRepayPlanDtlVo.rmk}</td>
+                    <td align="center">
+                        #if("$!{interestID}" == $!{cmsBondRepayPlanDtlVo.id})##还款已经选中的数据
+                            <span style="color:#009688">#springMessage('cms.msg.select')</span>
+                        #else
+                            #if("$!{cmsBondRepayPlanDtlVo.isRepay}" == "0" && "$!{cmsBondRepayPlanDtlVo.payStatus}" != "11")
+                                #if($!{showSign} ne '0')
+                                <button class="layui-btn" type="button"
+                                        onClick="interest('$!{cmsBondRepayPlanDtlVo.issueId}', '$!{cmsBondRepayPlanDtlVo.bondIssueNum}','$!{cmsBondRepayPlanDtlVo.issueMoney}','$!{cmsBondRepayPlanDtlVo.unpaidMoney}',
+                                                '$!date.format(
+                                                'yyyy-MM-dd',$!cmsBondRepayPlanDtlVo.planRepayDate)','$!{cmsBondRepayPlanDtlVo.repayMoney}','$!{cmsBondRepayPlanDtlVo.id}');">#springMessage(
+                                                'common.button.select')</button>
+                                #else
+                                    <span style="color:red">#springMessage('cms.repaymentSchedule.unused')</span>
+                                #end
+                            #else
+                                <span style="color:#5FB878">#springMessage('cms.repaymentSchedule.used')</span>
+                            #end
+                        #end
+                    </td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+</form>
+<div style="text-align: center;">
+    <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage(
+        'common.button.close')</button>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['jquery', "form", 'bttable', 'moneyType', 'selectType'], function () {
+        var $ = bt.jquery;
+        var index = 1;
+        moneyFun = bt.moneyType.getFun();
+        var bondIssueNum = $("#bondIssueNum").val()
+        $('#cmsBondRepayPlanBody').find('tr').hide();
+        $('.bondIssueNum_' + bondIssueNum).show();
+
+        // 切换发行编码
+        bt.typeCallBack = function (data) {
+            $('#cmsBondRepayPlanBody').find('tr').hide()
+            $('.bondIssueNum_' + data.bondissuenum).show();
+        }
+        bt.selectType.init();
+    });
+
+    function merge(tableId) {
+        var tr = document.getElementById(tableId);
+        for (var i = 1; i < tr.rows.length; i++) {                //表示数据内容的第二行
+            if (tr.rows[i].cells[col].innerHTML == tr.rows[i - 1].cells[col].innerHTML) {//col代表列
+                t = i - 1;
+                while (tr.rows[i].cells[col].innerHTML == tr.rows[t].cells[col].innerHTML) {
+                    tr.rows[i].cells[col].style.display = "none";
+                    if (tr.rows[t].cells[col].rowSpan <= (i - t)) {
+                        tr.rows[t].cells[col].rowSpan += 1;      //设置前一行的rowspan+1
+                    }
+                    i++;
+                }
+            }
+        }
+    }
+
+    function interest(issueId, bondIssueNum, issueMoney, unpaidMoney, planRepayDate, repayMoney, id) {
+        var webObj = bt.navtab.getParentDom();
+        webObj.setSelectInterestData(issueId, bondIssueNum, issueMoney, unpaidMoney, planRepayDate, repayMoney, id);
+        bt.navtab.closeCurrent();
+    }
+</script>
+</html>

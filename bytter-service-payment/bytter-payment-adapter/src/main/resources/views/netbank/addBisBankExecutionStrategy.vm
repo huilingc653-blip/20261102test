@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    ##电子回单唯一标识
+    <input type="hidden" name="receiptOnlyId" id="receiptOnlyId" value="BIS_EBILL_NO"/>
+    ##付款单唯一标识
+    <input type="hidden" name="billOnlyId" id="billOnlyId" value="BIS_DTL_NO"/>
+    ##银行流水唯一标识
+    <input type="hidden" name="dtlOnlyId" id="dtlOnlyId" value=""/>
+    <table class="layui-table breakRow">
+        <tbody>
+        <tr>
+            ##银行类型
+            <td class="textRight" width="15%">#springMessage('table.eBankBill.bankType')</td>
+            <td width="28%">
+                <div class="layui-inline">
+                    <div class="bt-biz-mulselectType" data-url="${basePath}/basic/business/btbanktype/json" data-method="get"
+                         data-valuefield="id" data-textfield="typeName" data-required="true"
+                         data-name="bankTypeId" data-inputvalue="inputvalue"
+                         data-search="true"
+                         data-biz-name="bankTypeId"></div>
+                </div>
+            </td>
+            ##策略类型
+            <td class="textRight" width="15%">策略类型</td>
+            <td width="42%">
+                <div class="bt-biz-dict"
+                     data-required="true"
+                     data-type="select"
+                     data-group="bank.strategy"
+                     data-valuefield="id"
+                     data-textfield="name"
+                     data-name="type"
+                     data-callback="toRegular"
+                     data-biz-name="type"></div>
+            </td>
+        </tr>
+
+        <tr>
+            ##是否存在唯一标识
+            <td class="textRight" >是否存在唯一标识</td>
+            <td>
+                <div class="bt-biz-dict"
+                     data-required="required"
+                     data-type="radio"
+                     data-group="sf_yn"
+                     data-defaultvalue="1"
+                     data-name="isExistId"
+                     data-callback="toRegular"
+                     data-biz-name="isExistId">
+
+                </div>
+            </td>
+            ##策略执行优先级
+            <td class="textRight">策略执行优先级</td>
+            <td >
+                <input type="text"
+                       id="executeSort"
+                       lay-verify="required|number"
+                       name="executeSort"
+                       data-min="1"
+                       data-maxlength="40"
+                       data-decimal="0"
+                       autocomplete="off"
+                       class="layui-input bt-biz-moneyType"
+                >
+            </td>
+        </tr>
+        <tr style="display: none" id="bisDtlNo">
+            ##付款单唯一标识
+            <td class="textRight">#springMessage('table.receipt.payUnique')</td>
+            <td>
+                <div class="bt-biz-dict "
+                     data-required="true"
+                     data-type="select"
+                     data-group="bisBankExecutionStrategy.payUnique"
+                     data-defaultvalue="BIS_DTL_NO"
+                     data-name="billOnlyIdSel"
+                     data-biz-name="billOnlyIdSel">
+                </div>
+            </td>
+            ##银行流水唯一标识
+            <td class="textRight">#springMessage('table.receipt.bankUnique')</td>
+            <td>
+                <div class="bt-biz-dict "
+                     data-required="true"
+                     data-type="select"
+                     data-group="bisBankExecutionStrategy.bankUnique"
+                     data-defaultvalue="BIS_DTL_NO"
+                     data-name="dtlOnlyIdSel" data-filterData="BIS_EBILL_NO"
+                     data-biz-name="dtlOnlyIdSel">
+                </div>
+            </td>
+        </tr>
+        <tr style="display: none" id="bisEbillNo">
+            ##电子回单唯一标识
+            <td class="textRight">#springMessage('table.bisBankExecutionStrategy.eReceiptUnique')</td>
+            <td>
+                <div class="bt-biz-dict "
+                     data-required="true"
+                     data-type="select"
+                     data-group="bisBankExecutionStrategy.eReceiptUnique"
+                     data-defaultvalue="BIS_EBILL_NO"
+                     data-name="receiptOnlyIdSel"
+                     data-biz-name="receiptOnlyIdSel">
+                </div>
+            </td>
+            ##银行流水唯一标识
+            <td class="textRight">#springMessage('table.receipt.bankUnique')</td>
+            <td>
+                <div class="bt-biz-dict "
+                     data-required="true"
+                     data-type="select"
+                     data-group="bisBankExecutionStrategy.bankUnique"
+                     data-defaultvalue="BIS_EBILL_NO"
+                     data-name="dtlOnlyIdReceiptSel" data-filterData="BIS_DTL_NO"
+                     data-biz-name="dtlOnlyIdReceiptSel">
+                </div>
+            </td>
+        </tr>
+        <tr style="display: none" id="rulesa">
+            ##执行规则
+            <td  class="textRight">#springMessage('table.receipt.rules')</td>
+            <td style="text-align: left;" colspan="3">
+                <div class="bt-biz-dict"
+                     data-type="checkbox"
+                     data-group="btPurpose.receiptRules"
+                     data-name="rules"
+                     data-biz-name="rules"
+                     data-defaultvalue="$!{btPurpose.rules}"
+                     data-callback="rulesCallback">
+                </div>
+            </td>
+        </tr>
+        <tr id="transTimeRuleTr" style="display: none">
+            ##交易日期规则
+            <td class="textRight">#springMessage('table.revenue.transTime')#springMessage('table.bvPrintMatchRule.matchRule')</td>
+            <td colspan="3">
+                <div class="layui-inline">
+                    <div class="bt-biz-dict "
+                         data-required="true"
+                         data-type="radio"
+                         data-group="bisBankExecutionStrategy.transTimeRule"
+                         data-defaultvalue="0"
+                         data-name="transTimeRule"
+                         data-biz-name="transTimeRule"
+                         data-callback="transTimeRuleCallback">
+                    </div>
+                </div>
+                <div class="layui-inline" id="tranDaysDiv" style="display: none">
+                    <div class="layui-inline">
+                        相差天数<font color="red">(<=)</font>
+                    </div>
+                    <div class="layui-inline">
+                        <input type="text" name="transDays" data-name="transDays" data-biz-name="transDays" autocomplete="off" class="layui-input bt-biz-moneyType"
+                               data-decimal="0" data-separator="" data-min="0">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##启用标志
+            <td class="textRight">#springMessage('table.fcCompareCheckType.validSign')</td>
+            <td >
+                <div class="bt-biz-dict "
+                     data-required="true"
+                     data-type="radio"
+                     data-group="fcCorpPool.status"
+                     data-defaultvalue="1"
+                     data-name="isEnable"
+                     data-biz-name="isEnable">
+                </div>
+            </td>
+        </tr>
+
+        <tr >
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div>
+<span id="point" >
+    <p style="color:#ff0000">#springMessage('table.bisBankExecutionStrategy.point')</p>
+    <span style="color:red">1、已有唯一标识银行下拉列表数据来源于“已确认具有三单关联唯一标识的银行”，会陆续更新具有唯一标识的银行记录</span><br>
+    <span style="color:red">2、付款与流水勾对通过BIS_DTL_NO关联</span><br>
+    <span style="color:red">3、流水与回单勾对通过BIS_EBILL_NO关联</span>
+</span>
+    </div>
+</form>
+
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/netbank/bisBankExecutionStrategy.add.js?_btv=${resourceVersion}"></script>
+</html>

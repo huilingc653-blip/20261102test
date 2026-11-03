@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+    	<table class="layui-table">
+    		<tr>
+    			<td class="textRight">#springMessage('table.fcAccbook.netId')</td>
+    			<td>
+    				<div class="layui-inline">
+                        <!-- <input type="text" name="eqs_netId"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.netId')"> -->
+                        <div class="bt-biz-corp" data-name="eqs_netId" data-biz-type="net" data-resource="fcl:accbook:common:query"
+                        data-type="selectTree" data-scope="net"></div>
+                    </div>
+    			</td>
+    			<td class="textRight">#springMessage('table.fcAccbookDtl.account')</td>
+				<td >
+					<input type="text" name="likes_account" class="layui-input bank">
+				</td>
+            </tr>
+            <tr>
+            	<td class="textRight">#springMessage('table.fcAccbook.orderNo')</td>
+            	<td class="input100">
+            		<div class="layui-inline">
+                        <input type="text" name="ges_orderNo"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.orderNo')">
+                    </div>
+                    <div class="layui-inline">~</div>
+                    <div class="layui-inline">
+                        <input type="text" name="les_orderNo"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.orderNo')">
+                    </div>
+            	</td>
+            	<td class="textRight">#springMessage('table.fcAccbook.tallyDate')</td>
+            	<td>
+            		<div class="layui-inline">
+                    	<!-- <div type="date" field="ged_tallyDate" defaultVal="$!{fcAccbookPage.tallyDate}"></div> -->
+                    	<input type="text" name="ged_tallyDate" data-name="ged_tallyDate" class="layui-input bt-biz-dateType" data-endid="startDate" data-type="date">
+                	</div>
+                	<div class="layui-inline">~</div>
+                	<div class="layui-inline">
+                    	<!-- <div type="date" field="led_tallyDate" defaultVal="$!{fcAccbookPage.tallyDate}"></div> -->
+                    	<input type="text" name="led_tallyDate"　data-name="led_tallyDate" class="layui-input bt-biz-dateType" id="startDate" data-type="date">
+                	</div>
+            	</td>
+            </tr>
+            <tr>
+            	<td class="textRight">#springMessage('table.fcAccbook.voucherState')</td>
+            	<td>
+            		<div class="layui-inline">
+                        <!-- <input type="text" name="eqs_voucherState"
+                                autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.voucherState')"> -->
+                                <div class="bt-biz-dict" data-type="select" data-name="eqs_voucherState" data-biz-name="eqs_voucherState" 
+                                data-group="Finacial.VoucherState" data-displayData="F,T,C"></div>
+                    </div>
+            	</td>
+            	<!-- <td class="textRight">#springMessage('table.fcAccbook.busOriType')</td> -->
+            	<td class="textRight">#springMessage('table.fcAccbook.busRaceId')</td>
+            	<td >
+            		<div class="layui-inline">
+                        <!-- <input type="text" name="eqi_busOriType"
+                               decimal="0" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.busOriType')"> -->
+                        <div class="bt-biz-selectType" data-name="eqs_busRaceId" 
+					data-url="${basePath}/finacial/accbook/fcaccbook/getUserBusRace" 
+					data-valuefield="id" data-textfield="raceName" ></div>      
+                    </div>
+            	</td>
+            </tr>
+            <tr>
+            	<td colspan="4" align="center">
+            		<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+            		<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            	</td>
+        	</tr>
+    	</table>
+    </form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAccbook.busRaceId')</th>
+        <th>#springMessage('table.fcAccbook.voucherType')</th>
+        <th>#springMessage('table.fcAccbook.tallyDate')</th>
+        <th>#springMessage('table.fcAccbook.interestStartDate')</th>
+        <th>#springMessage('table.fcAccbook.orderNo')</th>
+        <th>#springMessage('table.fcAccbook.rmk')</th>
+        <th>#springMessage('table.fcAccbook.money')</th>
+        <th>#springMessage('table.fcAccbook.voucherState')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+var datatable;
+bt.use(['form','datatable','btdate','moneyType','money','dateType','dicts','selectType','corp','bank'], function(){
+    $ = bt.jquery,form = bt.form();
+    var moneyType = bt.moneyType.init();
+    var moneyFun = bt.moneyType.getFun();
+    bt.dateType.init();
+    bt.dicts.init();
+    bt.selectType.init();
+    bt.corp.init();
+    bt.bank.init({
+ 	   elem:'.bank',    
+    });
+    
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        
+        checkbox:true,order: [5,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/finacial/accbook/fcaccbook/datatable"
+        },
+        buttons: [
+            {
+                text: bt.lang('Finacial.accbook.common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            },{
+                text: bt.lang('common.button.batchSubmit'),
+                action: function (e, dt, node, config) {
+                    var data = dt.rows('.selected').data();
+                    submitBatch(data);
+                }
+            },{
+                text: bt.lang('Finacial.accbook.common.button.batchDelete'),
+                action: function (e, dt, node, config) {
+                    var data = dt.rows('.selected').data();
+                    batchDelete(data);
+                }
+            }
+            /* ,{
+                text: '<i class="layui-icon">&#xe642;</i> '+bt.lang('common.button.edit'),
+                action: function ( e, dt, node, config ) {
+                    var data = dt.rows('.selected').data();
+                    var len = data.length;
+                    var rowData = data.splice(0,len);
+                    layer.msg(JSON.stringify(rowData));
+                }
+            } */,{
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ],
+        fixedColumns: {
+            rightColumns:1//代表冻结右边一列
+        }
+        
+        ,columns: [
+            {data:"busRaceId",bSortable:true,className:'center',render: function (data, type, full, meta) {
+			    return full.raceName;
+			}},
+            {data:"voucherType",bSortable:true,className:'center',render: function (data, type, full, meta) {
+			    return full.voucherName;
+			}},
+            {data:"tallyDate",bSortable:true},
+            {data:"interestStartDate",bSortable:true},
+            {data:"orderNo",bSortable:true},
+            {data:"rmk",bSortable:false},
+            {data:"money",bSortable:false,className:'textRight',render: function (data, type, full, meta) {
+                return moneyFun.format(data);
+            }},
+            {data:"voucherState",bSortable:false,render: function (data, type, full, meta) {
+                return bt.dict("Finacial.VoucherState", data);
+            }},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("Finacial.accbook.common.button.edit")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("Finacial.accbook.common.button.delete")+'</a>';
+                return html;
+            }}
+        ]
+    });
+    //格式化数字
+    $.each($("input[decimal]"),function(i,item){
+        if($(item).attr("decimal")!=""){
+            bt.moneyType.init({elem:$(item),decimal:2});
+        }
+    });
+    //时间
+    $.each($("div[type='date']"),function(i,item){
+        bt.btdate.init({
+            elem: "[field='"+$(item).attr("field")+"']",
+            name: $(item).attr("field"),
+            start: $(item).attr("defaultVal"),
+            format: "YYYY-MM-DD",
+            istime: false
+        });
+    });
+});
+
+//批量提交
+function submitBatch(rowData) {
+    var ids = "";
+    for (var i = 0; i < rowData.length; i++) {
+        if (ids == "") {
+            ids += rowData[i].id;
+        } else {
+            ids += "," + rowData[i].id;
+        }
+        //判断凭证状态
+        var voucherState = rowData[i].voucherState;
+        if("F" != voucherState && "T" != voucherState) {
+            var orderNo = rowData[i].orderNo;
+            parent.layer.alert(bt.lang('fin.book.tally.voucherState.error', [orderNo]), {icon: 2});
+            return false;
+        }
+    }
+
+    if (ids != "") {
+        //请确认批量提交所选记账凭证
+        layer.confirm(bt.lang('fin.book.tally.batchSubmit.comfirm'), {icon: 3}, function () {
+            bt.loading.show();
+            $.post(basePath + "/finacial/accbook/fcaccbook/batchSubmit", {ids: ids}, function (result) {
+                bt.loading.hide(); //关闭加载中
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                if(result.success){
+                    datatable.draw();
+                }
+            }, 'JSON');
+        });
+    } else {
+        parent.layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 2});
+        return false;
+    }
+    return false;
+}
+
+function batchDelete(rowData) {
+    var ids = "";
+    for (var i = 0; i < rowData.length; i++) {
+        if (ids == "") {
+            ids += rowData[i].id;
+        } else {
+            ids += "," + rowData[i].id;
+        }
+    }
+    if (ids != "") {
+        //请确认批量删除所选记账凭证
+        layer.confirm(bt.lang('common.message.confirm.batchDelete'), {icon: 3}, function () {
+            bt.loading.show();
+            $.post(basePath + "/finacial/accbook/fcaccbook/batchDelete", {ids: ids,pageType:"edit"}, function (result) {
+                bt.loading.hide(); //关闭加载中
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                if(result.success){
+                    datatable.draw();
+                }
+            }, 'JSON');
+        });
+    } else {
+        parent.layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 2});
+        return false;
+    }
+    return false;
+}
+
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.open({
+        type: 2,
+        area: ['1100px', '600px'],
+        maxmin: true,
+        content: basePath + "/finacial/accbook/fcaccbook/view?id=" + data.id
+    });
+}
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if (bt.navtab) {
+        bt.navtab.addNavtab(bt.lang('Finacial.accbook.common.button.edit'), basePath + "/finacial/accbook/fcaccbook/update?id=" + data.id);
+    }
+  /*parent.layer.open({
+        type: 2,
+        area: ['1000px', '600px'],
+        maxmin: true,
+        content: basePath + "/finacial/accbook/fcaccbook/update?id=" + data.id,
+        end:function(){
+        	bt.navtab.refreshCurrentTable();
+        }
+    });*/
+}
+function deleteColumn(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+        $.post(basePath + "/finacial/accbook/fcaccbook/delete/?accbook.id=" + data.id +"&pageType=edit", function(result){
+        	bt.navtab.refreshCurrentTable();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+
+
+function add(){
+    if (bt.navtab) {
+        bt.navtab.addNavtab(bt.lang('Finacial.accbook.common.button.add'), basePath + "/finacial/accbook/fcaccbook/add");
+    }
+}
+
+</script>
+</html>

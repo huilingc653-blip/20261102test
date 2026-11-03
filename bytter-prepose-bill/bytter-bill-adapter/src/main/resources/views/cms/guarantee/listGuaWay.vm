@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##担保方式编号
+            <td width="14%" class="textRight">#springMessage("table.cms.guaway.code")</td>
+            <td width="36%">
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_code" autocomplete="off" class="layui-input">
+                </div>
+            </td>
+
+            ##担保方式名称
+            <td width="14%" class="textRight">#springMessage("table.cms.guaway.name")</td>
+            <td width="36%">
+                <input type="text" name="likes_name" autocomplete="off" class="layui-input">
+            </td>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cms.guaway.code')</th>##担保方式编号
+        <th>#springMessage('table.cms.guaway.name')</th>##担保方式名称
+        <th>#springMessage('table.cms.guaway.ispledge')</th>##是否抵质押
+        <th>#springMessage('table.guaPledge.pledgeAttr')</th>##抵质押性质
+        <th>#springMessage('table.createRepayPlan.operation')</th>##操作
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form', 'datatable', 'corp', 'selectType', 'dicts'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.corp.init();
+        bt.selectType.init();
+        bt.dicts.init();
+
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: false,
+            order: [[0, 'asc']],
+            ajax: {
+                'url': basePath + "/cms/guarantee/guaway/dataTable"
+            }, searchForm: {
+                formFilter: "search",
+                formElem: "#searchForm"
+            },
+            buttons: [
+                {
+                    text: "#springMessage('common.button.add')",
+                    action: function (e, dt, node, config) {
+                        add();
+                    }
+                }
+            ],
+            columns: [
+                {data: "code", bSortable: true, className: 'center'},
+                {data: "guaWayName", bSortable: true, className: 'center'},
+                {
+                    data: "isPledge", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("cms.guaway.isPledge", full.isPledge);
+                    }
+                },
+                {
+                    data: "pledgeProperty", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("guarantee.pledge.TypeAttr", full.pledgeProperty);
+                    }
+                },
+                {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                        var html = ' <a class="" href="#" data-row="' + meta.row + '" onclick="update(this)">' + bt.lang("common.button.edit") + '</a>';
+                        html += ' | <a class="" href="#" data-row="' + meta.row + '" onclick="del(this)">' + bt.lang("common.button.delete") + '</a>';
+                        return html;
+                    }
+                }
+            ]
+        });
+    });
+
+    function add() {
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/guarantee/guaway/add",
+            end: function () {
+                bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+
+    function update(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/guarantee/guaway/update?id=" + data.id,
+            end: function () {
+                bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+
+    function del(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm("" + bt.lang('common.message.confirm.delete') + "", function () {
+            $.post(basePath + "/cms/guarantee/guaway/delete/" + data.id, function (result) {
+                if(result.success){
+                    bt.navtab.refreshCurrentTable();
+                    parent.layer.alert(bt.lang('common.message.success'), {icon: result.success ? 1 : 2});
+                } else {
+                    parent.layer ? parent.layer.alert(bt.lang("common.message.operate.fail"), {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }
+            }, 'JSON');
+        });
+    }
+
+</script>

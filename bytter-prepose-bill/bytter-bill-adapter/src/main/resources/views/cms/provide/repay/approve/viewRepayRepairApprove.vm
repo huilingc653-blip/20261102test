@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/flow/flow.vm")
+</head>
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 12px; 
+	text-align: center;
+	border-left: 0px;
+	border-right: 0px;
+	background-color: #d2d2d2;
+}
+</style>  
+<body>
+	<div>
+	<iframe src="${basePath}/cms/provide/loansend/viewSend/$!{repay.sendCode}" frameborder="0" scrolling="no" style="width: 100%;" ></iframe>
+	<script src="${basePath}/static/modules/cms/iframeAutoHeight.js?_btv=${resourceVersion}"></script>
+	</div>
+	
+	<div>
+		<input type="hidden" id="curCode" value="$!{curCode}">
+		<table class="layui-table">
+	    	<tbody>
+	    	<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">#springMessage('cms.loan.loanRepayInfo')</td>
+			</tr>
+			<tr>
+		    	##还款日期
+				<td class="textRight" width="14%">#springMessage('table.cmsProvideLoanRepay.repayDate')</td>
+				<td width="36%">$!date.format('yyyy-MM-dd',$!repay.repayDate)</td>
+		      	##还款金额
+				<td class="textRight" width="14%">#springMessage('table.cmsProvideLoanRepay.repayMoney')</td>
+				<td width="36%">$number.formatNumeric(${repay.repayMoney})</td>
+			</tr>
+			<tr>
+				##备注
+				<td class="textRight">#springMessage('table.cmsProvideLoanRepay.rmk')</td>
+				<td>
+					$!{repay.rmk}
+				</td>
+				<td colspan="2"></td>
+			</tr>
+			<tr>
+				##跳过还款补录
+				<td class="textRight">#springMessage('table.cmsProvideLoanRepay.acrossRepair')</td>
+				<td>
+					$dictTag.get("sf_yn",$!repay.acrossRepair)
+				</td>
+				<td colspan="2"></td>
+			</tr>
+			<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">#springMessage('table.choBankFinance.bl')</td>
+			</tr>
+			<tr>
+				##还款利息
+				<td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayAccrual')</td>
+				<td>
+					$!number.formatNumeric($!{repay.repayAccrual})
+				</td>
+				<td colspan="2"></td>
+			</tr>
+			<tr>
+				##预算信息
+				<td colspan="4">
+					<input type="hidden" id="id" name="id" value="$!{repay.billCode}"/>
+					<input type="hidden" id="corpId" name="corpId" value="$!{repay.corpId}"/>
+					<input type="hidden" id="repayMoney" name="repayMoney" value="$!{repay.repayMoney}">
+					<input type="hidden" id="repayDate" name="repayDate" value="$!date.format('yyyy-MM-dd',$!repay.repayDate)"/>
+					
+					<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+					<input id="repayItem" name="repayItem" type="hidden" value="$!{repayItem}">
+					<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+					<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+					<div id="tagItemDetail"></div>
+				</td>
+			</tr>
+			<tr>
+		    	##附件
+				<td class="textRight">#springMessage('cms.loan.attachment')</td>
+		      	<td colspan="3">
+		      		<!-- 附件上传 -->
+					<input id="annexName" name="annexName" type="hidden" value="$!{repay.uploadId}">
+			        <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+		      	</td>
+			</tr>
+			</tbody>
+		</table>
+	</div>
+    #workFlowHtml()
+	#parse("views/common/footer.vm")
+	#workFlowScript()
+</body>
+<script type="text/javascript">
+bt.use(['form','btUpload'], function(){
+	$ = bt.jquery,form = bt.form();
+	
+	var gid = $("#annexName").val();
+    var up = bt.btUpload.init({
+        elem: "#uploader",
+        hasUpload: false,
+        isExpand: true,
+        auto: false,
+        gid: gid
+    }); 
+    
+    /**
+     * 生成公共的属性
+     * @return
+     */
+	$genOtherHtml= function (corpId) {
+        var url = basePath + "/budget/fbsBudgetProcess/getViewItemDetail";
+        var param = {
+            corpId: corpId,
+            itemCode: $('#repayItem').val(),
+            billNo: $("#id").val(),
+            businessName: $("#businessName").val(),
+            processSysname: $("#processSysname").val(),
+            processDate: $("#repayDate").val(),
+            curId:$("#curCode").val(),
+            type: 'select',
+            date: (new Date()).getTime()
+        };
+        $.ajax({
+            url: url, method: 'POST', data: param, async: true, success: function (json) {
+                $("#tagItemDetail").html("");
+                $("#tagItemDetail").html(json);
+                bt.form().render();
+            }
+        });
+    }
+	
+	/**
+     * 资金计划挂接
+     */
+    function renderBudget(corpId){
+    	//判断支付结算是否挂接资金计划
+		var budgetSel = $("#budgetSel").val();
+		if(budgetSel == "1"){
+			var repayItem = $("#repayItem").val();
+	    	if(repayItem != null && repayItem != ""){
+	    		$genOtherHtml(corpId);
+	    	}else{
+	    		$("#tagItemDetail").html("");
+	    	}
+    	}
+    }
+	var corpId = $("#corpId").val();
+	var repayMoney =$("#repayMoney").val();	
+		renderBudget(corpId);
+	
+});
+</script>
+</html>

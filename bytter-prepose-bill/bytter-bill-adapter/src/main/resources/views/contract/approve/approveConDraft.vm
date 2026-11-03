@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+#parse("views/flow/flow.vm")
+</head>
+<body>
+<div>
+    <input type="hidden" id="mid" value="$!{conDraftVO.mid}"/>
+    <input type="hidden" id="rid" value="$!{conDraftVO.rid}"/>
+    <h2 class="layui-colla-title">#springMessage('contract.conInfo')</h2>
+    <table class="layui-table" width="100%">
+        <tbody>
+        <tr>
+        ##合同名称
+            <td class="textRight" width="15%">#springMessage('contract.conName')</td>
+            <td width="35%">
+                $!{conDraftVO.conName}
+            </td>
+        ##合同发起方
+            <td class="textRight" width="15%">#springMessage('contract.corpId')</td>
+            <td width="35%">
+                ($!{conDraftVO.corpCode})$!{conDraftVO.corpName}
+            </td>
+        </tr>
+        <tr>
+        ##签署方式
+            <td class="textRight" width="15%">#springMessage('contract.signType')</td>
+            <td width="35%">
+                $dictTag.get("CON_SIGN_TYPE",$!{conDraftVO.signType})
+            </td>
+        ##合同类型
+            <td class="textRight" width="15%">#springMessage('contract.conType')</td>
+            <td width="35%">
+                $!{conDraftVO.typeName}
+            </td>
+        </tr>
+        <tr>
+        ##纸质合同附件
+            <td class="textRight" width="15%">#springMessage('contract.conAttachmen')</td>
+            <td width="35%">
+                <input id="attachmentId" name="attachmentId" type="hidden" value="$!{conDraftVO.attachmentId}">
+                <div id="uploader" class="layui-input-inline" style="width: 100%"></div>
+            </td>
+        ##合同编号
+            <td class="textRight" width="15%">#springMessage('contract.conNo')</td>
+            <td width="35%">
+                $!{conDraftVO.conNo}
+            </td>
+            </td>
+        </tr>
+        <tr>
+        ##合同生效日期
+            <td class="textRight" width="15%">#springMessage('contract.beginDate')</td>
+            <td width="35%">
+                $!date.format('yyyy-MM-dd',$!{conDraftVO.beginDate})
+            </td>
+        ##合同失效日期
+            <td class="textRight" width="15%">#springMessage('contract.endDate')</td>
+            <td width="35%">
+                $!date.format('yyyy-MM-dd',$!{conDraftVO.endDate})
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <h2 class="layui-colla-title">#springMessage('contract.conBusinessInfo')</h2>
+    <table class="layui-table" width="100%">
+        <tbody>
+            #if($!conDraftVO.busdtls)
+                #set($name = "num")
+                #set($num = 0)
+                #foreach($vtDaField in $conDraftVO.busdtls)
+                    #set($num = $num + 1)
+                    #if($num%2 eq 1)
+                    <tr >
+                    #end
+                    <td width="15%" class="textRight">#springMessage("$!{vtDaField.name}")</td>
+                    #if($!vtDaField.fieldType eq "02")
+                        <td width="35%" >$!number.formatNumeric($!number.formatNumeric($!{vtDaField.val}))</td>
+                    #elseif($!vtDaField.fieldType eq "05")
+    						#set($valNum = $!number.formatNumeric(${vtDaField.val}) * 100)
+    						<td width="35%" >$!number.formatNumeric($!valNum,'#,##0.0000')%</td>
+					#else
+                        <td width="35%">$!{vtDaField.val}</td>
+                    #end
+                    #if($num%2 eq 0)
+                    </tr>
+                    #end
+                #end
+                #if($num%2 eq 1)
+                <td width="15%"></td>
+                <td width="35%"></td>
+                </tr>
+                #end
+            #end
+        </tbody>
+    </table>
+    <br/>
+    <br/>
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn"
+                    onclick="bt.trackFlowByBusinessId('$!{conDraftVO.rid}')">#springMessage(
+                'common.button.trackFlow')</button>
+            <button type="button" class="layui-btn" onclick="closeForms()">#springMessage(
+                'common.button.revert')</button>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+    #workFlowHtml()
+    #workFlowScript()
+<script type="text/javascript">
+    bt.use(['form', 'btUpload'], function () {
+        var $ = bt.jquery, form = bt.form();
+        var up = bt.btUpload.init({
+            elem: "#uploader",
+            auto: false,
+            hasDelete: false,
+            hasUpload: false,
+            isExpand: true,
+            gid: $("#attachmentId").val()
+        });
+    });
+
+</script>
+</body>
+</html>

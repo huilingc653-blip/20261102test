@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" method="post" id="searchForm">
+    <table class="layui-table">
+        <tr>
+            <td class="textRight">#springMessage('international.credit.lcInter')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                         data-name="eqs_lcInter" data-biz-name="lcInter" >
+                    </div>
+                </div>
+            </td>
+
+            <td class="textRight">#springMessage('international.credit.applicant')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="applicant"
+                         data-type="selectTree"
+                         data-name="ins_applicant"
+                         data-tree-type="check"
+                         data-resource="international:credit:createcredit:report:query">
+                    </div>
+                </div>
+            </td>
+
+            <td class="textRight">#springMessage('international.credit.issuingDate')</td>
+            <td>
+                <input style="display: inline-block;width: 30%" data-biz-name="ged_issuingDate" type="text" class="layui-input bt-biz-dateType" name="ged_issuingDate" data-endid="led_issuingDate"/>
+                <span class=date-mid>~</span>
+                <input style="display: inline-block;width: 30%" data-biz-name="led_issuingDate" type="text" class="layui-input bt-biz-dateType" name="led_issuingDate" id="led_issuingDate"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">
+                #springMessage('international.credit.creditNo')
+            </td>
+            <td>
+                <input type="text" class="layui-input" name="likes_creditNo" />
+            </td>
+
+            <td class="textRight">#springMessage('international.credit.contractNo')</td>
+            <td>
+                <input type="text" class="layui-input" name="likes_contractNo" />
+            </td>
+
+            <td class="textRight">
+                #springMessage('international.credit.creditMoney')
+            </td>
+            <td>
+                <div>
+                    <input style="display: inline-block;width: 30%" data-biz-name="gei_creditMoney" type="text" class="layui-input bt-biz-moneyType" name="gei_creditMoney"/>
+                    <span class=date-mid>~</span>
+                    <input style="display: inline-block;width: 30%" data-biz-name="lei_creditMoney" type="text" class="layui-input bt-biz-moneyType" name="lei_creditMoney"/>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center">
+                <button class="layui-btn" type="button" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+
+<table id="datatable" class="layui-table" style="width:100%">
+    <thead>
+    <tr>
+        <th>#springMessage('international.credit.issuingBank')</th>##开证银行
+        <th>#springMessage('international.credit.reBank')</th>##代开证银行
+        <th>#springMessage('international.credit.lcInter')</th>##信用证类型
+        <th>#springMessage('international.credit.applicant')</th>##开证人
+        <th>#springMessage('international.credit.beneficiary')</th>##受益人
+        <th>#springMessage('international.credit.creditNo')</th>##信用证号
+        <th>#springMessage('international.credit.reCreditNo')</th>##代开信用证号
+        <th>#springMessage('international.credit.contractNo')</th>##合同号
+        <th>#springMessage('international.credit.issuingDate')</th>##开证日期
+        <th>#springMessage('international.credit.expiryDate')</th>##信用证有效期
+        <th>#springMessage('international.payment.curName')</th>##开证币别
+        <th>#springMessage('international.credit.creditMoney')</th>##开证金额
+        <th>#springMessage('international.credit.delayDates')</th>##远期天数
+        <th>#springMessage('international.credit.chargeMoney')</th>##开证费用
+        <th>#springMessage('international.credit.acceptanceFee')</th>##承兑费用
+        <th>#springMessage('international.credit.discountInterest')</th>##贴现息
+        <th>#springMessage('table.international.Arrival.money')</th>##到单金额
+        <th>#springMessage('table.international.payment.handlingCharge')</th>##到单费用
+        <th>#springMessage('table.international.arrival.paymentDate')</th>##到单日期
+        <th>#springMessage('table.internation.payment.money')</th>##付汇金额
+        <th>#springMessage('table.international.pay.date')</th>##付汇日期
+        <th>#springMessage('international.lcDeposit.money')</th>##押汇金额
+        <th>#springMessage('international.lcDepositRepay.repayMoney')</th>##还押汇金额
+        <th>#springMessage('international.credit.rmk')</th>##备注
+        <th>#springMessage('common.table.thead.operation')</th>##操作
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery','dicts','datatable','money','moneyType','dateType','corp'], function(){
+        $ = bt.jquery;
+        bt.dicts.init();//字典
+        bt.moneyType.init();//金额
+        bt.dateType.init();//时间
+        bt.corp.init();//单位
+
+
+        var datatable = bt.datatable.init({
+            elem : "#datatable",
+            checkbox : false,
+            ajax : {
+                url : "queryReportCredits",
+                dataSrc : "data"
+            },
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            colReorder : true,
+            columns: [
+                {
+                    data: "issuingBank",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "reBank",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "lcInter",
+                    className: "center",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter",full.lcInter);
+                    }
+                }, {
+                    data: "applicant",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "beneficiary",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "creditNo",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "reCreditNo",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "contractNo",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "issuingDate",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "expiryDate",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "curName",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "creditMoney",
+                    className: "textRight",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.creditMoney);
+                    }
+                }, {
+                    data: "delayDates",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "chargeMoney",
+                    className : "textRight",
+                    bSortable: false,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.chargeMoney);
+                    }
+                }, {
+                    data: "acceptanceFee",
+                    className : "textRight",
+                    bSortable: false,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.acceptanceFee);
+                    }
+                }, {
+                    data: "discountInterest",
+                    className : "textRight",
+                    bSortable: false,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.discountInterest);
+                    }
+                }, {
+                    data: "billMoney",
+                    className : "textRight",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.billMoney);
+                    }
+                }, {
+                    data: "handlingCharge",
+                    className : "textRight",
+                    bSortable: false,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.handlingCharge);
+                    }
+                }, {
+                    data: "arrivalBillDate",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "paymentMoney",
+                    className : "textRight",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.paymentMoney);
+                    }
+                }, {
+                    data: "paymentDate",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "depositMoney",
+                    className : "textRight",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.depositMoney);
+                    }
+                }, {
+                    data: "reapyMoney",
+                    className : "textRight",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(full.reapyMoney);
+                    }
+                }, {
+                    data: "rmk",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: null,
+                    className: "center",
+                    bSortable: false,
+                    render: function (data, type, full, meta) {
+                        var explode = "<span class=\"text-explode\">|</span>";
+                        var id = full.id;
+                        var html = "<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"view('" + id + "')\">" + bt.lang("common.button.view") + "</a>";
+                        return html;
+                    }
+                }
+            ],
+           summary: {
+                pageSum: false,//小计功能开启
+                allSum: true,
+                selectSum: false,//已选汇总功能开启
+                outerData: false, //利用外部数据进行汇总
+                format: {
+                    decimal: 3
+                },
+                sumList: [
+
+                    {
+                        colNum: '12',
+                        dataName: 'creditMoney',
+                    }, {
+                        colNum: '14',
+                        dataName: 'chargeMoney'
+                    }, {
+                        colNum: '15',
+                        dataName: 'acceptanceFee'
+                    }, {
+                        colNum: '16',
+                        dataName: 'discountInterest'
+                    }, {
+                        colNum: '17',
+                        dataName: 'billMoney'
+                    }, {
+                        colNum: '18',
+                        dataName: 'handlingCharge'
+                    }, {
+                        colNum: '20',
+                        dataName: 'paymentMoney'
+                    }, {
+                        colNum: '22',
+                        dataName: 'depositMoney'
+                    }, {
+                        colNum: '23',
+                        dataName: 'reapyMoney'
+                    }
+                ]
+            },
+            btInitComplete:function(setting,json){
+            },
+            searchForm : {
+                formElem : "#searchForm",
+                formFilter : "search",
+                callback : function (data) {
+
+                }
+            }
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    function view(id){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.view'),basePath + "/international/credit/createCredit/viewCredit?id=" +id+ "&showCloseBtn=1");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/createCredit/viewCredit?id="+id+ "&showCloseBtn=1",
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+</script>
+</body>
+</html>

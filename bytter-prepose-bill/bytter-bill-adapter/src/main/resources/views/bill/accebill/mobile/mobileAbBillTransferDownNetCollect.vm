@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+<head>
+	#set($resourceVersion=$resourceVersion.get())
+	#set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no">
+    <title>#springMessage('bill.accebill.transferSum')</title>
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css" />
+    <script src="${basePath}/static/plugins/frozen/js/zepto.min.js"></script>
+    <script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+    <style>
+        html,body{
+            -webkit-overflow-scrolling : touch !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        .ui-form-item{
+            background: #6a91f8;
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+
+        .ui-dialog .ui-form-item{
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+        .ui-dialog .ui-form-item select{
+            direction: rtl;
+        }
+        .ui-select-group{
+            position: absolute;
+            right: 0;
+        }
+        .bg {
+            height: 100px;
+            background-color: #6a91f8;
+            background-image: url("${basePath}/static/images/bg/bg_shade.png");
+            background-position: bottom;
+            background-repeat: no-repeat;
+            background-size:auto;
+        }
+        .demo-item, #container{
+            height: 600px;
+        }
+        .abBillEmpty{
+            width: 100%;
+            height: 20px;
+            background-color: #dfe3ec;
+        }
+        .no_data{
+            width: 100%;
+            height:600px;
+            display: none;
+            text-align: center;
+        }
+        .no_data img{
+            margin-top: 40px;
+        }
+        .no_data label{
+            display: block;
+        }
+    </style>
+</head>
+
+<body style="height: 100%; margin: 0">
+<div class="ui-form">
+    <form  id="inputForm">
+        <div class="bg">
+            <div style="text-align: center; height: 100px; line-height: 100px;">
+                <p class="ui-txt-default" style="color: white; font-size: 12px;">#springMessage('bill.accebill.interval')<label id="startDateLable"></label>  ~ <label id="endDateLable"></label> </p>
+            </div>
+        </div>
+
+        <div class="ui-dialog ui-dialog-function" id="dialog1">
+            <div class="ui-dialog-cnt">
+                <div class="ui-dialog-bd">
+                    <form action="">
+                        <div class="ui-form-item ui-border-b">
+                            <label>#springMessage('common.button.resetAcceptor')</label>
+                            <div class="ui-select-group">
+                                <div class="ui-select">
+                                    <select id="corpId" name="corpId">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    ##统计日期
+                        <div class="ui-form-item ui-border-b">
+                            <label>#springMessage('bill.accebill.beginDate')</label>
+                            <div class="ui-select-group">
+                                <input  type="date" class="form-control" id="startDate" name="startDate" value="" max=""/>
+                            </div>
+                        </div>
+                        <div class="ui-form-item">
+                            <label>#springMessage('bill.accebill.endDate2')</label>
+                            <div class="ui-select-group">
+                                <input  type="date" class="form-control" id="endDate" name="endDate" value="" max=""/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="ui-dialog-ft">
+                    <button type="button" data-role="button">#springMessage('common.button.cancel')</button>
+                    <button type="button" data-role="button">#springMessage('common.button.confirm')</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="demo-item">
+    <div class="abBillEmpty"></div>
+    <div id="container" class="abBillChartSum">
+    </div>
+    <div id="abBill_no_data" class="no_data">
+        <img src="${basePath}/static/images/bg/no_data.png">
+        <label>#springMessage('common.msg.temporarily_no_data')</label>
+    </div>
+</div>
+
+</body>
+
+<script type="text/javascript">
+    // 初始化图表标签
+    var dom = document.getElementById("container");
+    var myChart = echarts.init(dom);
+    var app = {};
+    app.title = bt.lang('bill.accebill.transferSum');
+
+    /**
+     * 初始化单位
+     */
+    function initCrop() {
+        var url =  "/sys/corp/appTree";
+        setTimeout(function () {
+            BTAppBridge.post(url,{type:1},'postCorpData');
+        },100);
+    };
+    postCorpData = function (result) {
+        var html = '<option value="">'+bt.lang("common.placeholder.all")+'</option>';
+        $.each(result,function (index, item) {
+            html += '<option value='+item.id+'>'+item.name+'</option>';
+        })
+        $("#corpId").html(html);
+    }
+
+
+
+    /**
+     * 初始化图表
+     */
+    function initBar() {
+        //通过Ajax获取数据
+        var url =  "/bill/accebill/abbillTransferDown/dataAppNetCollectTable";
+        var startDate =$('#startDate').val();
+        var endDate = $('#endDate').val();
+        var corpId =$('#corpId').val();
+        $('#startDateLable').text(startDate);
+        $('#endDateLable').text(endDate);
+        setTimeout(function () {
+            BTAppBridge.post(url,{corpId:corpId,beginDate:startDate,endDate:endDate},'postBarData');
+        },100);
+    };
+    postBarData = function (result) {
+        var option = initChartSum(result.legend, result.yAxisData1, result.series);
+        myChart.hideLoading();
+        myChart.setOption(option, true);
+        window.onresize = myChart.resize;
+    }
+
+     /**
+      * 设置图表值
+      */
+    function initChartSum(legend, yAxisData1, series) {
+         $("#abBill_no_data").hide();
+         $("#container").show();
+         var seriesData = JSON.parse(series);
+        for (var i=0;i<seriesData.length;i++){
+            var temp = seriesData[i];
+            if (temp.data == null || temp.data == '' || temp.data == undefined) {
+                $("#abBill_no_data").show();
+                $("#container").hide();
+            }
+        }
+        const size = fGetChartFontSize();
+        var option = {
+            title: {
+                text: '',
+                subtext: ''
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                textStyle:{
+                    fontSize:size //此处设置提示文字大小
+                }
+            },
+            legend: {
+                data:legend,
+                textStyle:{
+                    fontSize:size //此处设置提示文字大小
+                },
+                itemWidth: 10,
+                itemHeight: 10
+            },
+            grid: {
+                left: '-7%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                boundaryGap: [0, 0.01],
+                axisLabel : {
+                    textStyle : {
+                        fontSize : size-5
+                    },
+                    interval:0
+                }
+            },
+            yAxis: {
+                type: 'category',
+                data: yAxisData1,
+                axisLabel : {
+                    textStyle : {
+                        fontSize : size
+                    },
+                    interval: 0,
+                    rotate:75
+                }
+            },
+            series: JSON.parse(series)
+        };
+        return option;
+    }
+
+    /**
+     * 图表字体
+     */
+    function fGetChartFontSize(){
+        const dpr = window.devicePixelRatio;
+        var fontSize = 14;
+        if(dpr >=2 && dpr<3){
+            fontSize = 12;
+        }
+        else if(dpr == 3){
+            fontSize = 15;
+        }
+        else if(dpr > 3){
+            fontSize = 20;
+        }
+        return fontSize;
+    }
+
+
+    /**
+     * 初始化日期
+    */
+    function initDate() {
+        //得到当前时间
+        var date = new Date();
+        //得到当前年份
+        var year = date.getFullYear();
+        //得到当前月份
+        //注：
+        //  1：js中获取Date中的month时，会比当前月份少一个月，所以这里需要先加一
+        //  2: 判断当前月份是否小于10，如果小于，那么就在月份的前面加一个 '0' ， 如果大于，就显示当前月份
+        var month = date.getMonth()+1 < 10 ? "0"+(date.getMonth()+1) : (date.getMonth()+1);
+        //得到当前日子（多少号）
+        var day = date.getDate() < 10 ? "0"+date.getDate() : date.getDate();
+        $('#endDate').val(year+"-"+month+"-"+day);
+        $('#startDate').val(year+"-01-01");
+        //设置input标签的max属性
+        $("#startDate").attr("max",year+"-"+month+"-"+day);
+    }
+    /**
+     * 初始化
+     */
+    initCrop();
+    initDate();
+    initBar();
+
+    //弹框事件
+    window.searchAction = function(){
+        $("#dialog1").addClass("show");
+    }
+    $(".ui-dialog button").click(function(){
+        $('.ui-dialog').removeClass("show");
+        initBar();
+    });
+    $('.ui-dialog-close').click(function(){
+        $('.ui-dialog').removeClass("show");
+    })
+
+</script>
+
+</html>

@@ -1,0 +1,159 @@
+#parse("views/common/head.vm")
+<!-- 不同上报模式，上报提交方法不一样 -->
+<input id="saveMethod" name="saveMethod" type="hidden" value="$!{saveMethod}">
+<input id="monthsCount" type="hidden" value="$months.size()"/>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+#foreach($budget in $fbsBudgetList)
+    <input  name="nextId" type="hidden" value="$!{budget.id}">
+#end
+    <thead>
+        #set($quarterSize = $!qRollSubperiod)
+        #set($row = 1)
+        #if($quarterSize > 0)
+            #set($row = 2)
+        #end
+    <tr>
+        <th rowspan="$row">#springMessage('table.fbsBudgetYear.number')</th>
+        <th rowspan="$row">#springMessage('table.fbsBudgetYear.itemCode')</th>
+        <th rowspan="$row">#springMessage('table.fbsBudgetYear.itemName')</th>
+        #foreach($quarter in $quarters)
+            #if($quarterSize >= $!{velocityCount})
+                <th colspan="4">$!{quarter}</th>
+            #else
+                <th rowspan="$row">$!{quarter}</th>
+            #end
+        #end
+            <th rowspan="$row">#springMessage('table.fbsBudgetYear.dtl')</th>
+    </tr>
+        #if($quarterSize > 0)
+        <tr>
+            #foreach($month in $months)
+                <th >$month</th>
+            #end
+        </tr>
+        #end
+    </thead>
+	<tbody>
+        #set($length = $rollMonthList.size())
+        #foreach($date in $rollMonthList)
+            #set($i = $!{qRollSubperiod})
+            #set($key = 1)
+            #set($b = $!{key} - 1)
+        <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}" data-tt-subject-sort="$!{date.itemCode}">
+            <td>
+                $!{velocityCount}
+            </td>
+            <td>
+                <div class="inline-block" style="width: 160px;">
+                    $!{date.itemCode}
+                    <input type="hidden"  name="detailId" value="$!{date.id.get($!{b})}">
+                    <input type="hidden" id="itemCode_$!{date.itemCode}" name="itemCode" value="$!{date.itemCode}">
+                    <input type="hidden" id="itemRelation_$!{date.itemCode}" name="itemRelation" data-curItemCode="$!{date.itemCode}" value="$!{date.item.itemRelation}">
+                    <input type="hidden" id="sign_$!{date.itemCode}" name="sign" value="$!{date.item.sign}">
+                    <input type="hidden" id="isBeginPeriod_$!{date.itemCode}" name="isBeginPeriod" value="$!{date.item.isBeginPeriod}">
+                    <input type="hidden" id="isEndPeriod_$!{date.itemCode}" name="isEndPeriod" value="$!{date.item.isEndPeriod}">
+                    <input type="hidden" id="rmk_$!{date.itemCode}" name="rmk" value="$!{date.rmk}">
+                </div>
+            </td>
+            <td>$!{date.itemName}</td>
+            #set( $monthNumber = $quarters.size() +1 )
+            #foreach($monthDateList in $date.childWeekBudget)
+                #set($i = $!{i} + 1)
+                #foreach($monthDate in $monthDateList)
+                    <td align="right">
+                        <input type="hidden" id="monthDetailId_$!{date.itemCode}_$monthNumber" name="monthDetailId$!{monthNumber}" value="$!{monthDate.id}">
+                        #if($!{allowEditCollectMoney}=="1" && $!{date.item.isWrite} == "1" && $!{date.item.isBeginPeriod} == "1" )
+                            <input type="text" id="bMoney${monthNumber}_$!{date.itemCode}" name="bMoneyMonth$!{monthNumber}" lay-verify="required" data-name="bMoneyMonth$!{monthNumber}"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" data-key="${monthNumber}"
+                                #if($!{monthDate.detailMoney})
+                                   value="$!{monthDate.detailMoney}"  readonly="readonly"
+                                #else
+                                   value="$!{monthDate.bMoney}"
+                                #end
+                                #if($!{date.item.isBeginPeriod} == "1" || $!{date.item.isEndPeriod} == "1")
+                                   data-minus="true"
+                                #end
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney${monthNumber}_$!{date.itemCode}"
+                                   data-period-name="bMoney${monthNumber}" data-isBeginPeriod="$!{date.item.isBeginPeriod}" data-isEndPeriod="$!{date.item.isEndPeriod}">
+                        #else
+                            <input type="hidden" id="bMoney${monthNumber}_$!{date.itemCode}" name="bMoneyMonth$!{monthNumber}" data-name="bMoneyMonth$!{monthNumber}"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{monthDate.bMoney}" data-key="${monthNumber}"
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney${monthNumber}_$!{date.itemCode}"
+                                   data-period-name="bMoney${monthNumber}" data-isBeginPeriod="$!{date.item.isBeginPeriod}" data-isEndPeriod="$!{date.item.isEndPeriod}">
+                            <div id="bMoneyDiv${monthNumber}_$!{date.itemCode}" name="bMoneyDiv">$!number.formatNumeric($!{monthDate.bMoney})</div>
+                        #end
+                    </td>
+                    #set($monthNumber = $monthNumber+1)
+                #end
+                <td align="right" >
+                    <input type="hidden" id="monthNumber$!{velocityCount}" value="${monthNumber}"/>
+                    <input type="hidden"  name="detailId$!{key}" value="$!{date.id.get($!{b})}">
+                    <input type="hidden" id="bMoney$!{key}_$!{date.itemCode}" name="bMoney$!{key}" data-name="bMoney$!{key}"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{date.bMoney.get($!{b})}" data-key="$!{key}"
+                           data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{key}_$!{date.itemCode}"
+                           data-isBeginPeriod="$!{date.item.isBeginPeriod}" data-isEndPeriod="$!{date.item.isEndPeriod}">
+                    <div id="bMoneyDiv$!{key}_$!{date.itemCode}" name="bMoneyDiv">$!number.formatNumeric($!{date.bMoney.get($!{b})})</div>
+                </td>
+                #set($key = $!{key} + 1)
+                #set($b = $!{b} + 1)
+            #end
+            #foreach($quarter in $quarters)
+                #if( $!{key} >$!{i} && $!{key} <= ${quarters.size()})
+                    <td align="right" >
+                        <input type="hidden"  name="detailId$!{key}" value="$!{date.id.get($!{b})}">
+                        #if($!{allowEditCollectMoney}=="1" && $!{date.item.isWrite} == "1" && $!{date.item.isBeginPeriod} == "1" )
+                            <input type="text" id="bMoney$!{key}_$!{date.itemCode}" name="bMoney$!{key}" lay-verify="required" data-name="bMoney$!{key}"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" data-key="$!{key}"
+                                #if($!{date.detailMoney.get($!{b})})
+                                   value="$!{date.detailMoney.get($!{b})}"  readonly="readonly"
+                                #else
+                                   value="$!{date.bMoney.get($!{b})}"
+                                #end
+                                #if($!{date.item.isBeginPeriod} == "1" || $!{date.item.isEndPeriod} == "1")
+                                   data-minus="true"
+                                #end
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{key}_$!{date.itemCode}">
+                        #else
+                            <input type="hidden" id="bMoney$!{key}_$!{date.itemCode}" name="bMoney$!{key}" data-name="bMoney$!{key}"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{date.bMoney.get($!{b})}" data-key="$!{key}"
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{key}_$!{date.itemCode}">
+                            <div id="bMoneyDiv$!{key}_$!{date.itemCode}" name="bMoneyDiv" class="clearDiv">$!number.formatNumeric($!{date.bMoney.get($!{b})})</div>
+                        #end
+                    </td>
+                    #set($b = $!{b} + 1)
+                    #set($key = $!{key} + 1)
+                #end
+                #set($i = $!{i} - 1)
+            #end
+        </tr>
+        #end
+		#if($!{fbsBudgetPage.id} != "")
+        <tr>
+            <td class="textRight" colspan="3">#springMessage('table.fbsBudget.msg')</td>
+            <td width="70%" colspan="14">
+				<textarea name="msg" id="msg" autocomplete="off" class="layui-textarea" lay-verify="strlength" data-maxlength="150" placeholder="#springMessage('table.fbsBudget.showMsg')"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="16" style="text-align: center;">
+				<button class="layui-btn" id="detailSubmit1" type="button">#springMessage('common.button.submit')</button>
+            </td>
+        </tr>
+		#else
+		<tr>
+            <td colspan="6" style="text-align: center;color: red">#springMessage('fbs.budget.input.message.itmecode')</td>
+        </tr>	
+		#end
+    </tbody>
+</table>
+<script>
+    var quarters = $quarters.size();
+</script>
+#if($!{target} == "input")
+    <!-- 附件上传 -->
+    <input id="attachmentId" name="attachmentId" type="hidden" value="$!{fbsBudgetPage.attachmentId}">
+    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+#end
+<!-- 日志 -->
+<div id="tagMsg"></div>
+<script src="${basePath}/static/modules/budget/fbsBudget.inputRollQuarterCollectDetail.js?_btv=${resourceVersion}"></script>

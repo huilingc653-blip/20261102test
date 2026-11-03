@@ -1,0 +1,148 @@
+	<form class="layui-form layui-form-pane">
+		#if(${info.msgtype} eq '022')
+		#set($vmReBasePage = "views/bill/accebill/busOpAbBillReceivebiz022.vm")
+		#parse($vmReBasePage)
+		#else
+		#set($vmReBasePage = "views/bill/accebill/busOpAbBillReceivebizBase.vm")
+		#parse($vmReBasePage)
+		#end
+	</form>
+    #parse("views/common/footer.vm")
+<script type="text/javascript">
+bt.use(['form','element'],function(){
+//初始化
+var msgType=$("#msgtype").val();
+var corpId=$("#recCorpId").val();
+var sgnupmk=$("#sgnupmk").val();
+var vvid=$("#vvid").val();
+if((msgType=='003'||msgType=='010')&&sgnupmk=='SU00'&&corpId&&vvid){
+     $renderBudget(corpId);
+  }
+});
+
+/**
+ * 生成公共的属性
+ * @return
+ */
+$genOtherHtml=function(){
+var flag=true;
+var processDate;
+var url=basePath+"/budget/fbsBudgetProcess/getViewItemDetail";
+var businessName=$("#businessName").val();
+var processSysname=$("#processSysname").val();
+var billNo=$("#vvid").val();
+var corpId=$("#recCorpId").val();
+var itemCode="";
+   $.ajax({
+          type:'post',
+		  url:basePath+"/budget/fbsBudgetProcess/getBudgetProcesInfo",
+		  data:{"businessName":businessName,
+	    	    "processSysname":processSysname,
+	    	    "billNo":billNo,
+                "billId":billNo
+		  },
+		  async:false,
+		  dataType:'json',
+		  success:function(result){
+		               if(!result.length){
+					      $("#budgetDiv").hide();
+                          $("#tagItemDetail").html("");
+						  flag=false;
+					   }
+		     }
+   });
+    if(!flag){
+	   return;
+	}
+	bt.use(['date'],function(){
+       	processDate=bt.date.format($("#replyDt").val(),"yyyy-mm-dd");
+    var param={
+        corpId:corpId,
+        itemCode:itemCode,
+        billNo:billNo,
+        billId:billNo,
+        businessName:businessName,
+        processSysname:processSysname,
+        processDate:processDate,
+        type:'select',
+        date:(new Date()).getTime()
+    };
+    $.ajax({
+    	    url:url,
+    	    type:'post',
+    	    data:param,
+    	    async:false, 
+    	    success: function (json) {
+			$("#budgetDiv").show();
+            $("#tagItemDetail").html("");
+            $("#tagItemDetail").html(json);
+        }
+    });
+   });
+};
+
+/**
+ * 资金计划挂接
+ */
+$renderBudget=function(corpId){
+	$.ajax({ 
+		type: 'POST',
+		url: basePath+"/bill/accebill/abvoucherinfoVice/isBudget", 
+		data:{'corpId':corpId,'briefId':'6001'},  
+		async: false, 
+		dataType:'json',
+		success: function(result){
+			if(result.success){
+				if(result.attributes.isBudget){
+					$genOtherHtml(); 
+				}else{
+				    $("#budgetDiv").hide(); 
+				    $("#tagItemDetail").html("");
+				}
+			}else{
+                $("#budgetDiv").hide();			
+				$("#tagItemDetail").html("");
+			}
+		}
+		});
+}
+
+/**
+ * 进行票据信息查看
+ * @param id 签收表ID
+ * @param type front正面，back背面
+ */
+var billInfo=function(id,opType, accId){
+    // parent.layer.open({
+    // 	title:bt.lang('common.button.billinfo'),
+    //     type: 2,
+    //     area: ['850px', '730px'],
+    //     maxmin: true,
+    //     content: basePath + "/bill/accebill/abvoucherinfo/billEcdsInfoView?recId=" + id+ "&accId=" + accId +"&origNo="+ $("#origNo").val()
+    // });
+	if(accId){
+		parent.layer.open({
+			type: 2,
+			area: ['900px', '700px'],
+			maxmin: true,
+			content: basePath + "/bill/accebill/abvoucherinfo/batchBillEcdsInfoView?accIds=" + accId
+		});
+	}else{
+		parent.layer.open({
+			type: 2,
+			area: ['900px', '700px'],
+			maxmin: true,
+			content: basePath + "/bill/accebill/abvoucherinfo/batchBillEcdsInfoView?id=" + id
+		});
+	}
+}
+
+var billInfoByVvid=function(vvid){
+	parent.layer.open({
+		type: 2,
+		area: ['900px', '700px'],
+		maxmin: true,
+		content: basePath + "/bill/accebill/abvoucherinfo/batchBillEcdsInfoView?vvid=" + vvid
+	});
+}
+</script>

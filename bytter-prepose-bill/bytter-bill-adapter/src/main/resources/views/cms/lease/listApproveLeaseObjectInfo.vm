@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+    <input id="leaseId" name="leaseId" type="hidden" value="$!{leaseId}">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}"/>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+
+    <thead>
+    <tr>
+        <th>#springMessage('cms:lease:sub:mater:leasetype')</th><!--租赁物类别  -->
+        <th>#springMessage('table.cmsLease.leaseNo')</th><!--租赁单号  -->
+        <th>#springMessage('cms:lease:sub:mater:code')</th><!--租赁物编号   -->
+        <th>#springMessage('cms:lease:sub:mater:name')</th><!--租赁物名称  -->
+        <th>#springMessage('cms:lease:sub:mater:brand')</th><!--品牌  -->
+        <th>#springMessage('cms:lease:sub:mater:specification')</th><!--规格型号  -->
+        <th>#springMessage('table.fcAccbookDtl.amount')</th><!--数量  -->
+        <th>#springMessage('table.bisAccDtl.curName')</th><!--币种  -->
+        <th>#springMessage('cms:lease:sub:mater:oldMoney')</th><!--原值金额  -->
+        <th>#springMessage('table.cmsLoanSend.status')</th><!--状态  -->
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+<!-- 这里填写新HTML的代码 -->
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(['form','datatable', 'dateType','moneyType','btdate','corp','dicts','moneyType', 'btImport'], function(){
+        $ = bt.jquery,form = bt.form(),moneyFun = bt.moneyType.getFun();
+        bt.corp.init();
+        bt.dicts.init();
+        moneyType=bt.moneyType.init();
+        bt.dateType.init();
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            checkbox: true,
+            colReorder: true,
+            ordering: false,
+            order: [1,'desc'],
+            ajax: {
+                'url': basePath+"/cms/LeaseObjectInfo/approveDataTable?leaseId="+$("#leaseId").val()
+            },
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+            columns: [
+                {data:"name",className:'center',bSortable:true},
+                {data: "leaseNo", bSortable: true},
+                {data:"leaseItemCode",className:'center',bSortable:true},
+                {data:"leaseItemName",className:'center',bSortable:true},
+                {data:"brand",className:'center',bSortable:true,},
+                {data:"speModel",className:'center',bSortable:true,},
+                {data:"numb",className:'center',bSortable:true},
+                {data:"curName",className:'center',bSortable:true,},
+                {data:"oldMoney",className:'center',bSortable:true,
+                    render: function ( data, type, full, meta ) {
+                        return moneyFun.format(full.oldMoney);
+                    }
+                },
+                {data:"status",className:'center',bSortable:true,
+                    render: function ( data, type, full, meta ) {
+                        return bt.dict("inl.info.status",full.status);
+                    }
+                },{
+                    data: null,
+                    className: 'center',
+                    render: function (data, type, full, meta) {
+                        var explode = "<span class=\"text-explode\">|</span>"
+                        var id = full.id;
+                        var taskId = full.taskId;
+                        var html = "";
+                        if ($("#flowStatus").val() == "todo") {
+                            html += "<a class=\"\" href=\"#\" data-row=\"" + meta.row + "\" onclick=\"approve('" + id + "','" + taskId + "')\">" + bt.lang("common.button.approve") + "</a>" + explode;
+                        }
+                        if($("#flowStatus").val() == 'pass'){
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }else {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }
+                        return html;
+                    }
+                }
+            ],
+            summary:{
+                pageSum: true,//小计功能开启
+                selectSum: false,//已选汇总功能开启
+                outerData: true,
+                //groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '9', //汇总列序号
+                        dataName: 'oriMoney' //汇总列数据
+                    }
+                ]
+            }
+        });
+    });
+
+
+    function approve(id, taskId) {
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('审批'), basePath + "/cms/LeaseObjectInfo/viewApprove?id=" + id + "&taskId=" + taskId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/LeaseObjectInfo/viewApprove?id=" + id + "&taskId=" + taskId,
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('cms:lease:sub:mater:infoList'),basePath + "/cms/LeaseObjectInfo/viewList/"+ data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/LeaseObjectInfo/viewList/"+ data.id,
+            end:function(){
+                location.reload();
+            }
+        });
+    }
+</script>
+</body>
+</html>

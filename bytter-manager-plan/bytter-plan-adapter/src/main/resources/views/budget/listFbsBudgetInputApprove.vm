@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+		<input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+        <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}" />
+		<table class="layui-table">
+			<tbody >
+				<tr>
+					<td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+                    <td>
+						<div class="layui-inline">
+                            <input type="text" name="ged_beginDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_beginDate">
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_beginDate" class="layui-input bt-input-inline bt-biz-dateType" id="led_beginDate">
+                        </div>
+                    </td>
+                    <td class="textRight">#springMessage('table.fbsBudget.timeType')</td>
+                    <td>
+                        <div class="layui-inline" >
+                            <div class="bt-biz-dict" data-type="select" data-group="fbs.timeType" data-defaultvalue="0" data-name="eqs_timeType" data-biz-name="timeType"></div>
+                        </div>
+                    </td>
+                </tr>
+				<tr>
+                    <td colspan="4" style="text-align: center;">
+                        <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+					</td>
+				</tr>
+            </tbody>
+		</table>
+    </form>
+
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+            <tr>
+                <th>#springMessage('table.fbsBudget.timeType')</th>
+                <th>#springMessage('table.fbsbudget.preiodName')</th>
+                <th>#springMessage('table.btBankAccApp.corpId')</th>
+                <th>#springMessage('table.fbsBudget.enrolDate')</th>
+                <th>#springMessage('table.fbsBudget.beginDate')</th>
+                <th>#springMessage('table.fbsBudget.endDate')</th>
+                <th>#springMessage('common.table.thead.operation')</th>
+            </tr>
+        </thead>
+    </table>
+	#workFlowHtml()
+    #parse("views/common/footer.vm")
+	#workFlowScript()
+    <script>
+        bt.use(['form','datatable','dicts'], function(){
+            bt.dicts.init();
+            bt.datatable.init({
+                elem: "#appTable",
+                colReorder: true,
+                checkbox:true,
+                order: [1,'desc'],
+                searchForm: {
+                    formElem: "#searchForm",
+                    formFilter: "search"
+                },
+                ajax: {
+                    'url': basePath+"/budget/fbsbudget/dataTableApprove"
+                },
+                buttons: [
+
+                ],
+                fixedColumns: {
+                    rightColumns:1//代表冻结右边一列
+                },
+                columns: [
+                    {data:"timeType",bSortable:true,
+                        render: function ( data, type, full, meta ) {
+                            return bt.dict('fbs.timeType',full.timeType);
+                        }
+                    },
+                    {data:"preiodNameTemp",bSortable:true,
+                        render: function ( data, type, full, meta ) {
+                            return bt.lang(full.preiodNameTemp);
+                        }
+                    },
+                    {data:"corpName",bSortable:true},
+                    {data:"enrolDate",bSortable:true},
+                    {data:"beginDate",bSortable:true},
+                    {data:"endDate",bSortable:true},
+                    {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html='';
+                    	if($("#flowStatus").val()=='todo'){
+                    		html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                    	}
+                        if($("#flowStatus").val() == 'pass'){
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }else {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }
+                    	return html;
+                    }}
+                ]
+            });
+        })
+    </script>
+    <script src="${basePath}/static/modules/budget/fbsBudgetApprove.list.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

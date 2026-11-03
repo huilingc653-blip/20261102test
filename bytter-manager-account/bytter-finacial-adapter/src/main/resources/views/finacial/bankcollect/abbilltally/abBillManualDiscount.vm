@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 22px; 
+	text-decoration: underline;
+	text-align: center;
+	/*color: blue;*/
+	/*color: #00CC33;*/
+}
+</style>    
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="opType" name="opType" value="$!{opType}">
+	<input type="hidden" id="menuType" name="menuType" value="$!{menuType}">
+	<input type="hidden" id="sysRaceCode">
+	<table class="layui-table">
+		<tbody>
+            <tr>
+			##持票单位
+                <td style="text-align:right;" width="14%" >#springMessage('bill.accebill.isCorp')</td>
+                <td width="36%" style="text-align:left;">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp" 
+                             data-biz-type="corp" 
+                             data-type="selectTree" 
+                             data-name="eqs_corpId" 
+                             data-biz-name="corpId" 
+                             data-scope="all"
+                             data-tree-type="check"
+                             data-resource="finacial:abbilltally:apply"></div>
+                    </div>
+                </td>
+
+			##票据号码
+                <td style="text-align:right;" width="14%">#springMessage('table.ratUrationApply.billNo')</td>
+                <td width="36%" style="text-align:left;">
+                    <input name="likes_origNo" class="layui-input">
+                </td>
+
+            </tr>
+      			
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+			<thead>
+				<tr>
+		      	  	<th>#springMessage('table.abVoucherinfo.billType')</th>##票据类型
+		       		<th>#springMessage('table.abVoucherinfo.billFlag')</th>##流通介质
+		       	 	<th>#springMessage('bill.accebill.corpId')</th>##所属单位
+		       		<th>#springMessage('table.abVoucherinfo.payer')</th>##出票人
+		      		<th>#springMessage('table.abVoucherinfo.acceptor')</th>##承兑人
+		        	<th>#springMessage('table.abBackbillinfo.origNo')</th>##票据号码
+		        	<th>#springMessage('table.abVoucherinfo.billMoney')</th>##票据金额
+		        	<th>#springMessage('table.abVoucherinfo.startDate')</th>##出票日期
+		        	<th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>##到期日期
+                    ##<th>#springMessage('table.choBankFinance.busType')</th> ##业务类型
+                    <th>#springMessage('table.fbsBudget.status')</th> ##状态
+
+		        	
+  			</tr>
+		</thead>
+</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','selectTable','btdate','bank','select','moneyType','dicts','bttable','element','datatable','mulselect','corp','dateType','selectType','region'], function(){
+	var tableData ;
+	element = layui.element();
+    $ = bt.jquery;
+    form = bt.form();
+    tt = bt.mulselect.init();
+    bt.bank.init({ elem:'.bank',})
+    region = bt.region.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+    dataType = bt.dateType.init();
+    bt.corp.init();
+    selectType = bt.selectType.init();
+    bt.dicts.init();
+
+    
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'rtlip',
+        colReorder: true,
+        checkbox:false,
+        mulselect:false,
+        selectCss:true,
+        buttonsLayout:false,
+        order: [5,'desc'],
+        fixedColumns:{
+        	leftColumns:0
+        },
+        ajax: {
+            'url': basePath+"/finacial/bankCollect/abBillTallyController/datatable?menuType="+$("#menuType").val()+"&opType="+$("#opType").val()
+        },searchForm:{
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+
+        columns: [
+            {data:"billType",bSortable:false,className:"center",
+                render:function(data,type,full,meta){
+                    return bt.dict("AB_BILL_TYPE",full.billType);
+                }},
+            {data:"billFlagName",bSortable:false,className:"center"},
+            {data:"corpName",bSortable:false,className:"center"},
+            {data:"payer",bSortable:false,className:"center"},
+            {data:"acceptor",bSortable:false,className:"center"},
+            {data:"origNo",bSortable:false,className:"center"},
+            {data: "billMoney", bSortable: false,className: "textRight",
+                render: function (data, type, full, meta) {
+                    return bt.money.format(full.billMoney);
+                }
+            },
+            {data:"startDate",bSortable:false,className:"center"},
+            {data:"endDate",bSortable:false,className:"center"},
+           // {data:"billstatus",bSortable:true,className:"center"},
+            {data:"voucherState",bSortable:false,className:"center",
+                render:function(data,type,full,meta){
+                    if(full.voucherState== null){
+                        return bt.lang("table.tally.wait.for.an.account");
+                    }else{
+                        return bt.dict("Finacial.VoucherStatus",full.voucherState);
+             }}},
+
+
+        ],
+        btInitComplete:function(setting,json){
+        	tableData = json.data;
+        },
+		btDrawCallback:function(setting){
+        	tableData = setting.json.data;
+        }
+    });
+    
+     $('#appTable tbody').on('dblclick','tr',function(data){
+        var dataIndex = $(this).context.rowIndex - 1;
+        //var data = tableData.rows('.selected').data();
+        rowData = tableData[dataIndex];
+        var id = rowData.aid;
+     	var type = $("#opType").val();
+     	var menuType = $("#menuType").val();
+     	var sysRaceCode = rowData.sysRaceCode;
+
+     	parent.parent.$("#buId").val(rowData.aid);
+     	parent.parent.$("#menuType").val(menuType);
+     	parent.parent.$("#key").val(id);
+     	parent.parent.$("#curCode").val(rowData.curId);
+     	parent.parent.$("#netId").val(rowData.netId);
+     	parent.parent.$("#corpCode").val(rowData.corpId);
+     	parent.parent.$("#sysRaceCode").val(sysRaceCode);
+     	$.post(basePath + "/finacial/bankCollect/abBillTallyController/processAccbook/",{id:id,type:type,menuType:menuType,sysRaceCode:sysRaceCode}, function(result){
+     		if(typeof result.success == "boolean" && result.success == false){
+     			layer.alert(result.msg);
+            	return;
+     		}
+            //增加背景色
+            var row = datatable.row(dataIndex).node();
+            $(".row_bg").removeClass("row_bg");
+            $(row).addClass("row_bg");
+            parent.parent.uploaderRender(type,result);
+     		parent.parent.bt.setDate(result);
+     	},'JSON');
+	});   
+});
+
+</script>
+</html>

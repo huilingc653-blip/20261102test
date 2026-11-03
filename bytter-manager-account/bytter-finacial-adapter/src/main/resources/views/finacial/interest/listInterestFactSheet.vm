@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	<style>
+		#ins_corpId_name .select-tree .select-tree-list {
+			max-width: 320px;
+			min-width: 100px;
+		}
+	</style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+<input id="pageNum" name="pageNum" type="hidden" value="$!{pageNum}">
+<table class="layui-table">
+<tbody>
+	<!-- 利息预提情况表 -->
+	<tr>
+		<!-- 网点 -->
+		<td class="textRight">#springMessage('table.fcloanrepay.netId')</td>
+		<td width="40%" id="ins_corpId_name">
+			<div class="layui-inline">
+				<div class="bt-biz-corp"
+					 data-biz-type="corp"
+					 data-type="selectTree"
+					 data-name="ins_corpId"
+					 data-tree-type="check"
+					 data-biz-name="netId"
+					 data-checkkboxtype='{ "Y": "ps", "N": "s" }'
+					 data-scope="all"
+					 data-callbackData="netChange"
+					 data-resource="finacial:fcpredrawdtl:factsheet:query"
+				></div>
+			</div>
+		</td>
+		<!-- <td class="textRight">#springMessage('table.fcAcc.netId'):</td>
+		<td width="40%">
+			<div class="bt-biz-corp"
+			data-name="eqs_netId"
+			data-biz-type="net"
+			data-biz-name="netId"
+			data-type="selectTree"
+			data-change="corpId"
+			data-callbackData="netChange"
+			data-scope="net"></div>
+		</td>
+
+		单位
+		<td class="textRight">#springMessage('table.fbsBudget.corpId'):</td>
+		<td width="40%">
+			<div class="bt-biz-corp"
+			data-name="eqs_corpId"
+			data-biz-type="corp"
+			data-biz-name="corpId"
+			data-type="select"
+			data-group="corpGroup"
+			data-scope="all"  ></div>
+			<div class="bt-biz-mulselectType"
+				data-name="eqs_corpId"
+				data-biz-name="corpId"
+				data-textField="name"
+				data-valueField="id"
+				data-url="${basePath}/finacial/interest/fcpredrawdtl/getCorpsByNetId?netId="></div>
+		</td>
+		 -->
+		<!-- 币别 -->
+		<td class="textRight">#springMessage('table.btBankAccCur.cur')</td>
+			<td width="40%">
+				<div class="layui-inline">
+	     			  <div data-name ="eqs_curCode" class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json" data-valueField="id" data-textField="curName" data-defaultvalue="first" ></div>
+				</div>
+	    </td>
+	</tr>
+
+	<tr>
+		<!-- 开户种类 -->
+		<td class="textRight">#springMessage('finacial.paramConfig.fcSubject.accType')
+		<td width="40%">
+			<div class="layui-input-inline">
+				<div class="bt-biz-dict" data-type="select" data-group="InnerAccount.AccType" data-biz-name="accType" data-name="eqs_accType" data-filterData="05,06,07,08,10,14"></div>
+			</div>
+		</td>
+
+		##账号
+		<td class="textRight">#springMessage('table.fcLessPayBill.account')</td>
+		<td>
+			<div class=layui-inline>
+				<div class="bt-biz-mulselectType" data-biz-name="account" data-name="ins_account"  data-textField="blnctrAcc" data-valueField="blnctrAcc" data-url="${basePath}/finacial/interest/fcpredrawdtl/accountlist" ></div>
+			</div>
+		</td>
+	</tr>
+
+	<tr>
+		##预提日期
+		<td class="textRight">#springMessage('table.predraw.date')</td>
+		<td>
+			 <input class="layui-input bt-input-inline bt-biz-dateType" type=text name="ged_interestTime" data-biz-name="interestTime" data-endid="t2" >
+			 <span class=date-mid>~</span>
+			 <input id=t2 class="layui-input bt-input-inline bt-biz-dateType" type=text data-biz-name="interestTime" data-callback="formatDate" >
+			 <input id="date" type="hidden" name="led_interestTime">
+		</td>
+
+		<td></td>
+		<td></td>
+	</tr>
+
+	<!--提交按钮 -->
+	<tr>
+	   <td style="text-align: center;" colSpan="6">
+	 		 <button id="search" type="button" class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+             <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+
+	   </td>
+	</tr>
+
+</tbody>
+
+</table>
+</form>
+
+<div  class="layui-input-inline" style="padding-left: 200px;">
+	<span>#springMessage('table.btBankAccCur.cur'):</span>
+	<span id="curName">
+	#if("$!{curName}" != "")
+		$!{curName}
+	#else
+		#springMessage('table.curName.rmb')
+	#end
+
+
+	</span>
+</div>
+
+<div  class="layui-input-inline" style="padding-left: 1000px;">
+	<span>#springMessage('table.fbsBudget.corpId'):</span>
+	<span>#springMessage('config.choBank.moneyUnit')</span>
+</div>
+
+<br/>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fbsBudget.corpId')</th>##单位
+        <th>#springMessage('table.fcLessPayBill.account')</th>##账号
+        <th>#springMessage('table.btBankAccApp.accName')</th>##账户名称
+       	<th>#springMessage('table.btBankAcc.accType')</th>##账户类别
+       	<th>#springMessage('table.predraw.date')</th>##预提日期
+       	<th>#springMessage('table.fbsBudgetPeriod.beginDate')</th> ##开始日期
+       	<th>#springMessage('table.fbsBudgetPeriod.endDate')</th>##结束日期
+       	<th>#springMessage('table.fcInterestDtlTemp.days')</th>##天数
+       	<th>#springMessage('table.fcInstrateAdjust.instrtType')</th>##利率类型
+       	<th>#springMessage('table.fcInterestDtlTemp.interestType')</th>##利息类型
+       	<th>#springMessage('table.bisFinanceExc.interestRate')(%)</th>##利率（%）
+       	<th>#springMessage('table.predraw.interest')</th>##预提利息
+    </tr>
+    </thead>
+</table>
+
+<!-- <div id="page" style="position:fixed ; bottom:0px;width:100%"></div>
+<input id="size" type="hidden" value="$!{size}"> -->
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/interest/fcPredrawDtl.sheet.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+
+    <style>
+        .select-column {
+            overflow: visible!important;
+        }
+
+    </style>
+</head>
+<body>
+<input type="hidden" name="autoTrue" id="autoTrue" value="$!{autoTrue}" />
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody >
+        <tr>
+            ##单位
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.corp')</td>
+            <td width="20%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="ins_corpId"
+                         data-scope="all"
+                         data-resource="netbank:bankAcc:refundblending:query"
+                         data-callback="corpCallback"></div>
+                </div>
+            </td>
+            ##本方账号
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.bankAcc')</td>
+            <td width="30%">
+                <input type="text" id="likes_bankAcc" name="likes_bankAcc" lay-verify="strlength" data-maxlength="30"
+                       data-resource="netbank:bankAcc:bisAccBal:managerQuery" accountType="2,3" permission="D,T"
+                       autocomplete="off" placeholder="#springMessage('table.btBankAccDtl.bankAcc')"
+                       data-biz-name="likes_bankAcc"  data-name="likes_bankAcc"
+                       class="layui-input bt-biz-accountTable" data-callback="accountCallBack">
+            </td>
+        </tr>
+        <tr>
+            ##交易日期
+            <td class="textRight" width="10%">#springMessage('table.btNetChalk.transTime')</td>
+            <td width="30%">
+                <input type="text" name="ged_transTime" data-type="date" data-biz-name="ged_transTime" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_transTime"  value="$!date.format('yyyy-MM-dd',$!{startDate})">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_transTime" data-type="date" data-biz-name="led_transTime" class="layui-input bt-input-inline bt-biz-dateType" id="led_transTime" data-today="true">
+            </td>
+            ##勾兑标志
+            <td class="textRight" width="10%">#springMessage('table.listPaymentBlending.blendSign')</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-type="select" data-group="paymentblending_status" data-name="eqs_blendSign" data-biz-name="blendSign"
+                     data-displayData="0,1,3"></div>
+            </td>
+        </tr>
+        <tr>
+            ##交易金额
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.amt')</td>
+            <td width="30%">
+                <div class="layui-inline">
+                    <input type="text" name="geg_amt" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" data-moneyendid="t20" placeholder="#springMessage('table.bisExc.payMoney')">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="leg_amt" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" id="t20" placeholder="#springMessage('table.bisExc.payMoney')">
+                </div>
+            </td>
+            ##用途
+            <td class="textRight" width="10%">#springMessage('table.nisBillhead.purpose')</td>
+            <td width="30%">
+                <input type="text" id="likes_uses" name="likes_uses"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.nisBillhead.purpose')">
+            </td>
+        </tr>
+        <tr>
+            ##勾对时间
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.paymentBlendingDate')</td>
+            <td width="30%">
+                <input type="text" name="ged_refundBlendTime" data-type="date" id="receipt_startPaymentBlendingDate" data-biz-name="ged_charageDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="receipt_endPaymentBlendingDate" >
+                <span class="date-mid">~</span>
+                <input type="text" name="led_refundBlendTime" data-type="date" id="receipt_endPaymentBlendingDate" data-biz-name="led_charageDate" class="layui-input bt-input-inline bt-biz-dateType" >
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+            ##查询
+        <tr>
+            <td colspan="6" class="center">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">#springMessage('table.bvPrintMatchRule.matchRule')</td>
+            <td colspan="5">
+                <div class="bt-biz-dict" data-type="checkbox" data-group="paymentblending_matching_rule" data-name="eqs_matchingRule" data-biz-name="matchingRule"
+                     data-defaultvalue="1,2,3,4,5" onclick="getPayBill();"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">#springMessage('table.refundblending.handle')</td>
+            <td colspan="5">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="refundblending_handle" data-name="eqs_handle" data-biz-name="handle"
+                         data-defaultvalue="1" ></div>
+                </div>
+                <div class="layui-input-inline" style="color:red">#springMessage('table.btNetChalk.methodInfo')</div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+#*<form id="searchFormBill" class="layui-form">
+    <input type="hidden" name="eqs_bankSerialNo" id="eqs_bankSerialNo" />
+    <input type="hidden" name="eqg_payMoney" id="eqg_payMoney" />
+    <input type="hidden" name="eqs_payerAcc" id="eqs_payerAcc" />
+    <input type="hidden" name="eqs_payeeAcc" id="eqs_payeeAcc" />
+    <input type="hidden" name="wishPayday" id="wishPayday" />
+    <input type="hidden" name="eqs_curId" id="eqs_curId" />
+    <input type="hidden" name="refundBlendType" id="refundBlendType" />
+    <input type="hidden" name="blendSign" id="blendSign" />
+</form>*#
+<table id="appTableDtl" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.btNetChalk.transTime')</th>
+        <th>#springMessage('table.btBankAccDtl.corp')</th>
+        <th>#springMessage('table.btBankAccDtl.bankAcc')</th>
+        <th>#springMessage('table.btBankAccDtl.accName')</th>
+        <th>#springMessage('table.btBankAccDtl.curName')</th>
+        <th>#springMessage('table.btBankAccDtl.amt')</th>
+        <th>#springMessage('table.bisAccDtl.summary')</th>
+        <th>#springMessage('table.nisBillhead.purpose')</th>
+        <th>#springMessage('table.btBankAccDtl.oppAccNo')</th>
+        <th>#springMessage('table.btBankAccDtl.oppAccName')</th>
+        <th>#springMessage('table.listPaymentBlending.blendSign')</th>
+        <th>#springMessage('table.btBankAccDtl.paymentBlendingDate')</th>
+    </tr>
+    </thead>
+</table>
+
+
+
+
+<form id="searchFormBill" class="layui-form">
+    <input type="hidden" name="eqs_bankSerialNo" id="eqs_bankSerialNo" />
+    <input type="hidden" name="wishPayday" id="wishPayday" />
+    <input type="hidden" name="eqs_curId" id="eqs_curId" />
+    <input type="hidden" name="blendSign" id="blendSign" />
+    <table class="layui-table">
+        <tbody >
+        <tr>
+            ##单位
+            <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.corp')</td>
+            <td width="20%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="ins_corpId"
+                         data-scope="all" data-resource="netbank:bankAcc:paymentBlending:query"
+                         data-callback="corpCallback2"></div>
+                </div>
+            </td>
+            ##付款账号
+            <td class="textRight" width="10%">#springMessage('table.nisBillhead.payerAcc')</td>
+            <td width="30%">
+                <input type="text" id="eqs_payerAcc" name="likes_payerAcc" lay-verify="strlength" data-maxlength="30" data-biz-name="eqs_payerAcc"  data-name="eqs_payerAcc"
+                       data-resource="netbank:bankAcc:bisAccBal:managerQuery" accountType="2,3" permission="D,T"
+                       autocomplete="off" class="layui-input bt-biz-accountTable" data-callback="payerAccCallBack" placeholder="#springMessage('table.nisBillhead.payerAcc')">
+            </td>
+            ##付款方户名
+            <td class="textRight" width="10%">#springMessage('table.eBankBill.payerAccName')</td>
+            <td width="30%">
+                <input type="text" id="likes_payerAccName" name="likes_payerAccName" lay-verify="strlength" data-maxlength="30"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.eBankBill.payerAccName')">
+            </td>
+        </tr>
+        <tr>
+            ##收款账号
+            <td class="textRight" width="10%">#springMessage('table.nisBillhead.payeeAcc')</td>
+            <td width="30%">
+                <input type="text" id="eqs_payeeAcc" name="likes_payeeAcc" lay-verify="strlength" data-maxlength="30"
+                       autocomplete="off" class="layui-input bank" placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+            </td>
+            ##收款方户名
+            <td class="textRight" width="10%">#springMessage('table.eBankBill.payeeAccName')</td>
+            <td width="30%">
+                <input type="text" id="likes_payeeAccName" name="likes_payeeAccName" lay-verify="strlength" data-maxlength="30"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.eBankBill.payeeAccName')">
+            </td>
+            ##金额
+            <td class="textRight" width="10%">#springMessage('table.nisBillhead.payMoney')</td>
+            <td width="30%">
+                <div class="layui-inline">
+                    <input type="text" name="geg_payMoney" data-biz-name="geg_payMoney" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" data-moneyendid="bill_endAmt" placeholder="#springMessage('table.nisBillhead.payMoney')">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="leg_payMoney" data-biz-name="leg_payMoney" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" id="bill_endAmt" placeholder="#springMessage('table.nisBillhead.payMoney')">
+                </div>
+            </td>
+        </tr>
+            ##查询
+        <tr>
+            <td colspan="6" class="center">
+                <button class="layui-btn" lay-submit lay-filter="searchBill" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+
+
+
+
+<table id="appTableBill" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisBillhead.billNo')</th>
+        <th>#springMessage('table.nisBillhead.payerAcc')</th>
+        <th>#springMessage('table.nisBillhead.payerAccName')</th>
+        <th>#springMessage('table.nisBillhead.curId')</th>
+        <th>#springMessage('table.nisBillhead.payMoney')</th>
+        <th>#springMessage('table.nisBillhead.voucerType')</th>
+        <th>#springMessage('table.nisBillhead.payeeAcc')</th>
+        <th>#springMessage('table.nisBillhead.payeeAccName')</th>
+        <th>#springMessage('table.nisBillhead.status')</th>
+        <th>#springMessage('table.nisBillhead.purpose')</th>
+        <th>#springMessage('table.createRepayPlan.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/bankacc/refundBlending.list.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .style{
+            color: red!important;
+        }
+
+    </style>
+</head>
+
+<body style="padding: 10px;">
+<form id="searchForm"  class="layui-form">
+    <input type="hidden" name="eqs_lcId" value="$!{id}">
+</form>
+
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="print">
+    <thead>
+    <tr>
+        <th rowspan="2" class="style">#springMessage('table.nisPersonnelDetail.corpId')</th>
+        <th class="style">#springMessage('(L/C NO)')</th>
+        <th rowspan="2" class="style">#springMessage('international.credit.lcInter')</th>##信用证类型
+        <th class="style">#springMessage('(Presenting Bank)')</th>
+        <th class="style">#springMessage('(Ben)')</th>
+        <th rowspan="2" class="style">#springMessage('table.internation.arrival.money')</th>##交单金额
+        <th class="style">#springMessage('(Currency)')</th>
+        <th class="style">#springMessage('(Presenting Date)')</th>
+        <th rowspan="2" class="style">#springMessage('common.table.status')</th>
+    </tr>
+    <tr>
+        <th>#springMessage('international.credit.creditNo')</th>
+        <th>#springMessage('table.internation.arrival.bank')</th>
+        <th>#springMessage('international.credit.beneficiary')</th>
+        <th>#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+        <th>#springMessage('table.arrival.paymentDate')</th>##交单日期
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form','datatable'], function(){
+        $ = bt.jquery,form = bt.form();
+
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            ordering: true,
+            buttonsLayout: false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/international/credit/arrivalletter/reportDatatable"
+            }
+            , columns: [
+                {data: "corpName", bSortable: true, className: "center"},
+                {data: "creditNo", bSortable: true, className: "center"},
+                {
+                    data: "lcInter", bSortable: true, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter", full.lcInter);
+                    }
+                },
+                {data: "handDocBank", bSortable: true, className: "center"},
+                {data: "corpName", bSortable: true, className: "center"},
+                {
+                    data: "billMoney", bSortable: true, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.billMoney);
+                    }
+                },
+                {data: "curName", bSortable: true, className: "center"},
+                {data: "paymentDate", bSortable: true, className: "center"},
+                {
+                    data: "status",
+                    bSortable: true,
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        var status = "";
+                        if (full.status == 11) {
+                            if (null != full.status2 && "" != full.status2 && undefined != full.status2) {
+                                // 抵押打回或者抵押审批中时使用抵批状态显示
+                                status = bt.dict("international.lcMortgage.status", full.status2);
+                            } else {
+                                status = bt.dict("international.status", full.status);
+                            }
+                        } else {
+                            // 没有做抵押、到期收矿操作时状态显示
+                            if (99 == full.status) {//取消抵押，或者未做抵押操作显示状态
+                                status = bt.dict("international.lcBillArrival.status", full.status);
+                            } else {//抵押/到期收款操作审批通过后显示状态
+                                status = bt.dict("international.status", full.status);
+                            }
+                        }
+                        return status;
+                    }
+                }
+            ]
+        });
+
+    });
+
+</script>
+</html>

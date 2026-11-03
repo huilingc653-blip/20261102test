@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+
+    <style>
+        #collaTable .layui-input {
+            width: 100%;
+        }
+        #collaTable2 .layui-input {
+            width: 60%;
+        }
+        #collaTable2 td {
+            border: none;
+        }
+        #collaTable2 .layui-input,.rateWrap,td
+        {
+            border: none;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="layui-collapse">
+    <form class="layui-form" method="post">
+
+        <input type="hidden" id="securityIssueCode" name="securityIssueCode" value="$!{securityIssueCode}">
+        ##计划明细
+        <div class="layui-collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">#springMessage('cms.equity.planDetail')</h2>
+                <div class="layui-colla-content  layui-show" >
+                    <br>
+                    <table class="layui-table self-adaption" id="planDetailTB" style="width:100%; margin-bottom:8px;margin-top: 8px;">
+                        <thead>
+                        <tr>
+                            <th >#springMessage('cms.security.securityIssueCode')</th>##证券发行编号
+                            <th > #springMessage('table.cmsLoanSend.repayDate')</th>##还款日期
+                            <th > #springMessage('cms.security.planRepayDate')</th>##计划还款日期
+                            <th > #springMessage('table.createRepayPlan.repaymentMoney')</th>##还款本金
+                            <th > #springMessage('table.cmsLoanRepay.repayAccrual')</th>##还款利息
+                            <th > #springMessage('table.cmsLoanRepay.repayMoney')</th>##还款金额
+                            <th > #springMessage('table.cmsBond.remainMoney')</th>##剩余本金
+                            <th > #springMessage('table.createRepayPlan.isRepay')</th>##是否已还
+                            <th >#springMessage('cms.equity.rmk')</th>##备注
+                        </tr>
+                        </thead>
+                        <tbody id="collaTable">
+                        </tbody>
+                        <tfoot>
+                            ##合计行
+                        <tr id="collaTable2" >
+                            <td align="center">#springMessage('table.interet.sum')</td>
+                            <td></td>
+                            <td></td>
+                            <td align="right">##本次还款本金合计
+                                <input type="text" id="repayMoneySum" data-name="repayMoneySum" data-biz-name="repayMoneySum" readonly="readonly" data-decimal="2"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType">
+                            </td>
+                            <td align="right">##本次还款利息合计
+                                <input type="text" id="repayInterestSum" data-name="repayInterestSum" data-biz-name="repayInterestSum" readonly="readonly" data-decimal="2"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType">
+                            </td>
+                            <td align="right">##本次还款金额合计
+                                <input type="text" id="repayAmountSum" data-name="repayAmountSum" data-biz-name="repayAmountSum" readonly="readonly" data-decimal="2"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType">
+                            </td>
+                            <td >&nbsp;</td>
+                            <td >&nbsp;</td>
+                            <td >&nbsp;</td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        #if(!$!{taskId})
+            <div class="layui-form-item layui-form-submit" id="buttonDiv">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+                </div>
+            </div>
+        #end
+    </form>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    var $,form,moneyType,dateType,dateFun,dicts,moneyFun,bttable,selectTable,rateTypes,equityCode;
+    var rowNum = 0;//用来记录行
+    var maxrepayMoney="";//最大缴付金额
+    var surplusPayMoney="";//剩余缴付金额
+    var minPayDate="";//最小缴付日期
+    var maxPayDate="";//最大缴付日期
+    var isRepay="0";//初始化时，若为1：已缴付/过户，则设置不可编辑
+    bt.use(['form','element','dicts','rateType','moneyType','date','dateType','btUpload','bttable', 'btImport'], function () {
+        $ = bt.jquery, form = bt.form();
+        dicts = bt.dicts.init();
+        moneyType = bt.moneyType.init();
+        moneyFun = bt.moneyType.getFun();
+        rateTypes = bt.rateType.init();//利率
+        dateType = bt.dateType.init();
+        dateFun = dateType.getFun();//获取时间操作方法
+        securityIssueCode = $("#securityIssueCode").val();
+        /**
+         * 生成列表
+         */
+        bt.bttable.init({
+            elem: "#planDetailTB",
+            mulselect: false,
+            checkbox: false,
+            url: basePath + "/cms/security/plan/getPlanDetailBysecurityIssueCode?securityIssueCode=" + securityIssueCode,
+            buttons: [],
+            columns: [
+                {
+                    data: "securityIssueCode", render: function (data, row) {
+                        rowNum = row;
+                        isRepay = "disabled"
+                        var html = '<input type="text" id="securityIssueCode_' + rowNum + '" name="detailDtl[' + rowNum + '].securityIssueCode" value="' + (data.securityIssueCode == null ? "" : data.securityIssueCode) + '" readonly="readonly" class="layui-input" />';
+                        html = html + ' <input type="hidden" id="id_' + rowNum + '" name="detailDtl[' + rowNum + '].id"  value="' + data.id + '">';
+                        return html;
+                    }
+                },
+                {
+                    data: "repayDate",
+                    render: function (data, row) {
+                        return '<input ' + isRepay + ' name="detailDtl[' + rowNum + '].repayDate" data-biz-name = "repayDate_' + rowNum + '" id="repayDate_' + rowNum + '" type="text" value="' + data.repayDate + '" class="layui-input bt-biz-dateType" ' +
+                                /*'data-min="'+minPayDate+'" data-max="'+maxPayDate+'" data-callback="clickEvent"' +*/
+                                'data-type="date" lay-verify="required"/>';
+                    }
+                },
+                {
+                    data: "planRepayDate",
+                    render: function (data, row) {
+                        return '<input ' + isRepay + ' name="detailDtl[' + rowNum + '].planRepayDate" data-biz-name = "planRepayDate_' + rowNum + '" id="planRepayDate_' + rowNum + '" type="text" value="' + data.planRepayDate + '" class="layui-input bt-biz-dateType" ' +
+                                /*'data-min="'+minPayDate+'" data-max="'+maxPayDate+'" data-callback="clickEvent"' +*/
+                                'data-type="date" lay-verify="required"/>';
+                    }
+                },
+                {
+                    data: "repayMoney", bSortable: true, className: "textRight", render: function (data, row) {
+                        return '<input ' + isRepay + ' divName="repayMoney" lay-verify="required" class="layui-input bt-input-inline  bt-biz-moneyType" value="' + moneyFun.format(data.repayMoney) + '"  type="text" data-decimal="2" id="repayMoney_' + rowNum + '" data-callback="bt.calMoney" data-biz-name="repayMoney_' + rowNum + '" data-min="0"  data-name="detailDtl[' + rowNum + '].repayMoney"/>';
+                    }
+                },
+                {
+                    data: "repayInterest", bSortable: true, className: "textRight", render: function (data, row) {
+                        return '<input ' + isRepay + ' divName="repayInterest" lay-verify="required" class="layui-input bt-input-inline  bt-biz-moneyType" value="' + moneyFun.format(data.repayInterest) + '"  type="text" data-decimal="2" id="repayInterest_' + rowNum + '" data-callback="bt.calMoney" data-biz-name="repayInterest_' + rowNum + '" data-min="0"  data-name="detailDtl[' + rowNum + '].repayInterest"/>';
+                    }
+                },
+                {
+                    data: "repayAmount", bSortable: true, className: "textRight", render: function (data, row) {
+                        return '<input disabled divName="repayAmount" lay-verify="required" class="layui-input bt-input-inline  bt-biz-moneyType" value="' + moneyFun.format(data.repayAmount) + '"  type="text" data-decimal="2" id="repayAmount_' + rowNum + '" data-biz-name="repayAmount_' + rowNum + '" data-min="0" data-name="detailDtl[' + rowNum + '].repayAmount"/>';
+                    }
+                },
+                {
+                    data: "remainMoney", bSortable: true, className: "textRight", render: function (data, row) {
+                        return '<input disabled divName="remainMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="remainMoney_' + rowNum + '" type="text" value="' + (data.remainMoney == null ? "" : moneyFun.format(data.remainMoney)) + '" data-decimal="2" id="remainMoney_' + rowNum + '" data-min="0" data-name="detailDtl[' + rowNum + '].remainMoney"/>';
+                    }
+                },
+
+                {
+                    data: "isRepay", bSortable: true, className: "textRight", render: function (data, row) {
+                            if(data.isRepay=="1"){
+                                return '<input  '+isRepay+' type="checkbox" lay-skin="primary" name="detailDtl['+rowNum+'].isRepay" value="1"  checked/>';
+                            }else{
+                                return '<input  '+isRepay+' type="checkbox" lay-skin="primary" name="detailDtl['+rowNum+'].isRepay" value="1" />';
+                            }
+                    }
+                },
+                {
+                    data: "rmk", render: function (data, row) {
+                        return '<input ' + isRepay + ' name="detailDtl[' + rowNum + '].rmk" id="rmk" value="' + (data.rmk == null ? "" : data.rmk) + '" class="layui-input" type="text"/>';
+                    }
+                }
+            ],
+            tableInitCallback: function (data) {
+                rowNum = data.length;
+                addFun();
+                sumMoney();
+            }
+        });
+    })
+        /**
+         * 各金额的合计
+         */
+        function sumMoney(){
+            var issueMoney=$("#issueMoney").val();
+            //计算本次缴付金额
+            var repayMoneySum=0;
+            var repayInterestSum=0;
+            var repayAmountSum=0;
+            $("input[divName^='repayMoney']").each(function(i){
+                repayMoneySum = bt.money.add(repayMoneySum, $(this).val());
+            });
+            $("input[divName^='repayInterest']").each(function(i){
+                repayInterestSum = bt.money.add(repayInterestSum, $(this).val());
+            });
+            $("input[divName^='repayAmount']").each(function(i){
+                repayAmountSum = bt.money.add(repayAmountSum, $(this).val());
+            });
+            moneyType.get("repayMoneySum").val(repayMoneySum);
+            moneyType.get("repayInterestSum").val(repayInterestSum);
+            moneyType.get("repayAmountSum").val(repayAmountSum);
+            maxrepayMoney=moneyFun.sub(parseFloat(issueMoney),parseFloat(repayMoneySum));//最大缴付金额
+        }
+
+        function addFun(){
+            //重新渲染datatype和moneyType
+            dateType.render();
+            moneyType.render();
+            rateTypes.render();//利率
+            form.render('checkbox');
+            //+1为了以防id重复
+            rowNum++;
+        }
+
+</script>
+</html>

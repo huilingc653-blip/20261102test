@@ -1,0 +1,31 @@
+package com.bytter.biz.inneraccount.vo.v1;
+
+import com.bytter.system.api.dto.BtBankAccAppDTO;
+import com.bytter.system.api.dto.BtBankAccDTO;
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+
+import java.io.Serializable;
+
+/**
+ *@Description 银行账户 查询数据
+ *@Author zhukr
+ *@Date 2026/1/14
+ */
+
+@ApiModel("银行账户 查询数据")
+@Data
+public class BtBankAccViewVO implements Serializable {
+
+    private BtBankAccDTO btBankAcc;
+
+    private BtBankAccAppDTO btBankAccAppPage;
+
+    private String busType;
+
+    private String isDomesticBankType;
+
+    private String curId;
+
+    private String bankAccDesc;
+}

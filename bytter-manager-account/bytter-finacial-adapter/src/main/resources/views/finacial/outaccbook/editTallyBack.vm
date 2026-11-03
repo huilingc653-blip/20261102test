@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input type="hidden" id="fcOutAccbookId" name="book.id" value="$!{fcOutAccbookPage.id}" />
+        <table class="layui-table">
+			<tbody>
+        	<tr>
+        		##记账日期
+				<td class="textRight">#springMessage('table.fcOutAccbook.tallyDate')</td>
+				<td >
+					$!date.format('yyyy-MM-dd',$!fcOutAccbookPage.tallyDate)
+				</td>
+        		##流水号
+				<td class="textRight">#springMessage('table.fcOutAccbook.orderNo')</td>
+				<td width="40%">
+					$!{fcOutAccbookPage.orderNo}
+				</td>
+			</tr>
+        	<tr>
+        		##票据号码
+				<td class="textRight">#springMessage('table.fcOutAccbook.billsNo')</td>
+				<td >
+					$!{fcOutAccbookPage.billsNo}
+				</td>
+        		##合同号码
+				<td class="textRight">#springMessage('table.fcOutAccbook.contractNo')</td>
+				<td >
+					$!{fcOutAccbookPage.contractNo}
+				</td>
+			</tr>
+        	<tr>
+        		##到期日
+				<td class="textRight">#springMessage('table.fcOutAccbook.endDate')</td>
+				<td >
+					$!date.format('yyyy-MM-dd',$!fcOutAccbookPage.endDate)
+				</td>
+				<td colspan="2">
+					
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4">
+					<table id="editTable" class="layui-table layui-form" style="width: 100%">
+						<thead>
+						<tr>
+							<th width="15%" style="text-align: center;">#springMessage('table.fcOutAccbook.summaryContent')</th>
+							<th width="10%" style="text-align: center;">#springMessage('table.fcOutAccbook.acc')</th>
+							<th width="15%" style="text-align: center;">#springMessage('table.fcOutAccbook.accName')</th>
+							<th width="15%" style="text-align: center;">#springMessage('table.fcOutAccbook.subject')</th>
+							<th width="10%" style="text-align: center;">#springMessage('table.fcOutAccbook.unit')</th>
+							<th width="15%" style="text-align: center;">#springMessage('table.fcOutAccbook.income')</th>
+							<th width="15%" style="text-align: center;">#springMessage('table.fcOutAccbook.expend')</th>
+						</tr>
+						</thead>
+						<tbody>
+						#foreach($dtl in $listDtl)
+        				<tr>
+							<td style="text-align: center;">
+								$!{dtl.summaryContent}
+							</td>
+			      			<td style="text-align: center;">
+			      				$!{dtl.acc}
+			      			</td>
+			     			<td style="text-align: center;">
+			    				$!{dtl.accName}
+			     			</td>
+			     			<td style="text-align: center;">
+			     				$!{dtl.subjectName}
+			     			</td>
+			     			<td style="text-align: center;">
+			     				$dictTag.get("fcSubject.measureUnit", $!{dtl.unit})
+			     			</td>
+			     			<td style="text-align: right;">
+			     				$number.formatNumeric($!{dtl.debitMoney})
+			     			</td>
+			     			<td style="text-align: right;">
+			     				$number.formatNumeric($!{dtl.creditMoney})
+			     			</td>
+			      		</tr>
+			      		#end
+        				</tbody>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="textRight">#springMessage('table.fcOutAccbook.invalidReason')</td>
+				<td colspan="3" style="word-wrap: break-word;">
+					$!{fcOutAccbookPage.invalidReason}
+				</td>
+			</tr>
+			<tr>
+				<td class="textRight">#springMessage('table.fcOutAccbook.backReason')</td>
+				<td colspan="3">
+					<textarea id="backReason" name="backReason" class="layui-textarea"></textarea>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+        <div class="layui-form-item layui-form-submit ">
+		    <div class="layui-input-block center">
+		        <button class="layui-btn" type="button" onClick="sub('0');" >#springMessage('common.button.pass')</button>
+		        <button class="layui-btn" type="button" onClick="sub('1');">#springMessage('common.button.back')</button>
+		    </div>
+		</div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+bt.use(['form','jquery'], function(){
+    $ = bt.jquery,form = bt.form();
+});
+	function sub(indx){
+		var rea = $("#backReason").val();
+		var id = $("#fcOutAccbookId").val();
+		var url = "";
+		if(indx == '1'){
+			url = basePath + "/finacial/outaccbook/tallyCancel/tallyCancelBack";
+			if(rea.length > 0 && rea.length <= 50){
+		    	parent.layer.confirm("#springMessage('common.message.confirm.back')",function(){
+		            $.post(url , {id:id,reason:rea} ,function(result){
+		            	parent.layer.alert(result.msg, {icon: result.success?1:2});
+		            	if(result.success){
+		            		parent.layer.closeAll();
+			        	}
+		                
+		            },'JSON');
+		        });
+		    }else if(rea.length >50){
+		    	parent.layer.alert("#springMessage('common.message.config.tooLength')");
+		    }else{
+		    	parent.layer.alert("#springMessage('common.message.config.please')");
+		    }
+		}else{
+			url = basePath + "/finacial/outaccbook/tallyCancel/tallyCancelCheck";
+			parent.layer.confirm("#springMessage('common.message.confirm.check')",function(){
+				$.post(url , {id:id} ,function(result){
+	            	if(result.success){
+	            		parent.layer.closeAll();
+		        	}
+	                parent.layer.alert(result.msg, {icon: result.success?1:2});
+	            },'JSON');
+			});
+		}
+		
+	}
+</script>
+</html>

@@ -1,0 +1,83 @@
+#parse("views/common/head.vm")
+<!-- 不同上报模式，上报提交方法不一样 -->
+<input id="saveMethod" name="saveMethod" type="hidden" value="$!{saveMethod}">
+###foreach($budget in $fbsBudgetList)
+##<input  name="nextId" type="hidden" value="$!{budget.id}">
+###end
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fbsBudgetYear.number')</th>
+        <th>#springMessage('table.fbsBudgetYear.itemCode')</th>
+        <th>#springMessage('table.fbsBudgetYear.itemName')</th>
+        #foreach($month in $months)
+            <th>$month#springMessage('table.fbsbudget.month')</th>
+        #end
+    </tr>
+    </thead>
+    <tbody>
+        #set($length = $rollMonthList.size())
+        #set($i = 0)
+        #foreach($date in $rollMonthList)
+            #set($key = 1)
+            #set($b = $!{key} - 1)
+        <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}" data-tt-subject-sort="$!{date.itemCode}">
+            <td>$!{velocityCount}</td>
+            <td>
+                $!{date.itemCode}
+                <input type="hidden" id="detailId_$!{date.itemCode}" name="detailId" value="$!{date.id.get($!{b})}">
+                <input type="hidden" id="itemCode_$!{date.itemCode}" name="itemCode" value="$!{date.itemCode}">
+                <input type="hidden" id="itemRelation_$!{date.itemCode}" name="itemRelation" data-curItemCode="$!{date.itemCode}" value="$!{date.item.itemRelation}">
+                <input type="hidden" id="sign_$!{date.itemCode}" name="sign" value="$!{date.item.sign}">
+                <input type="hidden" id="isBeginPeriod_$!{date.itemCode}" name="isBeginPeriod" value="$!{date.item.isBeginPeriod}">
+                <input type="hidden" id="isEndPeriod_$!{date.itemCode}" name="isEndPeriod" value="$!{date.isEndPeriod}">
+                <input type="hidden" id="resolveId_$!{date.itemCode}" name="resolveId" value="$!{date.id}">
+                <input type="hidden" id="rmk_$!{date.itemCode}" name="rmk" value="$!{date.rmk}">
+            </td>
+            <td>$!{date.itemName}</td>
+            #foreach($month in $months)
+            <td align="right" >
+                <!-- 汇总时允许修改上报金额，期初科目，可填写 -->
+                #if($!{allowEditCollectMoney}=="1" && $!{date.item.isWrite} == "1" && $!{date.item.isBeginPeriod} == "1" )
+                    <input type="text" id="bMoney$!{key}_$!{date.itemCode}" name="bMoney$!{key}" data-name="bMoney$!{key}" data-minus="true"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{date.bMoney.get($!{b})}" data-key="$!{key}"
+                           data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{key}_$!{date.itemCode}">
+                #else
+                    <input type="hidden" id="bMoney$!{key}_$!{date.itemCode}" name="bMoney$!{key}" data-name="bMoney$!{key}"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" data-callback="calItemMoney" value="$!{date.bMoney.get($!{b})}" data-key="$!{key}"
+                           data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="bMoney$!{key}_$!{date.itemCode}">
+                    <div id="bMoneyDiv$!{key}_$!{date.itemCode}" name="bMoneyDiv" class="clearDiv">$!number.formatNumeric($!{date.bMoney.get($!{b})})</div>
+                #end
+                #set($key = $!{key} + 1)
+                #set($b = $!{b} + 1)
+            </td>
+            #end
+        </tr>
+        #end
+        #if($!{fbsBudgetPage.id} != "")
+        <tr>
+            <td class="textRight" colspan="3">#springMessage('table.fbsBudget.msg')</td>
+            <td width="70%" colspan="14">
+                <textarea name="msg" id="msg" autocomplete="off" class="layui-textarea" lay-verify="strlength" data-maxlength="150" placeholder="#springMessage('table.fbsBudget.showMsg')"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="16" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('common.button.submit')</button>
+            </td>
+        </tr>
+        #else
+        <tr>
+            <td colspan="6" style="text-align: center;color: red">#springMessage('fbs.budget.input.message.itmecode')</td>
+        </tr>
+        #end
+    </tbody>
+</table>
+#if($!{target} == "input")
+	<!-- 附件上传 -->
+	<input id="attachmentId" name="attachmentId" type="hidden" value="$!{fbsBudgetPage.attachmentId}">
+	<div id="uploader" class="layui-input-inline" style="width:100%"></div>
+#end
+<!-- 日志 -->
+<div id="tagMsg"></div>
+<script src="${basePath}/static/modules/budget/fbsBudget.inputRollMonthCollectDetail.js?_btv=${resourceVersion}"></script>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form ignore-required-icon" method="post" id="inputForm">
+        <input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetAnalyse.timeType}">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+				##单位
+                <td class="textRight" width="10%"><font color="red">*</font></font>#springMessage('table.fbsBudget.corpId')</td>
+                <td width="25%">
+                    <div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-name="corpId"
+                             data-defaultvalue="$!{fbsBudgetAnalyse.corpId}"
+                             data-scope="all"></div>
+                    </div>
+                </td>
+				##日期
+                <td class="textRight" width="10%"><font color="red">*</font></font>#springMessage('table.fcOutSubjectDay.optDate')</td>
+                <td width="25%">
+                    <input type="text" name="queryDate" class="layui-input bt-input-inline bt-biz-dateType" data-type="month" value="$!{fbsBudgetAnalyse.queryDate}" data-biz-name="queryDate">
+                </td>
+                ##状态
+                <td class="textRight" width="10%">#springMessage('table.fbsBudget.status')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-displayData="0,-1,11,95" data-defaultvalue="$!{fbsBudgetAnalyse.analyseStatus}"
+                         data-group="fbsBudget.analyseStatus" data-name="analyseStatus"></div>
+                </td>
+            </tr>
+            <tr>
+                ##客户名称
+                <td class="textRight">#springMessage('table.fbsBudget.oppAccName')</td>
+                <td>
+                    <input type="text" name="oppAccName"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.fbsBudget.oppAccName')" value="$!{fbsBudgetAnalyse.oppAccName}">
+                </td>
+                ##差异金额
+                <td class="textRight">#springMessage('table.fbsBudget.diffMoney')</td>
+                <td colspan="3">
+                    <div class="layui-inline">
+                        <input type="text" data-name="diffBeginMoney" value="$!{fbsBudgetAnalyse.diffBeginMoney}"
+                               autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" data-moneyendid="diffEndMoney">
+                    </div>
+                    <span class="date-mid">~</span>
+                    <div class="layui-inline">
+                        <input type="text" data-name="diffEndMoney" value="$!{fbsBudgetAnalyse.diffEndMoney}"
+                               autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right" id="diffEndMoney">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6" style="text-align: center;">
+                    <button class="layui-btn" id="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    #if($!{showFlag})
+                        <button class="layui-btn" lay-submit="" lay-filter="submit" type="button">#springMessage('common.button.batchSubmit')</button>
+                        <button type="button" class="layui-btn" onclick="exports()">#springMessage('common.button.exports')</button>
+                    #end
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        #if($!{showFlag})
+            <div>
+        #else
+            <div style="display: none">
+        #end
+            <table id="appTable" class="layui-table" style="width:100%;">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkAll" lay-skin="primary" lay-filter="checkAll" name="checkAll"> #springMessage('common.check.all')</th>
+                    <th>#springMessage('table.fbsBudget.corpId')</th>
+                    <th>#springMessage('table.fcOutSubjectDay.optDate')</th>
+                    <th>#springMessage('table.fbsBudget.oppAccName')</th>
+                    <th>#springMessage('table.fbsBudget.settlType')</th>
+                    <th>#springMessage('table.fbsBudget.planReturnMoney')</th>
+                    <th>#springMessage('table.fbsBudget.factReturnMoney')</th>
+                    <th>#springMessage('table.fbsBudget.diffSalesMoney')</th>
+                    <th>#springMessage('table.fbsBudget.diffMoneyTotal')</th>
+                    <th>#springMessage('table.fbsBudget.diffRatio')</th>
+                    <th>#springMessage('table.fbsBudget.status')</th>
+                    <th>#springMessage('table.fbsBudget.diffReason')</th>
+                </tr>
+                </thead>
+                <tbody>
+                    #foreach($date in $dltList)
+                    <tr>
+                        <td rowspan="2" align="center">
+                            #if($!{date.showDiffReason})
+                                #if($!{date.analyseStatus} == 0 || $!{date.analyseStatus} == -1)
+                                    <input type="checkbox" class="check" id="detailId_$!{date.id}" name="checkDetailId" value="${date.id}" lay-skin="primary" lay-filter="checkDetailId">
+                                #end
+                            #end
+                        </td>
+                        <td rowspan="2">$!{corp.name}</td>
+                        <td rowspan="2">$!{fbsBudgetAnalyse.queryDate}</td>
+                        <td rowspan="2">$!{date.oppAccName}</td>
+                        <td align="center">$dictTag.get("settlType",0)</td>
+                        <td class="textRight">$!number.formatNumeric($!{date.planCashMoney})</td>
+                        <td class="textRight">$!number.formatNumeric($!{date.factCashMoney})</td>
+                        <td class="textRight">$!number.formatNumeric($!{date.diffCashMoney})</td>
+                        <td rowspan="2" class="textRight">$!number.formatNumeric($!{date.diffMoney})</td>
+                        <td rowspan="2" class="textRight">$!number.formatNumeric($!{date.diffRatio})</td>
+                        <td rowspan="2" align="center">
+                            #if($!{date.showDiffReason})
+                                $dictTag.get("fbsBudget.analyseStatus",$!{date.analyseStatus})
+                            #end
+                        </td>
+                        <td rowspan="2">
+                            #if($!{date.showDiffReason})
+                                #if($!{date.analyseStatus} == 0 || $!{date.analyseStatus} == -1)
+                                    <input type="text" style="width: 100%;" id="diffReason_$!{date.id}" name="diffReason" value="$!{date.diffReason}" data-maxlength="100">
+                                #else
+                                    $!{date.diffReason}
+                                #end
+                            #end
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">$dictTag.get("settlType",1)</td>
+                        <td class="textRight">$!number.formatNumeric($!{date.planBillMoney})</td>
+                        <td class="textRight">$!number.formatNumeric($!{date.factBillMoney})</td>
+                        <td class="textRight">$!number.formatNumeric($!{date.diffBillMoney})</td>
+                    </tr>
+                    #end
+                    <tr>
+                        <td class="textRight" colspan="5">#springMessage('table.datatable.total')</td>
+                        <td class="textRight">$!number.formatNumeric($!{planTotal})</td>
+                        <td class="textRight">$!number.formatNumeric($!{factTotal})</td>
+                        <td class="textRight">$!number.formatNumeric($!{diffTotal})</td>
+                        <td class="textRight">$!number.formatNumeric($!{diffTotal})</td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/budget/fbsBudget.sales.js?_btv=${resourceVersion}"></script>
+</html>

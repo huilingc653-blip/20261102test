@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+        <input type="hidden" name="id" id="id" />#*主键*#
+		<input type="hidden" name="accType" id="accType" value="08" />#*账户类型 01-企业活期 02-银行活期 03-放款[内部贷款] 04-银行借款 05-企业定期 08-通知存款*#
+		<input type="hidden" name="opType" id="opType" value="initList" />#*操作类型*#
+		<input type="hidden" name="netId" id="netId" />#*网点ID*#
+		<input type="hidden" name="netName" id="netName" />#*网点名称*#
+		<input type="hidden" name="curId" id="curId" />#*币别ID*#
+		<input type="hidden" name="curName" id="curName"  />#*币别名称*#
+		<input type="hidden" name="poolSign" id="poolSign" />#*资金池标识 0-非资金池；1-资金池*#
+		<input type="hidden" name="interestSign" id="interestSign" />#*计息标志*#
+		<input type="hidden" name="accountId" id="accountId" />#*内部账户ID*#
+		<input type="hidden" name="corpId" id="corpId" />#*开户单位*#
+		<input type="hidden" name="pageFlag" id="pageFlag" value="0" />#*界面标志0-新增 1-修改*#
+		<input type="hidden" name="generateMode" id="generateMode" value="I" />#*产生方式 P-批量计息 I-个别计息*#
+		<tbody>
+		<tr>
+			<td width="10%" class="textRight">#springMessage('table.fcAcc.blnctrAcc')</td>
+			<td width="25%">
+				##内部账号
+				#*<div class="layui-input-inline">
+					<input type="text" id="account" name="account" data-name="account" data-biz-name="account" lay-verify="required" accountType="1"
+						   class="layui-input bt-biz-accountTable" data-callback="accountCallBack" containParent="true" data-resource="finacial:interest:dda:hand"/>
+				</div>*#
+				<div class="layui-input-inline">
+					<input type="text" name="account" id="account" data-biz-name="account" lay-verify="required"
+						   autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAcc.blnctrAcc')">
+					<table id="accountTable" class="hide">
+						<thead>
+						<tr>
+							<th>#springMessage('table.choBankFinance.acc')</th>
+							<th>#springMessage('table.choBankFinance.accName')</th>
+							<th>#springMessage('table.fcAcc.corpId')</th>
+							<th>#springMessage('table.choBankFinance.curId')</th>
+						</tr>
+						</thead>
+					</table>
+				</div>
+			</td>
+            <td width="10%" class="textRight">#springMessage('table.interestSingleNod.balance')</td>
+            <td width="20%">
+                <input type="text" id="balance" name="balance" style="text-align:right" data-name="balance" data-biz-name="balance"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.choInnerFinance.depositMoney')" readonly="readonly">
+            </td>
+            <td width="10%" class="textRight">#springMessage('table.interestSingleNod.withdrawalMoney')</td>
+            <td >
+                <input type="text" id="money" name="money" style="text-align:right" data-name="money" data-biz-name="money"
+                    					   lay-verify="required" data-min="0"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.interestSingleNod.withdrawalMoney')" >
+            </td>
+        </tr>
+        <tr>
+            ##记账日期
+            <td width="10%" class="textRight">#springMessage('table.fcAccbook.tallyDate')</td>
+            <td width="25%">
+                <div class="layui-input-inline">
+                    <input type="text" name="tallyDate" class="layui-input bt-biz-dateType" data-type="date" id="tallyDate" data-biz-name="tallyDate" lay-verify="required|date"  />
+                </div>
+            </td>
+            ##止息日期
+            <td width="10%" class="textRight">#springMessage('table.interet.blnInstDate')</td>
+            <td width="20%">
+                <input type="text" name="endDate" class="layui-input bt-biz-dateType" lay-verify="required|date" data-type="date" data-biz-name="endDate" value="" id="endDate" />
+            </td>
+            <td width="10%" class="textRight">#springMessage('table.fcAccbookHis.affixAmount')</td>
+            <td >
+                <input type="text" name="affixAmount" id="affixAmount" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbookHis.affixAmount')">
+            </td>
+        </tr>
+        <tr>
+				<td colspan="8" align="center">
+					<button class="layui-btn layui-btn-mini" lay-submit lay-filter="calcInterest">#springMessage('table.fcAcc.interestSignOk')</button><!-- 计息 -->
+					<button class="layui-btn layui-btn-mini" lay-submit lay-filter="calcSubmit">#springMessage('common.button.submit')</button><!--提交 -->
+					<button class="layui-btn layui-btn-mini" lay-submit lay-filter="doBatchPrint">#springMessage('table.interet.vourcher')</button>
+					<button class="layui-btn layui-btn-mini" lay-submit lay-filter="doPrintRateNotice">#springMessage('table.interet.lxtzd')</button><!-- 打印利息通知单 -->
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<div class="layui-tab layui-tab-card my-tab" lay-filter="card2" style="height: 100%">
+	<ul class="layui-tab-title">
+		<li class="layui-this" lay-id="lxqd">#springMessage('table.interet.lxqd')</li><!--利息清单  -->
+		<li lay-id="jxpz">#springMessage('table.interet.jxpz')</li><!--计息凭证  -->
+		<li lay-id="jsqd">#springMessage('table.interet.jsqd')</li><!--积数清单  -->
+
+	</ul>
+	<div class="layui-tab-content" style="width: 100%; height: 100%; padding: 0px;">
+		<div class="layui-tab-item layui-show" style="width: 100%; height: 100%">
+			<iframe id="lxqdiframe" src="" frameborder="0" style="width: 100%; height: 100%"></iframe>
+		</div>
+        <div class="layui-tab-item" style="width: 100%; height: 100%">
+            <iframe id="jxpziframe" src="" frameborder="0" style="width: 100%; height: 100%;display: none"></iframe>
+        </div>
+        <div class="layui-tab-item" id="newiframeDiv" style="width: 100%; height: 100%; overflow-y: auto; display: none">
+            <iframe id="jsqdiframe" src="" frameborder="0" style="width: 100%; height: 100%;display: none"></iframe>
+        </div>
+	</div>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/interest/single/noti/fcInterestNoti.common.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/finacial/interest/single/noti/fcInterestNoti.add.js?_btv=${resourceVersion}"></script>
+</html>

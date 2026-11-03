@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+	.voucher-title {
+		font-weight: bold;
+		font-size: 12px;
+		text-align: center;
+		border-left: 0px;
+		border-right: 0px;
+		background-color: #d2d2d2;
+	}
+</style>
+</head>
+<body>
+	<form class="layui-form" method="post">
+			<input id="id" name="id" type="hidden" value="$!{deferred.id}">
+			<input id="corpId" name="corpId" type="hidden" value="$!{info.corpId}">
+			##发放编号
+			<input id="liCode" name="liCode" type="hidden" value="$!{send.billCode}">
+        <table class="layui-table">
+			<tbody>
+			<tr class="dark-table-header">
+       		 	##录入信息
+				<td colspan="4" class="voucher-title">#springMessage('cms.precative.Info')</td>
+			</tr>
+        	<tr>
+        		##贷款编号
+				<td class="textRight" width="10%">#springMessage('cms.precative.loanNo')</td>
+				<td width="40%">$!{send.fatherCode}</td>
+
+        		##合同编号
+				<td class="textRight" width="10%">#springMessage('table.fcAcc.contractNo')</td>
+				<td width="40%">$!{info.contractCode}</td>
+			</tr>
+
+        	<tr>
+        		##委托人
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.precativeId')</td>
+				<td>$!{info.precativeName}</td>
+        		##受托人
+					#if($!{info.isBank} && $!{info.isBank} == 1)
+                        <td class="textRight" id="isBankName">#springMessage('table.cmsPrecativeLoanInfo.bankCode')</td>
+                        <td>
+                            <span>$!{info.bankName}</span>
+                        </td>
+					#else
+                        <td class="textRight" id="isBankName">#springMessage('table.cmsPrecativeLoanInfo.corpId')</td>
+                        <td>
+                            <span>$!{info.corpName}</span>
+                        </td>
+					#end
+			</tr>
+
+        	<tr>
+        		##借款人
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.loanOpp')</td>
+				<td>$!{info.loanOppName}</td>
+
+        		##委贷单据编码
+				<td class="textRight">#springMessage('cms.precative.info.billCode')</td>
+				<td>$!{info.billCode}</td>
+			</tr>
+
+        	<tr>
+        		##贷款金额(小写)
+				<td class="textRight">#springMessage('table.cmsLoanInfo.loanMoneyLower')</td>
+				<td>
+				$number.formatNumeric($!{info.money})
+					<input type="hidden" data-name="pc5" class="bt-biz-moneyType layui-input" data-toup="loanMoney" data-decimal="2"
+						   data-minus="true" value="$!{info.money}" readonly="true">
+				</td>
+
+        		##贷款金额(大写)
+				<td class="textRight">#springMessage('table.cmsLoanInfo.loanMoneyUpper')</td>
+				<td>
+                   	<div id="loanMoney"></div>
+				</td>
+			</tr>
+
+        	<tr>
+        		##贷款币别
+				<td class="textRight">#springMessage('cms.precative.loan.curId')</td>
+				<td>$!{info.curName}</td>
+        		##贷款期限
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.term')</td>
+				<td>$!{info.term}$dictTag.get("PrecativeLoanInfo.ternUnit",$!{info.ternUnit})</td>
+			</tr>
+
+        	<tr>
+        		##开始日期
+				<td class="textRight">#springMessage('table.fcBankBalanceAdjust.beginDate')</td>
+				<td>$!date.format('yyyy-MM-dd',$!info.startDate)</td>
+
+        		##到期日期
+				<td class="textRight">#springMessage('table.fcAcc.deadlineDate')</td>
+				<td>$!date.format('yyyy-MM-dd',$!info.endDate)</td>
+			</tr>
+        	<tr>
+        		##手续费率
+				<td class="textRight">#springMessage('table.cgsBill.chargeRate')</td>
+				<td>
+				 		##set($poundageRate = $!{info.poundageRate} * 100)
+                        <span>$rateTag.show($!{info.poundageRate})</span>
+				</td>
+        		##担保方式
+				<!-- <td class="textRight">#springMessage('table.cmsProvideLoanInfo.plType')</td>
+				<td>$!{info.plName}</td> -->
+				<td></td>
+				<td></td>
+			</tr>
+        	<tr>
+        		##用途
+				<td class="textRight">#springMessage('table.nisBillhead.purpose')</td>
+				<td >$!{info.purpose}</td>
+        		##担保合同号
+				<!-- <td class="textRight">#springMessage('cms.prevative.info.guaSuretyCode')</td>
+				<td >$!{info.guaSuretyCode}</td> -->
+				<td></td>
+				<td></td>
+			</tr>
+
+			##委托贷款发放信息(第 n 次)
+			<tr>
+				<td colspan="6" style="text-align: center;">#springMessage('common.precative.loan.message')(#springMessage('cms.loan.the') $!{send.sendTime} #springMessage('cms.load.count'))</td>
+			</tr>
+
+			<tr>
+        		##委贷发放编码
+				<td class="textRight">#springMessage('cms.precative.send.billCode')</td>
+				<td >$!{send.billCode}</td>
+        		##贷款待发金额
+				<td class="textRight">#springMessage('cms.precative.loan.dueOutMoney')</td>
+				#set($balance = $!{info.money}-$!{send.sendApproveMoney})
+				<td >$number.formatNumeric($!{balance})</td>
+			</tr>
+
+			<tr>
+        		##贷款发放方式
+				<td class="textRight">#springMessage('table.cmsLoanInfo.loanSendOutType')</td>
+				<td >$dictTag.get("cms.loan.loanSendOutType", $!{info.loanSendOutType})</td>
+
+				<td ></td>
+				<td ></td>
+			</tr>
+
+			<tr>
+        		##本次放款金额
+				<td class="textRight">#springMessage('cms.precative.loan.thisSendMoney')</td>
+				<td>$number.formatNumeric($!{send.money})
+					<input type="hidden" data-name="pc5" class="bt-biz-moneyType layui-input" data-toup="sendMoney" data-decimal="2"
+					data-minus="true" value="$!{send.money}" readonly="true">
+				</td>
+        		##本次放款金额(大写)
+				<td class="textRight">#springMessage('cms.precative.loan.thisSendMoney.capitalize')</td>
+				<td >
+						<div class="layui-input-inline" id="sendMoney"></div>
+				</td>
+			</tr>
+			<tr>
+        		##贷款发放日期
+				<td class="textRight">#springMessage('cms.precative.send.sendDate')</td>
+				<td >$!date.format('yyyy-MM-dd',$!send.sendDate)</td>
+        		##贷款到期日期
+				<td class="textRight">#springMessage('cms.precative.send.deadlineDate')</td>
+				<td >
+				$!date.format('yyyy-MM-dd',$!send.deadlineDate)
+				<input id="matureDate" name="matureDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{send.deadlineDate})">
+				</td>
+			</tr>
+			<tr>
+        		##还款方式
+				<td class="textRight">#springMessage('table.cmsProvideLoanInfo.repayType')</td>
+				<td >$!{send.repayTypes}</td>
+        		##计息方式
+				<td class="textRight">#springMessage('table.cmsLoanSend.interestWay')</td>
+				<td >$dictTag.get("Admin.PredrawSign",$!{send.interestWay})</td>
+			</tr>
+			<tr>
+        		##浮动方式
+				<td class="textRight">#springMessage('table.cmsProvideLoanInfo.floatWay')</td>
+				<td>
+					$dictTag.get("Cms.FloatWay",$!{send.floatWay})
+					<div class="layui-inline" id="nextDetail">
+						#set($postfix = "")
+						#if($!{send.floatWay} == '03')
+							#set($postfix = "Month")
+						#elseif($!{send.floatWay} == '04')
+							#set($postfix = "Season")
+						#elseif($!{send.floatWay} == '05')
+							#set($postfix = "HY")
+						#elseif($!{send.floatWay} == '06')
+							#set($postfix = "Year")
+						#end
+						#if($postfix != "")
+							<span>$dictTag.get("Cms.FloatWay$postfix",$!{send.floatWayNext})</span>
+						#end
+					</div>
+				</td>
+
+        		##利率调整生效日期
+				<td class="textRight">#springMessage('table.cmsLoanSend.rateEntriesEffectDate')</td>
+				<td >$!date.format('yyyy-MM-dd',$!send.rateEntriesEffectDate)</td>
+			</tr>
+
+			<tr>
+        		##浮动利率
+				<td class="textRight">#springMessage('table.cmsProvideLoanInfo.floatRate')</td>
+				<td>
+					##if($!{send.floatWay} != '01')
+					<div class="layui-inline" >
+						##基准利率类型
+						<div  class="layui-input-inline" id="referenceRateTypeDiv">
+							$!{send.baseTypeName}
+						</div>
+						##贷款周期
+						<div style="padding-top: 10px;" id="repayCycleDiv">
+						</div>
+							$!{send.periodName}
+						<div style="padding-bottom: 10px;padding-top: 10px;">
+							##点数或者浮动比例选择与文本
+							<div class="layui-inline" id="pointsSelectDiv">
+								$!{send.pointsProportionName}
+							</div>
+							<div class="layui-inline" >
+								$!number.formatNumeric($!{send.pointsProportionText})
+							</div>
+						</div>
+					</div>
+					##end
+				</td>
+
+        		##贷款利率
+				<td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.rate')</td>
+				<td>
+					 ##set($infoRate = $!{info.rate} * 100)
+                     <span>$rateTag.show($!{info.rate})</span>
+				</td>
+			</tr>
+
+			<tr>
+        		##还款在途金额
+				<td class="textRight">#springMessage('table.cmsLoanRepay.inwayMoney')</td>
+				<td>$number.formatNumeric($!{passageMoney})</td>
+
+        		##已还金额
+				<td class="textRight">#springMessage('table.cmsLoanRepay.processMoney')</td>
+				<td>$number.formatNumeric($!{repayMoney})</td>
+			</tr>
+
+			#if("$!deferred" != "" && $!deferred.status != "")
+
+			<tr>
+				<td class="textRight">#springMessage('cms.precative.deferred.startdate')</td>
+				<td >$date.format("yyyy-MM-dd",$!{deferred.deferredStartDate})</td>
+
+				<td class="textRight">#springMessage('table.cmsLoanSend.deferredReplayDate')</td>
+				<td >$date.format("yyyy-MM-dd",$!{deferred.deferredRepayDate})</td>
+			</tr>
+
+			<tr>
+        		##展期期限
+				<td class="textRight">#springMessage('table.cmsProvideLoanDeferred.deferredLimt')</td>
+				<td width="40%">$!{deferred.deferredLimt} $dictTag.get("PrecativeLoanInfo.ternUnit",$!{deferred.ternUnit})</td>
+
+				#if($!{deferred.refuseWhy})
+					<td class="textRight" >#springMessage('table.cmsPrecativeLoanInfo.refuseWhy')</td>
+               		<td>$!{deferred.refuseWhy}</td>
+               	#else
+               		<td></td>
+               		<td></td>
+                #end
+			</tr>
+
+			<tr>
+        		##展期利率
+				<td class="textRight">#springMessage('table.fcAcc.delayRate')</td>
+				<td >
+					$rateTag.show($!{deferred.deferredRate})
+				</td>
+
+        		##备注
+				<td class="textRight">#springMessage('table.btBankAcc.rmk')</td>
+				<td>$!{deferred.rmk}</td>
+			</tr>
+			#end
+       		<tr>
+       			<td colspan="9" align="center">
+       				<button class="layui-btn"  onClick="doClose()">#springMessage('common.button.close')</button>
+       			</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/precative/cmsPrecativeLoanDeferred.additional.js?_btv=${resourceVersion}"></script>
+</html>

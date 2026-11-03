@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+	<input type="hidden" name="currentTypeName" value="$!{fexRateType.typeName}">
+	<input type="hidden" name="currentBifCode" value="$!{fexRateType.bifCode}">
+	<input type="hidden" name="currentRateInterfaceType" value="$!{fexRateType.rateInterfaceType}">
+	<input type="hidden" name="id" value="$!{fexRateType.id}">
+	<table class="layui-table">
+		<tbody>
+			##				名称
+		<tr>
+			<td class="textRight" width="40%">#springMessage('bill.accebill.name')</td>
+			<td>
+				<input type="text" name="typeName" lay-verify="required" value="$!{fexRateType.typeName}"
+					   autocomplete="off" class="layui-input" placeholder="#springMessage('bill.accebill.name')">
+			</td>
+		</tr>
+			##				外汇牌价接口类别
+		<tr>
+			<td class="textRight">#springMessage('fex.rate.interface.typename')</td>
+			<td>
+				<div class="bt-biz-dict" data-type="select"
+					 data-group="fex.rate.interface.type" data-name="rateInterfaceType"
+					 data-defaultvalue="$!{fexRateType.rateInterfaceType}" data-callback="bt.rateInterfaceTypeCallback"
+					 data-biz-name="rateInterfaceType" data-required = "true" ></div>
+			</td>
+		</tr>
+			##				接口
+		<tr>
+			<td class="textRight">#springMessage('table.type.interface')</td>
+			<td>
+				<div data-name="bifCode" class="bt-biz-selectType"
+					 data-biz-name="bifCode"
+					 data-url="${basePath}/basic/business/bisbifinit/jsonFex"
+					 data-valueField="id"
+					 data-textField="name"
+					 #if($!{fexRateType.rateInterfaceType}!="3")
+					 data-required="true"
+					 #end
+					 data-defaultvalue="$!{fexRateType.bifCode}"
+					 data-search="true"></div>
+			</td>
+		</tr>
+			##				是否需要按标准币种查询
+		<tr id="currencyTr" #if($!{fexRateType.rateInterfaceType} == "2")
+			style="display: none"
+		#end>
+			<td class="textRight">#springMessage('table.inquire.standard.currency')</td>
+			<td>
+				<div class="bt-biz-dict" data-type="radio" data-group="sf_yn"
+					 data-defaultvalue="$!{fexRateType.isNeedQueryCur}" data-name="isNeedQueryCur" data-required = "true"></div>
+			</td>
+		</tr>
+			##				有效标志
+		<tr>
+			<td class="textRight">#springMessage('table.btCurrency.validSign')</td>
+			<td>
+				<div class="bt-biz-dict" data-type="radio" data-group="valid_sign"
+					 data-defaultvalue="$!{fexRateType.validSign}" data-name="validSign" data-required = "true"></div>
+			</td>
+		</tr>
+			##				备注
+		<tr>
+			<td class="textRight">#springMessage('bisAccAttribute.rmk')</td>
+			<td >
+				<textarea placeholder="#springMessage('bisAccAttribute.rmk')" class="layui-textarea" style="width:100%" id="rmk" name="rmk">$!{fexRateType.rmk}</textarea>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.save')</button>
+				<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+	bt.use(['form','layedit','dicts', 'selectType','select'], function(){
+		var $ = bt.jquery,form = bt.form();
+		var selectType = bt.selectType.init();
+		bt.bifCode = function(data){
+			form.render('select');
+		}
+		bt.rateInterfaceTypeCallback = function(data){
+			var rateInterfaceType = bt.dicts.get("rateInterfaceType").val();
+			if(rateInterfaceType == "2"){
+				$("#currencyTr").hide();
+			}else{
+				$("#currencyTr").show()
+			}
+			if(rateInterfaceType == "3"){
+				//外汇牌价接口非必填
+				selectType.get("bifCode").attr("data-required",false);
+			}else {
+				selectType.get("bifCode").attr("data-required",true);
+			}
+			form.renderIcon();
+		}
+		bt.dicts.init();
+
+		//监听提交
+		form.on('submit(submit)', function(data){
+			var action = "/foreign/fexratetype/modify";
+			$.post(basePath + action, data.field, function (result) {
+				parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+					parent.layer.closeAll();
+					if (result.success) {
+						if (bt.navtab) {
+							bt.navtab.closeCurrent();
+							bt.navtab.refreshParent();
+						} else {
+							parent.layer ? parent.layer.closeAll() : layer.closeAll();
+						}
+					}
+				})
+			}, 'JSON');
+			return false;
+		});
+
+	});
+
+</script>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8"/>
+    <title>飞书授权中</title>
+    <script>
+        var basePath = "${basePath}";
+        if(top.location != this.location){top.location.replace(basePath+'/');}
+    </script>
+</head>
+
+<!-- 在html文档中引入 JSSDK -->
+<!-- JS 文件版本在升级功能时地址会变化，如有需要（比如使用新增的 API），请重新引用「网页应用开发指南」中的JSSDK链接，确保你当前使用的JSSDK版本是最新的。-->
+<script type="text/javascript"
+src="https://lf1-cdn-tos.bytegoofy.com/goofy/lark/op/h5-js-sdk-1.5.16.js">
+</script>
+<body>
+<div>
+</div>
+
+<script type="text/javascript" src="${basePath}/static/plugins/jquery/jquery.min.js" charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/plugins/jquery/jquery.ajax.extend.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript" src="${basePath}/static/plugins/layui/layui.js" charset="utf-8"></script>
+<script type="text/javascript" src="${basePath}/static/plugins/crypto/crypto-js.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="${basePath}/static/plugins/store/store.legacy.min.js?_btv=${resourceVersion}" charset="utf-8"></script>
+<script>
+    window.onload = function() {
+        if (!window.h5sdk) {
+            alert('please open in feishu')
+            return
+        }
+        const url = encodeURIComponent(location.href.split("#")[0]);
+        $.get(basePath + "/third/feiShu/config?url=" + url, function (json) {
+            if (!json) {
+                alert('获取配置出错')
+                return
+            }
+            const res = json.obj;
+            window.h5sdk.config({
+                appId: res.appId,
+                timestamp: res.timestamp,
+                nonceStr: res.noncestr,
+                signature: res.signature,
+                jsApiList: [],
+                //鉴权成功回调
+                onSuccess: (res1) => {
+                    console.log("config success:", JSON.stringify(res1));
+                },
+                //鉴权失败回调
+                onFail: (err1) => {
+                    console.log("config failed:" ,JSON.stringify(err1));
+                },
+            });
+            window.h5sdk.ready(()=>{
+                tt.requestAuthCode({
+                    appId: res.appId,
+                    // 获取成功后的回调
+                    success(res) {
+                        console.log("getAuthCode succeed");
+                        var _href = window.location.href;
+                        var url = _href.substring(0, _href.indexOf("/third"));
+                        tt.openSchema({
+                            schema: url + "/third/login?code=" + res.code + "&type=2",
+                            external: true,
+                            success(res){
+                                store.clearAll()
+                                // 加载字典资源
+                                $.get(basePath + "/dict", function (json) {
+                                    if (!json) {
+                                        return;
+                                    }
+                                    var dict = {};
+                                    for (var i = 0; i < json.length; i++) {
+                                        var temp = json[i];
+                                        var tempGroupCode = temp.groupCode;
+                                        if (!dict[tempGroupCode]) {
+                                            dict[tempGroupCode] = {};
+                                        }
+                                        if (!dict[tempGroupCode][temp.code]) {
+                                            dict[tempGroupCode][temp.code] = {name: temp.name, index: i, code: temp.code};
+                                        }
+                                    }
+                                    try{
+                                        store.set('bytter_dict', dict);
+                                    }catch (e) {
+                                        bt.dictContext = dict;
+                                    }
+                                }, 'JSON');
+
+                                //加载国际化资源
+                                $.ajax({
+                                    url: basePath + "/lang", type: 'get', async: false, dataType: 'json',
+                                    success: function (json) {
+                                        if (!json) {
+                                            return;
+                                        }
+                                        var lang =  {};
+                                        for (var i = 0; i < json.length; i++) {
+                                            lang[json[i].langKey] = json[i].langContext;
+                                        }
+                                        window.mutiLang = lang;
+                                        bt.bytterMutiLang = lang;
+                                        try {
+                                            store.set('bytter_lang', lang)
+                                        }catch (e) {
+                                        }
+                                    }
+                                });
+                                tt.closeWindow({
+                                    fail(res) {
+                                        console.log(`closeWindow fail: ${JSON.stringify(res)}`);
+                                    }
+                                });
+                            },
+                            fail(err) {
+                                console.log(`openSchema failed, err:`, JSON.stringify(err));
+                            }
+                        });
+                    },
+                    // 获取失败后的回调
+                    fail(err) {
+                        console.log(`getAuthCode failed, err:`, JSON.stringify(err));
+                    }
+                })
+            })
+        }, 'JSON');
+    }
+</script>
+
+</body>
+</html>

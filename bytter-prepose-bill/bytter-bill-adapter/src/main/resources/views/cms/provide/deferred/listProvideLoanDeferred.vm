@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+</head>
+<!-- 借款展期申请 -->
+<body>
+<form action="" id="searchForm" class=layui-form>
+    <table class="layui-table ">
+        <input type="hidden" id="pageType" value="$!{pageType}">
+        <tbody>
+        <tr>
+            <td class="textRight" width="25%">
+                ##申请单位
+                #springMessage('cms.provide.deferred.allCorp'):
+            </td>
+            <td width="25%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-biz-type="corp" data-type="selectTree" data-name="eqs_corpId"
+                         data-resource="cms:provide:deferred:apply:query" data-scope="all"></div>
+                </div>
+            </td>
+            ##发放单号
+            <td class="textRight" width="25%">#springMessage('table.cmsProvideLoanSend.billCode')：</td>
+            <td width="25%"><input type="text" class="layui-input" name="likes_provideCode"/></td>
+        <tr>
+
+        <tr>
+            ##借款发放编号
+            <td class="textRight" width="25%">#springMessage('table.cmsProvideLoanSend.contractCode')：</td>
+            <td width="25%"><input type="text" class="layui-input" name="likes_sendContractCode"/></td>
+
+            ##到期日期
+            <td class="textRight" width="25%">#springMessage('table.cmsProvideLoanSend.repayDate')：</td>
+            <td>
+                <div class="layui-inline">
+                    <input class="layui-input bt-input-inline bt-biz-dateType" type=text name="ged_repayDate"
+                           data-type="date" data-endid="t2">
+                </div>
+                <div class="layui-inline">~</div>
+                <div class="layui-inline">
+                    <input id=t2 class="layui-input bt-input-inline bt-biz-dateType" data-type="date" type=text
+                           name="led_repayDate">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form"
+       style="width: 100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cmsProvideLoanInfo.corpId')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.billCode')</th>
+        <th>#springMessage('table.cmsProvideLoanSend.billCode')</th>
+        <th>#springMessage('table.cmsProvideLoanSend.contractCode')</th>
+        <th>#springMessage('table.fcAccbookHis.enrolTime')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.bankId')</th>
+        <th>#springMessage('table.btBankAccCur.cur')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.plMoney')</th>
+        <th>#springMessage('table.cmsProvideLoanSend.money')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.plDate')</th>
+        <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.repayType')</th>
+        <th>#springMessage('table.cmsProvideLoanInfo.plClass')</th>
+        <!-- <th>#springMessage('table.cmsProvideLoanInfo.plType')</th> 担保方式-->
+        <th>#springMessage('table.cmsProvideLoanInfo.plTerm')</th>
+        #if($!{loanNum} != "1")
+            <th>#springMessage('table.cmsLoanSend.deferredNum')</th>
+            <th>#springMessage('cms.precative.deferred.startdate')</th>
+            <th>#springMessage('table.cmsLoanSend.deferredReplayDate')</th>
+        #end
+        <th>#springMessage('table.fcBankBalanceAdjust.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form', 'datatable', 'dateType', 'moneyType', 'corp'], function () {
+        $ = bt.jquery, form = bt.form();
+        //时间
+        bt.dateType.init();
+        bt.corp.init();
+        bt.jquery("#ged_repayDate").val();
+
+        /**判断字符串是否为空*/
+        bt.empty = function (ms) {
+            if (typeof (ms) == "undefined" || ms == null || ms == "" || ms == " ") {
+                return true;
+            }
+            return false;
+        }
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            ordering: false,
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            ajax: {
+                'url': basePath + "/cms/provide/provideloandeferred/datatable"
+            },
+            searchForm: {
+                formFilter: "search",
+                formElem: "#searchForm"
+            }
+            , columns: [
+                {data: "corpName", bSortable: true},
+                {data: "billCode", bSortable: true},
+                {data: "provideCode", bSortable: true},
+                {data: "sendContractCode", bSortable: true},
+                {data: "createDate", bSortable: true},
+                {data: "bankName", bSortable: true},
+                {data: "curName", bSortable: true},
+                {
+                    data: "plMoney",
+                    bSortable: true,
+                    className: "textRight",
+                    render: function (data, type, full, mate) {
+                        var plMoney = bt.money.format(full.plMoney);
+                        return plMoney;
+                    }
+                },
+                {
+                    data: "money", bSortable: true, className: "textRight", render: function (data, type, full, meta) {
+                        var money = bt.money.format(full.money);
+                        return money;
+                    }
+                },
+                {data: "plDate", bSortable: true},
+                {data: "repayDate", bSortable: true},
+                {
+                    data: "repayTypeName",
+                    bSortable: true,
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.empty(full.repayTypeName) ? full.repayTypeName1 : full.repayTypeName;
+                    }
+                },
+                {data: "plClassName", bSortable: true},
+                /* 	{data:"plType",bSortable:true,
+                      render : function(date,type,full,meta){
+                          return bt.dict("Cms.PlType.B",full.plType);
+                      }},*/
+                {
+                    data: "plTerm", bSortable: true,
+                    render: function (data, type, full, meta) {
+                        var term = full.plTerm + (full.ternUnit == "M" ? bt.lang("table.dailyAccount.unitNumber") : "") + bt.dict('PrecativeLoanInfo.ternUnit', full.ternUnit);
+                        return term;
+                    }
+                },
+                #if($!{loanNum} != "1")
+                    {
+                        data: "deferredNum", bSortable: true, className: 'center',
+                        render: function (data, type, full, meta) {
+                            if (full.deferredNum > 0) {
+                                return "<a href='javascript:void(0)' onclick='sendInfolist(\"" + full.provideCode + "\")' ><u>" + full.deferredNum + "</u></a>";
+                            } else {
+                                return full.deferredNum;
+                            }
+                        }
+                    },
+                    {data: "deferredStartDate", bSortable: true, className: 'center'},
+                    {data: "deferredRepayDate", bSortable: true, className: 'center'},
+                #end
+                {
+                    data: "status", bSortable: true,
+                    render: function (data, type, full, meta) {
+                        return bt.dict("cms.bizStatus", full.bizStatus);
+                    }
+                },
+                {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                        var html = '';
+                        if (bt.isResource('cms:provide:deferred:apply:edit')) {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="Application(this)">' + bt.lang("cms.loanDeferred.add") + '</a>';
+                        }
+                        html += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="' + meta.row + '" onclick="listMsg(this)">' + bt.lang("common.button.logInfo") + '</a>';
+
+                        return html;
+                    }
+                }
+            ],
+            summary: {
+                pageSum: true,//小计功能开启
+                selectSum: false,//已选汇总功能开启
+                //groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '8', //汇总列序号
+                        dataName: 'plMoney' //汇总列借款金额
+                    },
+                    {
+                        colNum: '9', //汇总列序号
+                        dataName: 'money' //汇总列发放金额
+                    }
+                ]
+            }
+        });
+
+    });
+
+    // 展期申请
+    function Application(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('cms.loanDeferred.add'), basePath + "/cms/provide/provideloandeferred/application?provideCode=" + data.provideCode);
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/cms/provide/provideloandeferred/update?id=" + data.id,
+                end: function () {
+                    datatable && datatable.draw();
+                }
+            });
+        }
+
+
+    }
+
+    function view(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/provide/provideloandeferred/view/" + data.id
+        });
+    }
+
+    //日志列表
+    function listMsg(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.button.logInfo'), basePath + "/cms/basedata/cmsprocessmsg/list?billCode=" + data.provideCode);
+
+            }
+        }
+    }
+
+    //展期次数
+    function sendInfolist(billCode) {
+        if (billCode) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/cms/provide/provideloandeferred/deferredInfolist?liCode=" + billCode);
+
+            }
+        }
+    }
+
+</script>
+</html>

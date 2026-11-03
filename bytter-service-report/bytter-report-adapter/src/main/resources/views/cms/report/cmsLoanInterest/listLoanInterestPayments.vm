@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+
+<body>
+    <form id="searchForm" class="layui-form input150-container">
+        <table class="layui-table">
+                <tr> 
+                	##申请单位
+                    <td class="textRight">#springMessage('table.abBillTransfer.applyCorp')</td>
+	        		<td>
+	       				<div class="layui-input-inline">
+                            <div class="bt-biz-corp" 
+								 data-name="corpId"
+								 data-tree-type="check"
+								 data-biz-type="corp" 
+								 data-type="selectTree"
+								 data-biz-name="corpId"	
+								 data-defaultvalue="$!{search.corpId}"></div>
+                        </div>
+                    </td>
+
+					##融资类型
+					<td class="textRight">#springMessage('table.cms.type')</td>
+					<td>
+                        <div class="layui-inline" >
+                            <div class="bt-biz-dict" data-type="select" data-group="Loan.Sign" data-name="cmsType" 
+								 					data-biz-name="cmsType" data-defaultvalue="$!{search.cmsType}">
+							</div>
+						</div>
+                     </td>
+                </tr>
+
+                <tr>
+                	##借款银行
+        			<td class="textRight">
+        				#springMessage('table.cmsProvideLoanInfo.bankId')
+	        		</td> 
+	                <td>
+	               		<div class="layui-input-inline">
+							<input id="bankName" name="bankName" type="text" class="layui-input" value="$!{search.bankName}">
+						</div>
+	                </td>
+
+					##日期
+					<td class="textRight">#springMessage('table.fbsBudgetPeriod.beginDate')</td>
+					<td>
+						<input name="searchStartDate" class="layui-input bt-input-inline bt-biz-dateType" data-biz-name="searchStartDate"
+                              id="date1" lay-verify="required"	type="text"  data-endid="date2" value="$!{startDate}">
+						<span class="date-mid">~</span>
+						<input name="searchEndDate" class="layui-input bt-input-inline bt-biz-dateType" data-biz-name="searchEndDate"
+                               lay-verify="required" id="date2" type="text" value="$!{endDate}">
+					</td>
+				</tr>
+
+           		<tr>
+					<td style="text-align: center;" colSpan="6">
+						<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button id="reset" type="button" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+						<button class="layui-btn" lay-submit lay-filter="exportExcel" type="button">#springMessage('common.button.exports')</button>
+					</td>
+            	</tr>
+        </table>
+    </form>
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    	<thead>
+    	<tr>
+        	<th width="15%">#springMessage("table.abBillTransfer.applyCorp")</th>##申请单位
+        	<th width="15%">#springMessage("table.cms.type")</th>##融资类型
+        	<th width="8%">#springMessage("table.cmsProvideLoanInfo.bankId")</th>##借款银行
+        	<th width="8%">#springMessage("table.abBillTransfer.allocatedCode.apply")</th>##申请单号
+    		<th width="10%">#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+            ##<th width="8%">#springMessage("table.abBillTransfer.applyMoney")</th>##申请金额
+        	<th width="8%">#springMessage("table.cmsProvideLoanSend.billCode")</th>##放款单号
+        	<th width="10%">#springMessage("table.cmsProvideLoanSend.money")</th>##发放金额
+        	<th width="10%">#springMessage('table.cmsProvideLoanSend.sendDate')</th>##发放日期
+       	 	<th width="10%">#springMessage('table.fcAcc.deadlineDate')</th>##到期日期
+            <th width="10%">#springMessage('table.cms.loan.interest.payable')</th>##应付利息
+            <th width="10%">#springMessage('table.cmsProvideLoanRepay.onlineInterest')</th>##实付利息
+    	</tr>
+    	</thead>
+		
+		<tbody>
+				#set($yftotal = 0)
+				#set($sftotal = 0)
+				#foreach($item in $list)
+					<tr>
+						<td class="center">$!{item.corpName}</td>
+							#if($!{item.cmsType} == "A2" || $!{item.cmsLoanType} == "A2" )
+								#set($cmstype = "01")
+							#elseif($!{item.cmsType} == "B2" || $!{item.cmsLoanType} == "B2")
+								#set($cmstype = "02")
+							#elseif($!{item.cmsType} == "C2" || $!{item.cmsLoanType} == "C2")
+								#set($cmstype = "03")
+							#end
+						<td class="center">$dictTag.get("Loan.Sign",$cmstype)</td>
+                        <td class="center">$!{item.bankName}</td>
+                        <td class="center">$!{item.billCode}</td>
+                        <td class="center">$!{item.curName}</td>
+                        <td class="center">$!{item.sendBillCode}</td>
+                        <td class="textRight">$number.formatNumeric($!{item.sendMoney})</td>
+                        <td class="center">$!date.format('yyyy-MM-dd',$!{item.sendDate})</td>
+                        <td class="center">$!date.format('yyyy-MM-dd',$!{item.endDate})</td>
+						#set($yftotal = $yftotal+$!{item.yfInterest} )
+                        <td class="textRight">
+							#if($!{item.yfInterest} == 0.00)
+								0.00
+							#else
+							<a href='#' onclick="getDetails('$!{item.sendBillCode}','0','$!{item.cmsType}')" >$number.formatNumeric($!{item.yfInterest})</a>
+							#end
+						</td>
+						#set($sftotal = $sftotal+$!{item.sfInterest} )
+                        <td class="textRight">
+							#if($!{item.sfInterest} == 0.00)
+								0.00
+							#else
+								<a href='#' onclick="getDetails('$!{item.sendBillCode}','1','$!{item.cmsType}')">$number.formatNumeric($!{item.sfInterest})</a>
+							#end
+						</td>
+					</tr>
+				#end
+				<tr>
+					<td></td><td></td><td></td><td></td>
+                    <td class="center">#springMessage('table.interet.sum')</td>
+                    <td></td><td></td><td></td><td></td>
+					<td class="textRight">$number.formatNumeric($yftotal)</td>
+                    <td class="textRight">$number.formatNumeric($sftotal)</td>
+				</tr>
+			
+		</tbody>
+	</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+var dateType;
+bt.use(['form','datatable','dateType','dicts','corp','select','moneyType','selectType','jquery'], function(){
+	$ = bt.jquery,form = bt.form();
+	dateType = bt.dateType.init();
+
+	bt.selectType.init();
+	bt.dicts.init();
+	bt.moneyType.init();
+	bt.moneyType.getFun();
+	bt.corp.init();
+
+
+    form.on('submit(search)', function(data){
+        var action =basePath + "/cms/report/cmsloaninterestpayments/list";
+        $("#searchForm").attr("action",action);
+		$("#searchForm").attr("method","post");
+        $("#searchForm").submit();
+    });
+
+    $("#reset").click(function(){
+        reset();
+    });
+
+	form.on('submit(exportExcel)', function(data){
+		var url =basePath + "/cms/report/cmsloaninterestpayments/exportExcel";
+		DownLoadFile({url: url, data: data.field, method: 'post'});
+		return false;
+	});
+});
+
+
+function getDetails(sendBillCode,sign,cmsType){
+    if(sendBillCode){
+        if(bt.navtab){
+           // var startTime = bt.dateType.init().get('ged_accOpenTime').val();
+          //  var endTime = $("#date").val();
+			var url = basePath + "/cms/report/cmsloaninterestpayments/getDetails?sendBillCode=" + sendBillCode + "&isRepay=" + sign + "&cmsType=" + cmsType + "&startDate=" + dateType.get("searchStartDate").val() + "&endDate=" + dateType.get("searchEndDate").val();
+            bt.navtab.addNavtab(bt.lang('common.view.data'),url);
+            return;
+        }
+    }
+}
+
+function reset(){
+    bt.dicts.init().get("cmsType").val("");
+    bt.dateType.init().get("searchStartDate").val("");
+    bt.dateType.init().get("searchEndDate").val("");
+    bt.corp.init().get("corpId").val("");
+    $("#bankName").attr("value","");
+    
+}
+
+var DownLoadFile = function (options) {
+	var config = $.extend(true, {method: 'post'}, options);
+	var iframe = $('<iframe id="down-file-iframe" />');
+	var form = $('<form target="down-file-iframe" method="' + config.method + '" />');
+	form.attr("action", config.url);
+	for (var key in config.data) {
+		form.append('<input type="hidden" name="' + key + '" value="' + config.data[key] + '" />');
+	}
+	iframe.append(form);
+	$(document.body).append(iframe);
+	form[0].submit();
+	iframe.remove();
+}
+
+</script>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="id" name="id" type="hidden" value="$!{ratBkrationPage.id}">
+    <input id="ratCode" name="ratCode" type="hidden" value="$!{ratBkrationPage.ratCode}">
+    <input type="hidden" id="ratType" name="ratType" value="0">
+    <input type="hidden" id="copmRatSize" name="copmRatSize" value="$!{copmRatSize}">
+    <input type="hidden" id="bankName" name="bankName" value="$!{ratBkrationPage.bankName}"/>
+    <input type="hidden" id="bankTypeName" name="bankTypeName" value="$!{ratBkrationPage.bankTypeName}"/>
+    <input type="hidden" id="userName" name="userName" value="$!{ratBkrationPage.userName}"/>
+    <input type="hidden" id="curName" name="curName" value="$!{ratBkrationPage.curName}"/>
+    <input type="hidden" id="curName" name="corpName" value="$!{ratBkrationPage.corpName}"/>
+    <input type="hidden" id="singItemSize" name="singItemSize" value="$!{singItemSize}">
+    <input type="hidden" id="compItemSize" name="compItemSize" value="$!{compItemSize}">
+    <input type="hidden" id="itemSize" name="itemSize" value="$!{itemSize}">
+    <input type="hidden" id="ratModeTemp" name="ratModeTemp" value="$!{ratBkrationPage.ratMode}">
+    <input type="hidden" id="corpIdTemp" name="corpIdTemp" value="$!{ratBkrationPage.corpId}">
+    <input type="hidden" id="bankId" name="bankId"/>
+    <input type="hidden" id="bondId" name="bondId" value="$!{dto.bondId}"/>
+    <input type="hidden" id="bondIdPre" name="bondIdPre" value="$!{dto.bondId}">
+    <input type="hidden" id="corpId" value="$!{ratBkrationPage.corpId}"/><!--授信单位id-->
+
+    <input type="hidden" id="accAvailMoney" name="accAvailMoney" value="$!{dto.availMoney}"/>
+    <input type="hidden" id="isHookBond" name="isHookBond" value="$!{ratBkrationPage.isHookBond}"/>
+    <input type="hidden" id="editFlag" value="1"><!-- 编辑数据页面标志-->
+    <input type="hidden" id="isHangBail" value="$!{isHangBail}"><!-- 授信是否挂保证金参数设置-->
+    <input type="hidden" id="creditContractControl" value="$!{creditContractControl}"><!-- 授信合同是否必须控制：0-不控制，1-提醒不控制，2-控制 -->
+    <input type="hidden" id="creditContractRequired" value="$!{ratBkrationPage.creditContractRequired}"><!-- 授信合同是否必须-->
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##授信模式
+            <td width="15%" class="textRight">#springMessage('table.ratBkration.ratMode')</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="radio" data-group="RatBkration.RatMode"
+                     data-defaultvalue="$!{ratBkrationPage.ratMode}"
+                     data-name="ratMode" data-biz-name="ratMode" data-callback="bt.changeCorp">
+                </div>
+            </td>
+            ##单位代码
+            <td width="12%" class="textRight">#springMessage('table.ratBkration.corpId')</td>
+            <td width="20%">
+                <div class="layui-input-inline" id="ratCorpDiv">
+                    #if($!{ratBkrationPage.ratMode} == "0")
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree" data-biz-name="corpId"
+                             data-name="corpId" data-defaultvalue="$!{ratBkrationPage.corpId}"
+                             data-width="300px;"
+                             data-required="true"
+                             data-resource="cms:rat:ration:apply"
+                             data-scope="rat"></div>
+                    #else
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree" data-biz-name="corpId"
+                             data-name="corpId" data-defaultvalue="$!{ratBkrationPage.corpId}"
+                             data-width="300px;"
+                             data-required="true"
+                             data-resource="cms:rat:ration:apply"
+                             data-scope="all"></div>
+                    #end
+
+                </div>
+            </td>
+            ##授信合同号
+            <td width="8%" class="textRight">#springMessage('table.ratBkration.contractNo')</td>
+            <td width="25%">
+                <div class="layui-inline">
+                    <input type="text" id="contractNo" name="contractNo" value="$!{ratBkrationPage.contractNo}"
+                           style="display: inline" lay-verify="required|strlength" data-maxlength="32"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.ratBkration.contractNo')">
+                    #parse("views/dual/manager/conInfo.vm")
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##银行编号
+            <td class="textRight"><font color="red">*</font>#springMessage('table.ratBkration.bankCode')</td>
+            <td colspan="3">
+                <div class="layui-inline">
+                    <input class="layui-input" id="shouBankName" readonly="readonly" type="text" style="width: 280px"
+                           value="$!{ratBkrationPage.bankName}"/>
+                </div>
+                <div class="layui-inline">
+                    <button type="button" class="layui-btn bt-biz-bankInfo" data-beforeClick="bt.bankInfoBeforeClick"
+                            data-callback="bankinfoCallback">#springMessage('common.button.select')</button>
+                </div>
+                <input type="hidden" id="bankCode" name="bankCode" value="$!{ratBkrationPage.bankCode}"/>
+                <input type="hidden" id="bankType" name="bankType" value="$!{ratBkrationPage.bankType}"/>
+            </td>
+            ##授信币种
+            <td class="textRight">#springMessage('table.ratBkration.curCode')</td>
+            <td>
+                <input type="hidden" id="curCode" value="$!{ratBkrationPage.curCode}"/>
+                <div class="bt-biz-selectType" data-biz-name="curCode"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id" data-textfield="curName" data-defaultvalue="$!{ratBkrationPage.curCode}"
+                     data-required="true" data-callback="curinfoCallback"
+                     data-name="curCode" data-search="true"></div>
+                </div>
+                ##                    <div class="bt-biz-selectType"  data-biz-name="curCode" type="list" field="curCode" fieldHref="${basePath}/basic/business/btcurrency/json" data-defaultvalue="$!{ratBkrationPage.curCode}"
+                ##						dictField="id" dictText="curName" placeholder="#springMessage('table.ratBkration.curCode')"></div>
+            </td>
+            ##额度是否包含保证金
+            <!-- 				<td class="textRight">#springMessage('table.ratBkration.includeBailmoney')</td> -->
+            <!-- 				<td> -->
+            <!-- 					<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{ratBkrationPage.includeBailmoney}"  -->
+            <!-- 						data-name="includeBailmoney" data-biz-name="includeBailmoney" >	 -->
+            <!-- 				</td> -->
+        </tr>
+        <tr>
+            ##授信开始时间
+            <td class="textRight">#springMessage('table.ratBkration.begindate')</td>
+            <td>
+                <input type="text" name="begindate" class="layui-input bt-biz-dateType" data-type="date"
+                       data-biz-name="begindate" data-endid="enddate" lay-verify="required"
+                       value="$!date.format('yyyy-MM-dd',$!ratBkrationPage.begindate)" data-callback="changeDate">
+            </td>
+            ##授信结束时间
+            <td class="textRight">#springMessage('table.ratBkration.enddate')</td>
+            <td>
+                <input type="text" name="enddate" class="layui-input bt-biz-dateType" data-type="date"
+                       data-biz-name="enddate" id="enddate" lay-verify="required"
+                       value="$!date.format('yyyy-MM-dd',$!ratBkrationPage.enddate)" data-callback="changeDate">
+            </td>
+            ##结转授信编号
+            <td class="textRight">#springMessage('table.ratBkration.changeCode')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="" data-defaultvalue="$!{ratBkrationPage.oldRatCode}"
+                     data-name="oldRatCode" data-biz-name="oldRatCode" data-valueField="id" data-textField="ratCode"
+                     data-disabled="false"></div>
+            </td>
+        </tr>
+        <tr>
+            ##担保合同开始时间
+            <td class="textRight">#springMessage('table.ratBkration.garanteeContract.begindate')</td>
+            <td >
+                <input type="text" name="guaranteeBeginDate" class="layui-input bt-biz-dateType" data-type="date" data-biz-name="guaranteeBeginDate" data-endid="guaranteeEndDate" value="$!date.format('yyyy-MM-dd',$!ratBkrationPage.guaranteeBeginDate)" >
+            </td>
+            ##担保合同结束时间
+            <td class="textRight">#springMessage('table.ratBkration.garanteeContract.enddate')</td>
+            <td >
+                <input type="text" name="guaranteeEndDate" class="layui-input bt-biz-dateType" data-type="date" data-biz-name="guaranteeEndDate" id="guaranteeEndDate" value="$!date.format('yyyy-MM-dd',$!ratBkrationPage.guaranteeEndDate)" >
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6">
+                <button class="layui-btn" id="addSingleTr" lay-submit="false" type="button"
+                        lay-filter="addSingleTr">#springMessage('ration.addSingleTr')</button>
+                <button class="layui-btn" id="addCompTr" lay-submit="false" type="button"
+                        lay-filter="addCompTr">#springMessage('ration.addCompTr')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table id="singleTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th width='150px'>#springMessage('table.ratBkrationDetail.itemCodeFlag')</th>
+            <th width='200px'>#springMessage('table.ratBkrationDetail.itemCode')</th>
+            <th width='220px'>#springMessage('table.ratBkrationDetail.creditType')</th>##授信方式
+            <th width='230px'>#springMessage('table.ratBkrationDetail.money')</th>
+            <th width='230px'>#springMessage('table.ratBkrationDetail.maxMoney')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        <tr style="display: none">
+            <td>
+        <tr>
+        </tbody>
+    </table>
+    <table id="compTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th width='150px'>#springMessage('table.ratBkrationDetail.itemCodeFlag')</th>
+            <th width='200px'>#springMessage('table.ratBkrationDetail.itemCode')</th>
+            <th width='220px'>#springMessage('table.ratBkrationDetail.creditType')</th>##授信方式
+            <th width='230px'>#springMessage('table.ratBkrationDetail.money')</th>
+            <th width='230px'>#springMessage('table.ratBkrationDetail.maxMoney')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+        <tbody>
+            #foreach($rationDtl in $!{ratBkrationPage.rationDtls})
+                #set($vcount = $velocityCount - 1)
+            <tr>
+                #if($!{vcount} == "0")
+                    <td rowspan="$!{copmRatSize}">$dictTag.get("RatModel.ItemFlag", "1")
+                        <input type="hidden" id="compRowIndex" name="compRowIndex" value="$!{rationDtl.itemOrder}">
+                    </td>
+                #end
+                <td>
+                    <input id="itemFlag$!{rationDtl.itemOrder}" name="rationDtls[$!{rationDtl.itemOrder}].itemFlag"
+                           type="hidden" value="1">
+                    <input name="rationDtls[$!{rationDtl.itemOrder}].itemOrder" type="hidden"
+                           value="$!{rationDtl.itemOrder}">
+                    <div class="layui-inline">
+                        <div class="bt-biz-selectType" data-biz-name="rationDtls[$!{rationDtl.itemOrder}].itemCode"
+                             data-url="${basePath}/cms/rat/ratitemcustom/getAllRatItem?type=0"
+                             data-valuefield="id" data-textfield="name" id="$!{rationDtl.itemOrder}itemCode"
+                             data-name="rationDtls[$!{rationDtl.itemOrder}].itemCode"
+                             data-defaultvalue="$!{rationDtl.itemCode}" data-itemdisabled="$!{rationDtl.disItemCodes}"
+                             data-search="false" data-link="true" data-callback="setItemCode">
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-dict" data-type="select" data-group="rat.creditType"
+                             data-biz-name="rationDtls[$!{rationDtl.itemOrder}].creditType"
+                             data-name="rationDtls[$!{rationDtl.itemOrder}].creditType" data-selecttext="false"
+                             data-defaultvalue="$!{rationDtl.creditType}"></div>
+                    </div>
+                </td>
+                #if($!{vcount} == "0")
+                    <td rowspan="$!{copmRatSize}">
+                        <input type="text" data-name="rationDtls[$!{rationDtl.itemOrder}].money"
+                               id="$!{rationDtl.itemOrder}money" data-biz-name="$!{rationDtl.itemOrder}money"
+                               class="layui-input bt-biz-moneyType" value="$!{rationDtl.money}" data-decimal="2"
+                               data-minus="false" data-callback="calComMoney">
+                    </td>
+                #end
+                <td>
+                    <input type="text" data-name="rationDtls[$!{rationDtl.itemOrder}].maxMoney"
+                           id="$!{rationDtl.itemOrder}maxMoney" data-biz-name="$!{rationDtl.itemOrder}maxMoney"
+                           class="layui-input bt-biz-moneyType" value="$!{rationDtl.maxMoney}" data-decimal="2"
+                           data-minus="false" rowindex="$!{rationDtl.itemOrder}" data-callback="bt.checkMaxMoney">
+                    <input type="hidden" id="assurepercent$!{rationDtl.itemOrder}"
+                           name="rationDtls[$!{rationDtl.itemOrder}].assurepercent" value="$!{rationDtl.assurepercent}">
+                    <input type="hidden" id="procedureFeeRate$!{rationDtl.itemOrder}"
+                           name="rationDtls[$!{rationDtl.itemOrder}].procedureFeeRate"
+                           value="$!{rationDtl.procedureFeeRate}">
+                    <input type="hidden" id="bondMoney$!{rationDtl.itemOrder}"
+                           name="rationDtls[$!{rationDtl.itemOrder}].bondMoney" value="$!{rationDtl.bondMoney}">
+                    <input type="hidden" id="procedureFee$!{rationDtl.itemOrder}"
+                           name="rationDtls[$!{rationDtl.itemOrder}].procedureFee" value="$!{rationDtl.procedureFee}">
+                </td>
+                <td>
+                    #if($!{vcount} == "0")
+                        <a class="" href="#" data-row="$!{rationDtl.itemOrder}"
+                           onclick="openAssure(this, $!{rationDtl.itemOrder})">#springMessage(
+                            "common.ration.limit.set")</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                        <button data-type="del" id="compButton" style="display: none" type="button"
+                                class="layui-btn layui-btn-mini">#springMessage("common.button.delete")</button>
+                    #else
+                        <a class="" href="#" data-row="$!{rationDtl.itemOrder}"
+                           onclick="openAssure(this, $!{rationDtl.itemOrder})">#springMessage(
+                            "common.ration.limit.set")</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                        <button data-type="del" type="button" class="layui-btn layui-btn-mini">#springMessage(
+                            "common.button.delete")</button>
+                    #end
+                </td>
+            </tr>
+            #end
+        </tbody>
+        <tfoot>
+        <tr>
+            <td align="center">#springMessage('table.ratBkration.sumMoney')</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>
+                <input type="text" id="moneysum" data-name="moneysum" data-biz-name="moneysum" readonly="readonly"
+                       data-decimal="2"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{ratBkrationPage.money}">
+            </td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        </tfoot>
+    </table>
+    <table class="layui-table">
+        <tbody>
+            #if($!{isHangBail}=="1")
+            <tr>
+                ##是否挂保证金
+                <td width="15%" class="textRight">#springMessage('table.fcBond.includeBond')</td>
+                <td width="40%">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn"
+                         data-name="isHookBond" data-biz-name="isHookBond" data-callback="bt.changeFcBond"></div>
+                </td>
+                <td width="15%"></td>
+                <td width="40%"></td>
+            </tr>
+            <tr class="isShow">
+                ##保证金比例
+                <td width="15%" class="textRight">#springMessage('table.fcBond.bondPercent')</td>
+                <td width="40%">
+                    <div class="layui-input-inline">
+                        <input type="text" data-name="bondPercent" data-max="100"
+                               class="layui-input bt-biz-ratioType"
+                               data-decimal="2" data-biz-name="bondPercent" value="$!{dto.bondPercent}"
+                               data-callback="setBailMoney">
+                    </div>
+                </td>
+                ##保证金金额
+                <td widht="15%" class="textRight">#springMessage('table.fcBond.bondmoney')</td>
+                <td width="40%">
+                    <div class="layui-input-inline">
+                        <input type="hidden" id="bondCorpId" value="$!{dto.corpId}"/>
+                        <input type="hidden" id="bondBankId" value="$!{dto.bankId}"/>
+                        <input type="hidden" id="bondCurId" value="$!{dto.curId}"/>
+                        <input type="hidden" id="applyMoneyPre" name="applyMoneyPre" value="$!{dto.applyMoney}"/>
+                        <input type="text" id="applyMoney" name="applyMoney" value="$!{dto.applyMoney}"
+                               class="layui-input bt-biz-moneyType" data-biz-name="applyMoney"
+                               data-callback="setBailMoneyRate">
+                    </div>
+                </td>
+            </tr>
+            <tr class="isShow">
+                ##保证金额度单
+                <td width="15%" class="textRight">#springMessage('table.fcBond.quotas')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <input id="bankAcc" name="bankAcc" type="text" readonly="true" class="layui-input"
+                               lay-verify="required"
+                               value="$!{dto.bankAcc}">
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn bt-biz-bondAccInfo" data-biz-name="bondAcc" type="button"
+                                data-callback="bondAccinfoCallback">#springMessage('common.button.select')</button>
+                    </div>
+                </td>
+                ##保证金合同号
+                <td width="15%" class="textRight">#springMessage('table.fcBond.contractNum')</td>
+                <td width="40%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bondContract" name="bondContract"
+                               autocomplete="off" class="layui-input" value="$!{dto.bondContract}">
+                    </div>
+                </td>
+                </div>
+                </td>
+            </tr>
+            #end
+            #if($!{isGuarantee}=="1")##授信参数设置挂接担保
+                #parse("views/common/guaContractChoose.vm")
+            #end
+        <tr>
+            ##备注
+            <td class="textRight" width="15%">#springMessage('table.ratBkration.remark')</td>
+            <td colspan="6">
+                <input type="text" id="remark" name="remark" style="width:90%" value="$!{ratBkrationPage.remark}"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.ratBkration.remark')">
+            </td>
+        </tr>
+        ##合同附件
+        <tr>
+            <td class="textRight"><span id="contractAttachSpan" style="color: red; display: none">*</span>#springMessage('table.ratBkration.contractAttach')</td>
+            <td style="text-align: center;" colspan="3">
+                <!-- 合同附件上传 -->
+                <input id="contractAnnexName" name="contractUploadId" type="hidden" value="$!{ratBkrationPage.contractAttachfilepath}">
+                <div id="contractUploader" class="layui-input-inline" style="width:100%"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.ratBkration.attach')</td>
+            <td style="text-align: center;" colspan="3">
+                <!-- 附件上传 -->
+                <input id="annexName" name="uploadId" type="hidden"
+                       value="$!{ratBkrationPage.attachfilepath}">
+                <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="temp">#springMessage('common.button.temp')</button>
+                <button class="layui-btn" id="submit" lay-submit="" lay-filter="submit">#springMessage(
+                    'common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratBkration.edit.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/guarantee/guaContractSelect.js?_btv=${resourceVersion}"></script>
+
+</html>

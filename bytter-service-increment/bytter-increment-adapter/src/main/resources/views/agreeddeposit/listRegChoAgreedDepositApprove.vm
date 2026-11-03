@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input id="eqs_busType" name="eqs_busType" type="hidden" value="$!{busType}">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}"/>
+    <table class="layui-table">
+        <tr>
+        ##开户单位
+            <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+            <td width="25%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="likes_corpId"
+                         data-resource="cho:inneragreeddeposit:agreeddeposit:reg:apply"
+                         data-scope="all"
+                         data-callback="bt.corpCallback"></div>
+                </div>
+            </td>
+        ##账号
+            <td class="textRight">#springMessage('table.fcAcc.account')</td>
+            <td>
+                <input type="text" name="likes_blnctrAcc" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.fcAcc.account')">
+            </td>
+        ##合同号
+            <td class="textRight">#springMessage('table.cgsBill.pactCode')</td>
+            <td>
+                <input type="text" name="likes_contractNo" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.cgsBill.pactCode')">
+            </td>
+        </tr>
+        <tr>
+        ##币别
+            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-name="eqs_curId" data-valueField="id" data-textField="curName"></div>
+                </div>
+            </td>
+        ##到期处理方式
+            <td class="textRight">#springMessage('table.bisFinanceExc.certificateWay')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select"
+                     data-group="agreed.certificateWay" data-name="eqs_certificateWay"></div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary resetBtn">#springMessage(
+                    'common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAgreedDeposit.billNo')</th>
+        <th>#springMessage('table.fcAcc.corpId')</th>
+        <th>#springMessage('table.fcAcc.account')</th>
+        <th>#springMessage('table.fcAcc.accName')</th>
+        <th>#springMessage('table.fcAcc.curId')</th>
+        <th>#springMessage('table.cgsBill.pactCode')</th>
+        <th>#springMessage('table.fbsBudgetReport.beginDate')</th>
+        <th>#springMessage('table.fbsBudgetReport.endDate')</th>
+        <th>#springMessage('table.bisFinanceExc.certificateWay')</th>
+        <th>#springMessage('table.btBankAcc.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+</body>
+<script>
+    bt.use(['form', 'datatable', 'select', 'corp', 'dicts', 'selectTable', 'moneyType', 'rateType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.dicts.init();
+        var moneyType = bt.moneyType.init();
+        var moneyFun = bt.moneyType.getFun();
+        var rateType = bt.rateType.getFun();
+
+
+        //生成列表
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            order: [[1, 'asc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/agreeddeposit/choinneragreeddeposit/dataTableApprove"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            }
+            , columns: [
+                {data: "billNo", bSortable: true, className: 'center'},
+                {data: "corpName", bSortable: true, className: 'center'},
+                {data: "blnctrAcc", bSortable: true, className: 'center'},
+                {data: "accName", bSortable: true, className: 'center'},
+                {data: "curName", bSortable: true, className: 'center'},
+                {data: "contractNo", bSortable: true, className: 'center'},
+                {data: "beginDate", bSortable: true, className: 'center'},
+                {data: "endDate", bSortable: true, className: 'center'},
+                {
+                    data: "certificateWay", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("agreed.certificateWay", full.certificateWay);
+                    }
+                },
+                {
+                    data: "status", bSortable: true, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return bt.dict("nisBillhead.status", full.status);
+                    }
+                },
+                {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                    var html = '';
+                    if ($("#flowStatus").val() == 'todo') {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="approve(this)">' + bt.lang("common.button.approve") + '</a>&nbsp;|&nbsp;';
+                    }
+                    html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                    return html;
+                }
+                }
+            ]
+        });
+
+        //初始化单位
+        bt.corp.init();
+    });
+</script>
+<script src="${basePath}/static/modules/agreeddeposit/choRegAgreedDepositApprove.list.js?_btv=${resourceVersion}"></script>
+</html>

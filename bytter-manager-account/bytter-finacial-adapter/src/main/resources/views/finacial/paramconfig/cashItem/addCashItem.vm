@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<table class="layui-table">
+		<tbody>
+            <tr>
+                <td class="textRight" width="30%">#springMessage("finacial.paramconfig.fcCashItem.itemCode")</td>
+                <td>
+                    <input type="text" name="itemCode" autocomplete="off" class="layui-input" maxlength="8" data-required="true" placeholder="#springMessage('finacial.paramconfig.fcCashItem.itemCode')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight" width="30%">#springMessage("finacial.paramconfig.fcCashItem.itemName")</td>
+                <td>
+                    <input type="text" name="itemName" autocomplete="off" class="layui-input" maxlength="50" data-required="true" placeholder="#springMessage('finacial.paramconfig.fcCashItem.itemName')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight" width="30%">#springMessage("finacial.paramconfig.fcCashItem.rmk")</td>
+                <td>
+                    <input type="text" name="rmk" autocomplete="off" class="layui-input" maxlength="50" placeholder="#springMessage('finacial.paramconfig.fcCashItem.itemName')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight" width="30%">#springMessage("table.btCurrency.validSign")</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="radio" data-group="valid_sign" data-defaultvalue="1" data-name="validSign"></div>
+                </td>
+            </tr>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+                 	<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage("common.button.submit")</button>
+                	<button type="reset" class="layui-btn layui-btn-primary">#springMessage("common.button.reset")</button>
+          		</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','layedit','corp','selectType','dicts'], function(){
+		$ = bt.jquery,form = bt.form();
+        bt.dicts.init();
+		//监听提交
+        form.on('submit(submit)', function(data){
+        	bt.loading.show();//显示加载中
+        	var codeLen =data.field['itemCode'];
+        	var nameLen =data.field['itemName'];
+        	if(strLen(codeLen) > 8){//业务种类代码
+        		layer.msg(bt.lang('table.fcBusRace.raceCodeLengthBeyond'));
+        		bt.loading.hide(); //关闭加载中
+        		return false;
+        	}
+/*        	if(strLen(nameLen) > 50){
+        		layer.msg(bt.lang('table.fcBusRace.raceNameLengthBeyond'));
+        		bt.loading.hide(); //关闭加载中
+        		return false;
+        	}*/
+        	//判断长度
+            var action = "/finacial/paramconfig/cashItem/submit/";
+            $.post(basePath + action,data.field,function(result){
+                if(result.success){
+                    parent.layer?parent.layer.closeAll():layer.closeAll();
+                }
+                bt.loading.hide(); //关闭加载中
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+            return false;
+        });
+		
+	});
+    
+  	//获取字符串长度
+    function strLen(str) {  
+    	var len = 0;  
+    	for (var i=0; i<str.length; i++) {
+    		if (str.charCodeAt(i)>127 || str.charCodeAt(i)==94) {  
+    			len += 2;  
+    		} else {  
+    			len ++;  
+    		}  
+    	}  
+    	return len;  
+    }
+</script>

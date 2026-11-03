@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tr>
+			<td class="textRight">#springMessage('bpm.option.extendparams.fieldname')</td>##字段名称
+			<td>
+                <div class="layui-inline">
+                    <input type="text" name="likes_fieldName" autocomplete="off" class="layui-input">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.fex.appRange1')</td>##应用范围
+            <td>
+                <div class="layui-inline">
+                    ## <div class="bt-biz-dict" data-type="select" data-group="application.scope" data-name="eqs_appRange1"></div>
+                    <div class="bt-biz-dict"
+                         id="appRange2"
+                         data-type="select"
+                         data-defaultvalue="$!{fexCustFieldRuleVO.appRange2}"
+                         data-group="application.scope2"
+                         data-name="eqs_appRange2"
+                         data-displayData="1,2,3,4"
+                         ></div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('contract.field.type')</td>##字段类型
+            <td>    
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="field.type" data-name="eqs_fieldType"></div>
+                </div>
+            </td>
+         </tr>
+         <tr>
+           	<td colspan="6" align="center">
+	            <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+	            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+       			
+       		</td>
+        </tr>
+    </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.field.name')</th>
+        <th>#springMessage('table.fex.appRange1')</th>
+        <th>#springMessage('contract.field.type')</th>
+        <th>#springMessage('table.fbsItem.validSign')</th>
+        <th>#springMessage('table.createRepayPlan.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+bt.use(['form','datatable','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.dicts.init();
+    //生成列表
+    bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        searchForm: {
+        	formElem: "#searchForm",
+        	formFilter: 'search'
+        },
+        ajax: {
+            'url': basePath+"/foreign/fexcustfieldrule/datatable"
+        },
+        buttons: [
+            {
+                text: bt.lang('common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            },
+//            {
+//                text: bt.lang('common.button.init'),
+//                action: function ( e, dt, node, config ) {
+//                	importRule();
+//                }
+//            }
+        ],
+        columns: [
+            {data:"fieldName",bSortable:true, className: 'center'},
+            {data:"appRange2",bSortable:true, className: 'center',
+                render:function (data, type, full, meta){
+                    return bt.dict("application.scope2",full.appRange2);
+            }},
+            {data:"fieldType",bSortable:true, className: 'center',
+            	render: function ( data, type, full, meta ) {
+                    return bt.dict("field.type",full.fieldType);
+                }	
+            },
+            {data:"validSign",bSortable:true, className: 'center',
+               render:function(data, type, full, meta){
+                   return bt.dict("valid_sign",full.validSign);
+               } 
+            },
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                return html;
+            }}
+        ]
+    });
+});
+function add(){
+	if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/foreign/fexcustfieldrule/add");
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/foreign/fexcustfieldrule/add",
+        end:function(){
+           bt.navtab.refreshCurrentTable();
+        }
+    });
+}
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    var url = basePath + "/foreign/fexcustfieldrule/view/" + data.id;
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: url
+    });
+}
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    var url = basePath + "/foreign/fexcustfieldrule/update?id=" + data.id;
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.update.data'), url);
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: url,
+        end:function(){
+            bt.navtab.refreshCurrentTable();
+        }
+    });
+}
+function deleteColumn(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+        $.post(basePath + "/foreign/fexcustfieldrule/delete/" + data.id, function(result){
+            bt.datatable.refreshCurrentPage();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+
+
+</script>

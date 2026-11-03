@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+    	<th>#springMessage('table.fcCompareCheckType.sort')</th><!--排序  -->
+        <th>#springMessage('table.fcCompareCheckType.checkTypeName')</th><!--核对标准名称  -->
+        <th>#springMessage('table.fcCompare.Check_the_standard')</th><!--核对标准  -->
+        <th>#springMessage('table.fcCompareCheckType.validSign')</th><!--启用标志  -->
+        <th>#springMessage('table.fcCompareCheckType.createTime')</th><!--  -->
+        <th>#springMessage('common.table.thead.operation')</th><!--  -->
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<!-- <script src="${basePath}/static/modules/finacial/paramconfig/fcCompareCheckType.list.js"></script> -->
+</html>
+<script>
+bt.use(['form','datatable'], function(){
+    $ = bt.jquery,form = bt.form();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        order: [1,'desc'],
+        ajax: {
+            'url': basePath+"/finacial/paramconfig/fccomparechecktype/datatable"
+        },
+        buttons: [
+            {
+                text: bt.lang('common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            }
+        ]
+        ,columns: [
+			{data:"sort",className:"center",bSortable:true},
+            {data:"checkTypeName",className:"center",bSortable:false},
+            {data:"checkTypesName",className:"center",bSortable:false},
+            {data:"validSign",className:"center",bSortable:false,
+            	render: function ( data, type, full, meta ) {
+            		if(full.validSign==1){
+            			return bt.lang("common.button.enable");
+            		}else{
+                    	return "<span style='color:red'>"+bt.lang("common.button.stop")+"</span>";
+            		}
+                }	
+            },
+            {data:"createTime",className:"center",bSortable:false},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+            	var enableStr = "";
+            	if(full.validSign==1){
+            		enableStr = bt.lang("common.button.stop");
+            	}else{
+            		enableStr = bt.lang("common.button.enable");
+            	}
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="enable(this)">'+ enableStr +'</a>\
+                <span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>\
+                <span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                return html;
+            }}
+        ]
+    });
+});
+function add(){
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/finacial/paramconfig/fccomparechecktype/add");
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/finacial/paramconfig/fccomparechecktype/add",
+        end:function(){
+            datatable && datatable.draw();
+        }
+    });
+}
+function enable(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    var url = basePath + "/finacial/paramconfig/fccomparechecktype/enable/" + data.id;
+    $.post(url,function(result){
+    	if(result.success){
+    		datatable && datatable.draw();
+    		parent.layer.alert(result.msg, {icon: result.success?1:2});
+    	}
+    },'JSON');
+}
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/finacial/paramconfig/fccomparechecktype/update?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/fccomparechecktype/update?id=" + data.id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+function deleteColumn(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+        $.post(basePath + "/finacial/paramconfig/fccomparechecktype/delete/" + data.id, function(result){
+            datatable && datatable.draw();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+</script>

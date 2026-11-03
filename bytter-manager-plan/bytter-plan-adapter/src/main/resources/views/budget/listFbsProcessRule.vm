@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+
+<form id="searchForm" class="layui-form">
+    <input type="hidden"  name="opType" id="opType" value="0"/>
+    <table class="layui-table">
+        <tr>
+            <td class="textRight" width="40%">#springMessage('table.fbsProcessRule.processRule')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select"
+                     data-group="plan.action.rule" data-name="eqs_processRule"></div>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: center" colspan="2">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fbsProcessRule.processRule')</th>
+        <th>#springMessage('table.fbsProcessRule.sort')</th>
+        <th>#springMessage('table.fbsBudgetProcessReport.ExerciseRatio')（%）</th>
+        <th>#springMessage('btBankType.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+    var datatable;
+    bt.use(['form','datatable','moneyType', 'dicts'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.moneyType.init();
+        bt.dicts.init();
+
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            checkbox:true,
+            order: [[2,'asc']],
+            ajax: {
+                'url': basePath+"/budget/fbsprocessrule/datatable"
+            },
+            buttons: [
+                {
+                    text: bt.lang('common.button.add'),
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                },{
+                    extend: "colvis",
+                    text: bt.lang('common.button.enable'),
+                    action: function ( e, dt, node, config ) {
+                        var data = dt.rows('.selected').data();
+                        enable(data);
+                    }
+                },{
+                    extend: "colvis",
+                    text: bt.lang('common.button.stop'),
+                    action: function ( e, dt, node, config ) {
+                        var data = dt.rows('.selected').data();
+                        stop(data);
+                    }
+                }
+            ]
+            ,columns: [
+                {
+                    data: "processRule", bSortable: true, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("plan.action.rule", full.processRule);
+                    }
+                },
+                {data:"sort",bSortable:true,className:'center'},
+                {data:"processRatio",bSortable:true,className:'textRight',
+                    render: function ( data, type, full, meta ) {
+                        return bt.money.format(full.processRatio*100);
+                    }
+                },
+                {
+                    data: "validSign", bSortable: true, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("valid_sign", full.validSign);
+                    }
+                },
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a><span class="text-explode">|</span>';
+                        html +='<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a><span class="text-explode">|</span>';
+                        html +='<a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                        return html;
+                    }
+                }
+            ]
+        });
+    });
+    function add(){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/budget/fbsprocessrule/add");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/budget/fbsprocessrule/add",
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/budget/fbsprocessrule/view/" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['1000px', '700px'],
+            maxmin: true,
+            content: basePath + "/budget/fbsprocessrule/view/" + data.id
+        });
+    }
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(data){
+            if(bt.navtab){
+                bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/budget/fbsprocessrule/update?id=" + data.id);
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/budget/fbsprocessrule/update?id=" + data.id,
+                end:function(){
+                    datatable && datatable.draw();
+                }
+            });
+        }
+    }
+    function deleteColumn(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            $.post(basePath + "/budget/fbsprocessrule/delete/" + data.id, function(result){
+                datatable && datatable.draw();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+    function enable(data){
+        var len = data.length;
+        if (len < 1) {
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+            return;
+        }
+        var ids = "";
+        var rowData = data.splice(0, len);
+        for (var i = 0; i < rowData.length; i++) {
+            if (ids == "") {
+                ids += rowData[i].id;
+            } else {
+                ids += "," + rowData[i].id;
+            }
+        }
+        parent.layer.confirm(bt.lang('common.message.confirm.batchEnable'),function(){
+            $.post(basePath + "/budget/fbsprocessrule/batchEnable", {ids: ids}, function(result){
+                datatable.draw();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+    function stop(data){
+        var len = data.length;
+        if (len < 1) {
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+            return;
+        }
+        var ids = "";
+        var rowData = data.splice(0, len);
+        for (var i = 0; i < rowData.length; i++) {
+            if (ids == "") {
+                ids += rowData[i].id;
+            } else {
+                ids += "," + rowData[i].id;
+            }
+        }
+        parent.layer.confirm(bt.lang('common.message.confirm.batchStop'),function(){
+            $.post(basePath + "/budget/fbsprocessrule/batchStop", {ids: ids}, function(result){
+                datatable.draw();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+</script>
+</html>

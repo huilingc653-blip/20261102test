@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/common/caData.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" id="id" name="id">
+    <input type="hidden" id="payeeAccId" name="payeeAccId">
+    <input type="hidden" id="status" name="status">
+    <input type="hidden" id="createBy" name="createBy" value="$!{createBy}">
+    <input type="hidden" id="createDate" name="createDate" value="$!date.format('yyyy-MM-dd',$!{createDate})">
+    <input type="hidden" id="updateBy" name="updateBy" value="$!{createBy}">
+    <input type="hidden" id="updateDate" name="updateDate" value="$!date.format('yyyy-MM-dd',$!{createDate})">
+    <input type="hidden" id="type" name="type" value="10">
+    <input type="hidden" id="corpId" name="corpId">
+    <input type="hidden" id="billNo" name="billNo">
+    <input type="hidden" id="payeeCurId" name="payeeCurId">
+    <input id="timeStamp" name="timeStamp" type="hidden" value="">
+    <!--系统参数-->
+    <input type="hidden" id="bankaccOver" name="bankaccOver" value="$!{bankaccOver}">
+    <input type="hidden" id="accountOver" name="accountOver" value="$!{accountOver}">
+    <input type="hidden" id="isAccount" name="isAccount" value="$!{isAccount}">
+    <input id="isOpenLimit" name="isOpenLimit" type="hidden" value="$!{isOpenLimit}">
+    <!-- 新增默认 -->
+    <input type="hidden" id="billFrom" name="billFrom"  value="1">
+
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.nisAllocationReq.payeeAcc')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="payeeAcc" name="payeeAcc" data-name="payeeAcc" data-biz-name="payeeAcc" lay-verify="required"
+                           data-resource="netbank:allocation:typeUp:apply" accountType="2,3" accBal="true"
+                           class="layui-input bt-biz-accountTable" data-callback="accountCallBack" existChilds="true"/>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.accountName')</td>
+            <td>
+                <input type="text" id="payeeAccName" name="payeeAccName" lay-verify="required" readonly="readonly"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.nisAllocationReq.payeeAccName')">
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.accBalance')</td>
+            <td>
+                <input type="text" id="payeeAccBalance" name="payeeAccBalance" data-biz-name="payeeAccBalance"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" readonly="readonly"
+                       placeholder="#springMessage('table.nisAllocationReq.payeeAccBalance')">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.nisAllocationReq.wishPayday')</td>
+            <td>
+            ##期望支付日期
+                <div class="layui-input-inline">
+                    <input type="text" name="wishPayday" class="layui-input bt-biz-dateType" data-type="date"
+                           data-min="$!date.format('yyyy-MM-dd',$!{date.getDate()})" data-biz-name="wishPayday"
+                           lay-verify="required|date" data-today="true">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.attributeId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/bankacc/bisaccattribute/json" data-valuefield="id"
+                         data-textfield="attributeName" data-inputvalue="inputvalue"
+                         data-name="attributeId" data-biz-name="attributeId" data-search="true"
+                         data-callback="attributeCallBack"></div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.isQuick')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="0" data-name="isQuick"
+                     data-biz-name="isQuick" data-required="true"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.nisAllocationReq.corp')</td>
+            <td>
+                <div id="corpName"></div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.curId')</td>
+            <td>
+                <div id="curName"></div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.purpose')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btpurpose?getByListSort&sysBusType=1&busDtl=2"
+                         data-valuefield="purpose" data-textfield="purpose" data-name="purpose" data-biz-name="purpose"
+                         data-inputvalue="inputvalue" data-search="true" data-required="true" data-value="" data-beforeInitResiveData="purposeBefore"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##备注说明
+            <td class="textRight" width="20%">#springMessage('table.settlement.rmk')</td>
+            <td width="110%" colspan="5">
+                <div class="layui-input-inline">
+                    <textarea class="layui-textarea" name="rmk" id='rmk' autocomplete="off" placeholder="#springMessage('table.settlement.rmk')"
+                              style="resize:none" cols="180" rows="2"></textarea>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6">
+                <table id="payeeInfo" class="layui-table layui-form dark-layui-table" style="width:100%;">
+                    <thead>
+                    <tr class="title" align="center">
+                        <th>#springMessage('table.nisAllocationReq.payerAcc')</th>
+                        <th>#springMessage('table.nisAllocationReq.corp')</td>
+                        <th>#springMessage('table.nisAllocationReq.accountName')</th>
+                        <th>#springMessage('table.nisAllocationReq.bankName')</th>
+                        <th>#springMessage('table.nisAllocationReq.accBalance')</th>
+                        <th>#springMessage('table.nisAllocationReq.up.money')</th>
+                    </tr>
+                    </thead>
+                    <tfoot style="text-align: center;background-color:#ddd">
+                    <tr id="sum">
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>#springMessage('table.datatable.total')</td>
+                        <td name="money">0.00</td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" class="center">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage(
+                    'common.button.submit')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage(
+                    'common.button.temp')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" data-callback="resetCallback">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    #caDataHidden()
+</form>
+    #parse("views/common/footer.vm")
+    #caDataScript()
+</body>
+<script src="${basePath}/static/modules/allocation/nisAllocationReq.common.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/allocation/nisUpAllocationReq.add.js?_btv=${resourceVersion}"></script>
+</html>

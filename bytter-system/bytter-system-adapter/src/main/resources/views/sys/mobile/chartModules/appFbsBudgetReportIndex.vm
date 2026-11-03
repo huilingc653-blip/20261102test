@@ -1,0 +1,176 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>资金计划</title>
+
+</head>
+#set($resourceVersion=$resourceVersion.get())
+#set($basePath=$springMacroRequestContext.contextPath)
+<link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css?_btv=${resourceVersion}">
+<link rel="stylesheet" href="${basePath}/static/css/mobile/appChartListMenu.css?_btv=${resourceVersion}">
+
+
+<section class="ui-container">
+
+    <input type="hidden" id="corpId" value="$!{corpId}">
+    <input type="hidden" id="netId" value="$!{netId}">
+
+
+    <ul class="ui-list ui-list-link ui-border-tb">
+
+
+        #foreach($menu in $menuList)
+
+            <li onclick="onMenuItemClick('$!{menu.url}','$!{menu.jumpType}','$!{menu.menuId}')"
+                class="chart-row-container ui-border-t">
+                <div class="row-item-icon-parent-container">
+                    <div class="row-item-icon-container">
+                        <img class="row-item-icon"
+                             src="${basePath}$!{menu.iconUrl}?_btv=${resourceVersion}"/>
+                    </div>
+                </div>
+                <div class="ui-list-info">
+                    <h4 class="ui-nowrap chart-name-text">
+                        $!{menu.name}
+                    </h4>
+                    <p class="ui-nowrap chart-description-text">$!{menu.description}</p>
+                </div>
+                <div class="row-arrowlink-icon-container">
+                    <img class="icon-right-arrowlink"
+                         src="${basePath}/static/mobile/icon/common/icon_right_arrowlink@2x.png?_btv=${resourceVersion}"/>
+                </div>
+
+            </li>
+
+        #end
+
+
+    ##        <li id="row1Element"
+    ##            class="chart-row-container ui-border-t">
+    ##            <div class="row-item-icon-parent-container">
+    ##                <div class="row-item-icon-container">
+    ##                    <img class="row-item-icon"
+    ##                         src="${basePath}/static/mobile/icon/chartPage/fbsBudget/icon_chart_fbsBudget_jhsb@2x.png?_btv=${resourceVersion}"/>
+    ##                </div>
+    ##            </div>
+    ##            <div class="ui-list-info">
+    ##                <h4 class="ui-nowrap chart-name-text">
+    ##                    计划上报
+    ##                </h4>
+    ##                <p class="ui-nowrap chart-description-text">上报情况汇总表</p>
+    ##            </div>
+    ##            <div class="row-arrowlink-icon-container">
+    ##                <img class="icon-right-arrowlink"
+    ##                     src="${basePath}/static/mobile/icon/common/icon_right_arrowlink@2x.png?_btv=${resourceVersion}"/>
+    ##            </div>
+    ##        </li>
+    ##
+    ##        <li id="row2Element"
+    ##            class="chart-row-container ui-border-t">
+    ##            <div class="row-item-icon-parent-container">
+    ##                <div class="row-item-icon-container">
+    ##                    <img class="row-item-icon"
+    ##                         src="${basePath}/static/mobile/icon/chartPage/fbsBudget/icon_chart_fbsBudget_jhzx@2x.png?_btv=${resourceVersion}"/>
+    ##                </div>
+    ##            </div>
+    ##            <div class="ui-list-info">
+    ##                <h4 class="ui-nowrap chart-name-text">
+    ##                    计划执行
+    ##                </h4>
+    ##                <p class="ui-nowrap chart-description-text">执行情况汇总表</p>
+    ##            </div>
+    ##            <div class="row-arrowlink-icon-container">
+    ##                <img class="icon-right-arrowlink"
+    ##                     src="${basePath}/static/mobile/icon/common/icon_right_arrowlink@2x.png?_btv=${resourceVersion}"/>
+    ##            </div>
+    ##        </li>
+
+
+    </ul>
+
+
+</section>
+<script src="${basePath}/static/plugins/frozen/js/zepto.min.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+
+    var chartModuleKey = "$!{chartModuleKey}";
+    var corpId = $("#corpId").val();
+    var netId = $("#netId").val();
+
+    function onMenuItemClick(url, jumpType, menuId) {
+        // alert("url=" + url + ",jumpType=" + jumpType + ",menuId=" + menuId);
+        if (jumpType === 'tab') {
+            // 获取该菜单下的tab报表菜单，一般都有数据。否则不会显示此菜单
+            BTAppBridge.post("/api/chart/getMobileChartTabMenuList", {
+                chartModuleKey: chartModuleKey,
+                menuId: menuId
+            }, "openTabPageCallback");
+        } else {
+            BTAppBridge.jump({
+                url: '/api/bankacc/mobileBankAcc',
+                corpId: corpId,
+                netId: netId,
+            });
+        }
+    }
+
+    $(document).ready(function () {
+
+        openTabPageCallback = function (data) {
+            // alert(JSON.stringify(data));
+            if (data) {
+                let tabsData = [];
+                data.forEach(function (item, index, arr) {
+                    tabsData.push({
+                        url: item.url,
+                        tabName: item.name,
+                        params: {
+                            corpId: corpId,
+                            netId: netId,
+                        }
+                    });
+                });
+                if (tabsData.length > 0) {
+                    BTAppBridge.openChartTabPage && BTAppBridge.openChartTabPage({
+                        tabsData: tabsData,
+                        headerTitle: '计划上报'
+                    });
+                }
+            }
+        }
+    });
+
+    (function (doc, win) {
+
+
+        $("#row1Element").click(function () {
+            setTimeout(function () {
+                BTAppBridge.openChartTabPage && BTAppBridge.openChartTabPage({
+                    tabsData: [
+                        {
+                            url: '/budget/fbsbudget/mobileReqInput',
+                            tabName: '计划上报'
+                        },
+                    ],
+                    headerTitle: '计划上报'
+                });
+            }, 100);
+        });
+        $("#row2Element").click(function () {
+            setTimeout(function () {
+                BTAppBridge.openChartTabPage && BTAppBridge.openChartTabPage({
+                    tabsData: [
+                        {
+                            url: '/budget/fbsbudget/mobileReqProess',
+                            tabName: '计划执行'
+                        },
+                    ],
+                    headerTitle: '计划执行'
+                });
+            }, 100);
+        });
+
+    })(document, window);
+
+
+</script>
+

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" id="depositRateType" name="depositRateType" value="$!{depositRateVO.depositRateType}">
+    <input type="hidden" name="id" value="$!{depositRateVO.id}">
+    <input type="hidden" name="depositClass" id="depositClass" value="$!{depositRateVO.depositClass}">
+    <input type="hidden" name="remark" value="$!{depositRateVO.remark}">
+    <input type="hidden" name="createBy" value="$!{depositRateVO.createBy}">
+    <input type="hidden" id="referenceRateType" value="$!{depositRateVO.referenceRateType}">
+    <input type="hidden" id="rateUp" value="$!{depositRateVO.rateUpLimit}">
+    <input type="hidden" id="rateDown" value="$!{depositRateVO.rateDownLimit}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+		## 类型编码
+            <td class="textRight">#springMessage('table.depositRateType.code')</td>
+            <td width="35%">
+                <div class=layui-inline>
+                        <div class=bt-biz-selectType
+                             data-name="rateTypeCode"
+                             data-textField="code"
+                             data-valueField="code"
+                             data-biz-name="rateTypeCode"
+                             data-url="${basePath}/pricing/depositRateType/interestRateType/getDepositRateType"
+                             data-inputvalue="true"
+                             data-callback="codeChange"
+                             data-search="true"
+                             data-required="true"
+                             data-defaultvalue="$!{depositRateVO.rateTypeCode}"
+                             data-beforeinit="rateTypeBefore">
+                        </div>
+                </div>
+            </td>
+		##类型名称
+            <td class="textRight">#springMessage('table.depositRateType.name')</td>
+            <td width="35%">
+                <input type="text" id="rateTypeName" name="rateTypeName" lay-verify="required|strlength" data-maxlength="100" readonly="readonly" value="$!{depositRateVO.rateTypeName}"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.depositRateType.name')">
+            </td>
+        </tr>
+        <tr>
+		##存款类型
+            <td class="textRight">#springMessage('table.depositRateType.depositType')</td>
+            <td >
+                <input type="text" id="depositClassName"  lay-verify="required|strlength" data-maxlength="100" readonly="readonly" value="$!dictTag.get("pricing.deposit.type",$!{depositRateVO.depositClass})"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.depositRateType.depositType')">
+            </td>
+            <td class="textRight">#springMessage('table.depositRate.curCode')</td>##币别
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-defaultvalue="$!{depositRateVO.moneyType}"
+                         data-name="moneyType" data-valueField="id" data-textField="curName"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##生效日期
+            <td class="textRight">#springMessage('table.depositRate.timeOfTakeEffect')</td>
+            <td>
+                <input type="text" class="layui-input bt-biz-dateType" data-name="timeOfTakeEffect"  data-biz-name="timeOfTakeEffect" name="timeOfTakeEffect"
+                       data-type="date" lay-verify="required" value="$!{depositRateVO.timeOfTakeEffect}">
+            </td>
+        ##存款账户标识
+            <td class="textRight">#springMessage('table.depositRateType.depAccSign')</td>
+            <td>
+                #if($!{depositRateVO.depositAccSign})
+                    #set($depositAccSign=$!{depositRateVO.depositAccSign})
+                #else
+                    #set($depositAccSign=2)
+                #end
+                <input type="text" class="layui-input" id="depositAccSign" lay-verify="required" readonly="readonly" value="$!dictTag.get("pricing.depAccSign",$!{depositAccSign})">
+            </td>
+        </tr>
+        <tr class="HqRateShow" style="display: none">
+        ##基准利率/基础利率
+            <td class="textRight">#springMessage('table.depositRate.referenceRate')/#springMessage('table.depositRate.baseRate')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="radio" data-biz-name="referenceRateType" data-required="true"
+                         data-group="reference.RateType" data-name="referenceRateType"
+                        #if($!{depositRateVO.referenceRateType})
+                         data-defaultvalue="$!{depositRateVO.referenceRateType}"
+                        #else
+                         data-defaultvalue="0"
+                        #end
+                         data-callback="setRatShow"></div>
+                </div>
+            </td>
+        ##基准利率
+            <td class="textRight rateShow1" style="display: none"><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.depositRate.referenceRate')</td>
+            <td class="rateShow1" style="display: none">
+                <input type="text" class="layui-input bt-biz-rateType" name="referenceRate" id="rateShow1"  value="$!{depositRateVO.rate}">
+            </td>
+        ##基础利率
+            <td class="textRight rateShow2" style="display: none"><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.depositRate.baseRate')</td>
+            <td class="rateShow2" style="display: none">
+                <input type="text" class="layui-input bt-biz-rateType" name="baseRate" id="rateShow2"  value="$!{depositRateVO.rate}">
+            </td>
+        </tr>
+            #if($!{depositRateVO.depositClass}=="04")##活期时，有浮动上下限
+            <tr class="HqRateShow floatRateShow" style="display: none">
+                #if($!{depositRateVO.referenceRateType}=="1")##基础利率
+                ##浮动范围上限（BP）
+                    <td class="textRight">#springMessage('table.LoanRate.Upper.limit.of.floating.range')(BP)</td>
+                    <td><input type="text" id="rateUpLimit" data-name="rateUpLimit"
+                               value="$!{depositRateVO.rateUpLimit}" lay-verify="required" data-max="100"
+                               data-min="-100" data-minus="true" data-decimal="2" class="layui-input bt-biz-moneyType">
+                    </td>
+                ##浮动范围下限（BP）
+                    <td class="textRight">#springMessage('table.LoanRate.Lower.limit.of.floating.range')(BP)</td>
+                    <td><input type="text" data-moneyendid="rateUpLimit" data-name="rateDownLimit"
+                               value="$!{depositRateVO.rateDownLimit}" lay-verify="required" data-min="-100"
+                               data-decimal="2" data-minus="true" class="layui-input bt-biz-moneyType"></td>
+                #else ##默认基准利率
+                ##浮动范围上限（%）
+                    <td class="textRight">#springMessage('table.LoanRate.Upper.limit.of.floating.range')(%)</td>
+                    <td><input type="text" id="rateUpLimit" data-name="rateUpLimit"
+                               value="$!{depositRateVO.rateUpLimit}" lay-verify="required" data-max="100"
+                               data-min="-100" data-minus="true" data-decimal="2" class="layui-input bt-biz-moneyType">
+                    </td>
+                ##浮动范围下限（%）
+                    <td class="textRight">#springMessage('table.LoanRate.Lower.limit.of.floating.range')(%)</td>
+                    <td><input type="text" data-moneyendid="rateUpLimit" data-name="rateDownLimit"
+                               value="$!{depositRateVO.rateDownLimit}" lay-verify="required" data-min="-100"
+                               data-decimal="2" data-minus="true" class="layui-input bt-biz-moneyType"></td>
+                #end
+            </tr>
+            #end
+            <tr class="rateShow" style="display: none">
+            ##利率
+                <td class="textRight">#springMessage('table.depositRate.interestRate')</td>
+                <td>
+                    <input type="text" class="layui-input bt-biz-rateType" name="rate" lay-verify="required"  id="rate" value="$!{depositRateVO.rate}">
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+
+
+		##备注
+        <tr>
+            <td class="textRight">#springMessage('table.depositRateType.remark')</td>
+            <td colspan="3">
+                <textarea type="text" id="remark" name="remark" class="layui-textarea" placeholder="#springMessage('table.depositRateType.remark')">$!{depositRateVO.remark}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="1">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="temp" value="0">#springMessage('common.button.temp')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                <button class="layui-btn" lay-submit="" onClick="closecurrent()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/pricing/depositRate.edit.js?_btv=${resourceVersion}"></script>
+</html>

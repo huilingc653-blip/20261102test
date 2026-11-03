@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post" id="inputForm">
+		<input id="id" name="id" type="hidden" value="$!{bisCorpPoolConfigPage.id}">
+		<input id="configCode"  type="hidden" value="$!{bisCorpPoolConfigPage.configCode}">
+		<table class="layui-table">
+			<tbody>
+                <tr>
+                ##规则编码
+                    <td class="textRight">#springMessage('规则编码')</td>
+                    <td>
+                        <input type="text" id="configCode" name="configCode" autocomplete="off" class="layui-input" readonly="readonly" value="$!{bisCorpPoolConfigPage.configCode}">
+                    </td>
+                </tr>
+				<tr>
+					##规则名称
+					<td class="textRight">#springMessage('table.excRulesManage.ruleName')</td>
+					<td>
+						<input type="text" id="configName" name="configName" lay-verify="required|strlength" data-maxlength="100" autocomplete="off" class="layui-input"
+							   placeholder="#springMessage('table.excRulesManage.ruleName')" value="$!{bisCorpPoolConfigPage.configName}">
+					</td>
+
+				</tr>
+                <tr>
+				##单位归集类型，默认0-归集，1-下拨
+					<td class="textRight" width="15%">#springMessage('类型')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="radio" data-group="bisCorpPoolConfig.busType" data-defaultvalue="$!{bisCorpPoolConfigPage.busType}" data-name="busType" data-biz-name="busType"></div>
+					</td>
+                </tr>
+				<tr>
+					##有效标志
+					<td class="textRight">#springMessage('nisBusType.validSign')</td>
+					<td>
+                        <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{bisCorpPoolConfigPage.validSign}" data-name="validSign" data-biz-name="validSign" ></div>
+					</td>
+				</tr>
+				<tr id="matchContentTr">
+					##匹配规则
+					<td colspan="2">
+						<table class="layui-table layui-table-border" width="100%" id="matchContentTable">
+							<tr style="background:#c6c6c6;">
+								<td colspan="7">#springMessage('table.netbank.nisproject.matchContent')</td>
+							</tr>
+							<tr>
+								<td class="textCenter" width="20%">#springMessage('table.bvPrintMatchRule.matchRule')</td>
+								<td class="textCenter" width="5%">#springMessage('table.symbol.brackets')</td>
+								<td class="textCenter" width="20%">#springMessage('table.netbank.nisproject.matchAttr')</td>
+								<td class="textCenter" width="20%">#springMessage('table.netbank.nisproject.matchRelation')</td>
+								<td class="textCenter" width="20%">#springMessage('table.netbank.nisproject.matchContent')</td>
+								<td class="textCenter" width="5%">#springMessage('table.symbol.brackets')</td>
+								<td class="textCenter" width="20%">#springMessage('common.table.thead.operation')</td>
+							</tr>
+							#if(${length} > 0)
+								#foreach($bisCorpPoolConfigRule in $!{bisCorpPoolConfigRuleList})
+									#set($row = $!{velocityCount})
+									#if($!{velocityCount} == 1)
+										<tr row="$row">
+											<td class="textCenter">
+												<input type="hidden" name="matchRule" value=" "/>
+											</td>
+											<td class="textCenter">
+												<div class="layui-input-inline">
+													<select name="leftParenthesis"   data-search="false" data-inputvalue="true" data-value="$!{bisCorpPoolConfigRule.leftParenthesis}">
+														<option value=" ">#springMessage('common.placeholder.select')</option>
+														#if($!{bisCorpPoolConfigRule.leftParenthesis} =="(")
+															<option value="(" selected>(</option>
+														#else if
+															<option value="(">(</option>
+														#end
+													</select>
+												</div>
+											</td>
+											<td class="textCenter">
+												<div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchElements"  data-name="matchElements" data-biz-name="matchElements$row" data-defaultvalue="$!{bisCorpPoolConfigRule.matchElements}" data-callback="onchangeMatchElements"></div>
+											</td>
+											<td class="textCenter">
+												<div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchRelations"  data-name="matchRelations" data-biz-name="matchRelations$row" data-defaultvalue="$!{bisCorpPoolConfigRule.matchRelations}" data-callback="onchangeMatchRelations"
+													#if($!{bisCorpPoolConfigRule.matchElements} != "amt")
+													 data-filterData="5,6,7,8"
+													#end
+												></div>
+											</td>
+											<td class="textCenter">
+												<input type="text" name="matchContent" id="matchContent$row"  placeholder="#springMessage('table.netbank.nisproject.matchContent')" autocomplete="off" class="layui-input" value="$!{bisCorpPoolConfigRule.matchContent}"
+													   lay-verify="strlength" data-maxlength="100"
+													#if($!{bisCorpPoolConfigRule.matchElements} == "amt"
+													&& ($!{bisCorpPoolConfigRule.matchRelations} == "1" || $!{bisCorpPoolConfigRule.matchRelations} == "2"
+													|| $!{bisCorpPoolConfigRule.matchRelations} == "3" || $!{bisCorpPoolConfigRule.matchRelations} == "4"))
+													   style="display: none;"#end>
+												<div class="layui-input-inline" id="number$row"
+													#if($!{bisCorpPoolConfigRule.matchElements} != "amt" || ($!{bisCorpPoolConfigRule.matchElements} == "amt"
+													&& ($!{bisCorpPoolConfigRule.matchRelations} == "5" || $!{bisCorpPoolConfigRule.matchRelations} == "6"
+													|| $!{bisCorpPoolConfigRule.matchRelations} == "7" || $!{bisCorpPoolConfigRule.matchRelations} == "8"
+													|| $!{bisCorpPoolConfigRule.matchRelations} == "9" || $!{bisCorpPoolConfigRule.matchRelations} == "10")))
+													  style="display: none;"#end>
+													<select  lay-search="" data-inputvalue="true" >
+														<option value="1" #if($!{bisCorpPoolConfigRule.matchContent} == "奇数") selected #end>#springMessage('table.number.odd')</option>
+														<option value="2" #if($!{bisCorpPoolConfigRule.matchContent} == "偶数") selected #end>#springMessage('table.number.even')</option>
+													</select>
+												</div>
+											</td>
+											<td class="textCenter">
+												<div class="layui-input-inline">
+													<select name="rightParenthesis"   data-search="false" data-inputvalue="true" data-value="$!{bisCorpPoolConfigRule.rightParenthesis}">
+														<option value=" ">#springMessage('common.placeholder.select')</option>
+														#if($!{bisCorpPoolConfigRule.rightParenthesis} ==")")
+															<option value=")" selected>)</option>
+														#else if
+															<option value=")">)</option>
+														#end
+													</select>
+												</div>
+											</td>
+											<td class="textCenter">
+												<button class="layui-btn" onclick="addTr();" type="button">#springMessage('common.addTr')</button>
+											</td>
+										</tr>
+									#else
+										<tr row="$row">
+											<td class="textCenter">
+												<div class="bt-biz-dict" data-type="select" data-group="FUNDWARN_NUM_OPERATOR"  data-name="matchRule"  data-defaultvalue="$!{bisCorpPoolConfigRule.matchRule}"></div>
+											</td>
+											<td class="textCenter">
+												<div class="layui-input-inline">
+													<select name="leftParenthesis"   data-search="false" data-inputvalue="true" data-value="$!{bisCorpPoolConfigRule.leftParenthesis}">
+														<option value=" ">#springMessage('common.placeholder.select')</option>
+														#if($!{bisCorpPoolConfigRule.leftParenthesis} =="(")
+															<option value="(" selected>(</option>
+														#else if
+															<option value="(">(</option>
+														#end
+													</select>
+												</div>
+											</td>
+											<td class="textCenter">
+												<div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchElements"  data-name="matchElements"  data-biz-name="matchElements$row" data-defaultvalue="$!{bisCorpPoolConfigRule.matchElements}" data-callback="onchangeMatchElements"></div>
+											</td>
+											<td class="textCenter">
+												<div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchRelations"  data-name="matchRelations"  data-biz-name="matchRelations$row" data-defaultvalue="$!{bisCorpPoolConfigRule.matchRelations}" data-callback="onchangeMatchRelations"
+													#if($!{bisCorpPoolConfigRule.matchElements} != "amt")
+													 data-filterData="5,6,7,8"
+													#end
+												></div>
+											</td>
+											<td class="textCenter">
+												<input type="text" name="matchContent" id="matchContent$row"  placeholder="#springMessage('table.netbank.nisproject.matchContent')" autocomplete="off" class="layui-input" value="$!{bisCorpPoolConfigRule.matchContent}"
+													#if($!{bisCorpPoolConfigRule.matchElements} == "amt"
+													&& ($!{bisCorpPoolConfigRule.matchRelations} == "1" || $!{bisCorpPoolConfigRule.matchRelations} == "2"
+													|| $!{bisCorpPoolConfigRule.matchRelations} == "3" || $!{bisCorpPoolConfigRule.matchRelations} == "4"))
+													   style="display: none;"#end>
+												<div class="layui-input-inline" id="number$row"
+													#if($!{bisCorpPoolConfigRule.matchElements} != "amt" || ($!{bisCorpPoolConfigRule.matchElements} == "amt"
+													&& ($!{bisCorpPoolConfigRule.matchRelations} == "5" || $!{bisCorpPoolConfigRule.matchRelations} == "6"
+													|| $!{bisCorpPoolConfigRule.matchRelations} == "7" || $!{bisCorpPoolConfigRule.matchRelations} == "8"
+													|| $!{bisCorpPoolConfigRule.matchRelations} == "9" || $!{bisCorpPoolConfigRule.matchRelations} == "10")))
+													 style="display: none;"#end>
+													<select  lay-search="" data-inputvalue="true" >
+														<option value="1" #if($!{bisCorpPoolConfigRule.matchContent} == "奇数") selected #end>#springMessage('table.number.odd')</option>
+														<option value="2" #if($!{bisCorpPoolConfigRule.matchContent} == "偶数") selected #end>#springMessage('table.number.even')</option>
+													</select>
+												</div>
+											</td>
+											<td class="textCenter">
+												<div class="layui-input-inline">
+													<select name="rightParenthesis"   data-search="false" data-inputvalue="true" >
+														<option value=" ">#springMessage('common.placeholder.select')</option>
+													#if($!{bisCorpPoolConfigRule.rightParenthesis} ==")")
+														<option value=")" selected>)</option>
+													#else if
+														<option value=")">)</option>
+													#end
+													</select>
+												</div>
+											</td>
+											<td class="textCenter">
+												<a href="javascript:void (0)" onclick="deleteDtl(this)">#springMessage("common.button.delete") </a>
+											</td>
+										</tr>
+									#end
+								#end
+							#else
+								<tr>
+									<td class="textCenter">
+										<input type="hidden" name="matchRule" value=" "/>
+									</td>
+									<td class="textCenter">
+										<div class="layui-input-inline">
+											<select name="rightParenthesis"   data-search="false" data-inputvalue="true">
+												<option value=" ">#springMessage('common.placeholder.select')</option>
+												<option value="(">(</option>
+											</select>
+										</div>
+									</td>
+									<td class="textCenter">
+										<div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchElements"  data-name="matchElements"  ></div>
+									</td>
+									<td class="textCenter">
+										<div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchRelations"  data-name="matchRelations"  ></div>
+									</td>
+									<td class="textCenter">
+										<input type="text" name="matchContent" id="matchContent1"  placeholder="#springMessage('table.netbank.nisproject.matchContent')" autocomplete="off" class="layui-input">
+										<div class="layui-input-inline" id="number1" style="display: none;">
+											<select  lay-search="" data-inputvalue="true" >
+												<option value="1">#springMessage('table.number.odd')</option>
+												<option value="2">#springMessage('table.number.even')</option>
+											</select>
+										</div>
+									</td>
+									<td class="textCenter">
+										<div class="layui-input-inline">
+											<select name="rightParenthesis"   data-search="false" data-inputvalue="true">
+												<option value=" ">#springMessage('common.placeholder.select')</option>
+												<option value=")">)</option>
+											</select>
+										</div>
+									</td>
+									<td class="textCenter">
+										<button class="layui-btn" onclick="addTr();" type="button">#springMessage('common.addTr')</button>
+									</td>
+								</tr>
+							#end
+						</table>
+					</td>
+				</tr>
+				<tr>
+				<td colspan="2" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="save">#springMessage('common.button.save')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	</form>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/bankacc/bisCorpPoolConfig.edit.js?_btv=${resourceVersion}"></script>
+</html>

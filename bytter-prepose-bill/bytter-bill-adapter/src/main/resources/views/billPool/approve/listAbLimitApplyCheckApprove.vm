@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+        <table class="layui-table">
+            <tbody>
+                <tr>
+					## 持票单位
+                    <td class="textRight">#springMessage('table.fcBond.corpName')</td>
+                    <td width="25%">
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-billPoolCorp"
+                                 data-tree-type="check"
+                                 data-biz-type="billPoolCorp"
+                                 data-type="selectTree"
+                                 data-name="ins_corpId"
+                                 data-scope="all"
+                                 ##data-resource="abpool:applycheck:resource:op">
+                            </div>
+                        </div>
+                    </td>
+					##票据池
+					<td class="textRight" width="10%">#springMessage('billPool.Limit.bpName')</td>
+					<td  width="23%">
+                         <div class="layui-input-inline">
+		                    <div class="bt-biz-billPool"
+		                         data-tree-type="check"
+		                         data-biz-type="billPool"
+		                         data-name="eqs_bpId"
+		                         data-type="selectTree"
+		                         data-name="bpId"
+		                         data-placeholder="">
+		                    </div>
+		                </div>
+                    </td>
+                    ##申领日期
+                    <td class="textRight" width="10%">#springMessage('billPool.bail.appDate')</td>
+					<td  width="23%">
+                        <div class="layui-inline">
+                    		<input type="text" name="ged_transDate" class="layui-input bt-biz-dateType" data-endid="led_transDate" data-today="false">
+                	  	</div>
+	                	<span class="date-mid">~</span>
+	                	 <div class="layui-inline">
+	                    	<input type="text" name="led_transDate" class="layui-input bt-biz-dateType" id="led_transDate" data-today="false">
+	               		 </div>
+                    </td>
+				</tr>
+				<tr>
+					##业务类型
+                   <td class="textRight" width="10%">#springMessage('billPool.busType')</td>
+		            <td width="23%">
+		                <div class="layui-input-inline">
+		                    <div class="bt-biz-busType"
+		                         data-tree-type="check"
+		                         data-biz-type="busType"
+		                         data-biz-name="busTypeId"
+		                         data-type="selectTree"
+		                         data-name="ins_busTypeId"
+		                         data-placeholder="">
+		                    </div>
+		                </div>
+		            </td>
+		           ##额度类型
+                   <td class="textRight" width="10%">#springMessage('billPool.Limit.limtType')</td>
+		           <td width="23%">
+		                  <div class="bt-biz-dict" data-type="select" data-group="AB_POOL_LIMT_TYPE" data-name="eqs_limtType"></div>
+		           </td>
+		           ##申领额度
+                   <td class="textRight" width="10%">#springMessage('billPool.limit.apply.money')</td>
+		           <td width="25%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="geg_applyMoney" data-moneyendid="endMoney" autocomplete="off"
+                                       class="layui-input bt-input-inline  bt-biz-moneyType" placeholder="#springMessage('billPool.limit.apply.money')">
+                                <span class="date-mid">~</span>
+                                <input type="text" name="leg_applyMoney" id="endMoney" autocomplete="off"
+                                       class="layui-input bt-input-inline  bt-biz-moneyType" placeholder="#springMessage('billPool.limit.apply.money')">
+                            </div>
+                   </td>
+				</tr>
+				
+                <tr>
+                    <td colspan="4" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" type="button" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" type="button" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+				</tr>
+            </tbody>
+        </table>
+    </form>
+
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBond.corpName')</th>
+        <th>#springMessage('billPool.Limit.checkType')</th>
+	    <th>#springMessage('billPool.type.bustypeCode')</th>
+	    <th>#springMessage('billPool.type.name')</th>
+		<th>#springMessage('billPool.type.parentBusName')</th>
+		<th>#springMessage('billPool.Limit.limtType')</th>
+		<th>#springMessage('billPool.limit.apply.money')</th>
+		<th>#springMessage('billPool.limit.apply.enddata')</th>
+		<th>#springMessage('billPool.Limit.rmk')</th>
+		<th>#springMessage('bill.accebill.applyDate')</th>
+		<th>#springMessage('billPool.Limit.parentName')</th>
+		<th>#springMessage('billPool.Limit.bustypeLevel')</th>
+		<th>#springMessage('billPool.Limit.bpName')</th>
+		<th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+	#workFlowHtml()
+    #parse("views/common/footer.vm")
+	#workFlowScript()
+</body>
+
+<script type="text/javascript">
+var billTable={},corp,busTypeJson={};
+bt.use(['form','selectTree','treeTable','datatable','moneyType','billPoolCorp','busType','dateType','dicts','billPool','moneyType'],function(){
+	 bt.billPool.init();
+	 bt.moneyType.init();
+	 bt.billPoolCorp.init();
+	 bt.dicts.init();
+	 bt.dateType.init();
+	 bt.moneyType.init();
+	  $ = bt.jquery,form = bt.form();
+	  busTypeJson = bt.busType.init();
+	//生成列表
+	    billTable = bt.datatable.init({
+	        elem: "#appTable",
+	        dom: 'Brtlip',
+	        colReorder: true,
+	        checkbox: true, order: [[1, 'asc']],
+	        searchForm: {
+	            formElem: "#searchForm",
+	            formFilter: "search"
+	        },
+	        ajax: {
+	            'url': basePath + "/billPool/applyCheck/dataTableApprove"
+	        }
+	        , columns: [
+	            {data:"corpName",bSortable:true,
+                    render: function ( data, type, full, meta ) {
+                       return '('+full.corpCode+')'+full.corpName;
+                    }
+                },
+                {data: "checkTypeName", bSortable: true},
+	            {data: "bustypeCode", bSortable: true},
+	            {data: "bustypeName", bSortable: true},
+	            {data: "parentBusName", bSortable: true},
+	            {data: "limtTypeName", bSortable: true},
+	            {data:"applyMoney",bSortable:true,className:'textRight',
+	                render: function ( data, type, full, meta ) {
+	                   	return bt.money.format(full.applyMoney);
+	                   }
+	            },
+	            {data: "endDate", bSortable: true},
+	            {data: "rmk", bSortable: true},
+	            {data:"createTime",className:'center',bSortable:true,
+	                render: function (data, type, full, meta) {
+	                     return bt.date.format(full.createTime, "yyyy-MM-dd");
+	                }
+	            },
+	            {data: "parentCorpName", bSortable: true},
+	            {data: "corpLevel", bSortable: true},
+	            {data: "bpName", bSortable: true},
+	            {data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+	                var html = '';
+	                if ($("#flowStatus").val() == 'todo') {
+	                    html += '<a class="" href="#" data-row="' + meta.row + '" onclick="approve(this)">' + bt.lang("common.button.approve") + '</a>&nbsp;|&nbsp;';
+	                }
+	                html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+	                return html;
+	            }
+	            }
+	        ],
+	        fixedColumns: {
+	            rightColumns: 2
+	        }
+	    });
+	
+});
+
+/*审核*/
+function approve(el) {
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    var rid = data.businessKey;
+    if (bt.navtab) {
+        bt.navtab.addNavtab(bt.lang('common.button.approve'), basePath + "/billPool/applyCheck/approve?businessId=" + rid + "&taskId=" + data.taskId);
+        return;
+    }
+    
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/billPool/applyCheck/approve?businessId=" +  data.id + "&taskId=" + data.taskId
+    });
+}
+
+</script>
+</html>

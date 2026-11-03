@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 22px; 
+	text-decoration: underline;
+	text-align: center;
+	/*color: blue;*/
+	/*color: #00CC33;*/
+}
+</style>    
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="opType" name="opType" value="$!{opType}">
+	<input type="hidden" id="menuType" name="menuType" value="$!{menuType}">
+	<table class="layui-table">
+		<tbody>
+        <tr>
+        ##申请单位
+            <td style="text-align:right;">#springMessage('table.abBillTransfer.applyCorpId')</td>
+            <td width="40%" style="text-align:left;">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="eqs_corpId"
+                         data-biz-name="corpId"
+                         data-scope="all"
+                         data-tree-type="check"
+                         data-resource="finacial:innerdeposit:apply"></div>
+                </div>
+            </td>
+
+        ##币别
+            <td style="text-align:right;">#springMessage('table.fbsBudgetDetail.curId')</td>
+            <td width="40%" style="text-align:left;">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id" data-textfield="curName" data-name="eqs_curId" data-search="true"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+        ##支取日期
+            <td style="text-align:right;">#springMessage('table.choBankFinance.payDate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input name="ged_payDate" class="layui-input bt-input-inline bt-biz-dateType" type="text"  data-endid="t2">
+                    <span class="date-mid">~</span>
+                    <input name="led_payDate" class="layui-input bt-input-inline bt-biz-dateType" id="t2" type="text">
+                </div>
+            </td>
+
+        ##支取金额
+            <td style="text-align:right;">#springMessage('table.choBankFinance.payMoney')</td>
+            <td width="40%" style="text-align:left;">
+                <input type="text" data-name="geg_payMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="money">
+                <span class="date-mid">~</span>
+                <input type="text" data-name="leg_payMoney" class="layui-input bt-input-inline  bt-biz-moneyType" id="money" >
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+			<thead>
+				<tr>
+                    <th>#springMessage('cms.precative.voucherNo')</th>##单据编号
+                    <th>#springMessage('table.abBillTransfer.applyCorp')</th>##申请单位
+                    <th>#springMessage('table.common.deposit.type')</th>##存款类型
+                    <th>#springMessage('table.fbsBudgetDetail.curId')</th>##币别
+                    <th>#springMessage('table.common.drawMoney')</th>##支取金额
+                    <th>#springMessage('table.tbCreditPeriod.period')</th>##期限
+                    <th>#springMessage('table.choBankFinance.payDate')</th>##取款日期
+                    <th>#springMessage('table.fbsBudgetDetail.purpose')</th>##用途
+                    <th>#springMessage('table.common.regular.deposit.no')</th>##定期存款编号
+                    <th>#springMessage('table.cmsPrecativeLoanInfo.tallySign')</th>##记账状态
+  			</tr>
+		</thead>
+</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','selectTable','btdate','bank','select','moneyType','dicts','bttable','element','datatable','mulselect','corp','dateType','selectType','region'], function(){
+	var tableData ;
+	element = layui.element();
+    $ = bt.jquery;
+    form = bt.form();
+    tt = bt.mulselect.init();
+    bt.bank.init({ elem:'.bank',})
+    region = bt.region.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+    dataType = bt.dateType.init();
+    bt.corp.init();
+    selectType = bt.selectType.init();
+    
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'rtlip',
+        colReorder: true,
+        checkbox:false,
+        mulselect:false,
+        selectCss:true,
+        buttonsLayout:false,
+        order: [2,'desc'],
+        fixedColumns:{
+        	leftColumns:0
+        },
+        ajax: {
+            'url': basePath+"/finacial/bankCollect/innerDeposit/datatable?menuType="+$("#menuType").val()+"&opType="+$("#opType").val()
+        },searchForm:{
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+        columns: [
+            {data:"billNo",bSortable:false,className:"center"},
+            {data:"corpName",bSortable:false,className:"center"},
+            {data:"depositRateTypeName",bSortable:false,className:"center"},
+            {data:"curName",bSortable:false,className:"center"},
+            {data:"payMoney",bSortable:false,className:"textRight",
+                render: function (data, type, full, meta) {
+                    return moneyFun.format(full.payMoney);
+                }
+            },
+            {data:"",bSortable:false,className:"center",
+                render: function (data, type, full, meta) {
+                    if(full.noticeType != null){
+                        return noticeType =  bt.dict("pricing.noticeType",full.noticeType);
+                    }else {
+                        var dateUnit =  bt.dict("pricing.fixedTerm",full.dateUnit);
+                        return full.dayLimit + dateUnit;
+                    }
+                }
+            },
+            {data:"payDate",bSortable:false,className:"center"},
+            {data:"purpose",bSortable:false,className:"center"},
+            {data:"relatedBillNo",bSortable:false,className:"center"},
+            {data:"tallySign",bSortable:false,className:"center",
+                render:function(data,type,full,meta){
+                    return bt.dict("cms.tallySign",full.tallySign == null ? 0 : full.tallySign );
+                }
+            }
+        ],
+        btInitComplete:function(setting,json){
+        	tableData = json.data;
+        },
+		btDrawCallback:function(setting){
+        	tableData = setting.json.data;
+        }
+    });
+    
+     $('#appTable tbody').on('dblclick','tr',function(data){  
+        var dataIndex = $(this).context.rowIndex - 1;
+        //var data = tableData.rows('.selected').data();
+        rowData = tableData[dataIndex];
+        var id = rowData.id;
+        var sysRaceCode = rowData.sysRaceCode;
+     	var type = $("#opType").val();
+     	var menuType = $("#menuType").val();
+     	parent.parent.$("#menuType").val(menuType);
+     	parent.parent.$("#key").val(id);
+     	parent.parent.$("#curCode").val(rowData.curId);
+     	parent.parent.$("#netId").val(rowData.netId);
+     	parent.parent.$("#corpCode").val(rowData.corpId);
+     	
+         
+     	$.post(basePath + "/finacial/bankCollect/innerDeposit/processAccbook/",{id:id,type:type,menuType:menuType}, function(result){
+     		if(typeof result.success == "boolean" && result.success == false){
+     			layer.alert(result.msg);
+            	return;
+     		}
+            //增加背景色
+            var row = datatable.row(dataIndex).node();
+            $(".row_bg").removeClass("row_bg");
+            $(row).addClass("row_bg");
+            parent.parent.uploaderRender(type,result);//双击行上传控件渲染事件
+     		parent.parent.bt.setDate(result);
+     	},'JSON');
+	});   
+});
+
+</script>
+</html>

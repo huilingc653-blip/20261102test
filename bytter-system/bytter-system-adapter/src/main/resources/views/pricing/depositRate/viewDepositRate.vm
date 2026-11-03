@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="interestRateType" name="interestRateType" type="hidden" value="1">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+		## 类型编码
+            <td class="textRight">#springMessage('table.depositRateType.code')</td>
+            <td width="40%">$!{depositRateVO.rateTypeCode}</td>
+		##类型名称
+            <td class="textRight">#springMessage('table.depositRateType.name')</td>
+            <td width="40%">$!{depositRateVO.rateTypeName}</td>
+        </tr>
+        <tr>
+		##存款类型
+            <td class="textRight">#springMessage('table.depositRateType.depositType')</td>
+            <td >$!dictTag.get("pricing.deposit.type",$!{depositRateVO.depositClass})</td>
+            <td class="textRight">#springMessage('table.depositRate.curCode')</td>##币别
+            <td>$!{depositRateVO.curName}</td>
+        </tr>
+        <tr>
+        ##生效日期
+            <td class="textRight">#springMessage('table.depositRate.timeOfTakeEffect')</td>
+            <td>$!date.format('yyyy-MM-dd',$!{depositRateVO.timeOfTakeEffect})</td>
+        ##存款账户标识
+            <td class="textRight">#springMessage('table.depositRateType.depAccSign')</td>
+            <td width="40%">
+                #if($!{depositRateVO.depositAccSign})
+                    #set($depositAccSign=$!{depositRateVO.depositAccSign})
+                #else
+                    #set($depositAccSign=2)##为空时默认为资金池内部账户
+                #end
+                $!dictTag.get("pricing.depAccSign",$!{depositAccSign})
+            </td>
+        </tr>
+        #if($!{depositRateVO.depositClass}=="04")##活期利率
+        <tr>
+        ##基准利率/基础利率
+            <td class="textRight">#springMessage('table.depositRate.referenceRate')/#springMessage('table.depositRate.baseRate')</td>
+            #if($!{depositRateVO.referenceRateType})
+                <td>
+                    $!dictTag.get("reference.RateType",$!{depositRateVO.referenceRateType})
+                </td>
+            #else
+                <td>
+                    $!dictTag.get("reference.RateType",0)##为空时默认基准利率
+                </td>
+            #end
+
+            #if($!{depositRateVO.referenceRateType}=="0")
+                <td class="textRight">#springMessage('table.depositRate.referenceRate')</td> ##基准利率
+            #else
+                <td class="textRight">#springMessage('table.depositRate.baseRate')</td> ##基础利率
+            #end
+            #set($rate=$!{depositRateVO.rate}*100)
+            <td>$!number.formatDoubles($!rate,4)%</td>
+        </tr>
+        <tr>
+            #if($!{depositRateVO.referenceRateType}=="1")##基础利率
+            ##浮动范围上限（BP）
+                <td class="textRight">#springMessage('table.LoanRate.Upper.limit.of.floating.range')(BP)</td>
+                <td>$!number.formatDoubles($!{depositRateVO.rateUpLimit},4)</td>
+            ##浮动范围下限（BP）
+                <td class="textRight" >#springMessage('table.LoanRate.Lower.limit.of.floating.range')(BP)</td>
+                <td>$!number.formatDoubles($!depositRateVO.rateDownLimit,4)</td>
+            #else##默认基准利率
+            ##浮动范围上限（%）
+                <td class="textRight">#springMessage('table.LoanRate.Upper.limit.of.floating.range')(%)</td>
+                <td>$!number.formatDoubles($!{depositRateVO.rateUpLimit},4)</td>
+            ##浮动范围下限（%）
+                <td class="textRight" >#springMessage('table.LoanRate.Lower.limit.of.floating.range')(%)</td>
+                <td>$!number.formatDoubles($!depositRateVO.rateDownLimit,4)</td>
+            #end
+        </tr>
+            #else
+            <tr class="rateShow" >
+            ##利率
+                <td class="textRight">#springMessage('table.depositRate.interestRate')</td>
+                #set($rate=$!{depositRateVO.rate}*100)
+                <td>$!number.formatDoubles($!rate,4)%</td>
+                <td></td>
+                <td></td>
+            </tr>
+        #end
+
+		##备注
+        <tr>
+            <td class="textRight">#springMessage('table.depositRateType.remark')</td>
+            <td colspan="3">$!{depositRateVO.remark}</td>
+        </tr>
+        #if($!{depositRateVO.status}=="-1")
+        ##打回原因
+        <tr>
+            <td class="textRight">#springMessage('table.depositRate.refuseWhy')</td>
+            <td colspan="3">$!{depositRateVO.returndeScribe}</td>
+        </tr>
+        #end
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" type="button" onClick="closecurrent()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    function closecurrent(){
+        parent.layer?parent.layer.closeAll():layer.closeAll();
+        return false;
+    }
+</script>
+</html>

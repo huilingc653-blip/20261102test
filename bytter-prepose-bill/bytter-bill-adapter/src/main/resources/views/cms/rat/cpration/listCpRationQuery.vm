@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        #page a, #page span {
+            height: 30px;
+            line-height: 30px;
+        }
+
+        #page .layui-laypage-total {
+            padding-right: 0px;
+        }
+    </style>
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+    <input type="hidden" id="curId" name="curId" value="$!{naturalCur}" >
+        <table class="layui-table">
+            <tbody>
+                <tr>
+                	##授信单位
+                    <td class="textRight" width="12%">#springMessage('table.ratBkration.corpId')</td>
+                    <td width="20%" class="rCode">
+                        <div class="layui-input-inline">
+						  ##<div class="bt-biz-mulselectType" data-url="${basePath}/cms/rat/ratcprationcount/corps"
+						  ##	data-valuefield="id" data-textfield="name" data-name="corpId"></div>
+						<div class="bt-biz-corp"
+                            data-biz-type="corp"
+                            data-type="selectTree"
+                            data-tree-type="check"
+                            data-name="corpId"
+							data-resource="cms:cpration:count:query"
+                            data-scope="all"
+							data-defaultvalue="$!{corpId}"
+						    data-required="true">
+						</div>
+                   	 </div>
+                    </td>
+                    ##品种
+                    <td class="textRight" width="12%">#springMessage('table.ratBkrationDetail.itemCode')</td>
+                    <td class="rCode" class="rCode" width="20%">
+                        <div class="layui-inline">
+	        				<div class="bt-biz-selectType" data-biz-name="itemCode" data-url="${basePath}/cms/rat/ratitemcustom/getAllRatItem?type=1"
+	        					data-valuefield="id" data-textfield="name" data-name="itemCode" data-search="true" data-value="$!{paramDTO.itemCode}">
+	        				</div>
+	        			</div>
+                    </td>
+					##授信币种
+					<td class="textRight" width="12%">#springMessage('table.ratBkration.curCode')</td>
+					<td width="20%">
+						<div class="layui-inline">
+						<div class="bt-biz-selectType" data-biz-name="curCode" data-url="${basePath}/basic/business/btcurrency/json"
+							data-valuefield="id" data-textfield="curName" data-required="true"
+							data-name="curCode" data-search="true" data-value="$!{paramDTO.curCode}"></div>
+						</div>
+					</td>
+                </tr>
+                <tr>
+                	##金额单位
+                    <td class="textRight" width="12%">#springMessage('common.moneyType')</td>
+                    <td width="20%">
+                        <div class="layui-input-inline">
+                        	<div class="bt-biz-dict" data-type="select" data-group="common.MoneyType"
+								data-name="moneyType" data-biz-name="moneyType" data-value="$!{paramDTO.moneyType}">
+							</div>
+                        </div>
+                    </td>
+                    ##估计授信时间
+                    <td class="textRight" width="12%">#springMessage('table.ratBkration.ratDate')</td>
+                    <td width="20%" class="rCode">
+                    	<div class="layui-inline layui-input-inline">
+                   		<input type="text" name="beginDate" id="beginDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="endDate"
+                    		data-type="date" data-biz-name="beginDate" value="$!date.format('yyyy-MM-dd',$!paramDTO.beginDate)">
+                    		<span class="date-mid">~</span>
+                    	<input type="text" name="endDate" id="endDate" class="layui-input bt-input-inline bt-biz-dateType"
+                    		data-type="date" data-biz-name="endDate" value="$!date.format('yyyy-MM-dd',$!paramDTO.endDate)">
+                    	</div>
+                    </td>
+					<td width="12%"></td>
+					<td width="20%"></td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<div>
+<table width="100%" align="center" id="search">
+		<tr>
+			<td align="right" width="10%">#springMessage('table.cmsRatInfo.reportDate')：</td>
+			<td width="23%" align="left">$!{reportDate}</td>
+			<td align="right" width="10%">#springMessage("common.moneyType")：</td>
+			<td width="24%" align="left">$dictTag.get('common.MoneyType',$!{moneyType})</td>
+			<td align="right" width="10%">#springMessage('table.cmsRatInfo.TabPerson')：</td>
+			<td width="23%" align="left">$!{userName}</td>
+            <td width="23%">&nbsp;</td>
+        </tr>
+</table>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+		<th align="center">#springMessage('table.ratBkration.corpId')</th>
+		<th align="center">#springMessage('table.ratBkration.validDate')</th>
+        <th align="center">#springMessage('table.ratBkrationDetail.itemFlag')</th>
+        <th align="center">#springMessage('table.ratBkrationDetail.itemCode')</th>
+        <th align="center">#springMessage('table.ratBkration.money')</th>
+        <th align="center">#springMessage('table.ratBkrationDisDetail.superProcessMoney')</th>##占用额度
+        <th align="center">#springMessage('table.ratBkrationDisDetail.checkProcessMoney')</th>##在审占用额度
+        ##<th align="center">#springMessage('table.ratBkrationDisDetail.overPlusMoney')</th>##可用额度
+        <th align="center">#springMessage('table.ratBkrationDisDetail.leftDisMoney')</th>##剩余授信额度
+		<th align="center">#springMessage('common.table.thead.operation')</th>#*操作*#
+    </tr>
+    </thead>
+    <tbody>
+		#foreach($ration in $!{rations})
+			<tr data-tt-id="$!{ration.ratCode}_$!{rationDtl.itemFlag}" data-tt-parent-id="$!{ration.ratCode}" >
+			<td rowspan="$!{ration.rationSize}" align="center">$!{ration.corpName}</td>
+            <td rowspan="$!{ration.rationSize}" align="center">$!date.format('yyyy-MM-dd',$!ration.beginDate)~$!date.format('yyyy-MM-dd',$!ration.endDate)</td>
+			#foreach($rationDtl in $!{ration.rationDlts})
+				#if($velocityCount == 1)
+						<td align="center">
+							$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})
+						</td>
+						<td align="center">
+							$!{rationDtl.itemName}
+						</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.money})</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.useMoney})</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.approveMoney})</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.overPlusMoney})</td>
+						#if($!{relateCon} == "1" && $!{ration.conId})
+							<td align="center" rowspan="$!{ration.rationSize}" align="right"><a href="#" onclick="conView('$!{ration.conId}')">#springMessage('common.button.conInfo')</a></td>
+							#else
+							<td></td>
+						#end
+					</tr>
+				#else
+					<tr>
+						<td align="center">
+							$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})
+						</td>
+						<td align="center">
+							$!{rationDtl.itemName}
+						</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.money})</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.useMoney})</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.approveMoney})</td>
+						<td align="right">$number.formatNumeric($!{rationDtl.overPlusMoney})</td>
+						#if($!{relateCon} == "1" && $!{ration.conId})
+                            <td align="center" rowspan="$!{ration.rationSize}" align="right"><a href="#" onclick="conView('$!{ration.conId}')">#springMessage('common.button.conInfo')</a></td>
+						#else
+                            <td></td>
+						#end
+					</tr>
+				#end
+			#end
+		#end
+    </tbody>
+</table>
+</div>
+    <div id="page" style="position:fixed ; bottom:0px;width:100%;" ></div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/cpration/listCpRationQuery.js?_btv=${resourceVersion}"></script>
+</html>

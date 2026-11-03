@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="id" name="id" type="hidden" value="$!{choInnerFinancePage.id}">
+		<input id="billNo" name="billNo" type="hidden" value="$!{choInnerFinancePage.billNo}">
+        <input id="createBy" name="createBy" type="hidden" value="$!{choInnerFinancePage.createBy}">
+		<input id="createDate" name="createDate" type="hidden" value="$!{choInnerFinancePage.createDate}">
+		<input id="updateBy" name="updateBy" type="hidden" value="$!{choInnerFinancePage.updateBy}">
+		<input id="updateDate" name="updateDate" type="hidden" value="$!{choInnerFinancePage.updateDate}">
+		<input id="busType" name="busType" type="hidden" value="$!{busType}">
+		<input id="status" name="status" type="hidden" value="0">
+		<input id="payerAccId" name="payerAccId" type="hidden" value="">
+		<input id="curId" name="curId" type="hidden" value="">
+        <input id="dayLimit" name="dayLimit" type="hidden" value="1">
+        <input id="dateUnit" name="dateUnit" type="hidden" value="3">
+		<!-- 系统参数 -->
+		<input id="noticeOnset" name="noticeOnset" type="hidden" value="$!{noticeOnset}">
+		<input id="noticeKeep" name="noticeKeep" type="hidden" value="$!{noticeKeep}">
+        <!-- 账户余额 -->
+        <input type="hidden" id="balance" name="balance">
+        <table class="layui-table">
+			<thead>
+            <tr>
+                <th colspan="4" style="text-align:center">$dictTag.get("choBankFinance.busType",$!{busType})</th>
+			</tr>
+			</thead>
+			<tbody>
+        	<tr>
+        		##单位ID
+				<td class="textRight">#springMessage('table.choBankFinance.corpId')</td>
+				<td width="40%">
+					<div class="layui-input-inline">
+						<div class="bt-biz-corp"
+						data-biz-type="corp"
+						data-type="selectTree"
+						data-name="corpId"
+						data-scope="all"
+						data-required="true"
+						data-resource="cho:innerFinanceC2N:choInnerFinance:apply"
+						data-callback="bt.corpCallback"></div>
+					</div>
+				</td>
+				##付款账号
+				<td class="textRight">#springMessage('table.choBankFinance.currentAcc')</td>
+				<td >
+					<div class="layui-input-inline">
+						<input type="text" id="payerAcc" name="payerAcc" data-biz-name="payerAcc" lay-verify="required|tableData"
+							 autocomplete="off" class="layui-input text" placeholder="#springMessage('table.choBankFinance.currentAcc')">
+						<table id="payerAccTable" class="hide">
+							<thead>
+								<tr>
+                                    <th>#springMessage('table.choBankFinance.acc')</th>
+                                    <th>#springMessage('table.choBankFinance.accName')</th>
+                                    <th>#springMessage('table.choBankFinance.curId')</th>
+                                    <th>#springMessage('table.accountDTO.balance')</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</td>
+			</tr>
+        	<tr>
+				##存款类型
+				<td class="textRight">#springMessage('table.eTransBill.depositType')</td>
+				<td >
+                    <div class="bt-biz-selectType" data-url="${basePath}/pricing/depositRateType/interestRateType/json/?depositClass=06&depositAccSign=1" data-name ="depositRateType" data-biz-name ="depositRateType"
+                         data-valueField="id" data-textField="name" data-required = "true" data-callback="bt.depositRateTypeCallback"></div>
+				</td>
+				##通知类型
+				<td class="textRight">#springMessage('table.choBankFinance.noticeDayLimit')</td>
+				<td >
+                    <div class="bt-biz-dict" data-type="select" data-group="pricing.noticeType" data-defaultvalue="1" data-name="noticeType" data-biz-name="noticeType" data-callback="bt.noticeTypeCallback" style="display: none"></div>
+                    <div class="bt-biz-dict" data-type="select" data-group="pricing.noticeType" data-defaultvalue="1" data-name="noticeTypeShow" data-biz-name="noticeTypeShow" data-disabled="true" data-required = "true"></div>
+				</td>
+			</tr>
+            <tr>
+				##起息日期
+                <td class="textRight">#springMessage('table.choBankFinance.interestStartDate')</td>
+                <td >
+                    <div class="layui-input-inline">
+                        <input type="text" id="interestStartDate" name="interestStartDate" data-name="interestStartDate" data-biz-name="interestStartDate" lay-verify="required"
+							   class="layui-input bt-biz-dateType" data-today="true" data-type="date" data-callback="bt.expectInterestCallback">
+                    </div>
+                    <div class="layui-input-inline" style="display: none;">
+                        <input type="hidden" id="deadlineDate" name="deadlineDate" data-name="deadlineDate" data-biz-name="deadlineDate" lay-verify="required"
+                               class="layui-input bt-biz-dateType" data-type="date" data-callback="bt.expectInterestCallback">
+                    </div>
+                </td>
+                ##到期日期
+                #*<td class="textRight">#springMessage('table.choBankFinance.deadlineDate')</td>
+                <td >
+                    <div class="layui-input-inline">
+                        <input type="text" id="deadlineDate" name="deadlineDate" data-name="deadlineDate" data-biz-name="deadlineDate" lay-verify="required"
+                               class="layui-input bt-biz-dateType" data-type="date" data-callback="bt.expectInterestCallback">
+                    </div>
+                </td>*#
+                <td></td>
+                <td></td>
+            </tr>
+			<tr>
+				##金额
+				<td class="textRight">#springMessage('table.nisBillhead.payMoney.lower')</td>
+				<td width="40%">
+					<div class="layui-input-inline">
+						<input type="text" id="payMoney" name="payMoney" style="text-align:right" lay-verify="required" data-name="payMoney" data-biz-name="payMoney" data-toUp="payMoneyUp"
+						 autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.nisBillhead.payMoney.lower')" data-min="${noticeOnset}"
+						 title="#springMessage('config.choBank.regularOnset')${noticeOnset}#springMessage('config.choBank.moneyUnit')" data-callback="bt.expectInterestCallback">
+					</div>
+				</td>
+				<td class="textRight">#springMessage('table.nisBillhead.payMoney.upper')</td>
+				<td width="40%" style="padding-left:0px">
+					<div id="payMoneyUp"></div>
+				</td>
+			</tr>
+        	<tr>
+                ##到期处理方式 0-不处理 1-本金续存 2-本息续存
+                #*<td class="textRight">#springMessage('table.choBankFinance.certificateWay')</td>
+                <td >
+                    <div class="bt-biz-dict" data-type="select" data-required="true" data-value="0"
+                         data-group="choInnerFinance.certificateWay" data-name="certificateWay"></div>
+                </td>*#
+				##用途
+				<td class="textRight">#springMessage('table.nisBillhead.purpose')</td>
+				<td>
+					<div class="layui-input-inline">
+						<div class="bt-biz-selectType" data-url="" data-name="purpose" data-biz-name="purpose" data-required="true"
+							 data-valuefield="purpose" data-textfield="purpose" data-inputvalue="inputvalue" data-search="true"></div>
+					</div>
+				</td>
+				<td></td>
+				<td></td>
+			</tr>
+            <tr>
+				##参考利率
+                <td class="textRight">#springMessage('table.choInnerFinance.interestRate')</td>
+                <td width="40%">
+                    <input type="text" id="interestRate" name="interestRate" style="text-align:right" data-name="interestRate" data-biz-name="interestRate" readonly="readonly"
+                           autocomplete="off" class="layui-input bt-biz-rateType" placeholder="#springMessage('table.choInnerFinance.interestRate')" data-callback="bt.expectInterestCallback">
+                </td>
+				##参考利息
+                <td class="textRight">#springMessage('table.choInnerFinance.expectInterest')</td>
+                <td width="40%">
+                    <input type="text" id="expectInterest" name="expectInterest" style="text-align:right" data-name="expectInterest" data-biz-name="expectInterest"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.choInnerFinance.expectInterest')" readonly="readonly">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('fcVoucherType.rmk')</td>
+                <td colspan="3">
+                    <textarea placeholder="#springMessage('fcVoucherType.rmk')" lay-verify="strlength" data-maxlength="100" class="layui-textarea" id="addWord" name="addWord" ></textarea>
+                </td>
+            </tr>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('common.button.submit')</button>
+					<button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage('common.button.temp')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/chowmatistic/choInnerFinanceCurrent2Notice.add.js?_btv=${resourceVersion}"></script>
+</html>

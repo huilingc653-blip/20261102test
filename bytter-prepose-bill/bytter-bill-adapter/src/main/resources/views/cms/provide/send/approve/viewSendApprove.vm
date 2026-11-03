@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/flow/flow.vm")
+</head>
+<body >
+	<div>
+		<iframe id="loanRepayIframe" src="${basePath}/cms/provide/loansend/viewSend/$!{send.billCode}" frameborder="0" scrolling="no" style="width: 100%;"></iframe>
+		<script src="${basePath}/static/modules/cms/iframeAutoHeight.js?_btv=${resourceVersion}"></script>
+	</div>
+	
+
+<table class="layui-table  breakRow" >
+    <tbody >
+		 <tr>
+			##预算信息
+			<td colspan="4">
+				<input type="hidden" id="corpId" name="corpId" value="$!{send.corpId}"/>##单位代码			
+				<input type="hidden" id="loanCode" name="loanCode" value="$!{send.loanCode}"/>##借款合同编号				
+				<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+				<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+				<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+				<input id="sendItem" name="sendItem" type="hidden" value="$!{sendItem}">
+				<input id="billCode" name="billCode" type="hidden" value="$!{send.billCode}">
+				<input id="sendDate" name="sendDate" type="hidden" value="$!{send.sendDate}">
+                <input id="curCode" type="hidden" value="$!{send.curCode}">
+				<div id="tagItemDetail"></div>
+			</td>
+		</tr>
+    </tbody>   
+	  </table>
+
+    #workFlowHtml()
+	#parse("views/common/footer.vm")
+	#workFlowScript()
+</body>
+<script type="text/javascript">
+bt.use(['jquery'], function(){
+	$ = bt.jquery;
+ 	$genOtherHtml= function (corpId) {
+        var url = basePath + "/budget/fbsBudgetProcess/getViewItemDetail";
+        var param = {
+            corpId: corpId,
+            itemCode: $('#sendItem').val(),
+            billNo: $("#billCode").val(),
+            businessName: $("#businessName").val(),
+            processSysname: $("#processSysname").val(),
+            processDate: $("#sendDate").val(),
+			curId:$("#curCode").val(),
+            type: 'select',
+            date: (new Date()).getTime()
+        };
+        $.ajax({
+            url: url, method: 'POST', data: param, async: true, success: function (json) {
+                $("#tagItemDetail").html("");
+                $("#tagItemDetail").html(json);
+                form.render();
+            }
+        });
+    }
+/**
+     * 资金计划挂接
+     */
+    function renderBudget(corpId){
+    	//判断支付结算是否挂接资金计划
+		var budgetSel = $("#budgetSel").val();
+		if(budgetSel == "1"){
+			var sendItem = $("#sendItem").val();
+	    	if(sendItem != null && sendItem != ""){
+	    		$genOtherHtml(corpId);
+	    	}else{
+	    		$("#tagItemDetail").html("");
+	    	}
+    	}
+    }
+	var corpId = $("#corpId").val();
+	renderBudget(corpId);
+});	
+</script>
+</html>

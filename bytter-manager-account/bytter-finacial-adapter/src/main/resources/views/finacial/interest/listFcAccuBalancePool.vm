@@ -1,0 +1,157 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm"  class="layui-form">
+<table class="layui-table">
+<tbody>
+<!-- 积数查询表 -->
+	<tr>
+		##资金池
+        <td class="textRight" width="10%">#springMessage('nis.pool.fcCorpPool.pool')</td>
+        <td width="25%">
+            <div class="layui-input-inline">
+                <div class="bt-biz-selectType" data-url="${basePath}/finacial/interest/fcaccubalancef?getUserCorpPools" data-name="eqs_netId"
+                     data-biz-name="ins_netId" data-callback="netIdCallback" data-valuefield="id" data-textfield="showName" data-search="true"></div>
+            </div>
+        </td>
+        <td class="textRight" width="10%">#springMessage('table.btBankAccApp.corpId')</td>
+        <td width="25%">
+            <div class="layui-input-inline">
+                <div class="bt-biz-selectType" data-url="" data-name="eqs_corpId" data-biz-name="ins_corpId"
+                     data-valuefield="corpId" data-textfield="showName" data-search="true"></div>
+            </div>
+        </td>
+	</tr>
+	
+	<tr>
+		<!-- 帐号 -->
+		<td class="textRight">#springMessage('table.fcAccuBalance.account')</td>
+		<td width="40%">
+			<input name="likes_account" type="text" class="layui-input bank"/>
+		</td>
+			
+		<!-- 计息标志 -->
+		<td class="textRight">#springMessage('table.fcAcc.interestSign')</td>
+		<td width="40%">
+			<div class="bt-biz-dict" data-type="select" data-group="Balance.InterestSign" data-name="eqs_interestSign"></div>
+		</td>
+
+	</tr>
+	
+	<tr height="20%">
+		<!-- 开户种类 -->
+		<td class="textRight">#springMessage('finacial.paramConfig.fcSubject.accType')
+		<td width="40%">
+			<div class="layui-input-inline">
+				<div class="bt-biz-dict" data-type="select" data-group="InnerAccount.AccType" data-name="ins_accType" data-displayData="01"></div>
+			</div>
+		</td>
+        <!-- 创建日期 -->
+        <td class="textRight">#springMessage('table.fcaccu.produceDate')</td>
+        <td width="40%">
+            <div class=layui-inline>
+                <input class="layui-input bt-input-inline bt-biz-dateType" type=text name="ged_balanceDate"  data-endid="t2">
+                <span class=date-mid>~</span>
+                <input id=t2 class="layui-input bt-input-inline bt-biz-dateType" type=text name="led_balanceDate">
+            </div>
+        </td>
+	</tr>
+	
+	<!--提交按钮 -->
+	<tr>
+	   <td style="text-align: center;" colSpan="6">
+	 		 <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+             <button type="reset" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+	   </td>
+	</tr>
+	
+</tbody>
+</table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="print">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcPredrawDtl.account')</th>
+        <th>#springMessage('table.nisPersonnelDetail.accName')	</th>
+        <th>#springMessage('fcInstrate.subjectCode')</th>
+        <th>#springMessage('table.fcaccu.produceDate')</th>
+       	<th>#springMessage('table.fcInitAcc.cumulation')</th>
+       	<th>#springMessage('table.fcAccuBalance.adjustCumu')</th>
+       	<th>#springMessage('table.fcAcc.interestSign')</th>
+       
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','btdate','select', 'selectType','dicts','money','bank','dateType'], function() {
+    $ = bt.jquery, form = bt.form();
+
+    bt.dicts.init();
+    bt.dateType.init();
+    bt.selectType.init();
+
+    bt.bank.init({
+        elem: '.bank',
+    });
+
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        colReorder: true,
+        buttonsLayout: true,
+        ordering: true,
+        order: [[0,'desc'], [3,'asc']],
+
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+
+        ajax: {
+            'url': basePath + "/finacial/interest/fcaccubalancef/datatablePool"
+        },
+
+        columns: [
+            {data: "account", bSortable: true, className: "center"},
+            {data: "accname", bSortable: true, className: "center"},
+            {data: "subjectPoolName", bSortable: true, className: "center"},
+            {data: "balanceDate", bSortable: true, className: "center"},
+            {
+                data: "cumu", bSortable: true, className: "textRight",
+                render: function (data, type, full, meta) {
+                    var cumu = bt.money.format(full.cumu);
+                    return cumu;
+                }
+            },
+            {
+                data: "adjustCumu", bSortable: true, className: "textRight",
+                render: function (data, type, full, meta) {
+                    var adjustCumu = bt.money.format(full.adjustCumu);
+                    return adjustCumu;
+                }
+            },
+            {
+                data: "interestSign", bSortable: true, className: "center",
+                render: function (data, type, full, meta) {
+                    return bt.dict("Balance.InterestSign", data);
+                }
+            }
+
+
+        ]
+    });
+});
+
+function netIdCallback(data) {
+	// 重新设置资金池的子单位
+	var corpPoolChildUrl = basePath + "/finacial/interest/fcaccubalancef?getUserCorpPoolChilds&poolId=" + data.id;
+	bt.selectType.get("ins_corpId").attr("data-url", corpPoolChildUrl);
+}			
+</script>
+</html>

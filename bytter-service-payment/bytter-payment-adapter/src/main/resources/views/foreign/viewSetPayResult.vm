@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form">
+		<input id="id" name="id" type="hidden" value="$!{bisForeignExcPage.id}">
+        <input id="voucherStat" name="voucherStat" type="hidden" value="$!{voucherStat}">
+		<table class="layui-table">
+			<thead>
+            <tr>
+                <th colspan="4" style="text-align:center">
+                    #if($!{voucherStat} == '2')
+                        #springMessage('table.bisExc.viewPayFailureTitle')
+                    #else
+                        #springMessage('table.bisExc.viewPaySuccessTitle')
+                    #end
+                </th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+        		##指令编号
+				<td class="textRight" width="20%">#springMessage('table.bisExc.voucherNo')</td>
+				<td width="30%">$!{bisForeignExcPage.voucherNo}</td>
+                ##交易状态
+                <td class="textRight" width="20%">#springMessage('table.bisExc.voucherStat')</td>
+                <td width="30%">$dictTag.get("bisExc.voucherStat",$!{bisForeignExcPage.voucherStat})</td>
+        	</tr>
+            <tr>
+                ##交易时间
+                <td class="textRight" width="20%">#springMessage('table.bisExc.transTime')</td>
+                <td width="30%">$!date.format('yyyy-MM-dd',$!{bisForeignExcPage.transTime})</td>
+                ##银行返回时间
+                <td class="textRight" width="20%">#springMessage('table.bisExc.returnTime')</td>
+                <td width="30%">$!date.format('yyyy-MM-dd',$!{bisForeignExcPage.returnTime})</td>
+            </tr>
+                ##返回信息
+            <td class="textRight" width="20%">#springMessage('table.bisExc.firstReturnMsg')</td>
+            <td colspan="3">$!{bisForeignExcPage.firstReturnMsg}</td>
+            </tr>
+            <tr>
+                ##返回信息
+                <td class="textRight" width="20%">#springMessage('table.bisExc.nextReturnMsg')</td>
+                <td colspan="3">$!{bisForeignExcPage.nextReturnMsg}</td>
+            </tr>
+            ##确认信息
+            <tr>
+                <td class="textRight" width="20%">#springMessage('table.bisExc.confirmCheck')</td>
+                <td colspan="3">
+                    <div style="color: red">
+                        #if($!{voucherStat} == '2')
+                            #springMessage('table.bisExc.confirmCheckFailureDec')
+                        #else
+                            #springMessage('table.bisExc.confirmCheckSuccessDec')
+                        #end
+                    </div>
+                    <input type="checkbox" name="confirmCheck" value="2" lay-skin="primary" lay-verify="required">
+                    #if($!{voucherStat} == '2')
+                        #springMessage('table.bisExc.confirmFailureDec')
+                    #else
+                        #springMessage('table.bisExc.confirmSuccessDec')
+                    #end
+                </td>
+            </tr>
+            ##校验密码
+            <tr>
+                <td class="textRight" width="20%">#springMessage('table.bisExc.validPassword')</td>
+                <td colspan="3">
+                    <div style="color: red">#springMessage('table.bisExc.validPasswordDec')</div>
+                    <input type="text" class="layui-input" lay-verify="required" name="validPassword" onfocus="this.type='password'" />
+                </td>
+            </tr>
+            ##处理意见
+			<tr>
+				<td class="textRight" width="20%">#springMessage('table.bisExc.handleOpinion')</td>
+				<td colspan="3">
+                    <input type="text" id="handleOpinion" name="handleOpinion" value="$!{bisForeignExcPage.handleOpinion}"  lay-verify="required|strlength" data-maxlength="100"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.bisExc.handleOpinion')">
+				</td>
+        	</tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+			</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script >
+bt.use(['form','layedit','moneyType'], function(){
+    var $ = bt.jquery,form = bt.form();
+    var moneyType = bt.moneyType.init();
+    var moneyFun = bt.moneyType.getFun();
+    //监听提交
+    form.on('submit(submit)', function (data) {
+        bt.loading.show();
+        var action = "/foreign/bisforeignexc/savePayResult";
+        $.post(basePath + action, data.field, function (result) {
+            bt.loading.hide();
+          var index = parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+                if (result.success) {
+                    if (bt.navtab) {
+                        bt.navtab.refreshParent();
+                        bt.navtab.refreshCurrent();
+                        parent.layer.closeAll();
+                    } else {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                    }
+                }
+              parent.layer.close(index);
+            })
+        }, 'JSON');
+        return false;
+    });
+});
+</script>
+</html>

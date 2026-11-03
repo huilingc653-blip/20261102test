@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+		.layui-table > thead th, .layui-table td {
+			position: static;
+		}
+		#page .wrapper {
+			margin-right: 20px;
+		}
+	</style>
+</head>
+<body>
+    <form id="searchForm" class="layui-form input150-container"> 
+    <input type="hidden" name="optType" id="optType" value="1">
+        <table class="layui-table">
+                <tr> 
+                	##单位
+                    <td class="textRight">#springMessage('table.report.corpId')</td>
+	        		<td class="rCode">
+	       				<div class="layui-input-inline">
+	                   		<div class="bt-biz-corp" data-biz-type="corp" data-type="selectTree" data-resource="cms:report:use:query"
+	                   		data-tree-type="check" data-checkkboxtype='{"Y":"s","N":"s"}'
+	                   		data-name="corpId" data-scope="all" data-biz-name="corpId" data-defaultvalue="$!{corpId}"></div>
+	           			</div>
+	           		</td>
+            		##银行
+                    <td class="textRight" width="12%">#springMessage('table.ratBkration.bankCode')</td>
+                    <td width="20%" class="rCode">
+                        <div class="layui-input-inline" >
+            				<select name="bankCode" id="bankCode" lay-search="" style="width: 200px">
+							<option value="">#springMessage('common.placeholder.all')</option>
+								#foreach($bank in $!{bankDTOs})
+									#if($!{bank.bankCode} == $!{bankCode})
+								<option value="$!{bank.bankCode}" selected="selected">$!{bank.bankName}</option>
+									#else
+								<option value="$!{bank.bankCode}">$!{bank.bankName}</option>
+									#end
+								#end
+							</select>
+                   		</div>
+                    </td>
+		            ##品种
+                    <td class="textRight" width="15%">#springMessage('table.ratBkrationDetail.itemCode')</td>
+                    <td class="rCode">
+                        <div class="layui-inline">
+	        				<div class="bt-biz-selectType" data-biz-name="ratCode" data-url="${basePath}/cms/rat/ratitemcustom/getAllRatItem?type=0"
+	        					data-valuefield="id" data-textfield="name" data-name="ratCode" data-search="true" data-value="$!{ratCode}">
+	        				</div>
+	        			</div>
+                    </td>
+                </tr>
+                <tr>
+                	##币别
+        			<td class="textRight">
+        				#springMessage('table.fcBusinessRuleDefine.curCode')
+	        		</td> 
+	                <td class="rCode">
+	                <div class="layui-input-inline">
+						<div class="bt-biz-selectType" data-biz-name="curCode" data-url="${basePath}/basic/business/btcurrency/json" 
+						data-valuefield="id" data-textfield="curName" data-name="curCode" data-defaultvalue="$!{curCode}"></div>
+						</div>
+	                </td>
+	           		##金额单位
+                    <td class="textRight">#springMessage('common.moneyType')</td>
+                    <td class="rCode">
+                        <div class="layui-input-inline">
+                        	<div class="bt-biz-dict" data-type="select" data-group="common.MoneyType" data-defaultvalue="1" data-required="true"
+								data-name="moneyType" data-biz-name="moneyType" data-value="$!{moneyType}">
+							</div>
+                        </div>
+                    </td>
+					##统计维护
+					<td class="textRight">#springMessage("table.report.typesOfStatistics")</td>
+					<td>
+						<div class="layui-form" autocomplete="off">
+							<div class="bt-biz-dict" data-type="select" data-biz-name="typesOfStatistics"  data-value="$!{typesOfStatistics}" data-defaultvalue="1" data-required="true" data-name="typesOfStatistics" data-group="statistics.type" required="true"></div>
+						</div>
+					</td>
+                </tr>
+				<tr>
+					<td class="textRight">#springMessage('table.ratBkration.begindate')</td>
+					<td>
+						<div class="layui-inline">
+							<input type="text" name="beginDate" class="layui-input bt-biz-dateType"
+								   data-endid="beginDate" value="$!{beginDate}"
+								   data-type="date" data-biz-name="beginDate">
+						</div>
+						<div class="layui-inline">
+							<span class="date-mid">~</span>
+						</div>
+						<div class="layui-inline">
+							<input type="text" name="endDate" class="layui-input bt-biz-dateType" id="endDate"
+								   data-type="date" data-biz-name="endDate" value="$!{endDate}">
+						</div>
+					</td>
+					<td class="textRight">#springMessage('table.ratBkration.enddate')</td>
+					<td>
+						<div class="layui-inline">
+							<input type="text" name="beginDate2" class="layui-input bt-biz-dateType"
+								   data-endid="endDate2"
+								   data-type="date" data-biz-name="beginDate2" value="$!{beginDate2}">
+						</div>
+						<div class="layui-inline">
+							<span class="date-mid">~</span>
+						</div>
+						<div class="layui-inline">
+							<input type="text" name="endDate2" class="layui-input bt-biz-dateType" id="endDate2"
+								   data-type="date" data-biz-name="endDate2" value="$!{endDate2}">
+						</div>
+					</td>
+					<td class="textRight">#springMessage('common.is.expire')</td>
+					<td>
+						<div class="layui-input-inline">
+							<div class="bt-biz-dict" data-type="select" data-group="common.is.expire"
+								 data-name="isExpire" data-biz-name="isExpire" data-value="$!{isExpire}">
+							</div>
+						</div>
+					</td>
+				</tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                        <button class="layui-btn" lay-submit="" lay-filter="excel"  type="button">#springMessage('common.button.exports')</button>
+					</td>
+                </tr>
+        </table>
+    </form>
+	<table width="100%" align="center" id="search" style="margin: 10px 0;">
+		<tr>
+			<td align="right" width="10%">#springMessage('table.cmsRatInfo.reportDate')：</td>
+			<td width="23%" align="left">$!{reportDate}</td>
+			<td align="right" width="10%">#springMessage("common.moneyType")：</td>
+			<td width="24%" align="left">$dictTag.get('common.MoneyType',$!{moneyType})</td>
+			<td align="right" width="10%">#springMessage('table.cmsRatInfo.TabPerson')：</td>
+			<td width="23%" align="left">$!{userName}</td>
+		</tr>
+	</table>
+<div id="tbl" style="width:100%;height: 500px;overflow:auto;padding: 0" >
+<table id="appTable" class="layui-table layui-form" style="width:100%;"> 
+    <thead>
+    <tr>
+		#if($!{typesOfStatistics}=="0")##统计维度为单位，一级分组为单位，二级分组为银行
+            <th width="16%">#springMessage('table.fcloanrepay.corpName')</th>
+            <th width="14%">#springMessage('common.button.bank')</th>
+		#else
+            <th width="14%">#springMessage('common.button.bank')</th>
+            <th width="16%">#springMessage('table.fcloanrepay.corpName')</th>
+		#end
+        <th width="6%">#springMessage('table.fcBusinessRuleDefine.curCode')</th>
+        <th width="10%">#springMessage('table.bytter_test.create_time')</th>
+        <th width="10%">#springMessage('table.ratBkrationDisDetail.ratMoneySum')</th>##授信总额
+        <th width="10%">#springMessage('table.ratBkrationDisDetail.useMoneySum')</th>##已使用额度合计
+        <th width="10%">#springMessage('table.ratBkrationDisDetail.leftMoneySum')</th>##剩余额度合计
+        <th width="7%">#springMessage('table.ratBkrationDis.distributeWay')</th>
+        <th width="8%">#springMessage('table.ratBkrationDisDetail.remark')</th>
+        <th width="7%">#springMessage('table.ratBkrationDetail.itemCode')</th>
+        <th align="center">#springMessage('table.ratBkrationDetail.creditType')</th> ## 授信方式
+        <th width="8%">#springMessage('table.ratBkration.money')</th>
+        <th width="8%">#springMessage('table.ratBkrationDisDetail.superProcessMoney')</th>
+        <th width="8%">#springMessage('table.ratBkrationDisDetail.checkProcessMoney')</th>
+        <th>#springMessage('table.report.ratBondApply')</th>##保证金（已执行）
+        <th>#springMessage('table.report.ratBondFrozen')</th>##保证金（在途）
+        <th width="8%">#springMessage('table.ratBkrationDisDetail.overPlusMoney')</th>
+        <th width="8%">#springMessage('table.ratBkrationDisDetail.leftDisMoney')</th>
+    </tr>
+    </thead>
+    <tbody> 
+    #if($ratBean)
+   		#foreach($rat in $!{ratBean})
+   		<tr>
+				#if($!{rat.corpId} =='total')<!--币别合计  -->
+                <td align="right" style='color: red;' colspan="11">$!{rat.corpName}</td>
+                <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.money})</td>
+                <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.useMoney})</td>
+                <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.approveMoney})</td>
+                <td align="right">$!number.formatNumeric($!{rat.bondApply})</td>##保证金（已执行）
+                <td align="right">$!number.formatNumeric($!{rat.bondAway})</td>##保证金（在途）
+                <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.overPlusMoney})</td>
+                <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.leftMoney})</td>
+            </tr>
+			#else
+				#set ($corpCount = 1 )
+				#if($!{typesOfStatistics}=="0")
+                <td align="right" rowspan="$!{rat.totalSize}">$!{rat.corpName}</td>
+				#else
+                <td align="right" rowspan="$!{rat.totalSize}">$!{rat.bankName}</td>
+				#end
+				#foreach($corp in $!{rat.corpDtls})
+					#if($!corpCount!=1)<!--第二个单位换行  -->
+                    <tr>
+					#end
+						#if($!{corp.corpId}=='subTotal')<!--币别小计  -->
+                        <td align="right" style='color: green;' colspan="10">$!{corp.corpName}</td>
+                        <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.money})</td>
+                        <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.useMoney})</td>
+                        <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.approveMoney})</td>
+                        <td align="right">$!number.formatNumeric($!{corp.bondApply})</td>##保证金（已执行）
+                        <td align="right">$!number.formatNumeric($!{corp.bondAway})</td>##保证金（在途）
+                        <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.overPlusMoney})</td>
+                        <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.leftMoney})</td>
+					#else
+						#if($!{typesOfStatistics}=="0")
+                            <td align="center" rowspan="$!{corp.rationSize}">$!{corp.bankName}</td>
+						#else
+                            <td align="center" rowspan="$!{corp.rationSize}">$!{corp.corpName}</td>
+						#end
+                        <td align="center" rowspan="$!{corp.rationSize}">$!{corp.curName}</td>
+                        <td align="center" rowspan="$!{corp.rationSize}">$!{corp.ratDateStr}</td>
+                        <td align="center" rowspan="$!{corp.rationSize}">$!number.formatNumeric($!{corp.money})</td>
+                        <td align="center" rowspan="$!{corp.rationSize}">$!number.formatNumeric($!{corp.useMoney})</td>
+                        <td align="center" rowspan="$!{corp.rationSize}">$!number.formatNumeric($!{corp.leftMoney})</td>
+                        <td align="center" rowspan="$!{corp.rationSize}">$dictTag.get(
+							"RatBkrationDis.DistributeWay", $!{corp.disWay})</td>
+                        <td align="center" class="bread-text" style="min-width: 150px;" rowspan="$!{corp.rationSize}">$!{corp.remark}</td>
+						#set($itemCount=1)
+						#foreach($item in $!{corp.rationDlts})
+								#if($!itemCount!=1)<!--第二条明细换行  -->
+                            <tr>
+							#end
+                            <td align="center">$!{item.itemName}</td>
+                            <td align="center">$dictTag.get("rat.creditType",$!{item.creditType})</td>
+                            <td align="right">$!number.formatNumeric($!{item.money})</td>
+                            <td align="right">$!number.formatNumeric($!{item.useMoney})</td>
+                            <td align="right">$!number.formatNumeric($!{item.approveMoney})</td>
+                            <td align="right">$!number.formatNumeric($!{item.bondApply})</td>##保证金（已执行）
+                            <td align="right">$!number.formatNumeric($!{item.bondAway})</td>##保证金（在途）
+                            <td align="right">$!number.formatNumeric($!{item.overPlusMoney})</td>
+                            <td align="right">$!number.formatNumeric($!{item.leftMoney})</td>
+							#if($!itemCount!=1)
+                            </tr>
+							#end
+							#set($itemCount = $itemCount+1)
+						#end
+						#if($!corpCount==1)<!--第一个条银行结束  -->
+                        </tr>
+						#end
+						#set($corpCount = $corpCount+1)
+					#end
+				#end
+			#end
+   		#end
+   	#end
+    </tbody> 
+</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratBkUseStatics.list.js?_btv=${resourceVersion}"></script>
+</html>

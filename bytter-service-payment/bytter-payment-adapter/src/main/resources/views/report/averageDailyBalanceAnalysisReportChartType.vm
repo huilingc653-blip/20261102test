@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="corpName" id="corpName" value="$!{vo.corpName}"/>
+    <input type="hidden" name="curId" id="curId" value="$!{vo.curId}"/>
+    <input type="hidden" name="corpIds" id="corpIds" value="$!{vo.corpIds}"/>
+    <input type="hidden" name="beforeDate" id="beforeDate" value="$!{vo.beforeDate}"/>
+    <input type="hidden" name="afterDate" id="afterDate" value="$!{vo.afterDate}"/>
+    <input type="hidden" name="isConverted" id="isConverted" value="$!{vo.isConverted}"/>
+    <input type="hidden" name="moneyUnit" id="moneyUnit" value="$!{vo.moneyUnit}"/>
+    <input type="hidden" name="statistical" id="statistical" value="$!{vo.statistical}"/>
+    <input type="hidden" name="depositType" id="depositType" value="$!{vo.depositType}"/>
+    <input type="hidden" name="frequency" id="frequency" value="$!{vo.frequency}"/>
+    <input type="hidden" name="reducedCurId" id="reducedCurId" value="$!{vo.reducedCurId}"/>
+    <input type="hidden" name="corpCurId" id="corpCurId" value="$!{vo.corpCurId}"/>
+</form>
+<table id="appTable" class="layui-table layui-form">
+    <div id="chart" class="layui-table" style="height:600px;margin:0 auto"></div>
+    <thead>
+    <tr>
+        #if($!{vo.statistical}=="0")
+            <th>#springMessage("table.nisPersonnelDetail.corpId")</th>
+        #else
+            <th>#springMessage('common.button.bank')/#springMessage('table.externalCorp.center')</th>
+        #end
+        <th>#springMessage('table.ratBkrationRelief.curCode')</th>
+        <th>#springMessage('table.common.deposit.type')</th>
+        <th>#springMessage('report.chofinancereport.opType')</th>
+        <th>#springMessage('table.report.current')#springMessage('table.report.dailyAverage')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form', 'datatable', 'money'], function () {
+        $ = bt.jquery, form = bt.form();
+
+        bt.datatable.init({
+            elem: "#appTable",
+            checkbox: true,
+            searchForm: {
+                formElem: '#searchForm',
+                formFilter: 'search'
+            },
+            ajax: {
+                'url': basePath + '/report/deposit/average/balance/chatForCorp',
+            },
+            columns: [
+                {data: "corpName", bSortable: true, className: "center",},
+                {data: "curName", bSortable: true, className: "center",},
+                {data: "depositType", bSortable: true, className: "center",},
+                {
+                    data: "statistical", bSortable: true, className: "center",
+                    render: function (data, type, row, meta) {
+                        if (data === '1') {
+                            return bt.lang('fundsBalanceStatistics.banksDeposit');
+                        } else {
+                            return bt.lang('fundsBalanceStatistics.InternalDeposit');
+                        }
+                    }
+                },
+                {data: "averageBalance", bSortable: true, className: "textRight",
+                    render: function (data, type, row, meta) {
+                        return bt.money.format(data);
+                    }},
+            ],
+            btInitComplete: function (settings, json) {
+                charts(json.data);
+            },
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: true,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '5',
+                        dataName: 'averageBalance'
+                    }
+                ]
+            }
+        });
+    });
+
+    /**
+     * 设置echar图
+     * @param data
+     */
+    function charts(data) {
+        let echartData = new Array();
+        let echartArray = new Array();
+        for (let i = 0; i < data.length; i++) {
+            let type = '';
+            if (data[i].statistical === '1') {
+                type = bt.lang('fundsBalanceStatistics.banksDeposit');
+            } else {
+                type = bt.lang('fundsBalanceStatistics.InternalDeposit');
+            }
+            echartArray.push(type + '-' + data[i].depositType);
+            echartData.push({name: type + '-' + data[i].depositType, value: data[i].averageBalance})
+        }
+        let option = {
+            title: {
+                text: bt.lang("table.report.statistical.deposit.distribution"),
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c} ({d}%)'
+            },
+            legend: {
+                bottom: 'bottom',
+                data: echartArray
+            },
+            toolbox: {
+                show: true,
+                feature: {
+                    mark: {show: true},
+                    magicType: {
+                        show: true,
+                        type: ['pie', 'funnel']
+                    },
+                    restore: {show: true},
+                    saveAsImage: {show: true}
+                }
+            },
+            series: [
+                {
+                    name: '',
+                    type: 'pie',
+                    radius: '55%',
+                    itemStyle:{
+                        normal:{
+                            label: {
+                                formatter: '  {b|{b}:}{c}  {per|{d}%} ',
+                                backgroundColor: '#f9f9f9',
+                                borderColor: '#aaa',
+                                borderWidth: 0.3,
+                                borderRadius: 4,
+                                rich: {
+                                    b: {
+                                        fontSize: 14,
+                                        lineHeight: 20
+                                    },
+                                    per: {
+                                        color: '#eee',
+                                        backgroundColor: '#556677',
+                                        padding: [2, 4],
+                                        borderRadius: 2
+                                    }
+                                }
+                            },
+                        },
+                    },
+                    data: echartData
+                }
+            ]
+        };
+        var myChart = echarts.init(document.getElementById('chart'));
+        myChart.setOption(option);
+    }
+</script>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="docSearchForm" class="layui-form">
+    <input type="hidden" name="docId" id="docId" value="$!{relationVo.docId}"/>
+    <input type="hidden" name="relationId" id="relationId" value="$!{relationVo.relationId}"/>
+    <input type="hidden" name="writeOffType" id="writeOffType" value="$!{relationVo.writeOffType}"/>
+    <input type="hidden" name="paymentMeans" id="paymentMeans" value="$!{relationVo.paymentMeans}"/>
+    <input type="hidden" name="bankAccTypeStr" id="bankAccTypeStr" value="$!{relationVo.bankAccTypeStr}"/>
+
+    <input type="hidden" name="docNum" id="docNum" value="$!{relationVo.docNum}"/>
+    <input type="hidden" name="relationNum" id="relationNum" value="$!{relationVo.relationNum}"/>
+
+    <table class="layui-table layui-table-border" style="margin:auto;width:60% !important;">
+        <thead>
+            <tr>
+                <th class="textCenter">数据类型</th>
+                <th class="textCenter">可核销原币余额</th>
+                <th class="textCenter">币种</th>
+                <th class="textCenter">可核销应收币种金额</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="textRight">
+                    应收单
+                </td>
+                <td class="textRight">
+                    $!number.formatNumeric($!{relationVo.docMoney})
+                    <input type="hidden" name="docMoneyTemp" id="docMoneyTemp" value="$!{relationVo.docMoney}"/>
+                </td>
+                <td class="textCenter">
+                    $!{relationVo.docCurName}
+                </td>
+                <td class="textRight">
+                    $!number.formatNumeric($!{relationVo.docMoney})
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">
+                    $dictTag.get("basic.paymentMeans",$!{relationVo.paymentMeans})
+                </td>
+                <td class="textRight">
+                    $!number.formatNumeric($!{relationVo.relationOriginMoney})
+                    <input type="hidden" name="relationOriginMoneyTemp" id="relationOriginMoneyTemp" value="$!{relationVo.relationOriginMoney}"/>
+                </td>
+                <td class="textCenter">
+                    $!{relationVo.relationCurName}
+                </td>
+                <td class="textRight">
+                    <span id="relationConvertMoney" class="textRight">
+                        $!number.formatNumeric($!{relationVo.relationConvertMoney})
+                    </span>
+                    <input type="hidden" name="relationConvertMoneyTemp" id="relationConvertMoneyTemp" value="$!{relationVo.relationConvertMoney}"/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                    <input class="layui-input layui-input-inline bt-biz-moneyType" type="text" data-name="exchangeRate"
+                           data-id="exchangeRate" data-biz-name="exchangeRate"
+                           autocomplete="off" data-convert="true" data-minus="false"
+                           data-callback="exchangeRateCallback"
+                           value="$!{exchangeRate}">
+                    <input type="hidden" name="exchangeRateTemp" id="exchangeRateTemp" value=""/>
+                    <button type="button" class="layui-input-inline layui-btn layui-btn-primary" onclick="altRate()">#springMessage('切换汇率币种')</button>
+                </td>
+            </tr>
+        </tbody>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('确认')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="cancle()">#springMessage('取消')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+var moneyType,moneyFun;
+bt.use(['form', 'datatable', 'dateType', 'corp', 'dicts', 'money', 'selectType', 'accountTable', 'bank', 'moneyType', 'mulselect', 'externalCorpBankAcc'], function () {
+     var $ = bt.jquery, form = bt.form();
+     moneyType = bt.moneyType.init();
+     moneyFun = moneyType.getFun();
+
+     form.on('submit(submit)', function (data) {
+        bt.loading.show();
+        checkPreSubmit(data);
+        return false;
+     });
+
+     //提交前校验
+     function checkPreSubmit(data){
+     debugger
+        var docNum = $("#docNum").val();
+        var relationNum = $("#relationNum").val();
+        var docMoneyTemp = $("#docMoneyTemp").val();
+        var relationConvertMoneyTemp = $("#relationConvertMoneyTemp").val();
+        //根据选择笔数进行相关验证
+        if(docNum>1 && moneyFun.sub(docMoneyTemp,relationConvertMoneyTemp)>0){
+            bt.loading.hide();
+            layer.alert("系统无法判断与哪一笔进行优先核销，请一对一勾选后手工核销！", {icon: 2});
+            return false;
+        }
+        if(relationNum>1 && moneyFun.sub(docMoneyTemp,relationConvertMoneyTemp)<0){
+            bt.loading.hide();
+            layer.alert("系统无法判断与哪一笔进行优先核销或是否存在汇率尾差，请一对一勾选后手工核销！", {icon: 2});
+            return false;
+        }
+        if(moneyFun.sub(docMoneyTemp,relationConvertMoneyTemp) > 0){
+            bt.loading.hide();
+            layer.confirm("金额不一致，是否部分核销？",function(){
+                bt.loading.show();
+                doSubmit(data);
+            });
+        }else if(moneyFun.sub(docMoneyTemp,relationConvertMoneyTemp) < 0){
+            bt.loading.hide();
+            layer.confirm("金额不一致，是否继续？",function(){
+                bt.loading.show();
+                doSubmit(data);
+            });
+        }else {
+            doSubmit(data);
+        }
+     }
+
+     //跳转确认页面
+     function doSubmit(data){
+     debugger
+        sureWriteOff($("#docId").val(), $("#relationId").val(), $("#writeOffType").val(), $("#paymentMeans").val(), "", moneyType.get("exchangeRate").val());
+     }
+
+     //跳转核销确认页面
+    function sureWriteOff(docId, relationId, writeOffType, paymentMeans, bankAccTypeStr, exchangeRate){
+        bt.loading.hide();
+        parent.layer.open({
+            type: 2,
+            area: ['1200px', '530px'],
+            maxmin: true,
+            content: basePath + "/accountReceivable/writeOff/viewSure?docId="+docId+"&relationId="+relationId+
+                                "&writeOffType="+writeOffType+"&paymentMeans="+paymentMeans+"&bankAccTypeStr="+bankAccTypeStr+
+                                "&exchangeRate="+exchangeRate,
+            end:function(){
+                bt.datatable.refreshTable("appTableDoc");
+                /*var data = bt.datatable.getSelectData("#appTableDoc");
+                debugger
+                if (data.length>0) {
+                    tableInitByTableType(data[0]);
+                }else if(data.length == 0){
+                    clearForm();
+                    setIdByTableType("#");
+                    getDataByTableType();
+                }*/
+            }
+        });
+    }
+
+});
+
+function altRate(){
+    var exchangeRate = moneyType.get("exchangeRate").val();
+    var oldExchangeRate = $("#exchangeRateTemp").val();
+    //存储计算前汇率
+    $("#exchangeRateTemp").val(exchangeRate);
+    //计算倒数 或 取上一次计算前汇率
+    if(oldExchangeRate){
+        exchangeRate = oldExchangeRate;
+    }else {
+        exchangeRate = moneyFun.div(1,exchangeRate,4);
+    }
+    //更新汇率值
+    moneyType.get("exchangeRate").val(exchangeRate);
+    //更新可核销的应收币种金额
+    $("#relationConvertMoney").text(moneyFun.format(moneyFun.mul($("#relationOriginMoneyTemp").val(), exchangeRate)));
+    $("#relationConvertMoneyTemp").val(moneyFun.format(moneyFun.mul($("#relationOriginMoneyTemp").val(), exchangeRate)));
+}
+
+function exchangeRateCallback(nextValue, elem, preValue){
+    if(nextValue != preValue){
+        $("#exchangeRateTemp").val("");
+    }
+    //更新可核销的应收币种金额
+    $("#relationConvertMoney").text(moneyFun.format(moneyFun.mul($("#relationOriginMoneyTemp").val(), nextValue)));
+    $("#relationConvertMoneyTemp").val(moneyFun.format(moneyFun.mul($("#relationOriginMoneyTemp").val(), nextValue)));
+}
+
+function cancle(){
+    parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+</script>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+	<table class="layui-table">
+		<tbody>
+		   	<tr>
+		   		##单位代码
+				<td class="textRight" width="25%">#springMessage('table.cmsProvideLoanInfo.corpId')</td>
+		   		<td width="25%">
+		   			<div class="layui-inline">
+		   				<div class="bt-biz-corp" data-type="selectTree" data-name="eqs_corpId"
+							 placeholder="#springMessage('table.cmsProvideLoanInfo.corpId')"
+							 data-resource="cms:provide:repqy:query" data-scope="all"></div>
+		   			</div>
+		   		</td>
+		   		##借款单号
+		   		<td class="textRight" width="25%">#springMessage('table.cmsProvideLoanInfo.billCode')</td>
+		   		<td width="25%">
+					<input name="likes_infoBillCode" class="layui-input"
+						   placeholder="#springMessage('table.cmsProvideLoanInfo.billCode')">
+		   		</td>
+		   	</tr>
+		   	<tr>
+		   		##借款合同号
+				<td class="textRight" width="25%">#springMessage('table.cmsProvideLoanInfo.contractNo')</td>
+		   		<td width="25%">
+		   			<input name="likes_contractCode" class="layui-input" placeholder="#springMessage('table.cmsProvideLoanInfo.contractNo')">
+		   		</td>
+		   		##发放日期
+		   		<td class="textRight" width="25%">#springMessage('table.cmsProvideLoanSend.sendDate')</td>
+		   		<td width="25%">
+					<div class="layui-inline">
+		   				<input name="ged_sendData" class="layui-input bt-biz-dateType" data-type="date"
+							   placeholder="#springMessage('table.cmsProvideLoanSend.sendDate')" type="text">
+		   			</div>
+		   			<div class="layui-inline">
+		   				 ~ 
+		   			</div>
+		   			<div class="layui-inline">
+		   				<input name="led_sendData" class="layui-input bt-biz-dateType"
+							   placeholder="#springMessage('table.cmsProvideLoanSend.sendDate')" data-type="date" type="text">
+		   			</div>
+		   		</td>
+		   	</tr>
+		   	<tr>
+		   		#*#if($shiro.hasPermission("cms:provide:repqy:query"))*#
+		   		<td colspan="4" style="text-align: center;">
+		   			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+		           	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+		   		</td>
+		   		#*#end*#
+		   	</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+    	<th>#springMessage('table.cmsProvideLoanInfo.corpId')</th><!-- 申请单位 -->
+    	<th>#springMessage('table.cmsProvideLoanInfo.billCode')</th><!-- 借款单号 -->
+    	<th>#springMessage('table.cmsProvideLoanInfo.contractNo')</th><!-- 借款合同号 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.bankId')</th><!-- 借款银行 -->
+        <th>#springMessage('table.cmsProvideLoanSend.billCode')</th><!-- 发放单号 -->
+        <th>#springMessage('table.fcAccbook.enrolTime')</th><!-- 录入日期 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.curId')</th><!-- 币别 -->
+        <th>#springMessage('table.cmsProvideLoanRepay.billCode')</th><!-- 还款单号 -->
+        <th>#springMessage('table.cmsProvideLoanRepay.repayMoney')</th><!-- 还款金额 -->
+        <th>#springMessage('table.cmsProvideLoanSend.money')</th><!-- 发放金额 -->
+      ##  <th>#springMessage('table.cmsProvideLoanRepay.plBalance')</th><!-- 借款余额 -->
+        <th>#springMessage('table.cmsProvideLoanSend.sendDate')</th><!-- 发放日期 -->
+        <th>#springMessage('table.cmsProvideLoanRepay.billNo')</th><!-- 头寸调拨单据号码 -->
+        <th>#springMessage('table.cmsProvideLoanRepay.reqStatus')</th><!-- 头寸调拨单据状态 -->
+        <th>#springMessage('table.cmsProvideLoanRepay.voucherStat')</th><!-- 交易状态 -->
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+bt.use(['form','datatable','corp','moneyType','dateType'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    bt.moneyType.init();
+    bt.dateType.init();//时间
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        checkbox:true,
+        ajax: {
+            'url': basePath+"/cms/provide/loanrepay/dataOnlineRepayFollow"
+        },
+        searchForm:{
+            formElem:"#searchForm",
+            formFilter:"search"
+        },
+        buttons: [
+            {
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ],
+        fixedColumns: {
+            rightColumns:1//代表冻结右边一列
+        }
+        ,columns: [
+            {data:"corpName"},
+            {data:"infoBillCode"},
+            {data:"contractCode"},
+            {data:"bankName"},
+            {data:"sendCode"},
+            {data:"createDate"},
+            {data:"curName"},
+            {data:"billCode"},
+            {data:"repayMoney",className:"textRight", render: function ( data, type, full, meta ){
+            	return bt.money.format(full.repayMoney);
+            }},
+            {data:"sendMoney",className:"textRight", render: function ( data, type, full, meta ){
+            	return bt.money.format(full.sendMoney);
+            }},
+        /*    {data:"plBalance",className:"textRight",render: function ( data, type, full, meta ){
+            	return bt.money.format(full.plBalance);
+            }},*/
+            {data:"sendData"},
+            {data:"billNo"},
+            {data:"reqStatus",className:"center", render: function ( data, type, full, meta ){
+            	return bt.dict("netbank.statusAll",full.reqStatus);
+            }},
+            {data:"voucherStat", render: function ( data, type, full, meta ){
+				return bt.dict("bisExc.voucherStat", full.voucherStat);
+            }},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+            	var html = "";
+            	html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a> ';
+            	if(full.reqStatus == 0){//头寸调拨 为暂存状态
+            		html += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="'+meta.row+'" onclick="withdraw(this)">'+bt.lang("common.button.withdraw")+'</a> ';
+            	}
+            	if(full.onlineStatus == 0 || full.reqStatus == -2){//信贷撤回或头寸删除
+            		html += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="'+meta.row+'" onclick="edit(this)">'+bt.lang("common.button.edit")+'</a> ';
+            		html += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a> ';
+            	}
+            	if(full.reqStatus == 0 || full.reqStatus == -2 || full.onlineStatus == 0){//暂存、撤回、头寸删除
+            		html += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="'+meta.row+'" onclick="onlineIsNo(this)">'+bt.lang("cms.loanRepay.onlineIsNo")+'</a> ';
+            	}
+            	if((full.reqStatus == 95 ||full.reqStatus == 100)&& full.voucherStat == 0){//撤回、头寸删除
+            		html += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="'+meta.row+'" onclick="deductOk(this)">'+bt.lang("cms.loanRepay.deductOk")+'</a> ';
+            	}
+            	return html;
+            }}
+        ],
+        summary:{
+            pageSum: true,//小计功能开启
+            selectSum: true,//已选汇总功能开启
+            //groupColumn: 'curName',//分类汇总列参数
+            format: {
+                decimal: 2
+            },
+            sumList: [
+                {
+                    colNum: '9', //汇总列序号
+                    dataName: 'repayMoney' //汇总列还款金额
+                },
+                {
+                    colNum: '10', //汇总列序号
+                    dataName: 'sendMoney' //汇总列发放金额
+                }
+            ]
+        }
+    });
+});
+
+
+
+//撤回
+function withdraw(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	var action = "/cms/provide/loanrepay/onlineWithdraw?id=" + data.id;
+	bt.loading.show();
+	$.post(basePath + action,function(result){
+		if(result.success){
+    		datatable.draw();
+    	}
+    	parent.layer.msg(result.msg, {icon: result.success?1:2});
+    	bt.loading.hide();
+    },'JSON');
+}
+
+function deductOk(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	var action = "/cms/provide/loanrepay/onlineDeductOk?id=" + data.id;
+	bt.loading.show();
+	$.post(basePath + action,function(result){
+		if(result.success){
+    		datatable.draw();
+    	}
+    	parent.layer.msg(result.msg, {icon: result.success?1:2});
+    	bt.loading.hide();
+    },'JSON');
+}
+
+
+function edit(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	var url = basePath + "/cms/provide/loanrepay/editOnline?id=" + data.id;
+    if(parent.bt.navtab){
+        parent.bt.navtab.addNavtab(bt.lang('common.update.data'), url);
+        return;
+    }
+}
+
+function onlineIsNo(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	var url = basePath + "/cms/provide/loanrepay/edit?id=" + data.id + "&onlineSign=0&downSign=0";
+    if(parent.bt.navtab){
+        parent.bt.navtab.addNavtab(bt.lang('common.add.data'), url);
+        return;
+    }
+}
+
+//撤回
+function del(el){
+	parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+		var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+		var action = "/cms/provide/loanrepay/onlineDel?id=" + data.id;
+		bt.loading.show();
+		$.post(basePath + action,function(result){
+			if(result.success){
+	    		datatable.draw();
+	    	}
+	    	parent.layer.msg(result.msg, {icon: result.success?1:2});
+	    	bt.loading.hide();
+	    },'JSON');
+	});
+}
+
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(parent.bt.navtab){
+    	parent.bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/provide/loanrepay/viewOnlineRepay?repayId=" + data.id );
+        return;
+    }
+    top.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/cms/provide/loanrepay/viewOnlineRepay?repayId=" + data.id 
+    });
+}
+
+
+
+
+/** 
+* 判断是否为空 true：空 false:不为空
+* @param data 
+*/
+function isNull(data){ 
+	return (data == "" || data == undefined || data == null) ? true : false; 
+}
+//日志列表
+function listMsg(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	if(data){
+        if(parent.bt.navtab){
+        	parent.bt.navtab.addNavtab(bt.lang('common.button.logInfo'),basePath + "/cms/basedata/cmsprocessmsg/list?billCode=" + data.infoBillCode+","+data.sendCode);
+            return;
+        }
+	}
+}
+
+</script>
+
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+	<input id="id" name="id" type="hidden" value="$!{fcCheckInitPage.id}">
+	<input id="bankAcc" name="bankAcc" type="hidden" value="$!{fcCheckInitPage.bankAcc}">
+	<input id="account" name="account" type="hidden"  value="$!{fcCheckInitPage.account}">
+	<input id="curId" name="curId" type="hidden"  value="$!{fcCheckInitPage.curId}">
+	<input id="checkType" name="checkType" type="hidden"  value="$!{fcCheckInitPage.checkType}">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				<!-- 中心账号 -->
+				<td class="textRight">#springMessage('finacial.check.centralityDataManager.centralityAcc')：</td>
+				<td width="40%">   
+					<input type="text"  name="account" autocomplete="off" class="layui-input"  value="$!{fcCheckInitPage.account}" disabled="disabled">
+				</td>
+				<!-- 银行账号 -->
+				<td class="textRight">#springMessage('table.fcCheckInit.bankAcc')：</td>
+				<td width="40%">   
+					<input type="text" name="bankAcc" autocomplete="off" class="layui-input" value="$!{fcCheckInitPage.bankAcc}" disabled="disabled">
+				</td>
+			</tr>
+			<tr>
+				<!-- 初始对账日期 -->
+				<td class="textRight">#springMessage('table.fcCheckInit.checkDate')：</td>
+				<td width="40%">
+					#if($!{isAdjust} == "true")
+						<input id="checkDate" name="checkDate" data-type="date" value="$!{fcCheckInitPage.checkDate}" class="layui-input bt-biz-dateType" readonly="readonly" lay-verify="required" />
+					#else
+						<input id="checkDate" name="checkDate" data-type="date" value="$!{fcCheckInitPage.checkDate}" class="layui-input bt-biz-dateType" lay-verify="required" />
+					#end
+				</td>
+				<!-- 银行账户初始余额 -->
+				<td class="textRight">#springMessage('table.fcCheckInit.bankBalance')：</td>
+				<td width="40%">   
+					#if($!{isAdjust} == "true")
+						<input class="layui-input bt-biz-moneyType" data-name="bankBalance" lay-verify="required" readonly="readonly" value="$!{fcCheckInitPage.bankBalance}">
+					#else	
+						<input class="layui-input bt-biz-moneyType" data-name="bankBalance" lay-verify="required" value="$!{fcCheckInitPage.bankBalance}">
+					#end
+				</td>
+			</tr>
+			<tr>	
+				<!-- 中心账户初始余额 -->
+				<td class="textRight">#springMessage('table.fcCheckInit.blnBalance')：</td>
+				<td width="40%">
+					#if($!{isAdjust} == "true")
+						<input class="layui-input bt-biz-moneyType" data-name="blnBalance" readonly="readonly" lay-verify="required" value="$!{fcCheckInitPage.blnBalance}" >
+					#else
+						<input class="layui-input bt-biz-moneyType" data-name="blnBalance" lay-verify="required" value="$!{fcCheckInitPage.blnBalance}" >
+					#end
+				</td>
+				<!-- 备注 -->
+				<td class="textRight">#springMessage('table.fcCheckInit.rmk')：</td>
+				<td width="40%"> 
+					<input type="text" id="rmk" name="rmk" autocomplete="off" class="layui-input" value="$!{fcCheckInitPage.rmk}">
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','dateType','moneyType'], function(){
+    var $ = bt.jquery,form = bt.form();
+    bt.moneyType.init();
+    bt.dateType.init();
+    //监听提交
+    form.on('submit(submit)', function(data){
+    	bt.loading.show();//显示加载中
+        var action = "/finacial/check/fccheckinit/save";
+        $.post(basePath + action,data.field,function(result){
+        	 if(result.success){
+             	if(!bt.navtab){
+             		location.reload();
+                     parent.layer?parent.layer.closeAll():layer.closeAll();
+             	} else {
+             		bt.navtab.refreshParent();
+            			bt.navtab.closeCurrent();
+             	}
+             }
+        	 bt.loading.hide(); //关闭加载中
+             parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+        return false;
+    }); 
+});
+</script>
+</html>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bytter.olap.dao.BoardDao">
+
+
+    <select id="getBoard" resultType="com.bytter.olap.pojo.DashboardBoard">
+        SELECT
+        board_id    AS id,
+        board_name  AS name,
+        layout_json AS layout,
+        category_id AS categoryId,
+        create_time AS createTime,
+        update_time AS updateTime
+        FROM olap_board
+        WHERE board_id = #{0}
+    </select>
+
+
+    <!--获取所有的看板列表-->
+    <select id="getAllBoardList" resultType="com.bytter.olap.pojo.DashboardBoard">
+        SELECT
+        board_id        AS id,
+        board_name      AS NAME,
+        layout_json     AS layout,
+        a.category_id   AS categoryId,
+        b.category_name AS categoryName,
+        create_time     AS createTime,
+        update_time     AS updateTime
+        FROM olap_board a
+        LEFT JOIN olap_category b ON a.category_id = b.category_id
+        ORDER BY a.board_name
+    </select>
+
+
+    <select id="getBoardListByPermission" resultType="com.bytter.olap.pojo.DashboardBoard">
+        SELECT * FROM (
+            SELECT
+                board_id        AS id,
+                a.user_id 		AS userId,
+                board_name      AS NAME,
+                layout_json     AS layout,
+                a.category_id   AS categoryId,
+                b.category_name AS categoryName,
+                create_time     AS createTime,
+                update_time     AS updateTime
+            FROM olap_board a
+            LEFT JOIN olap_category b ON a.category_id = b.category_id
+            ORDER BY a.board_name
+        ) T
+        WHERE T.ID IN (SELECT board_id FROM OLAP_USER_PERMISSION userPermission WHERE userPermission.USER_ID = #{currentUserId} )
+        OR (SELECT COUNT(*) FROM OLAP_ROLE_PERMISSION WHERE BOARD_ID = T.ID AND ROLE_ID IN
+        (SELECT ROLE_ID FROM SYS_USER_ROLE WHERE USER_ID = #{currentUserId} )) > 0
+        OR T.USERID = #{currentUserId}
+        OR #{currentUserId} IN (SELECT ID FROM SYS_USER WHERE LOGIN_NAME='admin')
+    </select>
+
+
+    <insert id="save"
+            parameterType="com.bytter.olap.pojo.DashboardBoard">
+        INSERT INTO olap_board(board_id,board_name,layout_json,category_id)
+        VALUES (#{id},#{name},#{layout},
+        <choose>
+            <when test="categoryId == null">
+                null
+            </when>
+            <otherwise>
+                #{categoryId}
+            </otherwise>
+        </choose>
+        )
+    </insert>
+
+
+    <update id="update" parameterType="com.bytter.olap.pojo.DashboardBoard">
+        UPDATE olap_board
+        SET board_name = #{name},layout_json = #{layout},update_time = #{updateTime},
+        <choose>
+            <when test="categoryId == null">
+                category_id = null
+            </when>
+            <otherwise>
+                category_id = #{categoryId}
+            </otherwise>
+        </choose>
+        WHERE board_id = #{id}
+    </update>
+
+    <select id="countExistBoardName" parameterType="Map" resultType="java.lang.Long">
+        SELECT count(1) FROM olap_board WHERE 1 = 1
+        <if test="board_id != null">
+            <![CDATA[
+            AND board_id <> #{board_id}
+            ]]>
+        </if>
+        AND board_name = #{board_name}
+    </select>
+
+
+    <delete id="delete">
+        DELETE FROM olap_board WHERE board_id = #{0}
+    </delete>
+
+    <select id="getBoardParam" resultType="com.bytter.olap.pojo.DashboardBoardParam">
+        SELECT board_param_id id,board_id boardId,config
+        FROM olap_board_param where board_id = #{0}
+    </select>
+
+    <insert id="saveBoardParam" parameterType="com.bytter.olap.pojo.DashboardBoardParam">
+        <![CDATA[
+
+
+
+
+
+        INSERT INTO olap_board_param(board_param_id,board_id,config) VALUES (#{id},#{boardId},#{config})
+
+
+
+
+
+        ]]>
+    </insert>
+
+    <delete id="deleteBoardParam">
+        DELETE FROM olap_board_param WHERE board_id = #{0}
+    </delete>
+
+
+</mapper>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="natureIdHidden" value=""/>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage("table.btBankAcc.corpId")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-name="corpId" data-biz-type="corp" data-type="selectTree"
+                         data-biz-name="corpId"
+                         data-tree-type="check"
+                         data-checkkboxtype='{"Y":"s","N":"s"}'
+                         data-resource="cms.report.bus.query"
+                         data-afterInit="bt.initValue"
+                         data-required="true"
+                    ></div>
+                </div>
+            </td>
+
+            ##分类
+            <td class="textRight">#springMessage("cms.report.classification")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="select" data-biz-name="busSign" data-name="busSign"
+                         data-group="report.busSign"></div>
+                </div>
+            </td>
+
+            ##业务品种
+            <td class="textRight">#springMessage("cms.business.race")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="mulselect" data-biz-name="busType" data-name="busType"
+                         data-group="report.busType"></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##币别
+            <td class="textRight">#springMessage("table.btBankAccCur.cur")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType"
+                         data-biz-name="curId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id"
+                         data-textfield="curName"
+                         data-callback="clearCur"
+                         data-name="curId"
+                         data-search="true"
+                         data-required="true"
+                         data-defaultvalue="$!{curId}"
+                         data-method="get"
+                    ></div></div>
+            </td>
+
+            ##是否折合币种
+            <td class="textRight">#springMessage("common.isConvert.currency")</td>
+            <td>
+                <div class="layui-form">
+                    <div class="bt-biz-dict" data-type="radio" data-defaultvalue="0" data-biz-name="isToCurr"  data-callback="callToCurr"
+                         data-name="isToCurr" data-group="sf_yn"></div>
+                </div>
+            </td>
+
+            ##对比周期
+            <td class="textRight">#springMessage("statisticsReport.IntegratedQuery.comparedCycle")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="mulselect" data-biz-name="cycle" data-name="cycle"
+                         data-group="report.contrast" data-defaultvalue="M"></div>
+                </div>
+            </td>
+        </tr>
+
+
+        <tr>
+            ##统计月份
+            <td class="textRight">#springMessage("common.statistical.time")</td>
+            <td>
+                <input type="text" class="layui-input" id="statDate" name="monthDate" lay-verify="required">
+            </td>
+
+            ##金额单位
+            <td class="textRight">#springMessage("common.moneyType")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="select" data-biz-name="moneyType" data-name="moneyType"
+                         data-group="cms.MoneyType" data-defaultvalue="1"></div>
+                </div>
+            </td>
+            ##折合币种
+            <td class="textRight">#springMessage("commom.converted.into.currency")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-biz-name="reducedCurId"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="reducedCurId"
+                     data-search="true"
+                     data-defaultvalue="$!{cur}"
+                     data-disabled = "true"
+                     data-callback="checkConvertCurCallBack"
+                ></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search1" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+</form>
+
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th rowspan="2">#springMessage("table.fbsBudget.corpId")</th>##单位
+        <th rowspan="2">#springMessage("cms.business.race")</th>##业务品种
+        <th rowspan="2">#springMessage("cms.report.classification")</th>##分类
+        <th colspan="2">#springMessage("cms.report.same.month")</th>##当月
+        <th colspan="2">#springMessage("cms.report.last.month")</th>##较上月_差额
+        <th colspan="2">#springMessage("cms.report.same.period.last.year")</th>##较去年同期_差额
+        <th colspan="2">#springMessage("cms.report.same.season")</th>##当季度累计
+        <th colspan="2">#springMessage("cms.report.last.season")</th>##较上季度累计_差额
+        <th colspan="2">#springMessage("cms.report.same.year")</th>##当年累计
+        <th colspan="2">#springMessage("cms.report.last.year")</th>##较去年累计_差额
+    </tr>
+
+    <tr>
+        <th>#springMessage("condition.btwarnstrategy.oldBankAcc.head")</th>##交易笔数
+        <th>#springMessage("table.eBankBill.payMoney")</th>##交易金额
+
+        <th>#springMessage("table.fcAccBalance.cnt")</th>##笔数
+        <th>#springMessage("table.choBankFinance.payMoney")</th>##金额
+
+        <th>#springMessage("table.fcAccBalance.cnt")</th>##笔数
+        <th>#springMessage("table.choBankFinance.payMoney")</th>##金额
+
+        <th>#springMessage("table.fcAccBalance.cnt")</th>##笔数
+        <th>#springMessage("table.choBankFinance.payMoney")</th>##金额
+
+        <th>#springMessage("table.fcAccBalance.cnt")</th>##笔数
+        <th>#springMessage("table.choBankFinance.payMoney")</th>##金额
+
+        <th>#springMessage("table.fcAccBalance.cnt")</th>##笔数
+        <th>#springMessage("table.choBankFinance.payMoney")</th>##金额
+
+        <th>#springMessage("table.fcAccBalance.cnt")</th>##笔数
+        <th>#springMessage("table.choBankFinance.payMoney")</th>##金额
+    </tr>
+    </thead>
+</table>
+
+    #parse("views/common/footer.vm")
+</body>
+
+<script>
+    var corp;
+    var selectType,form;
+    var moneyFun;
+    var dicts;
+    var dateType;
+    var mulselect;
+    bt.use(['form', 'datatable', 'dateType', 'selectType', 'dicts', 'corp', 'mulselect', 'moneyType', 'date','dateType'], function () {
+        $ = bt.jquery, form = bt.form();
+        mulselect = bt.mulselect.init();
+        dicts = bt.dicts.init();
+        dateType = bt.dateType.init();
+        var moneyType = bt.moneyType.init();
+        moneyFun = moneyType.getFun();
+        selectType = bt.selectType.init();
+        corp = bt.corp.init();
+
+        /** 统计月份 begin*/
+        var laydate = bt.laydate;
+
+        // 设置可选的日期
+        function maxDate() {
+            var now = new Date();
+            return now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+        }
+
+        laydate.render({
+            elem: '#statDate'
+            , max: maxDate()
+            , type: 'month'
+            , value: new Date()
+        });
+        /** 统计月份 end*/
+
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            isInitData: false,
+            exportFile:{
+                customPrint:{
+                    header:function(){
+                        var printHtml = '<tr>\n' +
+                                '            <th rowspan="2">#springMessage("table.fbsBudget.corpId")</th>\n'+
+                                '            <th rowspan="2">#springMessage("cms.business.race")</th>\n'+
+                                '            <th rowspan="2">#springMessage("cms.report.classification")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.same.month")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.last.month")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.same.period.last.year")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.same.season")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.last.season")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.same.year")</th>\n'+
+                                '            <th colspan="2">#springMessage("cms.report.last.year")</th>\n'+
+                                '        </tr>\n' +
+                                '    \n' +
+                                '        <tr>\n' +
+                                '            <th>#springMessage("condition.btwarnstrategy.oldBankAcc.head")</th>\n'+
+                                '            <th>#springMessage("table.eBankBill.payMoney")</th>\n'+
+                                '            \n' +
+                                '            <th>#springMessage("table.fcAccBalance.cnt")</th>\n'+
+                                '            <th>#springMessage("table.choBankFinance.payMoney")</th>\n'+
+                                '\n' +
+                                '            <th>#springMessage("table.fcAccBalance.cnt")</th>\n'+
+                                '            <th>#springMessage("table.choBankFinance.payMoney")</th>\n'+
+                                '\n' +
+                                '            <th>#springMessage("table.fcAccBalance.cnt")</th>\n'+
+                                '            <th>#springMessage("table.choBankFinance.payMoney")</th>\n'+
+                                '\n' +
+                                '            <th>#springMessage("table.fcAccBalance.cnt")</th>\n'+
+                                '            <th>#springMessage("table.choBankFinance.payMoney")</th>\n'+
+                                '\n' +
+                                '            <th>#springMessage("table.fcAccBalance.cnt")</th>\n'+
+                                '            <th>#springMessage("table.choBankFinance.payMoney")</th>\n'+
+                                '\n' +
+                                '            <th>#springMessage("table.fcAccBalance.cnt")</th>\n'+
+                                '            <th>#springMessage("table.choBankFinance.payMoney")</th>\n'+
+                                '        </tr>';
+                        return printHtml;
+                    },
+                },
+            },
+            ajax: {
+                'url': basePath + "/cms/report/businessvolume/datatable"
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search1",
+                callback: function (data) {
+                    columnShow();
+                }
+            },
+
+            columns: [
+                {data: "corpName", bSortable: false, className: "center"},
+                {data: "busTypeName", bSortable: false, className: "center"},
+                {data: "busSignName", bSortable: false, className: "center"},
+                {data: "num", bSortable: false, className: "center"},
+                {
+                    data: "money", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.money, {separator: ","});
+                    }
+                },
+                {data: "numM", bSortable: false, className: "center"},
+                {
+                    data: "balanceM", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.balanceM, {separator: ","});
+                    }
+                },
+                {data: "numL", bSortable: false, className: "center"},
+                {
+                    data: "balanceL", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.balanceL, {separator: ","});
+                    }
+                },
+                {data: "numNowS", bSortable: false, className: "center"},
+                {
+                    data: "balanceNowS", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.balanceNowS, {separator: ","});
+                    }
+                },
+                {data: "numS", bSortable: false, className: "center"},
+                {
+                    data: "balanceS", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.balanceS, {separator: ","});
+                    }
+                },
+                {data: "numNowY", bSortable: false, className: "center"},
+                {
+                    data: "balanceNowY", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.balanceNowY, {separator: ","});
+                    }
+                },
+                {data: "numY", bSortable: false, className: "center"},
+                {
+                    data: "balanceY", bSortable: false, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(full.balanceY, {separator: ","});
+                    }
+                }
+            ],
+            btDrawCallback:function (setting) {
+                var tableData = setting.json.data;
+                if(tableData && tableData.length>0){
+                    var msg=bt.lang('alert.please.maintain')+' ';
+                    var flag=false;
+                    for(var i=0;i<tableData.length;i++){
+                        if(tableData[i].id === '1'){
+                            flag=true;
+                            msg += selectType.get("curId").getData().text+'-'+selectType.get("reducedCurId").getData().text+' ';
+                            break;
+                        }
+                    }
+                    msg += bt.lang('table.btCurrency.curExrate');
+                    if(flag){
+                        layer.msg(msg)
+                    }
+                }
+            },
+            summary: {
+                pageSum: true,
+                allSum: false,
+                selectSum: false,
+                format: {
+                    decimal: 2
+                },
+                createSummaryText:function(text){ //自定义汇总名称
+                    return bt.lang('table.fbsBudget.collect')
+                },
+                sumList: [
+                    {
+                        colNum: '4',
+                        dataName: 'num',
+                        money:false
+                    },
+                    {
+                        colNum: '5',
+                        dataName: 'money'
+                    },
+                    {
+                        colNum: '6',
+                        dataName: 'numM',
+                        money:false
+                    },
+                    {
+                        colNum: '7',
+                        dataName: 'balanceM'
+                    },
+                    {
+                        colNum: '8',
+                        dataName: 'numL',
+                        money:false
+                    },
+                    {
+                        colNum: '9',
+                        dataName: 'balanceL'
+                    },
+                    {
+                        colNum: '10',
+                        dataName: 'numNowS',
+                        money:false
+                    },
+                    {
+                        colNum: '11',
+                        dataName: 'balanceNowS'
+                    },
+                    {
+                        colNum: '12',
+                        dataName: 'numS',
+                        money:false
+                    },
+                    {
+                        colNum: '13',
+                        dataName: 'balanceS'
+                    },
+                    {
+                        colNum: '14',
+                        dataName: 'numNowY',
+                        money:false
+                    },
+                    {
+                        colNum: '15',
+                        dataName: 'balanceNowY'
+                    },
+                    {
+                        colNum: '16',
+                        dataName: 'numY',
+                        money:false
+                    },
+                    {
+                        colNum: '17',
+                        dataName: 'balanceY'
+                    }
+                ]
+            },
+            pageSizeOptions: [500, 1000, 1500]
+        });
+    });
+
+    function callToCurr(data){
+        if(data.value =="1"){
+            selectType.get("reducedCurId").attr({'data-disabled':false,'data-required':true});
+            selectType.get("curId").attr({'data-disabled':true,'data-required':false});
+        }else {
+            selectType.get("reducedCurId").val("");
+            selectType.get("reducedCurId").attr({'data-disabled':true,'data-required':false});
+            selectType.get("curId").val("");
+            selectType.get("curId").attr({'data-disabled':false,'data-required':true});
+        }
+        form.renderIcon();
+        checkConvertCurCallBack();
+    }
+
+    function clearCur(){
+        selectType.get("reducedCurId").val("");
+    }
+
+    /**
+     * 币种转换校验
+     */
+    function checkConvertCurCallBack() {
+        // var origCur = selectType.get("curId").val();
+        // if (isNotEmpty(origCur) && isNotEmpty(reducedCurId)) {
+        var reducedCurId = selectType.get("reducedCurId").val();
+        if (isNotEmpty(reducedCurId)) {
+            $.ajax({
+                url: basePath + "/report/deposit/balance/checkConvertCurId",
+                type:"post",
+                data:{
+                    "isAllCur":"1",
+                    "convertCurId": reducedCurId,
+                    "date": $('#statDate').val(),
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("reducedCurId").val("");
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " " || stringData == "null") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+
+    /** 选择对比周期时动态显示列表 begin*/
+    function columnShow() {
+        var one = "", two = "", three = "";
+        var selectCyclew = mulselect.get("cycle").val();
+        if (selectCyclew && selectCyclew[0].value) {
+            for (var i = 0; i < selectCyclew.length; i++) {
+                if (selectCyclew[i].value == "M") {
+                    one = "M"
+                }
+                if (selectCyclew[i].value == "S") {
+                    two = "S"
+                }
+                if (selectCyclew[i].value == "Y") {
+                    three = "Y"
+                }
+            }
+        } else {
+            one = "";
+            two = "";
+            three = "";
+        }
+        showOrHidden(one, two, three);
+    }
+
+    function setColumnShow(index, flag) {
+        var column = datatable.column(index);
+        column.visible(flag);
+    }
+
+    function showOrHidden(one, two, three) {
+        //当月，较上月，较去年同期
+        if (!bt.empty(one)) {
+            setColumnShow(3, true);//显示列
+            setColumnShow(4, true);//显示列
+            setColumnShow(5, true);//显示列
+            setColumnShow(6, true);//显示列
+            setColumnShow(7, true);//显示列
+            setColumnShow(8, true);//显示列
+        } else {
+            setColumnShow(3, false);//隐藏列
+            setColumnShow(4, false);//隐藏列
+            setColumnShow(5, false);//隐藏列
+            setColumnShow(6, false);//隐藏列
+            setColumnShow(7, false);//隐藏列
+            setColumnShow(8, false);//隐藏列
+        }
+        //当季，较上季
+        if (!bt.empty(two)) {
+            setColumnShow(9, true);//显示列
+            setColumnShow(10, true);//显示列
+            setColumnShow(11, true);//显示列
+            setColumnShow(12, true);//显示列
+        } else {
+            setColumnShow(9, false);//隐藏列
+            setColumnShow(10, false);//隐藏列
+            setColumnShow(11, false);//隐藏列
+            setColumnShow(12, false);//隐藏列
+        }
+        //当年，较去年累计
+        if (!bt.empty(three)) {
+            setColumnShow(13, true);//显示列
+            setColumnShow(14, true);//显示列
+            setColumnShow(15, true);//显示列
+            setColumnShow(16, true);//显示列
+        } else {
+            setColumnShow(13, false);//隐藏列
+            setColumnShow(14, false);//隐藏列
+            setColumnShow(15, false);//隐藏列
+            setColumnShow(16, false);//隐藏列
+        }
+
+    }
+
+    /** 选择对比周期时动态显示列表 end*/
+
+    /**判断字符串是否为空*/
+    bt.empty = function(ms){
+        if(typeof(ms) == "undefined" || ms == null || ms == "" || ms == " "){
+            return true;
+        }
+        return false;
+    }
+</script>
+</html>

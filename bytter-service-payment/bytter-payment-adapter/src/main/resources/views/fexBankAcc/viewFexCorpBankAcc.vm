@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post" id="inputForm">
+		<input id="id" name="id" type="hidden" value="$!{vo.id}">
+		<input id="busType" name="busType" type="hidden" value="$!{busType}">
+		<table class="layui-table">
+		<tbody>
+			<thead>
+				<tr>
+					<th class="textLeft" colspan="6" >#springMessage("table.fexBankAcc.rule")</th>
+				</tr>
+			</thead>
+			<tr>
+			##单位
+			<td class="textRight" style="width: 10%">#springMessage("table.fexForeign.corpId")</td>
+			<td style="width: 20%">
+				#if($!{vo.corpName})
+					$!{vo.corpName}
+				#else
+					#springMessage("common.placeholder.all")
+				#end
+			</td>
+			##交易类型
+			<td class="textRight" style="width: 10%">#springMessage("table.fexBankAcc.tranType")</td>
+			<td style="width: 20%">
+				#if($!{vo.tranType})
+					$dictTag.get("fexCorp.tranType",$!{vo.tranType})
+				#else
+					#springMessage("common.placeholder.all")
+				#end
+			</td>
+			##产品
+			<td class="textRight" style="width: 10%">#springMessage("table.fexBankAcc.proId")</td>
+			<td style="width: 20%">
+				#if($!{vo.proId})
+					$!{vo.proName}
+				#else
+					#springMessage("common.placeholder.all")
+				#end
+			</td>
+			</tr>
+			<tr>
+				##交易对手
+				<td class="textRight">#springMessage("table.fexForeign.copt")</td>
+				<td>
+					#if($!{vo.oppCorpId})
+						$!{vo.oppCorpName}
+					#else
+						#springMessage("common.placeholder.all")
+					#end
+				</td>
+				##收付方向
+				<td class="textRight">#springMessage("table.fexBankAcc.cdSign")</td>
+				<td>
+					#if($!{vo.cdSign})
+						$dictTag.get("fexCorp.cdSign",$!{vo.cdSign})
+						#else
+						#springMessage("common.placeholder.all")
+					#end
+
+				</td>
+				##现金流类型
+				<td class="textRight">#springMessage("table.fexBankAcc.cashFlowType")</td>
+				<td>
+					#if($!{vo.cashFlowType})
+						$dictTag.get("fexCorp.cashFlowType",$!{vo.cashFlowType})
+						#else
+						#springMessage("common.placeholder.all")
+					#end
+				</td>
+			</tr>
+			<tr>
+				##币种
+				<td class="textRight">#springMessage('table.fexForeign.curId')</td>
+				<td>
+					#if($!{vo.curId})
+						$!{vo.curName}
+					#else
+						#springMessage("common.placeholder.all")
+					#end
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			</tbody>
+		</table>
+		<table class="layui-table ignore-required-icon isDown" id="editTable" width="100%">
+			<thead>
+			<tr>
+				<th colspan="7" class="textLeft">
+					#springMessage("table.fexBankAcc.defaultAcc")
+				</th>
+			</tr>
+			<tr>
+				<th  width="15%">#springMessage("table.fexBankAcc.effectDate")</th>
+				<th  width="15%">#springMessage("table.fexForeign.bank")</th>
+				<th  width="15%">#springMessage("table.fexForeign.bankAcc")</th>
+				<th  width="15%">#springMessage("table.fexForeign.cotpAccName")</th>
+				<th  width="15%">#springMessage("table.fexForeign.curId")</th>
+				<th  width="15%">#springMessage("table.fexBankAcc.voucherTypeId")</th>
+			</tr>
+			</thead>
+			<tbody>
+				#foreach($dtl in $!{vo.fexCorpBankAccDtl})
+					#set($vcount = $velocityCount - 1)
+				<tr data-row="$vcount">
+					##生效日期
+					<td class="center">
+						$!{dtl.effectDate}
+					</td>
+					##银行类型
+					<td class="center">
+						$!{dtl.bankTypeName}
+					</td>
+					##银行账号
+					<td class="center">
+						$!{dtl.bankAcc}
+					</td>
+					##账户名称
+					<td class="center">
+						$!{dtl.accName}
+					</td>
+					##币种
+					<td class="center">
+						$!{dtl.curName}
+					</td>
+					##默认支付方式
+					<td class="center">
+						$!{dtl.voucherName}
+					</td>
+				</tr>
+				#end
+			</tbody>
+		</table>
+		#if(!$taskId)
+			<div style="width: 100%;text-align: center;">
+				<button class="layui-btn" type="button" onClick="closecurrent()">#springMessage('common.button.close')</button>
+			</div>
+		#end
+	</form>
+	<!-- 日志 -->
+	<div id="tagMsg"></div>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script type="text/javascript">
+bt.use(['form','datatable','corp','dicts','jquery'], function(){
+	var $ = bt.jquery, form = bt.form();
+	/**
+	 * 生成日志列表
+	 * @return
+	 */
+		$genMsgHtml = function () {
+		var url = basePath + "/foreign/fexmessage/list/" + $('#id').val() + "/" + $("#busType").val() + "?timestamp=" + new Date().getTime();
+		$.ajax({
+			url: url,
+			method: 'GET',
+			async: false,
+			success: function (json) {
+				$("#tagMsg").html("");
+				$("#tagMsg").html(json);
+				form.render();
+			}
+		});
+	}
+		$genMsgHtml();
+});
+function closecurrent() {
+	parent.layer ? parent.layer.closeAll() : layer.closeAll();
+	return false;
+}
+</script>

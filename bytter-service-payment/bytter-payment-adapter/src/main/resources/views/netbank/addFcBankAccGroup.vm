@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="id" name="id" type="hidden" value="$!{fcVoucherTypePage.id}">
+		<input id="isSystem" name="isSystem" type="hidden" value="0">
+        <table class="layui-table">
+			<tbody >
+				<tr>
+					<td class="textRight" width="30%">#springMessage('fcBankAccGroup.code')</td>
+					<td >
+						<input type="text" id="accGroupCode" name="accGroupCode" lay-verify="required|langKey|strlength" autocomplete="off" class="layui-input" placeholder="#springMessage('fcReceiptType.code')">
+##						data-maxlength="2" data-minlength="2"
+                    </td>
+				</tr>
+				<tr >
+					<td class="textRight">#springMessage('fcBankAccGroup.name')</td>
+					<td>
+						<input type="text" id="accGroupName" name="accGroupName" lay-verify="required|strlength" data-maxlength="20" autocomplete="off" class="layui-input" placeholder="#springMessage('fcReceiptType.name')">
+                    </td>
+                </tr>
+
+				<tr>
+					<td class="textRight">#springMessage('fcBankAccGroup.operation.area')</td>
+					<td>
+						<div class="layui-input-inline">
+							<input type="hidden" name="areaCodes" id="add_areaCodes">
+							<input type="text" name="areaNames" readonly="readonly" autocomplete="off" class="layui-input" placeholder="所属营运区" id="add_areaNames"/>
+							<div class="bt-div-search">
+								<button class="bt-biz-inputOperationarea" type="button"
+										data-callback="bt.inputOperationAreaCallback"
+										title="选择">
+									<span class="iconfont byicon_box_search"></span>
+								</button>
+							</div>
+						</div>
+					</td>
+				</tr>
+
+
+    			<tr >
+                    <td colspan="2" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.save')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+    				</td>
+    			</tr>
+            </tbody>
+		</table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+	bt.use(['form', 'layedit', 'selectType', 'dicts','inputOperationarea'], function () {
+		var $ = bt.jquery, form = bt.form();
+		var inputOperationarea = bt.inputOperationarea.init();
+		inputOperationAreaCallback = function (selectedData) {
+			console.log(selectedData);
+			var codes = ''
+			var names = ''
+			bt.each(selectedData,function (i,item){
+				codes += item.operationAreaCode
+				names += item.operationAreaName
+				if(i < (selectedData.length -1)){
+					codes += ',';
+					names += ','
+				}
+			})
+			$("#add_areaCodes").val(codes)
+			$("#add_areaNames").val(names)
+		}
+
+		//监听提交
+		form.on('submit(submit)', function (data) {
+			var action = "/netbank/bankAccGroup/save";
+			$.post(basePath + action, data.field, function (result) {
+				parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+					parent.layer.closeAll();
+					// if (result.success) {
+					// 	if (bt.navtab) {
+					// 		bt.navtab.refreshParent();
+					// 		bt.navtab.refreshCurrent()
+					// 	} else {
+					// 		parent.layer ? parent.layer.closeAll() : layer.closeAll();
+					// 	}
+					// }
+				})
+			}, 'JSON');
+			$("#accGroupCode").val('');
+			$("#accGroupName").val('');
+			$("#add_areaNames").val('');
+			return false;
+		});
+	});
+
+</script>

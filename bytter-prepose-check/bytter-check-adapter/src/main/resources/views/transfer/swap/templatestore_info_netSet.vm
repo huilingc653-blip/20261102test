@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	<style>
+        #template_edit_fen_table .layui-input{width:120px;}
+	</style>
+</head>
+<body>
+<form id="netSetForm" class="layui-form">
+    <input type="hidden" name="dealType" value="$!{configType}">
+    <input type="hidden" id="newSet" value="$!{newSet}">
+    <input type="hidden" name="serialId" value="$!{templateStore.dtlId}">
+    <table class="layui-table" id="netSetTable">
+        <tbody>
+            <tr><td colspan="6" class="textCenter">#if($!configType=="payer")付款单 #else 收款单#end</td></tr>
+            <tr><td colspan="6" class="textCenter">申请单位：$!{templateStore.corpName}</td></tr>
+            <tr>
+                <td class="textCenter" rowSpan="4">收<br>款<br>单<br>位</td>
+                <td class="textRight">收款人：</td>
+                <td class="textLeft">#if($!configType=="payer")$!{templateStore.oppAccName} #else $!{templateStore.accName} #end </td>
+                <td class="textCenter" rowSpan="4">付<br>款<br>单<br>位</td>
+                <td class="textRight">付款人：</td>
+                <td class="textLeft">#if($!configType=="payer")$!{templateStore.accName} #else $!{templateStore.oppAccName}#end </td>
+            </tr>
+            <tr>
+                <td class="textRight">收款账号：</td>
+                <td class="textLeft">#if($!configType=="payer")$!{templateStore.oppAccNo} #else $!{templateStore.bankAcc}#end</td>
+                <td class="textRight">付款账号：</td>
+                <td class="textLeft">#if($!configType=="payer")$!{templateStore.bankAcc} #else $!{templateStore.oppAccNo}#end</td>
+            </tr>
+            <tr>
+                <td class="textRight">收款开户行：</td>
+                <td class="textLeft">#if($!configType=="payer")$!{templateStore.oppAccBank} #else $!{templateStore.bankName}#end</td>
+                <td class="textRight">付款开户行：</td>
+                <td class="textLeft">#if($!configType=="payer")$!{templateStore.bankName} #else $!{templateStore.oppAccBank}#end</td>
+            </tr>
+            <tr>
+                <td class="textRight">人民币（大写）：</td>
+                <td class="textLeft" id="info_money"></td>
+                <td class="textRight">人民币（小写）：</td>
+                <td class="textLeft" id="info_money_val">$!{templateStore.amt}</td>
+            </tr>
+            <tr>
+                <td  colspan="6" class="textCenter">补录信息</td>
+            </tr>
+                #set($list = $templateStore.erpHisDtlComFields)
+                #set($count = $list.size())
+                #foreach($obj in $list)
+                    #set($num = $velocityCount - 1)
+                    #if( $num%2 == 0)
+                        #set($vcount = $velocityCount +1)
+                        #set($ds = $list[$num].dataSource)
+                        <tr>
+                        <td class="textRight" colSpan="2"id="dyna$velocityCount">$list[$num].showName</td>
+                        <td class="textLeft">
+                            #if($ds.trim().length()==0)
+                                <input type="text" id="$list[$num].fieldCode" name="$list[$num].fieldCode"
+                                       autocomplete="off" class="layui-input" flag="defineStyle" lay-verify="#if($list[$num].isNotNull==1)required#end" value="$!list[$num].textValue" >
+
+                            #else
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-selectType" data-flag="defineStyle" data-url="$!{basePath}/erp/swap/template/source?code=$ds" data-valuefield="code"
+                                         data-textfield="name" data-name="$list[$num].fieldCode" data-search="true" data-biz-name="$list[$num].fieldCode"
+                                         data-link="true" data-defaultvalue="$!list[$num].textValue" data-required="#if($list[$num].isNotNull==1)true#end" ></div>
+                                </div>
+                            #end
+                        </td>
+                        #if($vcount>$count)
+                            <td class="textRight" colSpan="2"></td>
+                            <td class="textLeft"></td>
+                        #else
+                            #set($vds = $list[$velocityCount].dataSource)
+                            <td class="textRight" colSpan="2" id='"dyna$vcount'>$list[$velocityCount].showName</td>
+                            <td class="textLeft">
+                                #if($vds.trim().length()==0)
+                                    <input type="text" id="$list[$velocityCount].fieldCode" name="$list[$velocityCount].fieldCode"
+                                           autocomplete="off" class="layui-input" flag="defineStyle" lay-verify="#if($list[$velocityCount].isNotNull==1)required#end" value="$!list[$velocityCount].textValue"  >
+                                #else
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-selectType" data-flag="defineStyle" data-url="$!{basePath}/erp/swap/template/source?code=$vds" data-valuefield="code"
+                                             data-textfield="name" data-name="$list[$velocityCount].fieldCode" data-search="true" data-biz-name="$list[$velocityCount].fieldCode"
+                                             data-link="true" data-defaultvalue="$!list[$velocityCount].textValue" data-required="#if($list[$velocityCount].isNotNull==1)true#end" ></div>
+                                    </div>
+                                #end
+                            </td>
+                        #end
+
+                        </tr>
+                    #end
+                #end
+##                #set($size = $count - 1)
+##                #foreach($foo in [0..$size])
+##                #end
+
+        </tbody>
+    </table>
+    <div class="layui-form-item layui-form-submit">
+        <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+        <button type="reset" data-callback="chageCild" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+	</div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/swap/templatestore.info.newSet.js?_btv=${resourceVersion}"></script>
+</html>

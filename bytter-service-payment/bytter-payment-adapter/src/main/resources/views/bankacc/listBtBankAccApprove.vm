@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+		<input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+        <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}" />
+        <input type="hidden" name="eqs_busType" id="eqs_busType" value="$!{type}">
+		<table class="layui-table">
+			<tbody >
+				<tr>
+					<td class="textRight">#springMessage('table.btBankAccApp.createDate')</td>
+                    <td width="35%">
+						<div class="layui-inline">
+                            <input type="text" name="ged_createDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_createDate" >
+                            <span class="date-mid">~</span>
+                            <input type="text" name="led_createDate" class="layui-input bt-input-inline bt-biz-dateType" id="led_createDate">
+                        </div>
+                    </td>
+                    <td class="textRight">#springMessage("#springMessage('table.btBankAccApp.bankTypeId')")</td>
+                    <td width="35%">
+                        <div type="list" field="eqs_bankTypeId" name = "eqs_bankTypeId" fieldHref="${basePath}/basic/business/btbanktype/listFilter" dictField="id" dictText="typeName" defaultVal="$!{btBankAccAppPage.bankTypeId}" ></div>
+                    </td>
+                </tr>
+				<tr>
+                    <td colspan="4" style="text-align: center;">
+                        <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+					</td>
+				</tr>
+            </tbody>
+		</table>
+    </form>
+
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+            <tr>
+                <th>#springMessage('table.btBankAccApp.accNo')</th>
+                <th>#springMessage('table.btBankAccApp.bankAcc')</th>
+                <th>#springMessage('table.btBankAccApp.accName')</th>
+                <th>#springMessage('table.btBankAccApp.corpId')</th>
+                <th>#springMessage('table.btBankAccApp.curId')</th>
+                <th>#springMessage('table.btBankAccApp.isDomesticBank')</th>
+                <th>#springMessage('table.btBankAccApp.accType')</th>
+                <th>#springMessage('table.btBankAccApp.attributeId')</th>
+                <th>#springMessage('table.btBankAccApp.natureId')</th>
+                <th>#springMessage('table.btBankAccApp.bankTypeId')</th>
+                <th>#springMessage('table.btBankAccApp.bankName')</th>
+                <th>#springMessage('table.btBankAccApp.prov')</th>
+                <th>#springMessage('table.btBankAccApp.city')</th>
+                <th>#springMessage('table.btBankAccApp.electricBill')</th>
+                <th>#springMessage('table.btBankAccApp.createDate')</th>
+                <th>#springMessage('common.table.thead.operation')</th>
+            </tr>
+        </thead>
+    </table>
+	#paymentWorkFlowHtml()
+    #parse("views/common/footer.vm")
+	#paymentWorkFlowScript()
+    <script>
+        bt.use(['form','datatable','select'], function(){
+            bt.datatable.init({
+                elem: "#appTable",
+                colReorder: true,
+                checkbox:true,
+                order: [1,'desc'],
+                searchForm: {
+                    formElem: "#searchForm",
+                    formFilter: "search"
+                },
+                ajax: {
+                    'url': basePath+"/bankacc/btbankaccapp/dataTableApprove"
+                },
+                buttons: [
+
+                ],
+                fixedColumns: {
+                    rightColumns:1//代表冻结右边一列
+                },
+                columns: [
+                    {data:"accNo",bSortable:true},
+                    {data:"bankAcc",bSortable:true, visible: setBankAccVisible()},
+                    {data:"accName",bSortable:true},
+                    {data:"corpName",bSortable:true},
+                    {data:"curName",bSortable:true},
+                    {data:"isDomesticBank",bSortable:true,
+                        render:function (data,type,full,meta) {
+                            return bt.dict("btBankAcc.isDomesticBank",full.isDomesticBank);
+                        }
+                    },
+                    {data:"accType",bSortable:true,
+                        render: function ( data, type, full, meta ) {
+                            return bt.dict("btBankAcc.accType",full.accType);
+                        }
+                    },
+                    {data:"attributeName",bSortable:true},
+                    {data:"natureName",bSortable:true},
+                    {data:"bankTypeName",bSortable:true},
+                    {data:"bankName",bSortable:true},
+                    {data:"provName",bSortable:true},
+                    {data:"cityName",bSortable:true},
+                    {data:"electricBill",bSortable:true,
+                        render: function ( data, type, full, meta ) {
+                            return bt.dict("sf_yn",full.electricBill);
+                        }
+                    },
+                    {data:"createDate",bSortable:true,defaultContent:'',
+                        render: function (data, type, full, meta) {
+                            return bt.date.format(full.createDate, "yyyy-mm-dd");
+                        }
+                    },
+                    {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html='';
+                    	if($("#flowStatus").val()=='todo'){
+                    		html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                    	}
+                        if($("#flowStatus").val() == 'pass'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }else {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }
+                    	return html;
+                    }}
+                ]
+            });
+            //下拉框
+            $.each($("div[type='list']"),function(i,item){
+                bt.select.init({
+                    elem: "[field='"+$(item).attr("field")+"']",
+                    name: $(item).attr("field"),
+                    defaultVal: $(item).attr("defaultVal"),
+                    valueField: $(item).attr("dictField"),
+                    textField: $(item).attr("dictText"),
+                    search: true,
+                    disabled: false,
+                    url: $(item).attr("fieldhref")
+                });
+            });
+        })
+
+        function setBankAccVisible() {
+            var busType = $("#eqs_busType").val();
+            if (busType == "1") {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    </script>
+    <script src="${basePath}/static/modules/bankacc/btBankAccApprove.list.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

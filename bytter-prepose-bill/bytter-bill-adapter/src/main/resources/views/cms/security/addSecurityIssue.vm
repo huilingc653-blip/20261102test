@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+
+<form class="layui-form" method="post">
+    <!--保存保证金Id-->
+    <input  id="bondId"  name="bondId"  type="hidden">
+    <!--当前保证金账户的可用余额-->
+    <input id="accAvailMoney" name="accAvailMoney" type="hidden">
+    <input type="hidden" id="curId" name="curId" value="$!{info.curId}">
+    <input type="hidden" id="corpId" name="corpId" value="$!{info.corpId}">
+    <input type="hidden" id="securityInfoId" name="securityInfoId" value="$!{info.id}">
+    <input type="hidden" id="oriBailMoney" name="oriBailMoney"/>
+    <input type="hidden" id="bondRate" name="bondRate"/>
+    <input type="hidden" id="bondBankacc" name="bondBankacc"/>
+
+    ##资产证券化发行主信息
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('table.cmsSecurity.issue.mainMessage')</h2>
+            <div class="layui-colla-content layui-show" style="margin-bottom: 10px;">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##证券发行编号
+                        <td class="textRight" >#springMessage('cms.security.securityIssueCode')</td>
+                        <td >
+                            <input type="text" id="securityIssueCode"  name="securityIssueCode" autocomplete="off"
+                                   class="layui-input" lay-verify="required" />
+                        </td>
+                        ##批次
+                        <td class="textRight">#springMessage('table.cmsBond.batchNo')</td>
+                        <td>
+                            <input type="text"  name="batchNo"  autocomplete="off"
+                                   class="layui-input" />
+                        </td>
+                    </tr>
+                    <tr>
+                        ##层级
+                        <td class="textRight" >#springMessage('cms.security.level')</td>
+                        <input type="hidden" name="levelName" id="levelName" class="layui-input">
+                        <td id="levelName0">
+
+                        </td>
+                        ##产品名称
+                        <td class="textRight">#springMessage('cms.security.productName')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <div id="productName0" name="productName0"></div>
+                                <input type="hidden" name="productName" id="productName"   lay-verify="required"  class="layui-input">
+                            </div>
+                            &nbsp; &nbsp;
+                            <div class="layui-inline">
+                                <button class="layui-btn" type="button" onclick="checkLevel();">#springMessage('选择')</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##发行金额
+                        <td class="textRight" >#springMessage('cms.security.issueMoney')</td>
+                        <input type="hidden" name="issueMoney" id="issueMoney" data-biz-name="issueMoney"  class="layui-input bt-biz-moneyType">
+                        <td id="issueMoney0">
+
+                        </td>
+                        ##面值
+                        <td class="textRight">#springMessage('cms.security.faceValue')</td>
+                        <td>
+                            <input class="layui-input bt-biz-moneyType" data-maxlength="20" data-name="faceValue"
+                                   lay-verify="strlength" data-biz-name="faceValue" data-callback="faceValueCallback"
+                                   data-decimal="2" data-minus="false" type="text">
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 发行价格
+                        <td class="textRight">#springMessage('cms.security.issuePrice')</td>
+                        <td>
+                            <input class="layui-input bt-biz-moneyType" data-maxlength="20" data-name="issuePrice"
+                                   lay-verify="strlength" data-biz-name="issuePrice"
+                                   data-decimal="2" data-minus="false" type="text">
+                        </td>
+                        ## 本次发行金额
+                        <td class="textRight">#springMessage('cms.security.thisIssueMoney')</td>
+                        <td>
+                            <input class="layui-input bt-biz-moneyType" data-maxlength="20" data-name="thisIssueMoney" data-callback="issueStartDateCallback"
+                                   lay-verify="required|strlength" data-biz-name="thisIssueMoney" id="thisIssueMoney"
+                                   data-decimal="2" data-minus="false" type="text">
+                        </td>
+                    </tr>
+
+                    <tr>
+                        ##发行日期
+                        <td class="textRight">#springMessage('cms.security.issueDate')</td>
+                        <td>
+                            <input id="issueDate" name="issueDate"  data-biz-name="issueDate" lay-verify="required" data-callback="issueStartDateCallback"
+                                  data-type="date"  data-endid="legalEndDate" class="layui-input bt-biz-dateType"/>
+                        </td>
+                        ##本次发行折合人民币金额
+                        <td class="textRight">#springMessage('cms.security.issueRmbMoney')</td>
+                        <td>
+                            <div id="issueRmbMoney0">
+
+                            </div>
+                            <input class="layui-input bt-biz-moneyType" data-maxlength="20" data-name="issueRmbMoney"
+                                   lay-verify="required|strlength" data-biz-name="issueRmbMoney" disabled="true"
+                                   data-decimal="2" data-minus="false" type="hidden">
+                        </td>
+                    </tr>
+                    <tr>
+                        ##预期到期日
+                        <td class="textRight">#springMessage('cms.security.expectEndDate')</td>
+                        <td>
+                            <input id="expectEndDate" name="expectEndDate"  data-biz-name="expectEndDate"
+                                   data-type="date" class="layui-input bt-biz-dateType"/>
+                        </td>
+                        ##法定到期日
+                        <td class="textRight">#springMessage('cms.security.legalEndDate')</td>
+                        <td>
+                            <input id="legalEndDate" name="legalEndDate" lay-verify="required"  data-biz-name="legalEndDate"
+                                   data-type="date" class="layui-input bt-biz-dateType" data-callback="getLimit"/>
+                        </td>
+                        </tr>
+                    <tr>
+                        ##期限(年）
+                        <td class="textRight">#springMessage('cms.security.limit')</td>
+                        <input type="hidden" name="timeLimit" id="timeLimit"  class="layui-input">
+                        <td id="timeLimit0">
+
+                        </td>
+                        ##还款方式
+                        <td class="textRight" >#springMessage('table.cmsLoanRepay.repayway')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <div class="bt-biz-dict" data-name="repayType" data-biz-name="repayType" data-type="select"
+                                     data-group="Provide.RepayType" data-defaultvalue="01"
+                                     data-required="true"></div>
+                            </div>
+                            <div class="layui-inline">
+                                <!-- 还款计划 -->
+                                <button class="layui-btn" type="button" onclick="repayLan();">#springMessage('cms.button.repayPlan')</button>
+                            </div>
+                        </td>
+                    </tr>
+                   <tr>
+                       ##发行方式
+                       <td class="textRight" >#springMessage('cms.security.issueWay')</td>
+                       <td>
+                           <div class="layui-inline">
+                               <div class="bt-biz-dict" data-name="issueWay" data-biz-name="issueWay" data-type="select"
+                                    data-group="cms.security.issue.issueWay"></div>
+                           </div>
+                       </td>
+                       ##发行市场
+                       <td class="textRight">#springMessage('cms.security.issueMarket')</td>
+                       <td>
+                           <input type="text"  name="issueMarket" autocomplete="off"
+                                  class="layui-input" />
+                       </td>
+                   </tr>
+                    <tr>
+                        ##出表比例
+                        <td class="textRight">#springMessage('cms.security.tablePortion')</td>
+                        <td>
+                            <input type="text"  name="tablePortion" autocomplete="off" data-max="1" data-min="0"
+                                   class="layui-input bt-biz-rateType" data-decimal="2" />
+                        </td>
+                        ##信用评级
+                        <td class="textRight">#springMessage('cms.security.creditRating')</td>
+                        <td>
+                            <input type="text"  name="creditRating" autocomplete="off"
+                                   class="layui-input" />
+                        </td>
+                    </tr>
+                    <tr>
+                        ##主承销商
+                        <td class="textRight">#springMessage('table.cmsBond.leadUnderwriter')</td>
+                        <td>
+                            <input type="text"  name="underwriter" autocomplete="off"
+                                   class="layui-input" />
+                        </td>
+                        ##信用评级机构
+                        <td class="textRight">#springMessage('cms.security.creditRatingIns')</td>
+                        <td>
+                            <input type="text"  name="creditRatingIns" autocomplete="off"
+                                   class="layui-input" />
+                        </td>
+
+                    </tr>
+                    <tr>
+                        ##备注
+                        <td class="textRight">#springMessage('table.cmsProvideLoanInfo.rmk')</td>
+                        <td colspan="3">
+                                <textarea type="text" id="rmk" name="rmk" class="layui-textarea" maxlength="200"
+                                          placeholder="#springMessage('table.cmsProvideLoanInfo.rmk')"></textarea>
+                        </td>
+                    </tr>
+                    <input type="hidden" name="status"/>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    ##资产证券化利率信息
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('table.cmsSecurity.rateMessage')</h2>
+            <div class="layui-colla-content layui-show" style="margin-bottom: 10px;">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##息票类型
+                        <td class="textRight" >#springMessage('cms.security.couponType')</td>
+                        <td width="23%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-name="couponType"
+                                     data-biz-name="couponType" data-group="cms.security.issue.couponType"></div>
+                            </div>
+                        </td>
+                        ##浮动/固定
+                        <td class="textRight" >#springMessage('table.cmdBond.isFloat')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="CMS_BOND_FLOAT_TYPE"
+                                 data-required="true"
+                                 data-defaultvalue="1" data-name="isFloat"
+                                 data-biz-name="isFloat"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##票面利率
+                        <td class="textRight">#springMessage('df.coupon.rate')</td>
+                        <td >
+                            <input type="text" data-name="parRate" lay-verify="required" class="layui-input bt-biz-rateType">
+                        </td>
+                        ##利息年度天数
+                        <td class="textRight">#springMessage('table.cmsBond.interestYearDays')</td>
+                        <td style="width: 35%">
+                            <div class="layui-inline">
+                                <div class="bt-biz-dict" data-name="rateBase" data-type="radio"
+                                     data-group="Cms.RateBase"
+                                     data-defaultvalue="360"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##起息日
+                        <td class="textRight">#springMessage('cms.security.startDate')</td>
+                        <td>
+                            <input id="startDate" name="startDate"  data-biz-name="startDate" lay-verify="required"
+                                   data-type="date" class="layui-input bt-biz-dateType"/>
+                        </td>
+                        ##利息分配方式
+                        <td class="textRight">#springMessage('table.cmsBond.assignType')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-name="interestWay"
+                                 data-biz-name="interestWay" data-group="cms.security.issue.assignType"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##付息频率
+                        <td class="textRight">#springMessage('table.cmsLease.interestFre')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-name="interestFre" data-required="true"
+                                     data-biz-name="interestFre" data-group="CMS_BOND_PAY_FREQUENCY"></div>
+                            </div>
+                        </td>
+                        ##首次付息日
+                        <td class="textRight">#springMessage('cms.security.beginPayinterestDate')</td>
+                        <td>
+                            <input id="beginPayinterestDate" name="beginPayinterestDate"  data-biz-name="beginPayinterestDate" lay-verify="required"
+                                   data-type="date" class="layui-input bt-biz-dateType"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##本金支付频率
+                        <td class="textRight">#springMessage('cms.security.paymoneyFre')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-name="paymoneyFre" data-required="true"
+                                     data-biz-name="paymoneyFre" data-group="CMS_BOND_PAY_FREQUENCY"></div>
+                            </div>
+                        </td>
+                        ##首次本金支付日
+                        <td class="textRight">#springMessage('cms.security.beginPaymoneyDate')</td>
+                        <td>
+                            <input id="beginPaymoneyDate" name="beginPaymoneyDate"  data-biz-name="beginPaymoneyDate" lay-verify="required"
+                                   data-type="date" class="layui-input bt-biz-dateType"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##定价基准
+                        <td class="textRight">#springMessage('table.cmsBond.fixPriceBase')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <div class="bt-biz-selectType"
+                                     data-name="referenceRateType"
+                                    #if($!{info.CurName} eq '人民币')
+                                     data-url="${basePath}/cms/loanrate/maintence/queryBaseRate"
+                                    #else
+                                     data-url="${basePath}/cms/loanrate/maintence/queryNotBaseRate"
+                                    #end
+                                     data-valuefield="id"
+                                     data-textfield="baseTypeName"
+                                     data-callback="loanRepayCycle"
+                                     data-initcallback="loanRepayCycle"
+                                     data-defaultvalue="first"
+                                     data-biz-name="referenceRateType">
+                                </div>
+                            </div>
+                        </td>
+                        ##利率期限
+                        <td class="textRight">#springMessage('table.cmsLease.repayCycle')</td>
+                        <td>
+                            <div class="layui-inline">
+                                ##周期
+                                <div class="bt-biz-selectType"
+                                     data-name="repayCycle"
+                                     data-url=""
+                                     data-valuefield="creditPeriodId"
+                                     data-textfield="creditPeriodName"
+                                     data-defaultvalue="first"
+                                     data-biz-name="repayCycle">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##报价日期
+                        <td class="textRight">#springMessage('table.cmsBond.quoteDate')</td>
+                        <td>
+                            <input id="quoDate" name="quoDate"  data-biz-name="quoDate" lay-verify="required"
+                                   data-type="date" class="layui-input bt-biz-dateType"/>
+                        </td>
+                        ##基准利差(%/BP)
+                        <td class="textRight">#springMessage('cms.security.pointsProportionText')</td>
+                        <td >
+                            <input type="text" data-name="pointsProportionText" lay-verify="required" class="layui-input bt-biz-rateType">
+                        </td>
+                    </tr>
+
+                    <tr>
+                        ##首次基准利率
+                        <td class="textRight">#springMessage('cms.security.baseRate')</td>
+                        <td >
+                            <input type="text" data-name="baseRate" class="layui-input bt-biz-rateType">
+                        </td>
+                        ##利率上限
+                        <td class="textRight">#springMessage('table.tbLoanRateMaintence.rateUpLimit')</td>
+                        <td >
+                            <input type="text" data-name="upperRate" class="layui-input bt-biz-rateType">
+                        </td>
+                    </tr>
+                    <tr>
+                        ##利率下限
+                        <td class="textRight">#springMessage('cms.security.lowestRate')</td>
+                        <td >
+                            <input type="text" data-name="lowestRate" class="layui-input bt-biz-rateType">
+                        </td>
+                        ##备注
+                        <td class="textRight">#springMessage('table.cmsProvideLoanInfo.rmk')</td>
+                        <td >
+                            <input type="text" data-name="rateRmk" class="layui-input" maxlength="200">
+                        </td>
+                    </tr>
+                    <tr>
+                        ##基准利率确定规则
+                        <td class="textRight">#springMessage('cms.security.baseRateRules')</td>
+                        <td colspan="3">
+                                <textarea type="text" id="baseRateRules" name="baseRateRules" class="layui-textarea"
+                                          ></textarea>
+                        </td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    ##第三方费用信息
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('table.cmsProvideLoan.chargeMessage')</h2>
+            <div class="layui-colla-content  layui-show">
+                <table class="layui-table">
+                    <tr>
+                        <td align="center" width="80">
+                            ##新加的
+                            <table id="dataTable" class="layui-table">
+                                <thead>
+                                <th width="25%">#springMessage('table.fcChargeRule.fcChargeType')</th>##费用类型
+                                <th width="25%"> #springMessage('table.guaGuarantee.handleRate')</th>##费率
+                                <th width="25%">#springMessage('table.cms.projected.expemditure')</th>##预计费用
+                                <th width="25%">#springMessage('common.table.thead.operation')</th>##操作
+                                </thead>
+                                <tbody>
+                                <tr data-row="0">
+                                    <td width="20%" align="center">
+                                        <div class="layui-inline">
+                                            <div class="bt-biz-selectType" data-biz-name="costTypeDtl[0]costCode" id="costCode0"
+                                                 data-url="${basePath}/cms/dfCostType/getValidDfCostType"
+                                                 data-valuefield="id" data-textfield="costName" id="costCode0"
+                                                 data-name="costTypeDtl[0].costTypeId" data-search="true"
+                                                 data-link="true" data-callback="setItemCode">
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td width="15%" align="center">##费率
+                                        <input type="text" id="rate0" data-name="costTypeDtl[0].rate" data-biz-name="costTypeDtl[0]rate" data-callback="setInterestFee1" autocomplete="off" class="layui-input bt-biz-rateType">
+                                    </td>
+
+                                    <td width="15%" align="center">##预计费用
+                                        <input type="text" id="advanceFees0" data-name="costTypeDtl[0].advanceFees" data-biz-name="costTypeDtl[0]advanceFees" data-callback="setInterestFee4" autocomplete="off" class="layui-input bt-biz-moneyType">
+                                    </td>
+
+                                    <td width="10%" align="center">
+                                        <a href="javascript:void(0);" title="#springMessage('common.addTr')" onClick="addTr()"><i class="layui-icon">&#xe654;</i></a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    ##其他业务挂接信息
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('table.cmsProvideLoan.otherBusMessage')</h2>
+            <div class="layui-colla-content  layui-show">
+                <table class="layui-table">
+                    <tbody>
+                        ##增加保证金相关信息
+                        #parse("views/dual/manager/bondInfo.vm")
+
+                        ##担保挂接
+                        #parse("views/common/guaContractChoose.vm")
+
+                        ##抵质押物挂接
+                        #parse("views/cms/guarantee/guaPledgeCommon.vm")
+                    <tr>
+                        <td class="textRight">#springMessage('cms.loan.attachment')</td>
+                        <td style="text-align: center;" colspan="3">
+                            <!-- 附件上传 -->
+                            <input id="attachmentId" name="uploadId" type="hidden" value="">
+                            <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;" colspan="4">
+                            <button class="layui-btn" lay-submit="" id="submit" value="11">#springMessage('common.button.submit')</button>
+                            <button class="layui-btn" lay-submit="" id="temp" value="0">#springMessage('common.button.temp')</button>
+                            <button type="button" onclick="resetCallback()" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/cms/provide/provide.public.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/security/securityIssue.add.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/guarantee/guaContractSelect.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/guarantee/guaPledgeSelect.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="billNo" name="billNo" value="$!{billNo}">
+	<input type="hidden" id="type" name="type" value="$!{type}">
+	<input type="hidden" id="key" name="key" value="$!{key}">
+	<input type="hidden" id="menuType" name="menuType" value="$!{menuType}">
+	<input type="hidden" id="curCode" name="curCode" value="$!{curCode}">
+	<input type="hidden" id="netId" name="netId" value="$!{netId}">
+	<input type="hidden" id="corpId" name="corpId" value="$!{netId}">
+	<input type="hidden" id="payerAcc" name="payerAcc" value="$!{payerAcc}">
+	<input type="hidden" id="creditAcc" name="creditAcc" value="$!{payerAcc}">
+	<input type="hidden" id="showAccount" name="showAccount" value="$!{showAccount}">
+	<table id="printMRTable" class="layui-table self-adaption ignore-required-icon" >
+		<thead>
+		<tr>
+			<th style="text-align: center;"><span class="sign" style="color: red">*</span>#springMessage('table.fcAccbook.interestStartDate')</th>
+			<th style="text-align: center;"><span class="sign" style="color: red">*</span>#springMessage('table.fcAccbook.tallyDate')</th>
+			#if($!{showAccount} == "1")
+			<th style="text-align: center;"><span class="sign" style="color: red">*</span>#springMessage('table.fcAccbookDtl.account')</th>
+			#end
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>
+				#if( $!{type}== "Check")
+					<input type="text" id="interestStartDate" data-biz-name="interestStartDate" name="interestStartDate" readonly="readonly" data-type="date" class="layui-input bt-biz-dateType">
+				#else
+					<input type="text" data-biz-name="interestStartDate" data-callback="checkInterestStartDate"
+							#if($!{interestStartDateRule} == "1") data-today="true"  #end
+						   name="interestStartDate" class="layui-input bt-biz-dateType" data-type="date" lay-verify="required">
+				#end
+			</td>
+			<td>
+				#if( $!{type}== "Check")
+					<input type="text" id="tallyDate" data-biz-name="tallyDate" name="tallyDate" readonly="readonly" data-type="date" class="layui-input bt-biz-dateType">
+				#else
+					<input type="text" data-biz-name="tallyDate" data-callback="checkInterestStartDate" data-today="true" name="tallyDate" class="layui-input bt-biz-dateType" data-type="date" lay-verify="required">
+				#end
+			</td>
+			#if($!{showAccount} == "1")
+			<td>
+				<div class="pl layui-input-inline" style="width: 100%">
+					<input type="text" lay-verify="tableData"  name="account" id="account" class="layui-input text"  style="width: 100%" >
+					<table id="example">
+						<thead>
+							<tr>
+								<th>#springMessage("table.fcAccbookDtl.account")</th>
+								<th>#springMessage("table.fcAccbookDtl.accName")</th>
+								<th>#springMessage("table.fcAccbookDtl.subjectCode")</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</td>
+			#end
+		</tr>
+		<tr>
+			<td #if($!{showAccount} == "1") colspan="3" #else colspan="2" #end style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit" type="button">#springMessage('common.button.submit')</button>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+var dataType;
+bt.use(['form','layedit','dateType','selectTable'], function(){
+	$ = bt.jquery, form = bt.form();
+	dataType = bt.dateType.init();
+	var menuType = $("#menuType").val();
+	var key = $("#key").val();
+	var selectTab = bt.selectTable.init({
+		elem: "#example",
+		url: basePath+"/finacial/bankCollect/manualFinacial/getFcAcc?menuType="+menuType +"&key=" + key,
+		scrollX: true,
+		scrollY:"200px",
+		paging:true,
+		searchInput:"#account",
+		columns: [
+			{data:"blnctrAcc",},
+			{data:"accName",},
+			{data:"subjectName",},
+		],
+		clickCallback:function(data){
+			$("#account").val(data.blnctrAcc);
+			/*$("#accName").text(data.accName);
+			$("#baccName").val(data.accName);
+			// 加载现金流项目
+			loadCashFlowItem(row, data.blnctrAcc, null, null);
+			if(menuType == "5" && row == 1){
+				$("#creditAcc").val(data.blnctrAcc);
+			}
+			if(flag){
+				var cur = $("#curCode").val();
+				var corpId = $("#netId").val();
+				var account = $("#payerAcc").val();
+				parent.layer.open({
+					title: bt.lang("table.tally.change.account"),
+					type: 2,
+					area: ['60%', '50%'],
+					maxmin: false,
+					content: basePath + "/finacial/bankCollect/manualFinacial/changeDownAcc?curId="+ cur +"&menuType="+$("#menuType").val()
+							+"&account="+ account+ "&creditAcc=" + $("#creditAcc").val() + "&key=" + key,
+					end:function(){
+						//location.reload();
+					}
+				});
+			}*/
+		}
+	});
+    
+    //监听通过
+    form.on('submit(submit)', function(data){
+    	var opType = $("#type").val();
+        var action;
+    	if(opType == 'Init'){
+    		action = "/finacial/bankCollect/nisBillhead/batchSubmit";
+    	}else if (opType == 'Edit'){
+    		action = "/finacial/bankCollect/nisBillhead/batchSubmit";
+    	}else if (opType == 'Check'){
+            action = "/finacial/bankCollect/nisBillhead/batchPass";
+    	}
+        $.post(basePath + action,data.field,function(result){
+            bt.loading.hide(); //关闭加载中
+            if(result.success){
+                bt.navtab.refresh($(top.document).find('.layui-tab-title li.layui-this').attr('lay-id'));//刷新父页面
+                $("#submitDiv").find('button').addClass("layui-btn-disabled").attr('disabled','disabled');
+                parent.layer?parent.layer.closeAll():layer.closeAll();
+            }
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+
+    	//parent.layer ? parent.layer.closeAll() : layer.closeAll();
+    });
+});
+
+/**
+ * 日期校验
+ */
+function checkInterestStartDate() {
+    //记账日期
+    var tallyDate = dataType.get("tallyDate").val();
+    // 起息日期
+    var interestDate = dataType.get("interestStartDate").val();
+    if (!isEmpty(tallyDate) && !isEmpty(interestDate)) {
+        if (bt.date.compare(interestDate, tallyDate) > 0) {
+            layer.alert(bt.lang("fin.book.tally.intereststart.after"), {icon: false ? 1 : 2})
+            dataType.get("interestStartDate").val("");
+        }
+    }
+}
+</script>
+</html>

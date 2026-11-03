@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="forceSearchForm" class="layui-form">
+    <input type="hidden" name="corpId" id="corpId" value="$!{corpId}"/>
+    <input type="hidden" name="batchBusType" id="batchBusType" value="$!{docManageVo.batchBusType}"/>
+    <input type="hidden" name="exchangeRate" id="exchangeRate" value="1"/>
+
+    <table class="layui-table">
+        <tr>
+            ##强制核销类型
+            <td class="textRight" width="10%">#springMessage('强制核销类型')</td>
+            <td width="30%">$dictTag.get("writeOff.force.reason",$!{docManageVo.forceReasonType})</td>
+            <td class="textRight" width="10%">核销金额</td>
+            <td width="30%">$!{docManageVo.afterDocWriteOffBal}</td>
+        </tr>
+        <tr class="forcePaymentMeansTr hide">
+            ##收入结算方式
+            <td class="textRight" width="10%">#springMessage('收入结算方式')</td>
+            <td width="30%">$dictTag.get("writeOff.force.paymentMeans",$!{docManageVo.forcePaymentMeans})</td>
+        </tr>
+        <tr class="forceReasonTr hide">
+            ##强制核销原因
+            <td class="textRight" width="10%">#springMessage('强制核销原因')</td>
+            <td width="30%">$!{docManageVo.forceReason}</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">客商名称</td>
+            <td width="30%">$!{docManageVo.externalName}</td>
+            <td class="textRight" width="10%">应收单据编号</td>
+            <td width="30%">$!{docManageVo.code}</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">单位</td>
+            <td width="30%">$!{docManageVo.corpName}</td>
+            <td class="textRight" width="10%">业务类型</td>
+            <td width="30%"><span id = "span"></span></td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">单据来源</td>
+            <td width="30%">$dictTag.get("writeOff.docSource",$!{docManageVo.source})</td>
+            <td class="textRight" width="10%">单据日期</td>
+            <td width="30%">$!date.format('yyyy-MM-dd',$!{docManageVo.receiptDate})</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">本次核销类型</td>
+            <td width="30%">
+                $dictTag.get("writeOff.type",'3')
+                <input type="hidden" name="writeOffType" id="writeOffType" value="3"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">核销前状态</td>
+            <td width="30%">$dictTag.get("writeOff.status",$!{docManageVo.beforeWriteOffStatus})</td>
+            <td class="textRight" width="10%">核销后状态</td>
+            <td width="30%">
+                <span id="afterDocWriteOffStatusName">$dictTag.get("writeOff.status",$!{docManageVo.writeOffStatus})</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">到期日期</td>
+            <td width="30%">$!date.format('yyyy-MM-dd',$!{docManageVo.endDate})</td>
+            <td class="textRight" width="10%">账龄起算日</td>
+            <td width="30%">$!date.format('yyyy-MM-dd',$!{docManageVo.agingDate})</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">本次核销前应收余额</td>
+            <td width="30%">
+                $!number.formatNumeric($!{docManageVo.beforeWriteOffBal})
+            </td>
+            <td class="textRight" width="10%">本次核销后应收余额</td>
+            <td width="30%">$!{docManageVo.relationConvertMoney}</td>
+        </tr>
+    </table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+
+
+bt.use(['form'], function () {
+     var $ = bt.jquery;
+     var id = $('#corpId').val();
+     var batchBusType = $('#batchBusType').val();
+     var busTypeUrl = basePath + "/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=0&corpId=" + id;
+        $.ajax({
+            url: busTypeUrl,
+            method: 'GET',
+            async: false,
+            dataType: 'json',
+            success: function (data) {
+              for(var i =0; i<data.length;i++){
+                  if(data[i].busId == batchBusType){
+                       $('#span').text(data[i].busTypeName);
+                  }
+              }
+            }
+        });
+});
+
+
+
+
+</script>

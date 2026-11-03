@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-input {
+            width: 148px;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tr>
+        ##  swiftCode
+            <td class="textRight">#springMessage('table.btswiftinfo.swiftCode')</td>
+            <td>
+                <input type="text" name="likes_swiftCode" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.swiftCode')">
+            </td>
+        ##  机构名称
+            <td class="textRight">#springMessage('table.btswiftinfo.bankName')</td>
+            <td>
+                <input type="text" name="likes_bankName" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.bankName')">
+            </td>
+        </tr>
+        <tr>
+            ##  本地清算号
+            <td class="textRight">#springMessage('table.btswiftinfo.localClearNo')</td>
+            <td>
+                <input type="text" name="likes_localClearNo" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.localClearNo')">
+            </td>
+            ##  银行类型
+            <td class="textRight">#springMessage('table.btswiftinfo.bankType')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div data-name="eqs_bankTypeId" class="bt-biz-selectType"
+                         data-url="${basePath}/basic/business/btbanktype/json"
+                         data-valueField="id"
+                         data-biz-name="bankTypeId"
+                         data-textField="typeName"
+                         data-search="true"
+                         data-defaultvalue=""></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##  所在国
+            <td class="textRight">#springMessage('table.btswiftinfo.countryCode')</td>
+            <td>
+                <input type="text" name="likes_nameZh" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.countryCode')">
+            </td>
+        ##  所在城市
+            <td class="textRight">#springMessage('table.btswiftinfo.cityName')</td>
+            <td>
+                <input type="text" name="likes_cityNameZh" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.cityName')">
+            </td>
+        </tr>
+
+        #*<tr>
+            <td class="textRight">#springMessage('table.btswiftinfo.countryCode')#springMessage('table.btswiftinfo.nameen')</td>
+            <td>
+                <input type="text" name="likes_nameEn" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btswiftinfo.countryCode')#springMessage('table.btswiftinfo.nameen')">
+            </td>
+        </tr>*#
+
+        <tr>
+        ##  查询重置
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+        <th>#springMessage('table.btswiftinfo.bankType')</th>
+        <th>#springMessage('table.btswiftinfo.swiftCode')</th>
+        <th>#springMessage('table.btswiftinfo.localClearNo')</th>
+        <th>#springMessage('table.btswiftinfo.bankName')</th>
+        <th>#springMessage('table.btswiftinfo.countryCode')</th>
+        #*<th>#springMessage('table.btswiftinfo.countryCode')#springMessage('table.btswiftinfo.nameen')</th>*#
+        <th>#springMessage('table.btswiftinfo.cityName')</th>
+        <th>#springMessage('table.btswiftinfo.bankAdd')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable','selectType'], function () {
+        var $ = bt.jquery, table;
+
+        bt.selectType.init();
+        /**初始化国家信息列表,组件:datatable;  begin*/
+        table = bt.datatable.init({
+            elem: "#appTable",
+            order: [[1, 'asc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/basic/business/btswiftinfo/datatable"
+            },
+            selectCss: false
+
+            , columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="country-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "bankTypeName", bSortable: true},
+                {data: "swiftCode", bSortable: true},
+                {data: "localClearNo", bSortable: true},
+                {data: "bankName", bSortable: true},
+                {data: "nameZh", bSortable: true},
+                /*{data: "nameEn", bSortable: true},*/
+                {data: "cityNameZh", bSortable: true},
+                {data: "bankAdd", bSortable: true},
+            ]
+        });
+        /**国家信息列表  end*/
+
+        /**选择的数据进行数据传输  begin*/
+        table.on('click', '.country-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-swiftInfo']['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-swiftInfo']['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+        /**数据传输  end*/
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+	<style>
+		.dark-skin #appTable tbody tr{
+			background: #1B1C21;
+		}
+		.dark-skin #appTable th, .dark-skin #appTable td {
+			border-color: #2E2F34;
+		}
+
+		#if($!{configTag.getConfig('sys','uiStyle')} == "1")
+			##新版UI
+			.layui-laypage.bt-biz-pageType .layui-laypage-curr .layui-laypage-em{
+				background-color:#4E6DEC!important
+			}
+			.layui-laypage a:not(.layui-disabled):hover{
+				color:white!important;
+				background-color:#4E6DEC!important;
+			}
+			.layui-laypage.bt-biz-pageType a, .layui-laypage.bt-biz-pageType span.layui-laypage-curr{
+				font-size: 12px!important;
+			}
+		#else
+			##旧版UI
+		#end
+	</style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="isNotFirst" name="isNotFirst" value="isNotFirst">
+	<input type="hidden" id="total" name="total" value="${model.total}">
+	<input type="hidden" id="start" name="start" value="${model.curr}">
+	<input type="hidden" id="len" name="len" value="${model.len}">
+	<input type="hidden"  id="rmbCur" value="$!{rmbCur.id}">
+	<table class="layui-table">
+		<tr>
+		##网点
+			<td class="textRight">#springMessage('table.fcAcc.netId')</td>
+			<td >
+				<div class="layui-input-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="net"
+                             data-type="selectTree"
+                             data-name="netId"
+                             data-biz-name="netId"
+                             data-group="corpGroup"
+                             data-change="corpId"
+                             data-resource="netbank:report:nisallocationreq:query"
+                             data-scope="net" data-defaultvalue="$!{netId}"></div>
+				</div>
+			</td>
+		##单位
+			<td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+			<td >
+				<div class="layui-input-inline">
+					<div class="bt-biz-corp" data-biz-name="corpId" data-name="corpId"
+						 data-resource="netbank:report:nisallocationreq:query" data-scope="all" data-group="corpGroup"
+						 data-biz-type="corp" data-type="selectTree" data-tree-type="check"
+						 data-defaultvalue="$!{corpId}"
+						 data-tips="#springMessage('common.placeholder.select')#springMessage(
+							 'table.fcAcc.netId')"></div>
+				</div>
+				</div>
+			</td>
+			##余额日期
+			<td class="textRight">#springMessage('table.bisAccBal.balDate')</td>
+			<td class="rCode">
+				<div class="layui-input-inline">
+					<input type="text" name="balDate" class="layui-input bt-biz-dateType" data-type="date"
+						   lay-verify="required"
+						   data-name="balDate" data-biz-name="balDate" value="$!{balDate}">
+				</div>
+			</td>
+		</tr>
+		<tr>
+            ##币别
+            <td class="textRight" style="width: 10%">#springMessage('table.ratBkrationRelief.curCode')</td>
+            <td class="rCode">
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-name="curId" data-biz-name ="curId" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id" data-textfield="curName" data-defaultvalue="$!{curId}"></div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.btBankAccApp.bankTypeId')</td>
+            <td class="rCode">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/listFilter"
+                     data-name ="bankType" data-biz-name ="bankType"  data-valueField="id" data-textField="typeName" data-defaultvalue="$!{bankType}"></div>
+            </td>
+			<td class="textRight">#springMessage('table.btBankAccApp.bankAcc')</td>
+			<td class="rCode">
+				<div class="layui-input-inline">
+					<input type="text" name="bankAcc" class="layui-input bt-biz-bankType bank" id="bankAcc"
+						   data-name="bankAcc" data-biz-name="bankAcc" value="$!{bankAcc}">
+				</div>
+			</td>
+		</tr>
+		<tr>
+			##是否折合币种
+			<td class="textRight">#springMessage("common.isConvert.currency")</td>
+			<td>
+				<div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="changeCur"
+					 data-biz-name="changeCur" data-callback="callToCurr"
+					 data-defaultvalue="$!{changeCur}"></div>
+			</td>
+			##折合币种
+			<td class="textRight">#springMessage("commom.converted.into.currency")</td>
+			<td>
+				<div class="bt-biz-selectType"
+					 data-biz-name="reducedCurId"
+					 data-url="${basePath}/basic/business/btcurrency/json"
+					 data-valuefield="id"
+					 data-textfield="curName"
+					 data-name="reducedCurId"
+					 data-search="true"
+					 #if(${changeCur}!="1")data-disabled = "true" #end
+					 data-defaultvalue="$!{reducedCurId}"
+
+				></div>
+			</td>
+			##折算汇率类型
+			<td class="textRight">#springMessage('table.fexForeign.report.convert.rateType')</td>
+			<td>
+				<div type="list" data-name="rateType" class="bt-biz-selectType"
+					 #if(${changeCur}!="1")data-disabled = "true" #end data-name="rateType" data-biz-name="rateType"
+					 data-url="${basePath}/basic/business/btratetype/json" data-valueField="id" data-textField="typeName" data-defaultvalue="${rateType}"></div>
+			</td>
+		</tr>
+        <tr>
+			##汇率日期
+			<td class="textRight">#springMessage('report.fcExcrateAdjust.preTime')</td>
+			<td>
+				<input type="text" name="rateDate"  class="layui-input bt-input-inline bt-biz-dateType" value="$!{rateDate}"
+					   data-endid="rateDate" data-biz-name="rateDate" data-today="true"
+					#if(${changeCur}!="1")
+					   readonly="readonly"
+					#end
+				>
+			</td>
+			<td class="textRight">#springMessage('table.fcCheckInit.bankAccName')</td>
+			<td class="rCode">
+				<div class="layui-input-inline">
+					<input type="text" id="bankName" name="bankName" class="layui-input" autocomplete="off" value="$!{bankName}">
+				</div>
+			</td>
+        </tr>
+		<tr>
+			<td colspan="6" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage(
+                    'common.button.search')</button>
+				<button type="reset" class="layui-btn layui-btn-primary" data-callback="resetCode()" onclick="callToCurr('0')">#springMessage(
+                    'common.button.reset')</button>
+				<button class="layui-btn" lay-submit lay-filter="excel">#springMessage('common.button.exports')</button>
+			</td>
+		</tr>
+	</table>
+</form>
+<div id="tbl" style="width:100%;overflow:auto;box-sizing: border-box;padding-bottom: 45px;">
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+		<thead>
+		<tr class="title">
+			<td rowspan="2" align="center">#springMessage('table.fcAcc.netId')</td>
+			<td rowspan="2" align="center">#springMessage('table.fcAcc.corpId')</td>
+			<td rowspan="2" align="center">#springMessage('table.ratBkrationRelief.curCode')</td>
+##			<td colspan="5" align="center">#springMessage('table.btInnerAccApp.innerAcc')</td>
+			<td colspan="5" align="center">#springMessage('table.btBankAccApp.bankAcc')</td>
+			<td rowspan="2" align="center">#springMessage('table.interet.sum')</td>
+		</tr>
+		<tr>
+##			<th>#springMessage('table.fcPredrawDtlTemp.account')</th>
+##			<th>#springMessage('table.fcCheckInit.accountAccName')</th>
+##			<th>#springMessage('downAllocationAnalysis.BisAccBal')</th>
+##			<th>#springMessage('table.bisAccBal.availBal')</th>
+##			<th>#springMessage('table.fcFreeze.freezeMoney')</th>
+			<th>#springMessage('table.fcPredrawDtlTemp.account')</th>
+			<th>#springMessage('table.fcCheckInit.bankAccName')</th>
+			<th>#springMessage('downAllocationAnalysis.BisAccBal')</th>
+			<th>#springMessage('table.bisAccBal.availBal')</th>
+			<th>#springMessage('table.fcFreeze.freezeMoney')</th>
+		</tr>
+		</thead>
+		<tbody>
+			#if($model.balParam)
+				#foreach($balParam in $!{model.balParam})
+					#if($!{balParam.corpName} == "")
+						<tr>
+							<td align="center"></td>
+							<td align="center"></td>
+							<td align="center">
+								#if($!{balParam.curName} == "")
+									#springMessage('table.fexForeign.report.convert.currency.total')
+								#else
+									$!{balParam.curName}#springMessage('table.datatable.total')
+								#end
+							</td>
+##							<td align="center"></td>
+##							<td align="center"></td>
+##							<td class="textRight">#if($balParam.balance) $number.formatNumeric($!{balParam.balance})#else$!{balParam.balance}#end</td>
+##							<td class="textRight">#if($balParam.useMoney) $number.formatNumeric($!{balParam.useMoney})#else$!{balParam.useMoney}#end</td>
+##							<td class="textRight">#if($balParam.freezeMoney)$number.formatNumeric($!{balParam.freezeMoney})#else$!{balParam.freezeMoney}#end</td>
+							<td align="center"></td>
+							<td align="center"></td>
+							<td class="textRight"> #if($!{balParam.bal})$number.formatNumeric($!{balParam.bal})#else$!{balParam.bal}#end</td>
+							<td class="textRight"> #if($!{balParam.useBal})$number.formatNumeric($!{balParam.useBal})#else$!{balParam.useBal}#end</td>
+							<td class="textRight"> #if($!{balParam.frzBal})$number.formatNumeric($!{balParam.frzBal})#else$!{balParam.frzBal}#end</td>
+							<td class="textRight">#if($!{balParam.sumMoney})$number.formatNumeric($!{balParam.sumMoney})#else$!{balParam.sumMoney}#end</td>
+						</tr>
+					#else
+						<tr>
+							<td align="center"> $!{balParam.netName}</td>
+							<td align="center"> $!{balParam.corpName}</td>
+							<td align="center"> $!{balParam.curName}</td>
+##							<td align="center" rowspan="$!{balParam.num}"> $!{balParam.accountAcc}</td>
+##							<td align="center" rowspan="$!{balParam.num}"> $!{balParam.accountName}</td>
+##							<td class="textRight"
+##								rowspan="$!{balParam.num}">#if($balParam.balance) $number.formatNumeric($!{balParam.balance})#else$!{balParam.balance}#end</td>
+##							<td class="textRight"
+##								rowspan="$!{balParam.num}">#if($balParam.useMoney) $number.formatNumeric($!{balParam.useMoney})#else$!{balParam.useMoney}#end</td>
+##							<td class="textRight"
+##								rowspan="$!{balParam.num}">#if($balParam.freezeMoney)$number.formatNumeric($!{balParam.freezeMoney})#else$!{balParam.freezeMoney}#end</td>
+
+							#set($i=0)
+							#foreach($interAndBankAccBal in $!{balParam.internal})
+								#if($!{balParam.num}>1 && ${i}>0)
+									<td align="center"> $!{balParam.netName}</td>
+									<td align="center"> $!{balParam.corpName}</td>
+									<td align="center"> $!{balParam.curName}</td>
+								#end
+								<td align="center"> $!{interAndBankAccBal.bankAcc}</td>
+								<td align="center"> $!{interAndBankAccBal.bankName}</td>
+								<td class="textRight"> #if($!{interAndBankAccBal.bal})$number.formatNumeric($!{interAndBankAccBal.bal})#else$!{interAndBankAccBal.bal}#end</td>
+								<td class="textRight"> #if($!{interAndBankAccBal.useBal})$number.formatNumeric($!{interAndBankAccBal.useBal})#else$!{interAndBankAccBal.useBal}#end</td>
+								<td class="textRight"> #if($!{interAndBankAccBal.frzBal})$number.formatNumeric($!{interAndBankAccBal.frzBal})#else$!{interAndBankAccBal.frzBal}#end</td>
+								#set($i=${i}+1)
+								#if( ${i}==1)
+									<td class="textRight"
+										rowspan="$!{balParam.num}">#if($!{balParam.sumMoney})$number.formatNumeric($!{balParam.sumMoney})#else$!{balParam.sumMoney}#end</td>
+								#end
+						</tr>
+						#end
+					#end
+				#end
+			#end
+		</tbody>
+	</table>
+	<div id="page" style="position:fixed ; bottom:0px;width:100%"></div>
+</div>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/allocation/InternalAndBankAccBal.list.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+	var corp;
+	var dateType;
+	var moneyType;
+	var selectType,dicts;
+	bt.use(['form', 'datatable', 'dateType', 'select', 'pageType', 'moneyType', 'date', 'jquery', 'corp', 'bank','selectType','dicts'], function () {
+		$ = bt.jquery, form = bt.form();
+		dateType = bt.dateType.init();
+		moneyType = bt.moneyType.init();
+		selectType = bt.selectType.init();
+		dicts = bt.dicts.init();
+		corp = bt.corp.init();
+		bt.bank.init({
+			elem: '.bank',
+		});
+
+		bt.pageType.init({
+			elem: '#page',//分页组件容器
+			count: $!{model.total},      //表格总页码
+			curr: $!{model.curr},          //当前页码，默认值为0，即第一页
+			limit:  $!{model.len},         //当前显示条数，默认值为10
+			jump: function (obj) {  //翻页方法
+				var curr = obj.curr;
+				var len = obj.limit;
+				location.href = basePath + "/report/internalAndBankAccBal/list?" + getParam() + "&start=" + curr + "&len=" + len;
+
+			}
+
+		})
+
+		//重置
+		resetCode = function () {
+			var inputs = $('.rCode').find('input');
+			inputs.each(function () {
+				$(this).val("");
+			});
+            bt.corp.get("netId").val("");
+            bt.corp.get("corpId").val("");
+            var nowDate = bt.date.format(new Date(), 'yyyy-MM-dd');
+            dateType.get("balDate").val(nowDate);
+            selectType.get("curId").val("");
+            selectType.get("bankType").val("");
+			form.render('select');
+		}
+
+		//查询
+		form.on('submit(submit)', function (data) {
+
+		});
+	});
+	var getParam = function () {
+		var param = "";
+		var changeCur="0";
+		if(dicts.get('changeCur').val()){
+			changeCur=dicts.get('changeCur').val();
+		}
+		param += "netId=" + corp.get('netId').val() + "&corpId=" + corp.get('corpId').val() + "&balDate=" + dateType.get('balDate').val() +
+				"&bankAcc=" + $("#bankAcc").val() + "&isNotFirst=" + $("#isNotFirst").val()+
+				"&curId=" + dicts.get("curId").val() + "&bankType=" + dicts.get("bankType").val() +
+				"&changeCur="+changeCur+"&reducedCurId="+selectType.get('reducedCurId').val()+
+				"&rateDate="+dateType.get('rateDate').val()+"&rateType="+selectType.get('rateType').val();
+		return param;
+
+	}
+
+	function callToCurr(data){
+		if(data.value =="1"){
+			selectType.get("reducedCurId").attr({'data-disabled':false,'data-required':true,'data-value':$("#rmbCur").val()});
+			selectType.get("rateType").attr({'data-disabled':false,'data-required':true});
+			dateType.get("rateDate").attr({'readonly':false,'data-required':true});
+		}else {
+			selectType.get("reducedCurId").attr({'data-disabled':true,'data-required':false});
+			selectType.get("rateType").attr({'data-disabled':true,'data-required':false});
+			dateType.get("rateDate").attr({'readonly':true,'data-required':false});
+		}
+		form.render();
+		form.renderIcon();
+	}
+</script>
+</html>

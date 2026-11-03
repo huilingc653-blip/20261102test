@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="font-src *  data:">
+    <meta name="viewport"
+          content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no">
+    <title>银行流水查询</title>
+    <!-- 引入 FrozenUI -->
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css" media="all"/>
+    <link rel="stylesheet" href="$!{basePath}/static/mobile/plugins/dropload/dropload.css?_btv=${resourceVersion}">
+    <link rel="stylesheet" href="${basePath}/static/css/mobile/index.css" media="all"/>
+    <!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+    <script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js"></script>
+    <script src="${basePath}/static/mobile/plugins/f2/f2.min.js"></script>
+    <script src="${basePath}/static/js/mobile/date.js"></script>
+    <style>
+        body{
+            background-color: #F5F5F5;
+        }
+        #tab {
+            background: rgba(255, 255, 255, 1);
+        }
+        .cho-panel-item {
+            position: relative;
+            border-radius: 0.1rem;
+            margin: 0 auto;
+            width:3.45rem;
+            height:1.3rem;
+            margin-bottom: 0.1rem;
+        }
+        .cho-panel-item-logo {
+            position: absolute;
+            border-radius: 50%;
+            height: 0.48rem;
+            width: 0.48rem;
+            margin-top:0.23rem;
+            margin-left:0.18rem;
+            background-color: #FFFFFF;
+        }
+        .cho-panel-item-logo-head {
+            position: absolute;
+            border-radius: 50%;
+            padding: 0.18rem;
+            margin: 0.06rem;
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+        .cho-panel-item-title {
+            position: absolute;
+            height: 0.7rem;
+            width: 2rem;
+            margin-left:0.76rem;
+            margin-top:0.18rem;
+        }
+        .cho-panel-item-button {
+            position: absolute;
+            color: #ffffff;
+            margin-top:0.93rem;
+            border: 1px solid #ffffff;
+            border-radius: 0.05rem;
+            padding: 0.05rem 0;
+            text-align: center;
+            width: 0.78rem;
+            font-size: 0.12rem;
+        }
+        .button-dtl-left {
+            margin-left: 0.2rem;
+        }
+        .button-dtl-right {
+            margin-left: 2.47rem;
+        }
+        .button-dtl-center {
+            margin-left: 1.34rem;
+        }
+
+        .cho-panel-item-title-font {
+            font-size: 0.17rem;
+            inline-size: 0.15rem;
+            width: auto;
+            font-weight: bold;
+            font-family: PingFangSC-Regular, PingFang SC;
+            color: #FFFFFF;
+        }
+
+        .cho-panel-item-dtl-font {
+            font-size: 0.14rem;
+            inline-size: 0.14rem;
+            width: auto;
+            font-family: PingFangSC-Regular, PingFang SC;
+            color: #FFFFFF;
+        }
+
+        .cho-panel-item .cho-panel-item-money {
+            font-size: 0.22rem;
+            font-family: DINAlternate-Bold, DINAlternate;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .cho-panel-item-bottom span {
+            display: inline-block;
+            height: 100%;
+            font-size: 0.16rem;
+            font-family: DINAlternate-Bold, DINAlternate;
+            font-weight: bold;
+            color: rgba(167, 168, 225, 1);
+            line-height: 0.16rem;
+        }
+
+        .cho-content-item-acc-right span {
+            font-size: 0.12rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            line-height: 0.17rem;
+            padding: 0.10rem 1rem;
+            padding-right: 0rem;
+        }
+
+        .cho-tab-title span {
+            display: inline-block;
+            height: 0.24rem;
+            border-radius: 0.12rem;
+            margin: 0.06rem;
+            margin-top: 0.1rem;
+            color: #333;
+            padding: 0 0.1rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            margin-left: 0;
+            line-height: 0.25rem;
+        }
+
+        .cho-tab-title span:nth-child(3) {
+            margin-right: 0;
+        }
+
+        .cho-tab-title .active {
+            background-color: #1B1D75;
+            color: #fff !important;
+        }
+
+        .cho-date-item-bottom > div > div {
+            font-size: 0.12rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            line-height: 0.22rem;
+            height: 0.22rem;
+        }
+
+        /* 弹框选择 */
+        .bt-select-popup {
+            position: relative;
+            margin-right: 6px;
+        }
+
+        .ui-actionsheet {
+            display: none
+        }
+
+        .ui-actionsheet .show {
+            display: block;
+        }
+
+        .ui-actionsheet.show .ui-actionsheet-cnt {
+            transition: none;
+        }
+
+        .ui-actionsheet .ui-actionsheet-cnt {
+            transition: none;
+        }
+
+        .bt-select-popup input {
+            border: none;
+            width: 0.58rem;
+            height: 0.32rem;
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 600;
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-select-popup.active input {
+            color: #2988FF;
+            background-color: #E9F1FF;
+        }
+
+        .bt-select-popup.active:after {
+            color: #2988FF;
+        }
+
+        .bt-select-popup:after {
+            position: absolute;
+            top: 49%;
+            right: 0.15rem;
+            margin-top: -4px;
+            width: 0;
+            height: 0;
+            border-top: 6px solid;
+            border-right: 5px solid transparent;
+            border-left: 5px solid transparent;
+            color: #a6a6a6;
+            content: "";
+            pointer-events: none;
+        }
+
+        .ui-btn-wrap {
+            font-size: 14px;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 500;
+            color: rgba(51, 51, 51, 1);
+            margin-left: 0;
+            padding-top: 0.15rem;
+        }
+
+        .bt-date-btn input {
+            border: none;
+            width: 0.58rem;
+            height: 0.32rem;
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            width: 0.36rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 600;
+            color: rgba(102, 102, 102, 1);
+            padding-right: 0.04rem;
+        }
+
+        .popup-block * {
+            font-size: 0.14rem;
+        }
+
+        .bt-card {
+            background-color: #fff;
+        }
+
+        .bt-card .active {
+            color: #2988FF;
+            font-weight: 700;
+        }
+
+        .bt-card-header {
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium, PingFang SC;
+            font-weight: 700;
+            color: rgba(51, 51, 51, 1);
+            line-height: 0.35rem;
+            height: 0.35rem;
+            padding-left: 0.1rem;
+            text-align: left;
+        }
+
+        .bt-card-body {
+            padding-bottom: 0.15rem;
+        }
+
+        .bt-card-item {
+            height: 0.34rem;
+            background: rgba(240, 240, 240, 1);
+            border-radius: 0.18rem;
+            line-height: 0.34rem;
+            text-align: center;
+            margin: 0.05rem 0.1rem 0.05rem 0;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-card-body .ui-col:nth-last-child(1) .bt-card-item {
+            margin-right: 0;
+        }
+
+        /*浮框的按钮*/
+        .bt-popup-bottom button {
+            height: 0.4rem;
+            line-height: 0.4rem;
+            border-radius: 0.2rem;
+            font-size: 0.16rem;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+        }
+
+        .bt-popup-bottom .bt-popup-submit {
+            width: 2.1rem;
+            background: linear-gradient(90deg, rgba(75, 226, 255, 1) 0%, rgba(50, 104, 249, 1) 100%);
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .bt-popup-bottom .bt-popup-reset {
+            width: 1.1rem;
+            background: rgba(255, 255, 255, 1);
+            border: 1px solid rgba(212, 212, 212, 1);
+            color: rgba(102, 102, 102, 1);
+        }
+
+        .bt-popup-bottom {
+            background-color: #ffffff;
+            position: relative;
+        }
+
+        .bt-popup-container {
+            position: relative;
+            background-color: #fff;
+            max-height: calc(100% - 0.5rem);
+            overflow-y: auto;
+        }
+
+        .ui-sp-btn {
+            background: #f3f3f3;
+            border-radius: 0.16rem;
+            width: 1.11rem;
+            height: 0.3rem;
+            line-height: 0.3rem;
+        }
+
+        .ui-sp-btn > input {
+            font-size: 0.12rem;
+            font-family: 苹方-简 常规体;
+            font-weight: 400;
+            color: #333333;
+            width: 1.11rem;
+        }
+
+        .ui-form-item input {
+            padding-left: 0.16rem;
+        }
+
+        .ui-row-flex .ui-col {
+            text-align: center;
+        }
+        .ui-head{
+            background-color: red;
+
+        }
+        .card-dtl{
+            /*width:3.45rem;*/
+            height:2rem;
+            margin-right: 0.16rem;
+            margin-left: 0.16rem ;
+            margin-top: 0.1rem;
+            margin-bottom: 0.1rem;
+            background:rgba(255,255,255,1);
+            border-radius:0.1rem;
+            position: relative;
+        }
+
+        .card-dtl-inc{
+            position: absolute;
+            margin-top: 0.09rem;
+            margin-left: 0.13rem;
+            width: 1.2rem;
+        }
+        .card-dtl-inc-title{
+            position: absolute;
+            margin-left: 0.15rem;
+            margin-top: 0.01rem;
+            color:#666666;
+        }
+        .card-dtl-pay{
+            position: absolute;
+            margin-top: 0.09rem;
+            margin-left: 48%;
+            width: 1.2rem;
+        }
+        .card-dtl-pay-title{
+            position: absolute;
+            margin-left: 0.15rem;
+            margin-top: 0.01rem;
+            color:#666666;
+        }
+        .card-icon1{
+            width: 0.24rem;
+            height: 0.24rem;
+            background-image: url("${basePath}/static/modules/images/bankaccin.png");
+            background-repeat: no-repeat;
+            background-size: contain;
+            display: inline-block;
+            font-size: 0.12rem;
+        }
+        .card-icon2{
+            width: 0.24rem;
+            height: 0.24rem;
+            background-image: url("${basePath}/static/modules/images/bankaccout.png");
+            background-repeat: no-repeat;
+            background-size: contain;
+            display: inline-block;
+            font-size: 0.12rem;
+        }
+        .card-dtl-info{
+            position: absolute;
+            width: 95%;
+            height: 1.2rem;
+            margin-top: 0.71rem;
+            margin-left: 2.5%;
+            border-top: 1px solid #EFEFEF;
+            color:#999999;
+            font-size: 0.12rem;
+            font-weight:400;
+            line-height:0.12rem;
+        }
+
+        .card-dtl-item{
+            margin-top: 0.07rem;
+            margin-left: 0.1rem;
+        }
+        .card-dtl-info-left{
+            position: absolute;
+        }
+        .card-dtl-info-right{
+            position: absolute;
+            margin-left: 48%;
+        }
+        .data-head{
+            color: #666666;
+            font-size:0.14rem;
+            font-family:PingFangSC-Regular,PingFang SC;
+            font-weight:400;
+            line-height:0.14rem;
+            margin-top:0.15rem;
+            margin-bottom:0.15rem;
+            margin-left: 0.16rem ;
+        }
+        .data-body{
+            background-color: #F5F5F5;
+        }
+        .data-body-item{
+            border-bottom: 1px solid #EFEFEF;
+            height: 0.67rem;
+        }
+        .data-bottom{
+            color:#999999;
+            padding-left: 0.16rem;
+            padding-right: 0.16rem;
+            background-color: #ffffff;
+        }
+        .data-body-item-img{
+            width: 0.3rem;
+            height: 0.3rem;
+            background-image: url("${basePath}/static/modules/images/bankacctrans.png");
+            background-repeat: no-repeat;
+            background-size: contain;
+            font-size: 0.12rem;
+            margin-top:0.19rem;
+            float: left;
+        }
+        .data-body-item-rmk{
+            font-weight:400;
+            line-height:0.14rem;
+            color:rgba(51,51,51,1);
+            font-family:PingFangSC-Regular,PingFang SC;
+            font-size:0.14rem;
+
+            width:1.29rem;
+
+            display:inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .data-body-item-acc{
+            font-size: 0.12rem;
+            font-weight:400;
+            font-family:PingFangSC-Regular,PingFang SC;
+            line-height:0.12rem;
+            color:rgba(153,153,153,1);
+            width:1.29rem;
+
+            display:inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+
+        }
+
+        .data-body-item-left{
+            font-size: 0.12rem;
+            margin-left: 0.38rem;
+            padding-top: 0.15rem;
+        }
+        .data-body-item-right{
+            font-size: 0.12rem;
+            margin-left: 0.38rem;
+            padding-top: 0.05rem;
+        }
+        .data-body-item-amt{
+            /*font-size: 0.12rem;*/
+            /*margin-left: 0.2rem;*/
+            float: right;
+        }
+        .data-body-item-bal{
+            font-size: 0.16rem;
+            float: right;
+            font-weight:bold;
+            font-family:DINAlternate-Bold,DINAlternate;
+            line-height:0.14rem;
+            color:rgba(51,51,51,1);
+            display: inline-block;
+        }
+        .fresh{
+            color:#2988FF;
+            font-size:0.14rem;
+            inline-size:0.14rem;
+            display: inline-block;
+            width: auto;
+            text-align: center;
+            float: right;
+            margin-right: 0.15rem;
+        }
+        .date{
+            display: inline-block;
+        }
+        .error-body {
+            background-color: #fff;
+            font-size: 14px;
+            color: #666;
+            padding: 10px 20px;
+            background-color: #fff;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .item-info{
+            position: absolute;
+            font-size:14px;
+            font-family:PingFangSC-Regular,PingFang SC;
+            font-weight:400;
+            color:rgba(102,102,102,1);
+            line-height:20px;
+            margin-left: 0.16rem;
+        }
+        .item-info-img1{
+            position: absolute;
+            width:0.16rem;
+            height:0.14rem;
+            margin-top: 0.23rem;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-image: url("${basePath}/static/modules/images/bankaccdtlac.png")
+        }
+        .item-info-img2{
+            position: absolute;
+            width:0.16rem;
+            height:0.14rem;
+            margin-top: 0.13rem;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-image: url("${basePath}/static/modules/images/bankaccdtlinf.png")
+        }
+        .item-info-img3{
+            position: absolute;
+            width:0.16rem;
+            height:0.14rem;
+            margin-top: 0.13rem;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-image: url("${basePath}/static/modules/images/bankaccdtlcm.png")
+        }
+        .item-info-img4{
+            position: absolute;
+            width:0.16rem;
+            height:0.14rem;
+            margin-top: 0.13rem;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-image: url("${basePath}/static/modules/images/bankaccdtlbk.png")
+        }
+        .item-info-acc{
+            margin-top: 0.21rem;
+            margin-left: 0.3rem;
+        }
+        .item-info-acc-child{
+            margin-top: 0.13rem;
+            margin-left: 0.3rem;
+        }
+        html,body {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    #if($!{vo})
+    <div class="cho-body ui-container">
+        <div style="height: 2.55rem;position: fixed;width: 100%;background-color: #fff;top: 0;">
+            <input type="hidden" id="id" name="id" value="$!{vo.id}">
+            <input type="hidden" id="curId" name="curId" value="$!{vo.curId}">
+            <div id="tab">
+                <div class="ui-row-flex ui-head">
+                    <!-- 搜索框 -->
+                    <div class="ui-col ui-col">
+                        <div class="ui-searchbar-wrap ui-border-b">
+                            <div class="ui-searchbar ui-border-radius">
+                                <i class="ui-icon-search"></i>
+                                <div class="ui-searchbar-text">请输入摘要关键字查询</div>
+                                <div class="ui-searchbar-input">
+                                    <input value="" id="remark" name="remark" type="text" placeholder="请输入摘要关键字查询" onchange="searchData()"
+                                           autocapitalize="off">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-dtl">
+                <div class="card-dtl-inc">
+                    <div class="card-icon1"></div>
+                    <span class="card-dtl-inc-title">收入</span>
+                    <div>$!number.formatNumeric($!{sumIncome})</div>
+                </div>
+                <div class="card-dtl-pay">
+                    <div class="card-icon2"></div>
+                    <span class="card-dtl-pay-title">支出</span>
+                    <div>$!number.formatNumeric($!{sumPay})</div>
+                </div>
+                <div class="card-dtl-info">
+                    <div class="item-info-img1"></div>
+                    <div class="item-info-acc">$!{vo.bankAcc}</div>
+                    <div class="item-info-img2"></div>
+                    <div class="item-info-acc-child">$!{vo.attributeName}</div>
+                    <div class="item-info-img3"></div>
+                    <div class="item-info-acc-child">$!{vo.corpName}</div>
+                    <div class="item-info-img4"></div>
+                    <div class="item-info-acc-child">$!{vo.bankName}</div>
+                </div>
+            </div>
+        </div>
+        ##    <section id="tab1" style="height: calc(100vh - 2rem); overflow-y: auto;">
+        ##        <div class="data-head"><div class="date">今天</div><div class="fresh" onclick="fresh()">刷新</div></div>
+        ##        <div class="data-bottom">
+        ##                <div class="data-body-item">
+        ##                    <span class="data-body-item-img"></span>
+        ##                    <div class="data-body-item-left">
+        ##                        <span class="data-body-item-rmk">转账摘要说明</span>
+        ##                        <span class="data-body-item-bal">$!number.formatNumeric($!{sumPay})</span>
+        ##                    </div>
+        ##                    <div class="data-body-item-right">
+        ##                        <span class="data-body-item-acc">对方账户：213412412123124124124</span>
+        ##                        <span class="data-body-item-amt">余额：$!number.formatNumeric(8888888888888)</span>
+        ##                    </div>
+        ##                </div>
+        ##                <div class="data-body-item">
+        ##                    <span class="data-body-item-img"></span>
+        ##                    <div class="data-body-item-left">
+        ##                        <span class="data-body-item-rmk">转账摘要说明</span>
+        ##                        <span class="data-body-item-bal">$!number.formatNumeric($!{sumPay})</span>
+        ##                    </div>
+        ##                    <div class="data-body-item-right">
+        ##                        <span class="data-body-item-acc">对方账户：213412412123124124124</span>
+        ##                        <span class="data-body-item-amt">余额：$!number.formatNumeric(8888888888888)</span>
+        ##                    </div>
+        ##                </div>
+        ##            </div>
+
+        ##        <div id="bt-loading" class="bt-loading">
+        ##            <center><img style="width:25px;" src="${basePath}/static/mobile/icon/loadinggif.gif"></center>
+        ##        </div>
+        ##    </section>
+        <div class="search-result" style="padding-top: 2.5rem;">
+            <section class="search-result-list"></section>
+        </div>
+    </div>
+    #else
+    <div class="error-body">暂无权限，请联系管理员</div>
+    <script>alert('暂无权限')</script>
+    #end
+
+</body>
+<script src="${basePath}/static/plugins/web-view/webView.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/webViewScriptBridage.js?_btv=${resourceVersion}"></script>
+    ##<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js"></script>
+<script src="$!{basePath}/static/mobile/plugins/dropload/dropload.min.js?_btv=${resourceVersion}"></script>
+    ##<script src="${basePath}/static/mobile/plugins/f2/f2.min.js"></script>
+    ##<script src="${basePath}/static/js/mobile/date.js"></script>
+<script src="${basePath}/static/js/mobile/money.js"></script>
+<script>
+    var ACTIVE = 'active';
+    // 用于记录页面的查询参数
+    const searchParams = {
+        corpIds: [],
+        corpNames: [],
+        curId: null,
+        corpId: null,
+        accType: null,
+        bankAcc:null,
+    };
+
+    $('#bt-loading').show();
+    window.bankAccDtlList = (data)=>{
+        postData(data)
+    }
+
+
+    //单位搜索组件
+    function openCorpSelectionPage() {
+        setTimeout(function () {
+           var data = BTAppBridge.openCorpSelectionPage && BTAppBridge.openCorpSelectionPage('searchActionCallback');
+            uni.postMessage({
+                data:data
+            })
+        }, 200);
+    }
+
+    (function (doc, win) {
+        F2.track(false);
+        //初始化数据
+        // submiteData(true);
+
+        var pageSize  = 15,pageNumber = 0,dropObj = null;
+        win.resetScrollContent = function() {
+            console.log('初始化')
+            $('.search-result-list').html('');
+            $('.dropload-down').remove();
+            pageNumber = 0;
+            pageSize = 15;
+            dropObj = null;
+            $('.search-result').dropload({
+                scrollArea : window,
+                loadDownFn : function(me){
+                    pageNumber ++;
+                    dropObj = me;
+                    submiteData()
+                }
+            });
+        }
+        //滚动加载初始化
+        resetScrollContent();
+        //滚动加载初始化
+
+
+        /**
+         * 搜索回调方法
+         * @param data
+         */
+        window.searchActionCallback = function (data) {
+            // 根据data参数，查询数据
+            if (data.corpNames && data.corpNames.length > 0) {
+                searchParams.corpNames = data.corpNames;
+                $("#corpId").val(data.corpNames);
+            } else {
+                $("#corpId").val('');
+            }
+            if (data.corpIds) {
+                searchParams.corpIds = data.corpIds;
+                searchParams.corpId = data.corpIds;
+                setTimeout(function () {
+                    resetScrollContent()
+                   var data = BTAppBridge.post("/api/bankacc/mobileBankAccDtlData", searchParams, 'postData');
+                    uni.postMessage({
+                        data:data
+                    })
+                }, 100);
+            }
+        }
+
+        $('.ui-tab-nav > li').on('click', function () {
+            $(this).addClass('current').siblings('li').removeClass('current');
+            $('.ui-tab-content>li').removeClass('bt-show');
+            $('.ui-tab-content li').eq($(this).index()).addClass('bt-show');
+            initChart('pieChart' + $(this).index());
+        })
+
+        //搜索框点击
+        $('.ui-searchbar').on('click', function () {
+            $('.ui-searchbar-wrap').addClass('focus');
+            $('.ui-searchbar-input input').focus();
+        });
+        $('.ui-searchbar-cancel').on('click', function () {
+            $('.ui-searchbar-wrap').removeClass('focus');
+        });
+
+        //弹框选择
+        function addSheet($this, id) {
+            if ( $this.parent().hasClass('active')) {
+                hideSheet($this);
+                return
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+                $this.parent().addClass('active');
+            $(id).addClass('show');
+        }
+
+        //弹框选择
+        function hideSheet($this) {
+            $('.ui-actionsheet').removeClass('show');
+                $this.parent().removeClass('active');
+        }
+
+        //单位选择
+        $("#corpDiv").click(function () {
+            openCorpSelectionPage();
+        });
+
+        //数据列表
+        postData = function (result) {
+            setDataDiv(result);
+        }
+
+        //拼装数据列表
+        function setDataDiv(result) {
+            var showHtml = '';
+            var data = result.data;
+            if (!data && !result.success){
+                return
+            }
+            if (!data.length){
+                // 锁定
+                dropObj.lock();
+                // 无数据
+                dropObj.noData();
+            }else {
+                for (var i = 0; i < data.length; i++) {
+                    if (i === 0) {
+                        if (bt.date.format(new Date(), "yyyy-MM-dd") === bt.date.format(data[i].transTime)) {
+                            showHtml += '<div class="data-head"><span class="date">今天</span><span class="fresh" onclick="fresh()">刷新</span></div>';
+                            showHtml += '<div class="data-bottom">';
+                            showHtml += '<div class="data-body-item" onclick="details(\'' + data[i].id + '\')">';
+                            showHtml += '<span class="data-body-item-img"></span>';
+                            showHtml += '<div class="data-body-item-left">';
+                            if (isEmpty(data[i].remark)) {
+                                showHtml += '<span class="data-body-item-rmk">无</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-rmk">' + data[i].remark + '</span>';
+                            }
+
+                            if (data[i].cdSign === '1') {
+                                showHtml += '<span class="data-body-item-bal">- ' + bt.money.format(data[i].amt) + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-bal">+ ' + bt.money.format(data[i].amt) + '</span>';
+                            }
+
+                            showHtml += '</div>';
+                            showHtml += '<div class="data-body-item-right">';
+                            if (!isEmpty(data[i].oppAccNo)) {
+                                showHtml += '<span class="data-body-item-acc">对方账户：' + data[i].oppAccNo + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-acc">对方账户：无</span>';
+                            }
+                            showHtml += '<span class="data-body-item-amt">余额：' + bt.money.format(data[i].bal) + '</span>';
+                            showHtml += '</div>';
+                            showHtml += '</div>';
+                        } else {
+                            showHtml += '<div class="data-head">' + bt.date.format(data[i].transTime) + '<div class="fresh" onclick="fresh()">刷新</div></div>';
+                            showHtml += '<div class="data-bottom">';
+                            showHtml += '<div class="data-body-item" onclick="details(\'' + data[i].id + '\')">';
+                            showHtml += '<span class="data-body-item-img"></span>';
+                            showHtml += '<div class="data-body-item-left">';
+                            if (isEmpty(data[i].remark)) {
+                                showHtml += '<span class="data-body-item-rmk">无</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-rmk">' + data[i].remark + '</span>';
+                            }
+                            if (data[i].cdSign === '1') {
+                                showHtml += '<span class="data-body-item-bal">- ' + bt.money.format(data[i].amt) + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-bal">+ ' + bt.money.format(data[i].amt) + '</span>';
+                            }
+
+                            showHtml += '</div>';
+                            showHtml += '<div class="data-body-item-right">';
+                            if (!isEmpty(data[i].oppAccNo)) {
+                                showHtml += '<span class="data-body-item-acc">对方账户：' + data[i].oppAccNo + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-acc">对方账户：无</span>';
+                            }
+                            showHtml += '<span class="data-body-item-amt">余额：' + bt.money.format(data[i].bal) + '</span>';
+                            showHtml += '</div>';
+                            showHtml += '</div>';
+                        }
+                    }
+
+                    if (i > 0) {
+                        if (bt.date.format(data[i - 1].transTime) === bt.date.format(data[i].transTime)) {
+                            showHtml += '<div class="data-body-item" onclick="details(\'' + data[i].id + '\')">';
+                            showHtml += '<span class="data-body-item-img"></span>';
+                            showHtml += '<div class="data-body-item-left">';
+                            if (isEmpty(data[i].remark)) {
+                                showHtml += '<span class="data-body-item-rmk">无</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-rmk">' + data[i].remark + '</span>';
+                            }
+                            if (data[i].cdSign === '1') {
+                                showHtml += '<span class="data-body-item-bal">- ' + bt.money.format(data[i].amt) + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-bal">+ ' + bt.money.format(data[i].amt) + '</span>';
+                            }
+
+                            showHtml += '</div>';
+                            showHtml += '<div class="data-body-item-right">';
+                            if (!isEmpty(data[i].oppAccNo)) {
+                                showHtml += '<span class="data-body-item-acc">对方账户：' + data[i].oppAccNo + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-acc">对方账户：无</span>';
+                            }
+                            showHtml += '<span class="data-body-item-amt">余额：' + bt.money.format(data[i].bal) + '</span>';
+                            showHtml += '</div>';
+                            showHtml += '</div>';
+                        } else {
+                            showHtml += '</div>';
+                            showHtml += '<div class="data-head">' + bt.date.format(data[i].transTime) + '</div>';
+                            showHtml += '<div class="data-bottom">';
+                            showHtml += '<div class="data-body-item" onclick="details(\'' + data[i].id + '\')">';
+                            showHtml += '<span class="data-body-item-img"></span>';
+                            showHtml += '<div class="data-body-item-left">';
+                            if (isEmpty(data[i].remark)) {
+                                showHtml += '<span class="data-body-item-rmk">无</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-rmk">' + data[i].remark + '</span>';
+                            }
+                            if (data[i].cdSign === '1') {
+                                showHtml += '<span class="data-body-item-bal">- ' + bt.money.format(data[i].amt) + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-bal">+ ' + bt.money.format(data[i].amt) + '</span>';
+                            }
+
+                            showHtml += '</div>';
+                            showHtml += '<div class="data-body-item-right">';
+                            if (!isEmpty(data[i].oppAccNo)) {
+                                showHtml += '<span class="data-body-item-acc">对方账户：' + data[i].oppAccNo + '</span>';
+                            } else {
+                                showHtml += '<span class="data-body-item-acc">对方账户：无</span>';
+                            }
+                            showHtml += '<span class="data-body-item-amt">余额：' + bt.money.format(data[i].bal) + '</span>';
+                            showHtml += '</div>';
+                            showHtml += '</div>';
+                        }
+                    }
+                }
+            }
+            // var dataDiv = document.getElementById("tab1");
+            // dataDiv.innerHTML = showHtml;
+            $('.search-result-list').append(showHtml);
+            if (dropObj){
+                // 每次数据插入，必须重置
+                dropObj.resetload();
+            }
+            $('#bt-loading').hide();
+        }
+
+        function initCard(id, value, clickCallback, isNotInit) {
+            if (!id) {
+                return
+            }
+            var $card =
+            $(id);
+            var hiddenInput = $card.find('.bt-card-header input');
+            var items = $card.find('.bt-card-item');
+            items.removeClass(ACTIVE);
+            hiddenInput.val('');
+            //设置选中值
+            if (value) {
+                for (var i = 0; i < items.length; i++) {
+                    if (value === $(items[i]).data('value')) {
+                        $(items[i]).addClass(ACTIVE);
+                        hiddenInput.val(value);
+                        break
+                    }
+                }
+            }
+            if (isNotInit) {
+                return;
+            }
+
+            $(id).on('click', '.bt-card-item', function () {
+                var value = '';
+                if ($(this).hasClass(ACTIVE)) { //如果当前被选中时，点击会取消选中
+                    $(this).removeClass(ACTIVE);
+                } else {
+                        $card.find('.bt-card-item').removeClass(ACTIVE);
+                    $(this).addClass(ACTIVE);
+                    value = $(this).data('value');
+                }
+                hiddenInput.val(value);
+                if (clickCallback) {
+                    clickCallback(value);
+                }
+            })
+        }
+
+        //初始化
+        initCard('#accTypeName', '');
+        initCard('#attributeId', '');
+        initCard('#validSign', '');
+        //点击重置
+        $('#clearValue1').on('click', function () {
+            initCard('#accTypeName', '', '', true);
+        })
+        $('#clearValue2').on('click', function () {
+            initCard('#attributeId', '', '', true);
+        })
+        $('#clearValue3').on('click', function () {
+            $("#bankAcc").val("");
+            initCard('#validSign', '', '', true);
+        })
+        $("#btn1").click(function () {
+            addSheet($(this), '#actionsheet1')
+        });
+        $("#btn2").click(function () {
+            addSheet($(this), '#actionsheet2')
+        });
+        $("#btn3").click(function () {
+            addSheet($(this), '#actionsheet3')
+        });
+        //点击确定
+        $('.submitBtn').on('click', function () {
+            var btn = $(this).parents('.ui-actionsheet').removeClass('show')
+                    .data('link');
+            $('#' + btn).removeClass('active');
+            resetScrollContent();
+            //确认提交
+            // submiteData(false);
+        })
+
+
+        //数据提交
+        function submiteData(isInit) {
+            searchParams.id = $("#id").val();
+            searchParams.curId = $("#curId").val();
+            searchParams.remark = $("#remark").val();
+            searchParams.pageSize = pageSize;
+            searchParams.pageNumber = pageNumber;
+            setTimeout(function () {
+               var data = BTAppBridge.post("/api/bankacc/mobileBankAccDtlPaginationData", searchParams, 'postData');
+               console.log(JSON.stringify(data))
+                uni.postMessage({
+                    data:data
+                })
+            }, 500);
+        }
+
+    })(document, window);
+
+    //查看详情页面
+    function details(id) {
+        setTimeout(function () {
+            var data = BTAppBridge.jump({url: "/api/bankacc/mobileBankAccDtlInfo", id: id});
+            uni.postMessage({
+                data:data
+            })
+        }, 100);
+    }
+
+    //数据提交
+    function searchData() {
+        // searchParams.id = $("#id").val();
+        // searchParams.curId = $("#curId").val();
+        // searchParams.remark = $("#remark").val();
+        // setTimeout(function () {
+        // resetScrollContent();
+        //     BTAppBridge.post("/api/bankacc/mobileBankAccDtlData", searchParams, 'postData');
+        // }, 100);
+        resetScrollContent();
+    }
+
+    //数据提交
+    function fresh() {
+        resetScrollContent();
+        // searchParams.id = $("#id").val();
+        // searchParams.curId = $("#curId").val();
+        // setTimeout(function () {
+        //     // resetScrollContent();
+        //     BTAppBridge.post("/api/bankacc/mobileBankAccDtlData", searchParams, 'postData');
+        // }, 100);
+    }
+
+    /**判断字符串是否为空*/
+    function isEmpty(ms) {
+        if (typeof (ms) == "undefined" || ms == null || ms == "" || ms == " ") {
+            return true;
+        }
+        return false;
+    }
+
+</script>
+
+</html>

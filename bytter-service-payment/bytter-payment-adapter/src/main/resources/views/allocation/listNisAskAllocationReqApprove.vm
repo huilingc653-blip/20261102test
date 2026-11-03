@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/common/caData.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}" />
+    <input type="hidden" name="eqi_type" value="12">
+    <input type="hidden" id="caType"  value="5"/>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.nisAllocationReq.payeeAcc')</td>
+            <td >
+                <div class="layui-input-inline">
+                    <input type="text" id="likes_payeeAcc" name="likes_payeeAcc" data-name="likes_payeeAcc" data-biz-name="likes_payeeAcc" accountType="2,3" url="${basePath}/bankacc/btbankacc/getListBy"
+                           data-resource="netbank:allocation:typeAsk:query"  class="layui-input bt-biz-accountTable" data-callback="accountCallBack"/>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.money')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" data-name="geg_money" class="layui-input bt-biz-moneyType textRight"
+                           data-moneyendid="tleg_money20" autocomplete="off" placeholder="#springMessage('table.nisAllocationReq.money')">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" id="leg_money" data-name="leg_money" class="layui-input bt-biz-moneyType textRight"
+                           autocomplete="off" placeholder="#springMessage('table.nisAllocationReq.money')">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisAllocationReq.wishPayday')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" name="ged_wishPayday" class="layui-input bt-input-inline bt-biz-dateType"
+                           data-endid="led_wishPayday">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_wishPayday" class="layui-input bt-input-inline bt-biz-dateType"
+                           id="led_wishPayday">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">付款账号</td>
+            <td >
+                <div class="layui-input-inline">
+                    <input type="text" id="likes_payerAcc" name="likes_payerAcc" data-name="likes_payerAcc" data-biz-name="likes_payerAcc" accountType="2,3" url="${basePath}/bankacc/btbankacc/getListBy"
+                           data-resource="netbank:allocation:typeAsk:query"  class="layui-input bt-biz-accountTable" data-callback="payerCallBack"/>
+                </div>
+            </td>
+            <td class="textRight">收款户名</td>
+            <td>
+                <input type="text" name="likes_payeeAccName"
+                       autocomplete="off" class="layui-input" placeholder="收款户名"/>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisAllocationReq.billNo')</th>
+        <th>#springMessage('table.nisAllocationReq.payeeAcc')</th>
+        <th>收款户名</th>
+        <th>收款开户行</th>
+        <th>付款账号</th>
+        <th>付款户名</th>
+        <th>付款开户行</th>
+        <th>#springMessage('table.nisAllocationReq.curId')</th>
+        <th>#springMessage('table.nisAllocationReq.wishPayday')</th>
+        <th>#springMessage('table.nisAllocationReq.purpose')</th>
+        <th>#springMessage('table.nisAllocationReq.ask.money')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #paymentWorkFlowHtml()
+    #parse("views/common/footer.vm")
+    #caDataHidden()
+    #caDataScript()
+    #paymentWorkFlowScript()
+<script>
+    bt.use(['form', 'datatable', 'moneyType','accountTable'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.moneyType.init();
+        accountCallBack = function (data) {
+            $("#likes_payeeAcc").val(data.bankAcc);
+        }
+
+        payerCallBack = function (data) {
+            $("#likes_payerAcc").val(data.bankAcc);
+        }
+        bt.accountTable.init();
+
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            order: [1, 'desc'],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/allocation/nisallocationreq/dataTableApprove"
+            },
+            buttons: [],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {data: "billNo", bSortable: true},
+                {data: "payeeAcc", bSortable: true},
+                {data: "payeeAccName", bSortable: true},
+                {data: "payeeBankName", bSortable: false},
+                {data: "payerAcc", bSortable: true},
+                {data: "payerAccName", bSortable: true},
+                {data: "payerBankName", bSortable: false},
+                {data: "curName", bSortable: true},
+                {data: "wishPayday", bSortable: true},
+                {data: "purpose", bSortable: true},
+                {
+                    data: "money", bSortable: true, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(full.money);
+                    }
+                },
+                {data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                    var html='';
+                	if($("#flowStatus").val()=='todo'){
+                		html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                	}
+                	if ($("#flowStatus").val() == 'track') {
+	                    if ((full.status >= 11 && full.status < 95)) {
+	                        // 审批人可主动撤回
+	                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="withdraw(this)">' + bt.lang("common.button.withdraw") + '</a><span class="text-explode">|</span>';
+	                    }
+               		}
+                    if($("#flowStatus").val() == 'pass'){
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a><span class="text-explode">|</span>';
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                    }else {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                    }
+                	return html;
+                }}
+            ],
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: true,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '8',
+                        dataName: 'money'
+                    }
+                ]
+            }
+        });
+    });
+    
+     /**
+     * 流程撤回 - 审批人可主动撤回
+     * @param el
+     */
+    withdraw = function (el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            parent.layer.confirm(bt.lang('common.message.confirm.batchRevoke'), function () {
+                $.post(basePath + "/payment/bpm/task/batchRevoke", {ids: data.id}, function (result) {
+                    console.log('result',result)
+                    if(result.success){
+                        bt.datatable.refreshCurrentPage();
+                        var msg = result.msg;
+                        if(!msg && result.messageEnum){
+                            msg = bt.lang(result.messageEnum);
+                        }
+                        var obj = result.obj;
+                        var length = obj.length;
+                        if (length) {
+                            //对报错信息进行转化，显示每个报错信息有多少条
+                            for (var a = 0; a < length; a++) {
+                                if (obj[a].corpName) {
+                                    obj[a].errorMsg = [];
+                                    var messageList = obj[a].messageList.sort();
+                                    for (var i = 0; i < messageList.length;) {
+                                        var count = 0;
+                                        for (var j = i; j < messageList.length; j++) {
+                                            if (messageList[i] == messageList[j]) {
+                                                count++;
+                                            }
+                                        }
+                                        obj[a].errorMsg.push([messageList[i].replace(/_/g, '.').toLowerCase(), count]);
+                                        i += count;
+                                    }
+                                }
+                            }
+                            //拼装报错信息
+                            for (var i = 0; i < length; i++) {
+                                if (obj[i].corpName) {
+                                    msg += obj[i].corpName + '单位有' + obj[i].errorNum + '条撤回失败,原因:';
+                                    for (var k = 0; k < obj[i].errorMsg.length; k++) {
+                                        msg += obj[i].errorMsg[k][1] + '条' + bt.lang(obj[i].errorMsg[k][0])
+                                    }
+                                }
+                            }
+                        }
+                        parent.layer.alert(msg, {icon: result.success ? 1 : 2});
+                    }else{
+                        parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    }
+                }, 'JSON');
+            });
+        }
+    }
+</script>
+<script src="${basePath}/static/modules/allocation/nisTurnAllocationReqApprove.list.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

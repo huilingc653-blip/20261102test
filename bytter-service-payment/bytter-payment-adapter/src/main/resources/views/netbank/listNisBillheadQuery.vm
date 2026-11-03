@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        .col-error{
+            color: #ff0000;
+
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input id="opType" name="opType" type="hidden" value="$!{opType}">
+    <input id="loginName" name="loginName" type="hidden" value="$shiro.getPrincipal().loginName">
+    <input type="hidden" id="budgetSel" value="$!configTag.getConfig('nis','budgetSel')">
+    <input id="showIsPayed" name="showIsPayed" type="hidden" value="$!{showIsPayed}">
+    <div class="layui-collapse" lay-filter="collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title"></h2>
+            <div class="layui-colla-content layui-show">
+                #if($!{opType}=="queryDel")
+                    <div class="bt-biz-dict" data-type="select" data-displayData="-2" data-defaultvalue="$!{defStatus}"
+                         data-group="nisBillhead.status" data-name="eqi_status" style="display: none"></div>
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                        ##单位
+                            <td class="textRight">#springMessage('table.nisBillhead.corpId')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <div class="bt-biz-corp"
+                                         data-biz-type="corp"
+                                         data-type="selectTree"
+                                         data-tree-type="check"
+                                         data-name="ins_corpId"
+                                         data-resource="netbank:netBankQueryDel:nisBillHead:query"
+                                         data-scope="all"
+                                         data-callback="bt.corpCallback"></div>
+                                </div>
+                            </td>
+                        ##结算方式
+                            <td class="textRight">#springMessage('table.nisBillhead.voucherTypeId')</td>
+                            <td>
+                                <div class="layui-inline">
+##                                    <div type="list" field="eqs_voucherTypeId"
+##                                         fieldHref="${basePath}/netbank/fcvouchertype/json" dictField="id"
+##                                         dictText="voucherName" defaultVal="$!{nisBillheadPage.voucherTypeId}"></div>
+                                    <div class="bt-biz-mulselectType" data-url="${basePath}/netbank/fcvouchertype/json" data-method="get"
+                                         data-valuefield="id" data-textfield="voucherName" data-name="ins_voucherTypeId" data-biz-name="voucherName"
+                                         data-defaultvalue="$!{nisBillheadPage.voucherTypeId}"></div>
+
+                                </div>
+                            </td>
+                        ##金额
+                            <td class="textRight">#springMessage('table.nisBillhead.payMoney')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input type="text" data-name="geg_payMoney"
+                                           autocomplete="off" class="layui-input bt-biz-moneyType"
+                                           style="text-align:right" data-moneyendid="t20"  onchange="setEndMoney(this);"
+                                           placeholder="#springMessage('table.nisBillhead.payMoney')">
+                                </div>
+                                <span class="date-mid">~</span>
+                                <div class="layui-inline">
+                                    <input type="text" data-name="leg_payMoney"
+                                           autocomplete="off" class="layui-input bt-biz-moneyType"
+                                           style="text-align:right" id="t20"  data-biz-name = "leg_payMoney"
+                                           placeholder="#springMessage('table.nisBillhead.payMoney')">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##付款账号
+                            <td class="textRight">#springMessage('table.nisBillhead.payerAcc')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="eqs_payerAcc" name="eqs_payerAcc" lay-verify="tableData" data-biz-name="payerAcc"
+                                           autocomplete="off" class="layui-input text" placeholder="#springMessage('table.nisBillhead.payerAcc')">
+                                    <table id="payerAccTable" class="hide">
+                                        <thead>
+                                        <tr>
+                                            <th>#springMessage('table.nisBillhead.payerAcc')</th>
+                                            <th>#springMessage('table.nisBillhead.payerAccName')</th>
+                                            <th>#springMessage('table.nisBillhead.payerBank')</th>
+                                            <th>#springMessage('table.nisBillhead.curId')</th>
+                                        </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </td>
+                        ##收款账号
+                            <td class="textRight">#springMessage('table.nisBillhead.payeeAcc')</td>
+                            <td>
+                                <input type="text" name="likes_payeeAcc"
+                                       autocomplete="off" class="layui-input bank"
+                                       placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+                            </td>
+                        ##收款账号名称
+                            <td class="textRight">#springMessage('table.nisBillhead.payeeAccName')</td>
+                            <td>
+                                <input type="text" name="likes_payeeAccName"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisBillhead.payeeAccName')">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##付款单号
+                            <td class="textRight">#springMessage('table.nisBillhead.billNo')</td>
+                            <td>
+                                <input type="text" name="likes_billNo"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisBillhead.billNo')">
+                            </td>
+                        ##单据来源
+                            <td class="textRight">#springMessage('table.nisBillhead.billFrom')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select"
+                                     data-group="nisBillhead.billFrom" data-name="eqs_billFrom"></div>
+                            </td>
+                        ##期望支付日期
+                            <td class="textRight">#springMessage('table.nisBillhead.wishPayday')</td>
+                            <td>
+                                <input type="text" name="ged_wishPayday"
+                                       class="layui-input bt-input-inline bt-biz-dateType"
+                                       data-endid="led_wishPayday" value="">
+                                <span class="date-mid">~</span>
+                                <input type="text" name="led_wishPayday"
+                                       class="layui-input bt-input-inline bt-biz-dateType"
+                                       id="led_wishPayday" value="$!date.format('yyyy-MM-dd',$!{endWishPayday})">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##业务类别
+                            <td class="textRight">#springMessage('table.nisBillhead.busType')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-mulselectType"
+                                         data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=1"
+                                         data-name="eqs_busType" data-biz-name="eqs_busType"
+                                         data-valuefield="busId" data-textfield="busTypeName" data-inputvalue="inputvalue"
+                                         data-search="true"
+                                        ##                                     data-beforeinit="busBefore"
+                                    ></div>
+                                </div>
+                            </td>
+                        ##币别
+                            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                                         data-name="eqs_curId" data-valueField="id" data-textField="curName"></div>
+                                </div>
+                            </td>
+                        ##会计凭证号
+                            <td class="textRight">#springMessage('table.nisAllocationReq.bursarBillNo')</td>
+                            <td>
+                                <input type="text" name="likes_bursarBillNo"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisAllocationReq.bursarBillNo')">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##用途
+                            <td class="textRight">#springMessage('table.nisBillhead.purpose')</td>
+                            <td>
+                                <input type="text" name="likes_purpose"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisBillhead.purpose')">
+                            </td>
+                            <td class="textRight">#springMessage('table.btChargeBackType.busType')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-selectType" data-url="${basePath}/netbank/btchargebacktype/json"
+                                         data-name="eqs_chargeBackType" data-valueField="busType" data-inputvalue="inputvalue"
+                                         data-textField="busTypeName"  ></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="text-align: center;">
+                                <button class="layui-btn" lay-submit lay-filter="search"
+                                        type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage(
+                                    'common.button.reset')</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                #else
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                        ##单位
+                            <td class="textRight">#springMessage('table.nisBillhead.corpId')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <div class="bt-biz-corp"
+                                         data-biz-type="corp"
+                                         data-type="selectTree"
+                                         data-tree-type="check"
+                                         data-name="ins_corpId"
+                                         data-resource="netbank:netBankQuery:nisBillHead:query"
+                                         data-scope="all"
+                                         data-callback="bt.corpCallback"></div>
+                                </div>
+                            </td>
+                        ##结算方式
+                            <td class="textRight">#springMessage('table.nisBillhead.voucherTypeId')</td>
+                            <td>
+                                <div class="layui-inline">
+##                                    <div type="list" field="eqs_voucherTypeId"
+##                                         fieldHref="${basePath}/netbank/fcvouchertype/json" dictField="id"
+##                                         dictText="voucherName" defaultVal="$!{nisBillheadPage.voucherTypeId}"></div>
+                                    <div class="bt-biz-mulselectType" data-url="${basePath}/netbank/fcvouchertype/json" data-method="get"
+                                         data-valuefield="id" data-textfield="voucherName" data-name="ins_voucherTypeId" data-biz-name="voucherName"
+                                         data-defaultvalue="$!{nisBillheadPage.voucherTypeId}"></div>
+                                </div>
+                            </td>
+                        ##金额
+                            <td class="textRight">#springMessage('table.nisBillhead.payMoney')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <input type="text" data-name="geg_payMoney"
+                                           autocomplete="off" class="layui-input bt-biz-moneyType" onchange="setEndMoney(this);"
+                                           style="text-align:right" data-moneyendid="t20"
+                                           placeholder="#springMessage('table.nisBillhead.payMoney')">
+                                </div>
+                                <span class="date-mid">~</span>
+                                <div class="layui-inline">
+                                    <input type="text" data-name="leg_payMoney"
+                                           autocomplete="off" class="layui-input bt-biz-moneyType"
+                                           style="text-align:right" id="t20" data-biz-name = "leg_payMoney"
+                                           placeholder="#springMessage('table.nisBillhead.payMoney')">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##付款账号
+                            <td class="textRight">#springMessage('table.nisBillhead.payerAcc')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="eqs_payerAcc" name="eqs_payerAcc" lay-verify="tableData" data-biz-name="payerAcc"
+                                           autocomplete="off" class="layui-input text" placeholder="#springMessage('table.nisBillhead.payerAcc')">
+                                    <table id="payerAccTable" class="hide">
+                                        <thead>
+                                        <tr>
+                                            <th>#springMessage('table.nisBillhead.payerAcc')</th>
+                                            <th>#springMessage('table.nisBillhead.payerAccName')</th>
+                                            <th>#springMessage('table.nisBillhead.payerBank')</th>
+                                            <th>#springMessage('table.nisBillhead.curId')</th>
+                                        </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </td>
+                        ##收款账号
+                            <td class="textRight">#springMessage('table.nisBillhead.payeeAcc')</td>
+                            <td>
+                                <input type="text" name="likes_payeeAcc"
+                                       autocomplete="off" class="layui-input bank"
+                                       placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+                            </td>
+                        ##收款账号名称
+                            <td class="textRight">#springMessage('table.nisBillhead.payeeAccName')</td>
+                            <td>
+                                <input type="text" name="likes_payeeAccName"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisBillhead.payeeAccName')">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##付款单号
+                            <td class="textRight">#springMessage('table.nisBillhead.billNo')</td>
+                            <td>
+                                <input type="text" name="likes_billNo"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisBillhead.billNo')">
+                            </td>
+                        ##单据来源
+                            <td class="textRight">#springMessage('table.nisBillhead.billFrom')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select"
+                                     data-group="nisBillhead.billFrom" data-name="eqs_billFrom"></div>
+                            </td>
+                        ##期望支付日期
+                            <td class="textRight">#springMessage('table.nisBillhead.wishPayday')</td>
+                            <td>
+                                <input type="text" name="ged_wishPayday"
+                                       class="layui-input bt-input-inline bt-biz-dateType"
+                                       data-endid="led_wishPayday"
+                                       value="$!date.format('yyyy-MM-dd',$!{startWishPayday})">
+                                <span class="date-mid">~</span>
+                                <input type="text" name="led_wishPayday"
+                                       class="layui-input bt-input-inline bt-biz-dateType"
+                                       id="led_wishPayday" value="$!date.format('yyyy-MM-dd',$!{endWishPayday})">
+                            </td>
+                        </tr>
+                        <tr>
+                        ##业务类别
+                            <td class="textRight">#springMessage('table.nisBillhead.busType')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-mulselectType"
+                                         data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=1"
+                                         data-name="eqs_busType" data-biz-name="eqs_busType"
+                                         data-valuefield="busId" data-textfield="busTypeName" data-inputvalue="inputvalue"
+                                         data-search="true"
+                                        ##                                     data-beforeinit="busBefore"
+                                    ></div>
+                                </div>
+                            </td>
+                        ##状态
+                            <td class="textRight">#springMessage('table.nisBillhead.status')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select" data-filterData="-2"
+                                     data-group="nisBillhead.status" data-name="eqi_status"></div>
+                            </td>
+                        ##交易状态
+                            <td class="textRight">#springMessage('table.bisExc.voucherStat')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="mulselect" data-group="bisExc.voucherStat"
+                                     data-name="ins_voucherStat" data-filterData="w,R,p"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                        ##会计凭证号
+                            <td class="textRight">#springMessage('table.nisAllocationReq.bursarBillNo')</td>
+                            <td>
+                                <input type="text" name="likes_bursarBillNo"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisAllocationReq.bursarBillNo')">
+                            </td>
+                        ##币别
+                            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                                         data-name="eqs_curId" data-valueField="id" data-textField="curName"></div>
+                                </div>
+                            </td>
+                        ##制单人
+                            <td class="textRight">#springMessage('table.nisAllocationReq.createBy')</td>
+                            <td colspan="5">
+                                <div class="layui-inline">
+                                    <div class="bt-biz-mulselectType" data-url="${basePath}/netbank/nisbillhead/getUserByCorpId" data-method="get" data-valuefield="loginName" data-textfield="showText" data-name="ins_createBy" data-biz-name="createBy"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##是否对私
+                            <td class="textRight">#springMessage('table.nisBillhead.isForindividual')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select" data-group="nisBillhead.isPayed"
+                                     data-name="eqs_isForindividual"></div>
+                            </td>
+                            ##是否自动支付
+                            <td class="textRight">#springMessage('table.nisBillhead.isAutoPay')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="select" data-group="nisBillhead.isPayed"
+                                     data-defaultvalue="" data-name="eqs_isAutoPay"></div>
+                            </td>
+                            ##用途
+                            <td class="textRight">#springMessage('table.nisBillhead.purpose')</td>
+                            <td>
+                                <input type="text" name="likes_purpose"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.nisBillhead.purpose')">
+                            </td>
+                        </tr>
+                        <tr>
+                            ##下拨状态
+                            <td class="textRight">#springMessage('nis.payment.allocation.status')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="mulselect" data-group="bisExc.voucherStat"
+                                     data-name="ins_demandVoucherStat" data-filterData="w,R,p"></div>
+                            </td>
+                            <td class="textRight">申请人编码</td>
+                            <td>
+                                <input type="text" name="likes_opCode"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="申请人编码">
+                            </td>
+##                            <td class="textRight">共享计划付款日期</td>
+##                            <td>
+##                                <input type="text" name="ged_sharingDate"
+##                                       class="layui-input bt-input-inline bt-biz-dateType"
+##                                       data-endid="led_sharingDate">
+##                                <span class="date-mid">~</span>
+##                                <input type="text" name="led_sharingDate"
+##                                       class="layui-input bt-input-inline bt-biz-dateType"
+##                                       id="led_sharingDate">
+##                            </td>
+                        </tr>
+
+                        <tr>
+                            ##是否推送共享
+                            <td class="textRight">是否推送共享</td>
+                            <td>
+                                <div class="layui-inline">
+                                    <div class="bt-biz-dict" data-type="select" data-group="nisBillhead.isSendGx" data-name="eqs_isSendGx" data-biz-name="eqs_isSendGx"></div>
+                                </div>
+                            </td>
+                            #if($!configTag.getConfig('nis','isEnableSplit') == "1")
+                                ##原付款单号
+                                <td class="textRight">#springMessage('table.nisBillhead.splitBillNo')</td>
+                                <td>
+                                    <input type="text" name="likes_splitBillNo"
+                                           autocomplete="off" class="layui-input"
+                                           placeholder="#springMessage('table.nisBillhead.splitBillNo')">
+                                </td>
+                            #end
+
+                            #if($!{showIsPayed} == "1")
+                                ##是否已付款
+                                <td class="textRight">#springMessage('table.nisBillhead.isPayed')</td>
+                                <td>
+                                    <div class="bt-biz-dict" data-type="select" data-group="nisBillhead.isPayed"
+                                         data-name="eqs_isPayed"></div>
+                                </td
+                            #else
+                                <td></td>
+                                <td></td>
+                            #end
+                        </tr>
+
+
+                        <tr>
+                            <td colspan="6" style="text-align: center;">
+                                <button class="layui-btn" lay-submit lay-filter="search"
+                                        type="button">#springMessage('common.button.search')</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">#springMessage(
+                                    'common.button.reset')</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                #end
+            </div>
+        </div>
+    </div>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisBillhead.billNo')</th>
+        <th>#springMessage('table.nisBillhead.corpId')</th>
+        <th>#springMessage('table.nisBillhead.voucherTypeId')</th>
+        <th>#springMessage('table.nisBillhead.payerAcc')</th>
+        <th>#springMessage('table.nisBillhead.payerAccName')</th>
+        <th>#springMessage('table.nisBillhead.payerBank')</th>
+        <th>#springMessage('table.nisBillhead.curId')</th>
+        <th>#springMessage('table.nisBillhead.payMoney')</th>
+##        <th>#springMessage('table.abVoucherinfo.billType')</th>
+##        <th>#springMessage('table.erp.billFlag')</th>
+        <th>#springMessage('table.nisBillhead.payeeAcc')</th>
+        <th>#springMessage('table.nisBillhead.payeeAccName')</th>
+        <th>#springMessage('table.nisBillhead.payeeBankCode')</th>
+        <th>#springMessage('table.nisBillhead.payeeBank')</th>
+        <th>#springMessage('table.nisBillhead.wishPayday')</th>
+        <th>#springMessage('table.nisBillhead.splitBillNo')</th>
+        <th>#springMessage('table.nisBillhead.busType')</th>
+        <th>#springMessage('table.nisAllocationReq.bursarBillNo')</th>
+        <th>#springMessage('table.nisBillhead.purpose')</th>
+        <th>#springMessage('table.nisBillhead.addWord')</th>
+        <th>#springMessage('table.nisBillhead.isPayed')</th>
+        <th>#springMessage('table.nisBillhead.billFrom')</th>
+        <th>#springMessage('table.nisBillhead.status')</th>
+        <th>#springMessage('table.enterpriseLimit.landingResult')</th>
+        <th>#springMessage('table.bisExc.voucherStat')</th>
+        <th>交易后返回信息</th>
+        <th>#springMessage('table.btChargeBackType.busType')</th>
+        <th>#springMessage('table.nisBillhead.isAutoPay')</th>
+        <th>#springMessage('table.nisBillhead.isForindividual')</th>
+        <th>是否推送共享</th>
+        <th>#springMessage('nis.payment.downAllocation.requireListCode')</th>
+        <th>#springMessage('nis.payment.allocation.status')</th>
+        <th>#springMessage('table.nisAllocationReq.createBy')</th>
+        <th>#springMessage('table.nisBillhead.createDate')</th>
+        <th>申请人编码</th>
+        <th>实际付款日期</th>
+##        <th>#springMessage('source.document.scheduled.payment.date')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/netbank/nisBillhead.query.js?_btv=${resourceVersion}"></script>

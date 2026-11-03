@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body style="padding-bottom: 60px" class="full-body">
+<div id="print">
+        <input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+        <input id="corpId" name="corpId" type="hidden" value="$!{fbsBudgetPage.corpId}">
+        <input id="target" name="target" type="hidden" value="$!{target}">
+        <input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetPage.timeType}">
+        <input id="beginDate" name="beginDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})">
+        <input id="endDate" name="endDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})">
+    <form id="searchForm" class="layui-form">
+        <div class="layui-collapse" lay-filter="collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title"></h2>
+                <div class="layui-colla-content layui-show">
+		<table class="layui-table">
+        <tbody>
+            <tr>
+                ##单位
+                <td class="textRight" width="20%">#springMessage('table.fbsBudget.corpId')</td>
+                <td width="30%">$!{fbsBudgetPage.corpName}</td>
+				##周期类型
+                <td class="textRight" width="20%">#springMessage('table.fbsBudget.timeType')</td>
+                <td width="30%">$dictTag.get("fbs.timeType",$!{fbsBudgetPage.timeType})</td>
+            </tr>
+			<tr>
+                ##开始日期
+                <td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})</td>
+				##结束日期
+                <td class="textRight">#springMessage('table.fbsBudget.endDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})</td>
+            </tr>
+            <tr>
+				##币种
+                <td class="textRight">#springMessage('table.fbsBudgetDetail.curId')</td>
+                <td>$!{currencyTag.getCurName($!{fbsBudgetPage.curId})}</td>
+                ##科目显示级别
+                    <td class="textRight"><div class="noprint">#springMessage('fbs.item.level.show')</div></td>
+                    <td>
+                        <div class="noprint">
+                            <div class="bt-biz-dict" data-type="select" data-group="fbs.item.level"
+                                 data-defaultvalue="$!{level}" data-name="level" data-biz-name="level"
+                                 data-callback="chooseLevel"></div>
+                        </div>
+                </td>
+            </tr>
+			</tbody>
+		</table>
+        <table id="curTable" class="layui-table layui-form dark-layui-table" style="width:100%;">
+            <thead>
+            <tr>
+                <th width="31%">#springMessage('table.fbsBudget.corpId')</th>
+                <th width="23%">#springMessage('table.fbsBudgetDetail.curId')</th>
+                <th width="23%">#springMessage('table.btCurrency.curExrate')</th>
+                <th width="23%">#springMessage('table.fbsBudget.status')</th>
+            </tr>
+            </thead>
+            <tbody>
+				#foreach($date in $childCorpData)
+                <tr
+                    #if($!{target}=="super" && $!{date.status} == 95)
+                            style="display: none"
+                    #end>
+                    <td>
+                        (${date.corpCode})&nbsp;&nbsp;${date.corpName}
+                        <input id="childId_${date.id}" name="childId" type="hidden" value="$!{date.id}">
+                        <input id="childCorpId_${date.id}" name="childCorpId" type="hidden" value="$!{date.corpId}">
+                    </td>
+                    <td align="center">$!{date.curName}</td>
+                    <td align="right">
+                        #if($!{date.exchangeRate})
+                           $!excRateTag.getBuget($!{date.exchangeRate})
+                        #end
+                    </td>
+                    <td align="center">
+						#if($!{date.status} == "-2")
+                            <font color="red">$dictTag.get("fbsBudget.status",$!{date.status})</font>
+						#else
+							$dictTag.get("fbsBudget.status",$!{date.status})
+						#end
+                    </td>
+                </tr>
+				#end
+			</tbody>
+		</table>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div style="display:inline-block;width:100%;">
+        <div id="maingrid1" data-biz-name="chooseLevel"></div>
+    </div>
+		<table id="appTable" class="layui-table layui-form" style="width:100%;display: none;">
+            <thead>
+            <tr>
+                <th rowspan="2">#springMessage('table.fbsBudgetYear.number')</th>
+        		<th rowspan="2">#springMessage('table.fbsBudgetYear.itemCode')</th>
+                <th rowspan="2">#springMessage('table.fbsBudgetYear.itemName')</th>
+                <th rowspan="2">#springMessage('table.fbsBudgetYear.bMoney')</th>
+				<th rowspan="2">#springMessage('table.fbsBudgetYear.bsuperMoney')(#springMessage('table.fbsBudgetYear.pass'))</th>
+				<th colspan="$!{childCorpSize}">#springMessage('table.fbsBudgetYear.btempMoney')(#springMessage('table.fbsBudgetYear.notPass'))</th>
+            </tr>
+			<tr>
+				#foreach($corp in $childCorpMap.entrySet())
+					#if($!{corp.key} == "sumMoney")
+					<th>#springMessage('table.fbsBudgetYear.sumMoney')</th>
+					#else
+					<th>$!{corp.key}</th>
+					#end
+				#end
+			</tr>
+            </thead>
+        	<tbody>
+            	#foreach($date in $dltList)
+            		<tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}" data-tt-subject-sort="$!{date.itemCode}">
+            			<td>$!{velocityCount}</td>
+            			<td data-name="itemCode">$!{date.itemCode}</td>
+        				<td data-name="itemName">$!{date.itemName}</td>
+						#foreach($corp in $childCorpMap.entrySet())
+                            #if($!{corp.key} == "sumMoney")
+                            #set($index1 = ${velocityCount} - 1)
+                            #foreach($dtl in $corp.value)
+								#if($!{date.itemCode} == $!{dtl.itemCode})
+                                    #set($index1 = ${index1} + 1)
+									<td class="textRight" data-name="bMoney$!{index1}" align="right">$!number.formatNumeric($!{dtl.bMoney})</td>
+								#end
+							#end
+                            #end
+						#end
+						#foreach($corp in $childCorpMap.entrySet())
+                            #if($!{corp.key} == "sumMoney")
+                            #set($index2 = ${velocityCount} - 1)
+							#foreach($dtl in $corp.value)
+								#if($!{date.itemCode} == $!{dtl.itemCode})
+                                    #set($index2 = ${index2} + 1)
+								<td class="textRight" data-name="bsuperMoney$!{index2}" align="right">$!number.formatNumeric($!{dtl.bsuperMoney})</td>
+								#end
+							#end
+                            #end
+						#end
+						#foreach($corp in $childCorpMap.entrySet())
+                            #set($index3 = ${velocityCount} - 1)
+							#foreach($dtl in $corp.value)
+								#if($!{date.itemCode} == $!{dtl.itemCode})
+                                    #set($index3 = ${index3} + 1)
+									<td class="textRight" data-name="btempMoney$!{index3}" align="right">$!number.formatNumeric($!{dtl.btempMoney})</td>
+								#end
+							#end
+						#end
+            		</tr>
+            	#end
+            </tbody>
+        </table>
+		</div>
+        <div class="layui-form-item layui-form-submit" id="buttonDiv">
+            <div class="layui-input-block">
+                <button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage('common.button.print')</button>
+                <button type="button" class="layui-btn" onclick="exports()">#springMessage('common.button.exports')</button>
+            </div>
+        </div>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script >
+    var dicts,tree;
+bt.use(['form','layedit','toLigerTree', 'printType','dicts','element'], function(){
+    var $ = bt.jquery,form = bt.form();
+    dicts = bt.dicts.init();
+    $("#appTable").show();
+    tree = bt.toLigerTree.init2({
+        elem: '#appTable',
+        newElem: '#maingrid1',
+        rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+        isDoubleHeader: true,//是否有双表头
+        allowHideColumn: true,
+        resize:false,
+        height: "80%",
+        fixedLeftColumns: 0,
+        columnName:'itemCode',
+        onAfterShowData:function(currentData){
+            var level = dicts.get('level').val();
+            for(var i=0;i<currentData.Rows.length;i++){
+                var row=currentData.Rows[i];
+                if(row.children && row.children.length>0){
+                    if(level == 0 || level == ""){
+
+                    }else if(level == 1){
+                        this.collapse(row);
+                        collapseChild(row.children,this);
+                    }else if(level == 2 || level == 3){
+                        var row2 = row.children;
+                        for(var j = 0,len2 = row2.length;j< len2;j++){
+                            if(row2[j].children && row2[j].children.length){
+                                if(level == 2){
+                                    this.collapse(row2[j]);
+                                    collapseChild(row2[j].children,this);
+                                }else if(level == 3){
+                                    var row3 = row2[j].children;
+                                    for(var k = 0,len3 = row3.length;k< len3;k++){
+                                        if(row3[k].children && row3[k].children.length){
+                                            this.collapse(row3[k]);
+                                            collapseChild(row3[k].children,this);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    function collapseChild(node,treeObj){
+        for(var j = 0,len2 = node.length;j< len2;j++){
+            if(node[j].children && node[j].children.length){
+                treeObj.collapse(node[j]);
+                var child = node[j].children;
+                collapseChild(node[j].children,treeObj);
+            }
+        }
+    }
+    bt.printType.init();
+
+    /**
+     * 导出
+     */
+    exports = function () {
+        var url = basePath + "/budget/fbsBudgetDownloadAndImport/exportBudgetCur?corpId=" + $('#corpId').val() + "&timeType=" + $("#timeType").val() + "&beginDate=" + $("#beginDate").val() + "&endDate=" + $("#endDate").val() + "&target=" + $("#target").val();
+        window.location.href = url;
+    };
+});
+    var data;
+    chooseLevel = function () {
+        var level = dicts.get('level').val();
+        if(data == null) {
+            data = tree.get('chooseLevel').getData();//获取数据的方法；
+        }
+        console.log('finished',level);
+        tree.get('chooseLevel').loadData();
+    }
+</script>

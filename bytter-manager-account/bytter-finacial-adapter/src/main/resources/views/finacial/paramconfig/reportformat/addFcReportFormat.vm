@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+	<style>
+		html {
+			height: 100%;
+		}
+		.layui-form .table-scroll {
+			overflow: auto;
+		}
+		#printMRTable .layui-input {
+			width: 100%;
+		}
+	</style>
+</head>
+<body>
+<form class="layui-form">
+	<input id="netCode" name="netCode" type="hidden" value="$!{netCode}">
+	<input id="reportSize"  type="hidden" value="$!{reportSize}">
+	<input id="reportType" name="reportType" type="hidden" value="$!{reportType}">
+	<table class="layui-table">
+		<tbody>
+		<tr>
+			##种类
+			<td class="textRight">#springMessage('fcAccSummons.subjectId')</td>
+			<td width="30%">
+				<div class="bt-biz-dict" data-type="select" data-group="finacial.reportFormat.reportType" data-defaultvalue="1" data-name="reportType"
+					 data-biz-name="reportType" data-callback="reportFormat" data-width="120px">
+				</div>
+			</td>
+			##网点
+			<td class="textRight">#springMessage('table.fcAcc.netId')</td>
+			<td width="30%">
+				<div class="bt-biz-corp" data-name="netCode" data-required="true" data-biz-type="net" data-type="select" data-defaultvalue="$!{netCode}" data-callback="getFormat"></div>
+		</tr>
+		<tr>
+			<td colspan="4" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+			</td>
+		</tr>
+	</table>
+	## 报表格式   设置宋体是为了格式定义更准确，如果不是宋体的话，一个空格并不等于一个字符的宽度，会导致损益表页面层次显示不正确。
+	<table id="printMRTable" class="layui-table" style="font-family: '宋体';">
+		<thead>
+		<tr>
+			<th style="text-align: center;" width="50px"><span style="color:#F00;font-weight:bold">*</span>#springMessage('table.fcBankBillTemp.lineNo')</th> ##行号
+			<th style="text-align: center;" width="250px"><span style="color:#F00;font-weight:bold">*</span>#springMessage('table.fcReportFormat.item')</th>##项目
+			<th style="text-align: center;" width="50px"><span style="color:#F00;font-weight:bold">*</span>#springMessage('table.fcReportFormat.orderNo')</th>##行次
+			<th style="text-align: center;" width="100px">#springMessage('table.fcReportFormat.rect')</th>##正负
+			<th style="text-align: center;" id="subjectTd" width="250px">#springMessage('table.fcReportFormat.subjectId')</th>##科目
+			<th style="text-align: center;">#springMessage('table.fcReportFormat.formula')</th>##公式
+			<th style="text-align: center;" id="thDirection" width="100px"><span style="color:#F00;font-weight:bold">*</span>#springMessage('table.fcReportFormat.direction')</th>##左右
+			<th style="text-align: center;" width="50px"><a href="#" title="#springMessage('common.addTr')" ></a></th>
+		</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script>
+	bt.use(['form','layedit','selectTable','btdate','select','money','dicts','bttable','corp','selectType','dicts'], function(){
+		$ = bt.jquery,form = bt.form();
+		btCorp = bt.corp.init();
+		selectType = bt.selectType.init();
+		dicts = bt.dicts.init();
+
+		//监听提交
+		form.on('submit(submit)', function(data){
+			bt.loading.show();//显示加载中
+			if(data.field.netCode == " "){
+				layer.msg(bt.lang('table.fcReportFormat.firstSelectNet'));
+				bt.loading.hide(); //关闭加载中
+				return false;
+			}
+			var dataInfo={
+				id:data.field.id,
+				reportType:data.field.reportType,
+				netCode:data.field.netCode,
+				lineNo:data.field.lineNo,
+				direction:data.field.direction,
+				item:data.field.item,
+				orderNo:data.field.orderNo,
+				rect:data.field.rect,
+				subject:data.field.subject,
+				formula:data.field.formula,
+				initYear:data.field.initYear
+			};
+			var trs = $("#printMRTable>tbody").children('tr:visible');
+			if(trs.length > 0){
+				trs.each(function(i,tr){
+					var tds = $(tr).children('td');
+					tds.each(function(index,td){
+						var $input = $(td).find('[name]');
+						$.each($input,function (index1,item) {
+							var name = $(this).attr('name');
+							var text = $(this).val();
+							if(typeof(name) != "undefined"){//设置费用明细数据
+								name = name.substring(0,name.indexOf("_"));
+								if(name == "initYear"){
+									if($(this).checked){
+										text = 1;
+									}else{
+										text = 0;
+									}
+								}
+								dataInfo["format["+i+"]."+name] = text;;
+							}
+						})
+					});
+					dataInfo["format["+i+"].netCode"]=$("#netCode").val();
+					dataInfo["format["+i+"].reportType"]=$("#reportType").val();
+				});
+			}
+			var action = "/finacial/paramconfig/fcreportformat/submit";
+			$.post(basePath + action,dataInfo,function(result){
+				if(result.success){
+
+				}
+				bt.loading.hide(); //关闭加载中
+				parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+			},'JSON');
+			return false;
+		});
+
+		var row;
+		index ="index";
+		var subjectSelectData = []
+		if(subjectSelectData && !subjectSelectData.length ){
+			$.ajaxSettings.async = false;
+			$.get(basePath+'/finacial/paramconfig/fcsubject/jsonSubjectDate',function(data){
+				if(data){
+					subjectSelectData = data
+				}
+			},"json")
+			$.ajaxSettings.async = true;
+		}
+		function creatSubjectHtml(index,row,data){
+			var html =''
+			html +='<div style="position: relative;display: inline;min-width: 200px;"><select name="subject_'+index+row+'" lay-search>'
+			html += '<option value="">请选择</option>'
+			for(var i = 0; i < subjectSelectData.length; i++){
+				// 重置显示内容
+				var text = initSubject(subjectSelectData[i]["subjectName"],subjectSelectData[i])
+				if(data && data.subject == subjectSelectData[i]["id"]){
+					html += '<option value="'+subjectSelectData[i]["id"]+'" selected>'+text+'</option>'
+				}else{
+					html += '<option value="'+subjectSelectData[i]["id"]+'">'+text+'</option>'
+				}
+			}
+			html += '</select></div>'
+			return html
+		}
+		initPrintMRTable = function(){
+			var reportType = dicts.get("reportType").val();
+			//生成列表
+			bt.bttable.init({
+				elem: "#printMRTable",
+				url: basePath+"/finacial/paramconfig/fcreportformat/getReportFormat?netCode="+$("#netCode").val()+"&reportType="+$("#reportType").val(),
+				scrollX : true,
+				scrollY : "500px",
+				buttons: [{
+					text: "#springMessage('common.button.add')",
+					action:function( $i , $table ){
+						if(isEmpty($("#netCode").val())){
+							layer.msg(bt.lang('table.fcReportFormat.firstSelectNet'));
+							return false;
+						}
+						if(isEmpty($("#reportType").val())){
+							layer.msg(bt.lang('table.fcReportFormat.selectReportType'));
+							return false;
+						}
+						if(isNaN(row)){
+							row = 0;
+						}
+						var html='<tr row="'+row+'">';
+						html+= '<td><input style="min-width: 50px;width: 100%;" id="lineNo_'+ index + row +'" name="lineNo_'+ index + row + '" class="layui-input" type="text" lay-verify="strlength" data-maxlength="5"  ></td>';
+						if($("#reportType").val() == "3"){
+							html+='<td>';
+							html+='<input style="min-width: 150px;width: 100%;" readonly="readonly" id="item_'+index + row + '" class="layui-input" name="item_'+index + row + '" type="text" onclick="selectItem(this)" >'
+							html+='<input id="itemId_'+index + row + '" class="layui-input" name="itemId_'+index + row + '" type="hidden" >'
+							html+='</td>'
+						}else {
+							html+='<td><input style="min-width: 150px;width: 100%;" id="item_'+index + row + '" class="layui-input" name="item_'+index + row + '" type="text"   ></td>';
+						}
+						html+='<td><input style="min-width: 50px;width: 100%" id="orderNo_'+index + row + '" name="orderNo_'+index + row + '"  class="layui-input" type="text" lay-verify="strlength" data-maxlength="5" ></td> ';
+						html+='<td><div data-width="100px" class="bt-biz-dict" data-more="true" data-type="select"  data-group="finacial.reportFormat.rect" data-name="rect_'+index+row+'" data-biz-name="rect_'+index+row+'"></td>';
+						if ($("#reportType").val() != "3") {
+							html += '<td>'+creatSubjectHtml(index,row)+'</td>'
+							//html+='<td><div class="bt-biz-selectType"  data-biz-name="subject_'+index+row+'" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate" data-valuefield="id" data-textfield="subjectName" data-name="subject_'+index+row+'" data-search="true" data-beforeInit="initSubject" ></div></td>';
+						}
+						html+='<td><input style="min-width: 150px;width: 100%;" class="layui-input"  id="formula_'+index + row + '" name="formula_'+index + row + '" type="text"></td>';
+						if($("#reportType").val() != "2"){
+							html+= '<td><div data-width="100px" class="bt-biz-dict" data-more="true" data-type="select" data-group="finacial.reportFormat.direction" data-name="direction_'+index+row+'" data-biz-name="direction_'+index+row+'"></td>';
+						}
+						html+='<td><a href="#" data-type="del">'+bt.lang("common.button.delete")+'</a></td>';
+						html+='</tr>';
+						$("#printMRTable>tbody").append(html);
+						bt.dicts.init();
+						// bt.selectType.init();
+						// 绘制添加的select表单
+						form.render('select')
+						row++;
+					}
+
+				},{
+					text: "#springMessage('common.button.clone')",
+					action: function ( $i , $table ) {
+						var netCode = $("#netCode").val();
+						var reportType=$("#reportType").val();
+						if(isEmpty(netCode)){
+							layer.msg(bt.lang('table.fcReportFormat.firstSelectNet'));
+							return false;
+						}
+						if(isEmpty(reportType)){
+							layer.msg(bt.lang('table.fcReportFormat.selectReportType'));
+							return false;
+						}
+						$.ajax({
+							url:basePath+"/finacial/paramconfig/fcreportformat/getReportFormat",
+							method:'POST',
+							data:{
+								netCode:$("#netCode").val(),
+								reportType:$("#reportType").val()
+							},
+							dataType:'json',
+							success:function(data){
+								if(data == ""){
+									layer.msg(bt.lang('table.fcReportFormat.formatNotDefine'));
+									return false;
+								}else{
+									parent.layer.open({
+										type: 2,
+										area: ['850px', '530px'],
+										maxmin: true,
+										content: basePath + "/finacial/paramconfig/fcreportformat/copy?netCode=" + netCode + "&reportType=" + reportType
+									});
+								}
+							}
+						});
+					}
+				}
+				],
+				columns:[
+					{data:"lineNo",
+						render:function(data, row){
+							var reInfo = '<input style="min-width: 50px;width: 100%;" id="lineNo_'+index + row + '"  require class="layui-input" lay-verify="strlength" data-maxlength="5" name="lineNo_'+index + row + '" type="text" value="'+data.lineNo+'">';
+							return reInfo;
+						}
+					},
+					{data:"item",
+						render:function(data,row){
+							var reInfo = "";
+							if (reportType == "3") {
+								reInfo += '<input style="min-width: 150px;width: 100%;" readonly="readonly" id="item_' + index + row + '"  class="layui-input"  name="item_' + index + row + '" type="text" onclick="selectItem(this)" value="' + data.item + '">';
+								reInfo += '<input id="itemId_' + index + row + '" class="layui-input" name="itemId_' + index + row + '" type="hidden" value="' + data.itemId + '">';
+							} else {
+								reInfo = '<input style="min-width: 150px;width: 100%;" id="item_' + index + row + '"  class="layui-input"  name="item_' + index + row + '" type="text" value="' + data.item + '">';
+							}
+							return reInfo;
+						}
+					},
+					{data:"orderNo",
+						render:function(data,row){
+							var orderNo=isEmpty(data.orderNo)?"":data.orderNo;
+							var reInfo='<input style="min-width: 50px;width: 100%;" id="orderNo_'+index + row + '"  class="layui-input" lay-verify="strlength" data-maxlength="5" name="orderNo_'+index + row + '" type="text"  value="'+orderNo+'">';
+							return reInfo;
+
+						}
+					},
+					{data:"rect",
+						render:function(data,row){
+							var reInfo = '<div data-width="100px" class="bt-biz-dict" data-more="true" data-type="select" data-group="finacial.reportFormat.rect" data-defaultvalue="'+data.rect+'" data-name="rect_'+index+row+'" data-biz-name="rect_'+index+row+'">';
+							return reInfo;
+						}
+					},
+					{data:"subject",
+						render:function(data,row){
+							var reInfo = "";
+							if(data.reportType != "3"){
+								return creatSubjectHtml(index,row,data)
+								// 	reInfo ='<div class="bt-biz-selectType"  data-biz-name="subject_'+index+row+'" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate" data-valuefield="id" data-textfield="subjectName" data-name="subject_'+index+row+'" data-beforeInit="initSubject" data-search="true" data-defaultvalue="'+data.subject+'" ></div>';
+							}
+							return reInfo;
+						}
+					},
+					{ data:"formula",
+						render:function(data,row){
+							var reInfo='<input style="min-width: 150px;width: 100%;" id="formula_'+index + row + '"  class="layui-input"  name="formula_'+index + row + '" type="text" value="'+ (data.formula == null ? "" : data.formula) +'">';
+							return reInfo;
+						}
+					},
+					{data:"direction",
+						render:function(data,row){
+							var reInfo = "";
+							if(data.reportType != "2"){
+								reInfo +='<div data-width="100px" class="bt-biz-dict" data-more="true" data-type="select" data-group="finacial.reportFormat.direction" data-defaultvalue="'+data.direction+'" id="direction_'+index+row+'" data-name="direction_'+index+row+'" data-biz-name="direction_'+index+row+'">';
+							}
+							return reInfo;
+						}
+					},
+					{data:null,render:function(data,row){
+							var reInfo='';
+							reInfo='<a href="#" data-type="del">'+bt.lang("common.button.delete")+'</a>';
+							return reInfo;
+						}}
+				],
+				delRowCallback:function(data,tr){
+					tr.remove();
+				},
+				tableInitCallback:function(data){
+					row = data.length;
+					// bt.selectType.init();
+					bt.dicts.init();
+					form.render('select');
+					if($("#reportType").val() == "1"){
+
+					}else if($("#reportType").val() == "2"){
+						$("td[name='direction']").hide();
+						$("div[data-name^='direction_index']").hide();
+					}else if ($("#reportType").val() == "3") {
+						$("td[name='subject']").hide();
+					}
+					$('.table-scroll').css('height',$('html').height() - 170 +'px')
+				}
+			});
+		}
+		initPrintMRTable();
+
+		initSubject = function (text, data) {
+			if (data.subjectCode) {
+				return "(" + data.subjectCode + ")" + data.subjectName;
+			}
+			return text;
+		}
+
+	});
+
+	/**网点回调函数**/
+	function getFormat(id){
+		$("#netCode").val(id.value);
+		initPrintMRTable();
+	}
+
+	/**种类回调函数**/
+	function reportFormat(id){
+		var reportType = dicts.get("reportType").val();
+		$("#reportType").val(reportType);
+		if(reportType == 1){
+			$("#subjectTd").show();
+			$("#thDirection").show();
+			$("#thDirection").html('<span style="color:#F00;font-weight:bold">*</span>'+bt.lang('table.fcReportFormat.direction'));
+		}else if(reportType == 3){
+			$("#thDirection").show();
+			$("#subjectTd").hide();
+		}else {
+			$("#subjectTd").show();
+			$("#thDirection").hide();
+		}
+		initPrintMRTable();
+	}
+
+
+
+	/**判断字符串是否为空*/
+	function isEmpty(ms){
+		if(typeof(ms) == "undefined" || ms == null || ms == "" || $.trim(ms) == ""){
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 *
+	 * @param obj
+	 */
+	function selectItem(obj) {
+		layer.open({
+			type:2,
+			area: ['850px', '650px'],
+			content: basePath + "/finacial/paramconfig/cashItem/selecCashItemData",
+			btnAlign: "c",
+			btn: [bt.lang("common.button.confirm"), bt.lang("common.button.close")] ,
+			yes: function(index, layero){
+				var iframeWin = layero.find('iframe')[0];
+				var selectData = iframeWin.contentWindow.getSelectData();
+				obj.value = selectData.itemName;
+				var trObj = $(obj).parents("tr");
+				$("#itemId_index" + trObj.attr("row")).val(selectData.id);
+				layer.close(index);
+			} ,
+			btn2: function(index, layero){
+				layer.close(index);
+			}
+		});
+	}
+</script>
+</html>

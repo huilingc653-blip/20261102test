@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 22px; 
+	text-decoration: underline;
+	text-align: center;
+	/*color: blue;*/
+	/*color: #00CC33;*/
+}
+</style>    
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="netId" name="netId" type="hidden" value="$!{fcAccbookPage.netId}">
+		<input id="orderNo" name="orderNo" type="hidden" value="$!{fcAccbookPage.orderNo}">
+		<input id="voucherNo" name="voucherNo" type="hidden" value="$!{fcAccbookPage.voucherNo}">
+		<input id="enrolTime" name="enrolTime" type="hidden" value="$!{fcAccbookPage.enrolTime}">
+		<input id="origVoucherNo" name="origVoucherNo" type="hidden" value="$!{fcAccbookPage.origVoucherNo}">
+		<input id="operatorCode" name="operatorCode" type="hidden" value="$!{fcAccbookPage.operatorCode}">
+		<input id="checkerCode" name="checkerCode" type="hidden" value="$!{fcAccbookPage.checkerCode}">
+		<input id="checkTime" name="checkTime" type="hidden" value="$!{fcAccbookPage.checkTime}">
+		<input id="redblueSign" name="redblueSign" type="hidden" value="$!{fcAccbookPage.redblueSign}">
+		<input id="voucherState" name="voucherState" type="hidden" value="$!{fcAccbookPage.voucherState}">
+		<input id="chargedSign" name="chargedSign" type="hidden" value="$!{fcAccbookPage.chargedSign}">
+		<input id="rushSign" name="rushSign" type="hidden" value="$!{fcAccbookPage.rushSign}">
+		<input id="generateMode" name="generateMode" type="hidden" value="$!{fcAccbookPage.generateMode}">
+		<input id="postscript" name="postscript" type="hidden" value="$!{fcAccbookPage.postscript}">
+		<input id="curCode" name="curCode" type="hidden" value="$!{fcAccbookPage.curCode}">
+		
+		<div class="voucher-title">
+			##记账凭证
+			<label >#springMessage('table.fcAccbook.tallyTitle')</label>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-inline">
+				##凭证种类
+				<label class="layui-form-label">#springMessage('table.fcAccbook.voucherType')</label>
+				<div class="layui-input-inline">
+					<div type="list" field="accbook.voucherType" fieldHref="${basePath}/netbank/fcvouchertype/json" dictField="id" dictText="voucherName" ></div>
+				</div>
+			</div>
+			<div class="layui-inline">
+			</div>
+			<div class="layui-inline" style="float: right; margin-right: 20px;">
+				##附件张数
+				<label class="layui-form-label">#springMessage('table.fcAccbook.affixAmount')</label>
+				<div class="layui-input-inline">
+					<!--number-->
+					<input type="text" id="affixAmount" data-name="affixAmount" data-type="int" maxlength="2"
+						decimal="0" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.affixAmount')">
+					<input id="accbook.affixAmount" name="accbook.affixAmount" type="hidden" >
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-inline">
+				##业务种类
+				<label class="layui-form-label">#springMessage('table.fcAccbook.busRaceId')</label>
+				<div class="layui-input-inline">
+					<input type="text" name="accbook.busRaceId"
+                     	autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.busRaceId')" >
+				</div>
+			</div>
+			<div class="layui-inline">
+				##记账日期
+				<label class="layui-form-label">#springMessage('table.fcAccbook.tallyDate')</label>
+				<div class="layui-input-inline">
+					<div type="date" field="tallyDate" name="tallyDate" lay-verify="required"></div>
+					<input id="accbook.tallyDate" name="accbook.tallyDate" type="hidden" value="$!{fcAccbookPage.curCode}">
+				</div>
+			</div>
+			<div class="layui-inline" style="float: right; margin-right: 20px;">
+				##起息日期
+				<label class="layui-form-label">#springMessage('table.fcAccbook.interestStartDate')</label>
+				<div class="layui-input-inline">
+					<div type="date" field="interestStartDate" name="interestStartDate" lay-verify="required"></div>
+					<input id="accbook.interestStartDate" name="accbook.interestStartDate" type="hidden" value="$!{fcAccbookPage.curCode}">
+				</div>
+			</div>
+		</div>
+		## 凭证表格数据
+		<table id="dataTable" class="layui-table">
+			<thead>
+				<tr>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.summaryContent')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.account')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.accName')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.origVoucherNo')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.debitMoney')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.creditMoney')</th>
+					<th style="text-align: center;"><a href="#" title="#springMessage('common.addTr')" onClick="addTr()"><i class="layui-icon">&#xe654;</i></a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<div type="list" field="bookDtls[0].summaryContent" fieldHref="${basePath}/finacial/paramconfig/btsummary/json" dictField="summaryContent" dictText="summaryContent" defaultVal="$!{table.fcVoucherEntryDefine.summary}"></div>
+					</td>
+					<td>
+						<input type="text" data-name="bookDtls[0].account" name="bookDtls[0].account" class="layui-input" maxlength="32" lay-verify="required"/>
+					</td>
+					<td>
+						<div id="bookDtls[0].accName">&nbsp;</div>
+					</td>
+					<td><input type="text" name="bookDtls[0].origVoucherNo" class="layui-input" maxlength="32" /></td>
+					<td align="right">
+						<input type="text" data-name="debitMoney_0" name="debitMoney_0" index="0" alisaname="debitMoney_0"
+							data-type="precent" decimal="2" minus="true" class="layui-input" maxlength="20" />
+						<input id="bookDtls[0].debitMoney" name="bookDtls[0].debitMoney" type="hidden" >
+					</td>
+					<td align="right">
+						<input type="text" data-name="creditMoney_0" name="creditMoney_0" index="0" alisaname="creditMoney_0"
+							data-type="precent" decimal="2" minus="true" class="layui-input" maxlength="20" />
+						<input id="bookDtls[0].creditMoney" name="bookDtls[0].creditMoney" type="hidden" >
+					</td>
+					<td align="center"></td>
+				</tr>
+				<tr>
+					<td>
+						<div type="list" field="bookDtls[1].summaryContent" fieldHref="${basePath}/finacial/paramconfig/btsummary/json" dictField="summaryContent" dictText="summaryContent" defaultVal="$!{table.fcVoucherEntryDefine.summary}"></div>
+					</td>
+					<td>
+						<input type="text" data-name="bookDtls[1].account" name="bookDtls[1].account" class="layui-input" maxlength="32" lay-verify="required"/>
+					</td>
+					<td>
+						<div id="bookDtls[1].accName">&nbsp;</div>
+					</td>
+					<td><input type="text" name="bookDtls[1].origVoucherNo" class="layui-input" maxlength="32" /></td>
+					<td align="right">
+						<input type="text" data-name="debitMoney_1" name="debitMoney_1" index="1" alisaname="debitMoney_1"
+							data-type="precent" decimal="2" minus="true" class="layui-input" maxlength="20" />
+						<input id="bookDtls[1].debitMoney" name="bookDtls[1].debitMoney" type="hidden" >
+					</td>
+					<td align="right">
+						<input type="text" data-name="creditMoney_1" name="creditMoney_1" index="1" alisaname="creditMoney_1"
+							data-type="precent" decimal="2" minus="true" class="layui-input" maxlength="20" />
+						<input id="bookDtls[1].creditMoney" name="bookDtls[1].creditMoney" type="hidden" >
+					</td>
+					<td align="center"></td>
+				</tr>
+				<!-- 模板 start 点击“增加明细”按钮时按照这列来生成下一行-->
+				<tr id="template" style="display: none;">
+					<td>
+						<div type="list" field="template[x].summaryContent" fieldHref="${basePath}/finacial/paramconfig/btsummary/json" dictField="summaryContent" dictText="summaryContent" defaultVal="$!{table.fcVoucherEntryDefine.summary}"></div>
+					</td>
+					<td>
+						<input type="text" data-name="template[x].account" name="template[x].account" class="layui-input" maxlength="32" />
+<!-- 						<div type="list" field="template[x].account" fieldHref="${basePath}/finacial/paramconfig/btsummary/json" dictField="id" dictText="summaryContent" defaultVal="$!{table.fcVoucherEntryDefine.summary}"></div> -->
+					</td>
+					<td>
+						<div id="bookDtls[x].accName">&nbsp;</div>
+					</td>
+					<td><input type="text" name="template[x].origVoucherNo" class="layui-input" maxlength="32" /></td>
+					<td>
+						<input type="text" data-name="debitMoney_x" name="debitMoney_x" index="[_x_]" selectAttr="template_x" alisaname="debitMoney_x"
+							data-type="precent" decimal="2" minus="true" class="layui-input" maxlength="17" />
+						<input id="template[x].debitMoney" name="template[x].debitMoney" type="hidden" >
+					</td>
+					<td>
+						<input type="text" data-name="creditMoney_x" name="creditMoney_x" index="[_x_]" selectAttr="template_x" alisaname="creditMoney_x"
+							data-type="precent" decimal="2" minus="true" class="layui-input" maxlength="17" />
+						<input id="template[x].creditMoney" name="template[x].creditMoney" type="hidden" >
+					</td>
+					<td>
+						<a id="iconIndex_[_x_]" href="#" title="#springMessage('common.delTr')" onClick="remoTr(this.parentElement.parentElement.rowIndex)"><i class="layui-icon">&#xe640;</i></a>
+					</td>
+				</tr>
+				<!-- 模板 end -->
+			</tbody>
+			<tfoot>
+				<td style="text-align: right">#springMessage('table.interet.sum')：</td>
+				<td >&nbsp;</td>
+				<td >&nbsp;</td>
+				<td >&nbsp;</td>
+				<td style="text-align: right;" ><span id='debitTot' val="0">0.00</span></td>
+				<td style="text-align: right;" ><span id='creditTot' val="0">0.00</span></td>
+			</tfoot>
+		</table>
+		<div class="layui-form-item">
+			<div class="layui-inline" >
+				##加急标志
+				<label class="layui-form-label">#springMessage('table.fcAccbook.emergencySign')</label>
+				<div class="layui-input-inline">
+					#set ($emergencySignMap = {"field":"accbook.emergencySign","type":"radio","typeGroupCode":"sf_yn","defaultVal":"0","title":"table.fcAccbook.emergencySign"})
+					#set ($emergencyForm = $dictSelect.instance($emergencySignMap))
+					${emergencyForm.html()}
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-block">
+				##备注
+				<label class="layui-form-label">#springMessage('table.fcAccbook.rmk')</label>
+				<div class="layui-input-block">
+					<!--number-->
+					<input type="text" id="rmk" name="accbook.rmk" maxlength="40"
+					 autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.rmk')">
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit="" lay-filter="temp">#springMessage('common.button.temp')</button>
+				<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+			</div>
+		</div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<!-- <script src="${basePath}/static/modules/finacial/accbook/fcAccbook.add.js?_btv=${resourceVersion}"></script> -->
+<script type="text/javascript">
+var calcTot, setTot, calcDelDr, delTrTot;
+
+bt.use(['form','layedit','selectTree','corp','moneynum','btdate','select','money'], function(){
+    var $ = bt.jquery,form = bt.form();
+    
+    /*
+    * 先还原原先列的借贷方金额
+    */
+    calcDelDr = function(rowIndex){
+    	//重新计算金额合计   = 原值  - 删行的值
+    	var mindex = rowIndex - 1;
+    	var data_name = "[alisaname='creditMoney_" + mindex + "']";
+    	//判断贷方是否已录入金额
+    	var creditMoneyi = layui.jquery(data_name).val();
+    	creditMoneyi = bt.money.toNumber(creditMoneyi);
+    	if(null == creditMoneyi || creditMoneyi - 0 == 0){
+    	} else {
+    		//减掉录入的金额
+    		delTrTot(creditMoneyi, "creditTot");
+    		return;
+    	}
+    	
+    	var data_name = "[alisaname='debitMoney_" + mindex + "']";
+    	//判断借方是否已录入金额
+    	var debitMoneyi = layui.jquery(data_name).val();
+    	creditMoneyi = bt.money.toNumber(debitMoneyi);
+    	if(null == debitMoneyi || debitMoneyi - 0 == 0){
+    	} else {
+    		//减掉录入的金额
+    		delTrTot(debitMoneyi, "debitTot");
+    		return;
+    	}
+    }
+    
+    /**
+     * 删除行后更新合计值
+     */
+    delTrTot = function(data, telId){
+    	var $tel = $("#" + telId);//贷方增加合计
+    	//计算合计值 = 原值 + 新值 - 旧值
+    	var totMoney = bt.money.sub($tel.attr("val"), data);
+		$("#" + telId).attr("val", totMoney);//
+		$("#" + telId).text(bt.money.format(totMoney));
+    }
+    
+    /**
+     * 计算合计值
+     */
+    setTot = function(item, data, telId){
+    	var oldVal = $(item).attr("oldVal");
+    	var newVal = data;
+    	if(oldVal === undefined){
+    		oldVal = 0;				
+    	}
+    	if(newVal === '') {
+    		newVal = 0;
+    	} else {
+    		newVal = bt.money.toNumber(newVal);
+    	}
+    	
+    	var $tel = $("#" + telId);//贷方增加合计
+    	//计算合计值 = 原值 + 新值 - 旧值
+    	var totMoney = bt.money.add($tel.attr("val"), data, -1*oldVal);
+    	
+		$("#" + telId).attr("val", totMoney);//
+		$("#" + telId).text(bt.money.format(totMoney));
+		$(item).attr("oldVal", bt.money.toNumber(data));
+    	$(item).attr("value", bt.money.toNumber(data));
+    }
+    
+    calcTot = function(item, data){
+    	var oldVal = $(item).attr("oldVal");
+    	var newVal = data;
+    	if(oldVal === undefined){
+    		oldVal = 0;				
+    	}
+    	if(newVal === '') {
+    		newVal = 0;
+    	} else {
+    		newVal = bt.money.toNumber(newVal);
+    	}
+    	//获取发生额，计算合计值
+		var alisaname = $(item).attr("alisaname");
+    	if(undefined != alisaname){
+    		alisaname = alisaname.split("_");
+    	}
+    	var mindex;
+    	if(alisaname.length == 2){
+	    	mindex = alisaname[1];
+    	} else {
+	    	mindex = $(item).attr("index");
+    	}
+    	var name = alisaname[0];
+    	
+    	if(name.indexOf("debitMoney") != -1){//借方金额
+    		var data_name = "[alisaname='creditMoney_" + mindex + "']";
+    		//判断贷方是否已录入金额
+    		var creditMoneyi = layui.jquery(data_name).val();
+    		creditMoneyi = bt.money.toNumber(creditMoneyi);
+    		if(null == creditMoneyi || creditMoneyi - 0 == 0){
+    		} else {
+    			$(item).val("0.00");
+    			return;
+    		}
+    		$("input[name='bookDtls[" + mindex + "].debitMoney'").val(data);
+    		//计算合计值
+    		setTot(item, data, "debitTot");
+    	} else if(name.indexOf("creditMoney") != -1){//贷方金额
+    		var data_name = "[alisaname='debitMoney_" + mindex + "']";
+    		//判断借方是否已录入金额
+    		var creditMoneyi = layui.jquery(data_name).val();
+    		creditMoneyi = bt.money.toNumber(creditMoneyi);
+    		if(null == creditMoneyi || creditMoneyi - 0 == 0){
+    		} else {
+    			$(item).val("0.00");
+    			return;
+    		}
+    		$("input[name='bookDtls[" + mindex + "].creditMoney'").val(data);
+    		//计算合计值
+    		setTot(item, data, "creditTot");
+    	}
+    	
+    	if(mindex - 0 == 0){//第一行
+    		if(name.indexOf("debitMoney") != -1){//借方金额
+    			var data_name = "[alisaname='creditMoney_1']";
+        		//判断贷方是否已录入金额
+        		var creditMoney0 = layui.jquery(data_name).val();
+        		creditMoney0 = bt.money.toNumber(creditMoney0);
+   				var eItem = $(data_name);
+   				eItem.val(bt.money.format(data));
+   				eItem.attr("data-value", bt.money.format(data));
+   				$("input[name='bookDtls[1].creditMoney'").val(data);
+   				//计算合计值
+   				setTot(eItem, data, "creditTot");
+    		} else if(name.indexOf("creditMoney") != -1){//贷方金额
+    			var data_name = "[alisaname='creditMoney_1']";
+        		//判断贷方是否已录入金额
+        		var debitMoney0 = layui.jquery(data_name).val();
+        		debitMoney0 = bt.money.toNumber(debitMoney0);
+   				var eItem = $(data_name);
+   				eItem.val(bt.money.format(data));
+   				eItem.attr("data-value", bt.money.format(data));
+   				$("input[name='bookDtls[1].debitMoney'").val(data);
+   				//计算合计值
+   				setTot(eItem, data, "debitTot");
+    		}
+    	}
+    };
+    
+    
+    bt.moneynum.init({elem:$('[data-type="int"]'),decimal:0,minus:false,callback : function(data){
+    	$("input[name='accbook.affixAmount'").val(data);
+    }});
+    //格式化数字
+    $.each($('[data-type="precent"]'),function(i,item){
+        if($(item).attr("decimal")!=""){
+            bt.moneynum.init({elem:$(item),decimal:2,minus:true,callback : function(data){
+            	calcTot(item, data);
+            }});
+        }
+    });
+  	//时间
+	$.each($("div[type='date']"),function(i,item){
+		bt.btdate.init({
+			elem: "[field='"+$(item).attr("field")+"']",
+			name: $(item).attr("field"),
+            start: $(item).attr("defaultVal"),
+            format: "YYYY-MM-DD",
+			istime: false,
+			required : true,
+			choose:function(data){
+		    	$("input[name='accbook." + $(item).attr("field") + "'").val(data);
+			}
+		});
+	});
+    $.each($("div[type='datetime']"),function(i,item){
+        bt.btdate.init({
+            elem: "[field='"+$(item).attr("field")+"']",
+            name: $(item).attr("field"),
+            start: $(item).attr("defaultVal"),
+            format: "YYYY-MM-DD hh:mm:ss",
+            istime: true
+        });
+    });
+  //下拉框
+    $.each($("div[type='list']"),function(i,item){
+        bt.select.init({
+            elem: "[field='"+$(item).attr("field")+"']",
+            name: $(item).attr("field"),
+            defaultVal: $(item).attr("defaultVal"),
+            valueField: $(item).attr("dictField"),
+            textField: $(item).attr("dictText"),
+            search: true,
+            disabled: false,
+            url: $(item).attr("fieldhref"),
+        });
+    });
+    
+    //监听提交
+    form.on('submit(temp)', function(data){
+        var action = "/finacial/accbook/fcaccbook/save";
+        $.post(basePath + action,data.field,function(result){
+            if(result.success){
+                parent.layer?parent.layer.closeAll():layer.closeAll();
+            }
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+        return false;
+    });
+    
+    //监听提交
+    form.on('submit(submit)', function(data){
+        var action = "/finacial/accbook/fcaccbook/submit";
+        $.post(basePath + action,data.field,function(result){
+            if(result.success){
+                parent.layer?parent.layer.closeAll():layer.closeAll();
+            }
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+        return false;
+    });
+});
+
+
+
+function addTr() {
+	var form = bt.form();
+	var tab = document.getElementById("dataTable");
+	var rowsCount = tab.rows.length;
+	var lastTr = tab.rows.item(rowsCount - 2);//最后要复制的行
+	var newTr = tab.insertRow(rowsCount - 2);//新生成的行
+	var index = rowsCount - 3;
+	for (var i = 0; i < lastTr.cells.length; i++) {
+		var newTd = newTr.insertCell(i);
+		str = lastTr.cells.item(i).innerHTML;
+		while (str.indexOf("[_x_]") > 0) {
+			str = str.replace("[_x_]", (rowsCount - 3));
+		}
+		while (str.indexOf("[x]") > 0) {
+			str = str.replace("[_x_]", (rowsCount - 3));
+			str = str.replace("[x]", "[" + (rowsCount - 3) + "]");
+			str = str.replace("_x", "_" + (rowsCount - 3));
+		}
+		while (str.indexOf("_x") > 0) {
+			str = str.replace("_x", "_" + (rowsCount - 3));
+		}
+		while (str.indexOf("template") > 0){
+			str = str.replace("template", "bookDtls");
+		}
+		newTd.innerHTML = str;
+	}
+	if(rowsCount > 5){
+		var iconIndex = "iconIndex_" + (rowsCount - 4);//最后一行才能出现删除按钮
+		document.getElementById(iconIndex).style.display = "none";
+	}
+	
+	form.render('select');//刷新下拉框
+	
+	var groupName = "bookDtls_" + index;
+	bt.use(['form','moneynum','money'], function(){
+	    var $ = bt.jquery,form = bt.form();
+	    $.each($('[selectAttr="' + groupName + '"]'),function(i,item){
+		    bt.moneynum.init({elem:$(this),decimal:2,minus:true,callback : function(data){
+		    	calcTot(item, data);
+		    	//计算合计值
+            }});
+	    });
+	    
+	});
+}
+function remoTr(rowIndex) {
+	var form = bt.form();
+	//先还原借贷方金额，再删除行
+	calcDelDr(rowIndex);//重新计算金额合计   = 原值  - 删行的值
+	var tab = document.getElementById("dataTable");
+	var rowsCount = tab.rows.length;
+	tab.deleteRow(rowIndex);
+	//循环修改元素的名字
+	for (var i = rowIndex; i < (tab.rows.length - 2); i++) {
+		var tempTr = tab.rows.item(i);
+		for (var x = 0; x < tempTr.cells.length; x++) {
+			var tempTd = tempTr.cells.item(x);
+			var strHTML = tempTd.innerHTML;
+			while (strHTML.indexOf("[" + (i - 1) + "]") > 0) {
+				strHTML = strHTML.replace("[" + (i - 1) + "]", "["
+						+ (i - 2) + "]");
+			}
+			while (strHTML.indexOf("_" + i) > 0) {
+				strHTML = strHTML.replace("_" + i, "_"
+						+ (i - 1));
+			}
+			while (strHTML.indexOf("[" + (i) + "]") > 0) {
+				strHTML = strHTML.replace("[" + (i) + "]", "[" + (i - 1)
+						+ "]");
+			}
+			tempTd.innerHTML = strHTML;
+		}
+	}
+	if(rowsCount > 6){
+		var iconIndex = "iconIndex_" + (rowsCount - 5);//最后一行才能出现删除按钮
+		document.getElementById(iconIndex).style.display = "block";
+	}
+	
+	bt.use(['form','moneynum','money'], function(){
+	    var $ = bt.jquery,form = bt.form();
+	    $.each($('[data-type="precent"]'),function(i,item){
+	        if($(item).attr("decimal")!=""){
+	        	bt.moneynum.init({elem:$(this),decimal:2,minus:true,callback : function(data){
+			    	//计算合计值
+			    	calcTot(item, data);
+	            }});
+	        }
+	    });
+	});
+	//form.render('select');//刷新下拉框
+	return false;
+}
+
+
+
+</script>
+</html>

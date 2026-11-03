@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-table {
+            margin: 0px 0;
+        }
+    </style>
+</head>
+<body style="padding-bottom:50px;">
+<form class="layui-form" method="post">
+    <!-- 系统参数 -->
+    <input id="isBudget" name="isBudget" type="hidden" value="$!{isBudget}">
+    <input id="recItem" name="recItem" type="hidden" value="$!{recItem}">
+    <input id="defItemCode" name="defItemCode" type="hidden" value="">
+    <input type="hidden" id="curId" name="curCode" value="$!{curId}"/>
+    <input type="hidden" id="maxBillMoney" value="$!{maxBillMoney}">
+    ##<input type="hidden" id="fbsbudgetprocessCorp" value="$!{fbsbudgetprocessCorp}">
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.billInfo.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tr>
+                        ##出票标志
+                        <td class="textRight">#springMessage('table.abVoucherinfo.newStmIssuofpprInd')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="AB_BILL_NEW_STM_ISSUOFPPR_IND"
+                                 data-defaultvalue="1"
+                                 data-name="newStmIssuofpprInd" data-biz-name="newStmIssuofpprInd"
+                                 data-callback="changeNewStmIssuofpprInd"></div>
+                        </td>
+                        ##是否允许分包
+                        <td style="display:none" class="textRight drawBillShow">#springMessage(
+                            'table.abVoucherinfo.blgrdbagcrclPrmtInd')</td>
+                        <td style="display:none" class="drawBillShow">
+                            <div class="bt-biz-dict" data-type="radio" data-callback="changeblgrdbagcrclPrmtInd"
+                                 data-group="AB_BILL_BLGRDBAGCRCL_PRMT_IND"
+                                 data-defaultvalue="1" id="blgrdbagcrclPrmtInd" data-name="blgrdbagcrclPrmtInd"
+                                 data-biz-name="blgrdbagcrclPrmtInd" data-required="true"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##票据号码  modified zouxs 20240117
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.origNo')</td>
+                        <td width="35%">
+                            <input type="text" id="origNo" name="origNo" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.origNo')"
+                                   lay-verify="required|checkOrigNo|strlength" data-maxlength="40"
+                                   onblur="getVouInfoByOrigNo()">
+                        </td>
+                        ##标准金额
+                        <td class="textRight">#springMessage('table.abVoucherinfo.blStdAmt')</td>
+                        <td>
+                            <input type="text" id="blStdAmt" name="blStdAmt" data-biz-name="blStdAmt" autocomplete="off"
+                                   class="layui-input bt-biz-moneyType" data-min="0.01" data-decimal="2"
+                                   lay-verify="required" value="0.01"
+                                   placeholder="#springMessage('table.abVoucherinfo.blStdAmt')" readonly="true">
+                        </td>
+                    </tr>
+                    <tr class="drawBillShow2">
+                        ##子票区间开始序号
+                        <td class="textRight">#springMessage('table.abVoucherinfo.sbbllRngStrtSn')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="sbbllRngStrtSn" name="sbbllRngStrtSn" autocomplete="off"
+                                       class="layui-input"
+                                       placeholder="#springMessage('table.abVoucherinfo.sbbllRngStrtSn')"
+                                       lay-verify="required|strlength" maxlength="12"
+                                       onblur="sbbllRngSnBlur('start')"
+                                       data-required="true">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="sbbllRngStrtSn-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                        ##子票区间结束序号
+                        <td class="textRight">#springMessage('table.abVoucherinfo.sbbllRngEndSn')</td>
+                        <td>
+##                            <div id="sbbllRngEndSn" name="sbbllRngEndSn" data-name="sbbllRngEndSn" autocomplete="off"
+##                                 placeholder="#springMessage('table.abVoucherinfo.sbbllRngEndSn')"></div>
+                            <div class="layui-input-inline">
+                                <input type="text" id="sbbllRngEndSn" name="sbbllRngEndSn" autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.sbbllRngEndSn')"
+                                       lay-verify="required|strlength|checkSbbllRngEndSn" data-maxlength="12"
+                                       data-required="true" readonly ="true">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="sbbllRngEndSn-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##票据金额
+                        <td class="textRight">#springMessage('table.abVoucherinfo.billMoney')</td>
+                        <td>
+                            <input type="text" id="billMoney" name="billMoney" autocomplete="off"
+                                   class="layui-input bt-biz-moneyType"
+                                   data-decimal="2" data-toUp="moneyUp" lay-verify="required|checkBillMoney"
+                                   placeholder="#springMessage('table.abVoucherinfo.billMoney')" data-min="0.01"
+                                   data-max="1000000000"
+                                   data-biz-name="billMoney" opType="11" onblur="billMoneyBlur('billMoney')">
+                        </td>
+                        ##人民币大写
+                        <td class="textRight">#springMessage('table.abVoucherinfo.billMoneyUp')</td>
+                        <td>
+                            <div id="moneyUp" name="moneyUp" data-name="moneyUp" autocomplete="off"
+                                 placeholder="#springMessage('table.abVoucherinfo.billMoneyUp')"></div>
+                        </td>
+                    </tr>
+                    ##			<tr style="display:none" class="drawBillShow">
+                    ##				##标准金额 20240117
+                    ##				<td class="textRight">#springMessage('table.abVoucherinfo.blStdAmt')</td>
+                    ##				<td>
+                    ##					<input type="text" id="blStdAmt" name="blStdAmt" autocomplete="off" class="layui-input bt-biz-moneyType" data-min="0.01" data-decimal="2"
+                    ##						   lay-verify="required" value="0.01" placeholder="#springMessage('table.abVoucherinfo.blStdAmt')">
+                    ##				</td>
+                    ##			</tr>
+                    <tr>
+                        ##申请单位
+                        <td class="textRight" width="15%">#springMessage('bill.accebill.applyCorp')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline" id="applyCorpId">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-biz-name="applyCorpId"
+                                     data-type="selectTree"
+                                     data-name="applyCorpId"
+                                     data-scope="all"
+                                     data-required="true"
+                                     data-resource="bill:accebill:abreceivebill:register"
+                                     data-callbackData="applyCorpCallback"
+                                     placeholder="#springMessage('bill.accebill.applyCorp')">
+                                </div>
+                            </div>
+                        </td>
+                        ##票据号码  20240117
+                        ##				<td class="textRight"  width="15%">#springMessage('table.abVoucherinfo.origNo')</td>
+                        ##				<td width="35%">
+                        ##				  <input type="text" id="origNo" name="origNo" autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.origNo')" lay-verify="required|checkOrigNo|strlength" data-maxlength="40" onblur="getVouInfoByOrigNo()">
+                        ##				</td>
+                    </tr>
+                    <tr>
+                        ##票据单位
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfoVice.corpId')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="accCorp"
+                                     data-type="selectTree"
+                                     id="corpId"
+                                     data-name="corpId"
+                                     data-required="true"
+                                     data-biz-name="corpId"
+                                     data-placeholder="#springMessage('table.abVoucherinfoVice.corpId')"
+                                     data-callbackdata="corpCallback"
+                                     data-resource="bill:accebill:abreceivebill:register">
+                                </div>
+                            </div>
+                        </td>
+                        ##票据单位账号
+                        <td class="textRight">#springMessage('table.abVoucherinfoVice.corp.bankAcc')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="bankAcc" name="bankAcc" data-name="bankAcc"
+                                       data-biz-name="bankAcc" class="bank layui-input bt-biz-accountTable"
+                                       data-callback="clickCallback"
+                                       placeholder="#springMessage('table.abVoucherinfoVice.corp.bankAcc')"
+                                       lay-verify="required|strlength" data-maxlength="40"/>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##业务单位
+                        <td class="textRight" width="15%">#springMessage('bill.accebill.busCorp')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline" id="busCorpId">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-biz-name="busCorpId"
+                                     data-type="selectTree"
+                                     data-name="busCorpId"
+                                     data-scope="all"
+                                     data-resource="bill:accebill:abreceivebill:register"
+                                     placeholder="#springMessage('bill.accebill.busCorp')">
+                                </div>
+                            </div>
+                        </td>
+                        ##票据单位银行名称
+                        <td class="textRight">#springMessage('table.abVoucherinfoVice.bankName')</td>
+                        <td>
+                            <input class="layui-input" id="bankName" name=""
+                                   placeholder="#springMessage('table.abVoucherinfoVice.bankName')"
+                                   lay-verify="required" readonly="true"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##业务人员
+                        <td class="textRight" width="15%">#springMessage('bill.accebill.busPersonnel')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline">
+                                <input type="text" id="busPersonnel" name="busPersonnel" lay-verify="strlength"
+                                       data-maxlength="200"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('bill.accebill.busPersonnel')">
+                            </div>
+                        </td>
+                        ##票据单位统一识别号码
+                        <td style="display:none" class="textRight drawBillShow">#springMessage(
+                            'table.abVoucherinfoVice.socCode')</td>
+                        <td style="display:none" class="drawBillShow">
+                            <input class="layui-input" id="blHoldUnnIdNo" name="blHoldUnnIdNo" data-maxlength="32"
+                                   lay-verify="strlength"
+                                   placeholder="#springMessage('table.abVoucherinfoVice.socCode')"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('table.abVoucherinfo.billFlag')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="AB_BILL_FLAG" data-defaultvalue="11"
+                                 data-name="billFlag" data-required="true" data-biz-name="billFlag"
+                                 data-callback="changeFormEle"></div>
+                        </td>
+                        <td class="textRight">#springMessage('table.abVoucherinfoVice.enterStock')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="AB_ENTER_STOCK"
+                                 data-biz-name="enterStock" data-name="enterStock" data-defaultvalue="10"
+                                 data-required="true" data-disabledValue="11,12"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##票据类型
+                        <td class="textRight">#springMessage('table.abVoucherinfo.billType')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="AB_BILL_TYPE" data-defaultvalue="10"
+                                 data-name="billType" data-required="true" data-biz-name="billType"
+                                 data-callback="changeBillTypeOperation"></div>
+                        </td>
+                        ##业务归属日期
+                        <td class="textRight">#springMessage('table.abAccrecords.businessDate')</td>
+                        <td>
+                            <input type="text" id="businessDate" name="businessDate" class="layui-input bt-biz-dateType"
+                                   data-type="date" placeholder="#springMessage('table.abAccrecords.businessDate')"
+                                   lay-verify="required|checkBusinessDate" data-today="true"
+                                   data-callBack="changeBusdt">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="textRight">#springMessage('bill.accebill.abreceive.insideSing')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="radio" data-group="ACCEBILL_ABRECEIVE_INSIDESING"
+                                 data-defaultvalue="0" data-placeholder="" data-name="insideSing" data-required="true"
+                                 data-biz-name="insideSing" data-callback="isInSideCorp"></div>
+                        </td>
+                        <td class="textRight">#springMessage('table.abVoucherinfo.banendrsmtmk')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-group="AB_BANEM" data-defaultvalue="EM00"
+                                 data-placeholder="" data-name="banendrsmtmk" data-required="true"
+                                 data-biz-name="banendrsmtmk"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##出票日期
+                        <td class="textRight">#springMessage('table.abVoucherinfo.startDate')</td>
+                        <td>
+                            <input type="text" name="startDate" id="startDate" class="layui-input bt-biz-dateType"
+                                   data-endid="endDate" placeholder="#springMessage('table.abVoucherinfo.startDate')"
+                                   lay-verify="required" data-biz-name="startDate">
+                        </td>
+                        ##票据来源
+                        <td class="textRight">#springMessage('table.abVoucherinfoVice.billSource')</td>
+                        <td>
+                            <div class="bt-biz-dict" data-type="select" data-group="AB_ABRECEIVEBILL_SOURCE"
+                                 data-placeholder="" data-defaultvalue="10" data-name="billSource"
+                                 data-biz-name="billSource" data-filterData="14,15,16,17"
+                                 data-callback="clickBillSource" data-required="true"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##到期日期
+                        <td class="textRight">#springMessage('table.abVoucherinfo.endDate')</td>
+                        <td>
+                            <input type="text" name="endDate" id="endDate" class="layui-input bt-biz-dateType"
+                                   id="endDate" placeholder="#springMessage('table.abVoucherinfo.endDate')"
+                                   lay-verify="required|checkStartWithEnd" date-biz-name="endDate">
+                        </td>
+                        ##前手
+                        <td class="textRight">#springMessage('bill.accebill.cnAccrecords')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="cnAccrecords" name="cnAccrecords" autocomplete="off"
+                                       class="layui-input"
+                                       placeholder="#springMessage('bill.accebill.cnAccrecords')"
+                                       onblur="isInSideCorp()" lay-verify="strlength" data-maxlength="240">
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-externalCorpBankAcc" type="button"
+                                            data-callback="bt.bailCorpCallback"
+                                            data-beforeClick="bt.externalCorpBankAccParams" opType="cnAccExternalClick">
+                                        <i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            ##
+                            ##<div class="layui-input-inline">
+                            ##	<button class="layui-btn bt-biz-externalCorpBankAcc" type="button" data-callback="bt.bailCorpCallback"
+                            ##			data-beforeClick="bt.externalCorpBankAccParams" opType="cnAccExternalClick" >#springMessage('common.button.external')
+                            ##	</button>
+                            ##</div>
+                            ##<div class="layui-input-inline" id="bankDiv">
+                            ##	<button class="layui-btn bt-biz-bankInfo" type="button" data-callback="bt.bailBankInfoCallback"
+                            ##			opType="cnAccBankClick">#springMessage('common.button.bank')
+                            ##	</button>
+                            ##</div>
+
+                        </td>
+                    </tr>
+                    ##			<tr>
+                    ##				##票据金额
+                    ##                <td class="textRight">#springMessage('table.abVoucherinfo.billMoney')</td>
+                    ##                <td>
+                    ##					<input type="text" id="billMoney" name="billMoney" autocomplete="off"  class="layui-input bt-biz-moneyType" data-decimal="2" data-toUp="moneyUp" lay-verify="required|checkBillMoney"  placeholder="#springMessage('table.abVoucherinfo.billMoney')" data-min="0.01"  data-max="1000000000" data-biz-name="billMoney" opType="11">
+                    ##				</td>
+                    ##				##人民币大写
+                    ##				<td class="textRight">#springMessage('table.abVoucherinfo.billMoneyUp')</td>
+                    ##                <td>
+                    ##					<div id="moneyUp"  name="moneyUp" data-name="moneyUp" autocomplete="off"  placeholder="#springMessage('table.abVoucherinfo.billMoneyUp')"></div>
+                    ##				</td>
+                    ##			</tr>
+                </table>
+            </div>
+        </div>
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.payer.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##出票人
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.payer')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline">
+                                <input id="payer" class="layui-input" name="payer"
+                                       placeholder="#springMessage('table.abVoucherinfo.payer')"
+                                       lay-verify="required|strlength" data-maxlength="240"/>
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-externalCorpBankAcc" type="button"
+                                            data-callback="bt.bailCorpCallback" opType="payerExternalClick"
+                                            data-beforeClick="bt.externalCorpBankAccParams"><i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                        ##出票人开户银行名称
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.payerBankName')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline">
+                                <input type="text" id="payerBankName" name="payerBankName" autocomplete="off"
+                                       class="layui-input"
+                                       placeholder="#springMessage('table.abVoucherinfo.payerBankName')"
+                                       lay-verify="required|strlength" data-maxlength="240">
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-bankInfo" type="button"
+                                            data-callback="bt.bailBankInfoCallback" opType="payerBankClick"><i
+                                            class="layui-icon">&#xe615;</i></button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##出票人账号
+                        <td class="textRight">#springMessage('table.abVoucherinfo.payeracc')</td>
+                        <td>
+                            <input type="text" id="payeracc" name="payeracc" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.payeracc')"
+                                   lay-verify="required|strlength" data-maxlength="30">
+                        </td>
+                        ##出票人统一信用代码
+                        <td style="display:none" class="textRight drawBillShow">#springMessage(
+                            'table.abVoucherinfo.blRmtrUnnIdNo')</td>
+                        <td style="display:none" class="drawBillShow">
+                            <input type="text" id="blRmtrUnnIdNo" name="blRmtrUnnIdNo" autocomplete="off"
+                                   class="layui-input"
+                                   lay-verify="strlength" data-maxlength="32"
+                                   placeholder="#springMessage('table.abVoucherinfo.blRmtrUnnIdNo')">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.payee.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##收票人
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.payee')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline"><input class="layui-input" name="payee" id="payee"
+                                                                   placeholder="#springMessage(
+                                                                       'table.abVoucherinfo.payee')"
+                                                                   lay-verify="required|strlength"
+                                                                   data-maxlength="240"/>
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-externalCorpBankAcc" type="button"
+                                            data-callback="bt.bailCorpCallback" opType="payeeExternalClick"
+                                            data-beforeClick="bt.externalCorpBankAccParams"><i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                    </button></div>
+                            </div>
+                        </td>
+                        ##收票人开户银行名称
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.payeeBankName')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline"><input type="text" id="payeeBankName" name="payeeBankName"
+                                                                   autocomplete="off" class="layui-input"
+                                                                   placeholder="#springMessage(
+                                                                       'table.abVoucherinfo.payeeBankName')"
+                                                                   lay-verify="required|strlength" data-maxlength="240">
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-bankInfo" type="button"
+                                            data-callback="bt.bailBankInfoCallback" opType="payeeBankClick"><i
+                                            class="layui-icon">&#xe615;</i></button>
+                                    </button></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##收票人账号
+                        <td class="textRight">#springMessage('table.abVoucherinfo.payeeacc')</td>
+                        <td>
+                            <input type="text" id="payeeacc" name="payeeacc" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.payeeacc')"
+                                   lay-verify="required|strlength" data-maxlength="30">
+                        </td>
+                        ##收票人统一信用代码
+                        <td style="display:none" class="textRight drawBillShow">#springMessage(
+                            'table.abVoucherinfo.blRcvpymtpsUnnIdNo')</td>
+                        <td style="display:none" class="drawBillShow">
+                            <input type="text" id="blRcvpymtpsUnnIdNo" name="blRcvpymtpsUnnIdNo" autocomplete="off"
+                                   class="layui-input"
+                                   lay-verify="strlength" data-maxlength="32"
+                                   placeholder="#springMessage('table.abVoucherinfo.blRcvpymtpsUnnIdNo')">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.acceptor.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##承兑人
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.acceptor')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline"><input id="acceptor" class="layui-input" name="acceptor"
+                                                                   placeholder="#springMessage(
+                                                                       'table.abVoucherinfo.acceptor')"
+                                                                   lay-verify="required|strlength"
+                                                                   data-maxlength="240"/>
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-externalCorpBankAcc" type="button"
+                                            data-callback="bt.bailCorpCallback" id="acceptorExternal"
+                                            opType="acceptorExternalClick" style="display:none"
+                                            data-beforeClick="bt.externalCorpBankAccParams"><i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                        ##承兑人开户行名称
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.acceptorBankName')</td>
+                        <td width="35%">
+                            <div class="layui-input-inline"><input type="text" id="acceptorBankName"
+                                                                   name="acceptorBankName" autocomplete="off"
+                                                                   class="layui-input" placeholder="#springMessage(
+                                'table.abVoucherinfo.acceptorBankName')" lay-verify="required|strlength"
+                                                                   data-maxlength="240">
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-bankInfo" type="button"
+                                            data-callback="bt.bailBankInfoCallback" opType="acceptorBankClick"><i
+                                            class="layui-icon">&#xe615;</i></button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##承兑人账号
+                        <td class="textRight">#springMessage('table.abVoucherinfo.acceptoracc')</td>
+                        <td>
+                            <input type="text" id="acceptoracc" name="acceptoracc" autocomplete="off"
+                                   class="layui-input" placeholder="#springMessage('table.abVoucherinfo.acceptoracc')"
+                                   lay-verify="required|strlength" data-maxlength="30">
+                        </td>
+                        ##承兑人开户行行号
+                        <td class="textRight">#springMessage('table.abVoucherinfo.acceptorbankno')</td>
+                        <td>
+                            <input type="text" id="acceptorbankno" name="acceptorbankno" autocomplete="off"
+                                   class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.acceptorbankno')"
+                                   lay-verify="required|strlength" data-maxlength="30">
+                        </td>
+                    </tr>
+                    <tr style="display:none" class="drawBillShow">
+                        ##承兑人统一信用代码
+                        <td class="textRight">#springMessage('table.abVoucherinfo.blAcptrUnnIdNo')</td>
+                        <td>
+                            <input type="text" id="blAcptrUnnIdNo" name="blAcptrUnnIdNo" autocomplete="off"
+                                   class="layui-input"
+                                   lay-verify="strlength" data-maxlength="32"
+                                   placeholder="#springMessage('table.abVoucherinfo.blAcptrUnnIdNo')">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item ignore-required-hide" id="discountDiv" style="display:none">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.discountinfo.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.rpdmk')</td>
+                        <td width="35%">
+                            <div class="bt-biz-dict" data-type="select" data-group="AB_DISCOUNT_RPDMK"
+                                 data-defaultvalue="RM00" data-name="rpdmk" id="rpdmk" data-biz-name="rpdmk"
+                                 data-placeholder="" data-required="true" data-callback="clickRpdmk"></div>
+                        </td>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.sttlmmk')</td>
+                        <td width="35%">
+                            <div class="bt-biz-dict" data-type="select" data-group="AB_STTLMMK" data-defaultvalue="SM01"
+                                 data-name="sttlmmk" id="sttlmmk" data-placeholder="" data-required="true"></div>
+                        </td>
+                    </tr>
+                    <tr id="rpddtTr" style="display:none">
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.rpdopendt')</td>
+                        <td width="35%"><input type="text" name="rpdopendt" class="layui-input bt-biz-dateType"
+                                               id="rpdopendt" data-endid="rpdduedt" data-biz-name="rpdopendt"
+                                               placeholder="#springMessage('table.abDiscount.rpdopendt')"
+                                               data-required="true"></td>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.rpdduedt')</td>
+                        <td width="35%"><input type="text" name="rpdduedt" class="layui-input bt-biz-dateType"
+                                               id="rpdduedt" data-biz-name="rpdduedt"
+                                               placeholder="#springMessage('table.abDiscount.rpdduedt')"
+                                               data-required="true"></td>
+                    </tr>
+                    <tr>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.discountDate')</td>
+                        <td width="35%"><input type="text" name="discountDate" class="layui-input bt-biz-dateType"
+                                               id="discountDate" data-today="true"
+                                               placeholder="#springMessage('table.abDiscount.discountDate')"
+                                               lay-verify="required"/></td>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.interestRates')</td>
+                        <td width="35%"><input type="text" name="interestRates" class="layui-input bt-biz-rateType"
+                                               id="interestRates"
+                                               placeholder="#springMessage('table.abDiscount.interestRates')"
+                                               lay-verify="required"/></td>
+                    </tr>
+                    <tr>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.daynum')</td>
+                        <td width="35%"><input type="text" id="daynum" name="daynum" autocomplete="off"
+                                               class="layui-input"
+                                               placeholder="#springMessage('table.abDiscount.daynum')"
+                                               lay-verify="required|strlength" data-maxlength="10"></td>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.interest')</td>
+                        <td width="35%"><input type="text" id="interest" name="interest" autocomplete="off"
+                                               class="layui-input bt-biz-moneyType" data-decimal="2"
+                                               lay-verify="required"
+                                               placeholder="#springMessage('table.abDiscount.interest')"
+                                               data-biz-name="interest"></td>
+                    </tr>
+                    <tr>
+                        <td class="textRight" width="15%">#springMessage('table.abDiscount.paydate')</td>
+                        <td width="35%">
+                            <div class="bt-biz-dict" data-type="select" data-group="AB_PAY_DATE" data-defaultvalue="0"
+                                 data-name="paydate" id="paydate" data-biz-name="paydate" data-placeholder=""
+                                 data-required="true"></div>
+                        </td>
+                        <td colspan="2"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.creditRating.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##开票信用等级
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.payerCdtRatgs')</td>
+                        <td width="35%">
+                            <input type="text" id="payerCdtRatgs" name="payerCdtRatgs" lay-verify="strlength"
+                                   data-maxlength="3"
+                                   autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.payerCdtRatgs')">
+                        </td>
+                        ##开票评级机构
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.payerCdtRatgGgcy')</td>
+                        <td width="35%">
+                            <input type="text" id="payerCdtRatgGgcy" name="payerCdtRatgGgcy" lay-verify="strlength"
+                                   data-maxlength="50"
+                                   autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.payerCdtRatgGgcy')">
+                        </td>
+                    </tr>
+                    <tr>
+                        ##开票评级到期日
+                        <td class="textRight">#springMessage('table.abVoucherinfo.payerCdtRatgDuedt')</td>
+                        <td>
+                            <input type="text" name="payerCdtRatgDuedt" data-name="payerCdtRatgDuedt"
+                                   class="layui-input bt-biz-dateType" data-type="date"
+                                   data-biz-name="payerCdtRatgDuedt"
+                                   placeholder="$!{table.abVoucherinfo.payerCdtRatgDuedt}">
+                        </td>
+                        <td class="textRight"></td>
+                        <td width="35%"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('bill.accebill.other.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##手续费
+                        <td class="textRight">#springMessage('table.abAccrecords.feemoney')</td>
+                        <td>
+                            <input type="text" data-name="feemoney" class="layui-input bt-biz-moneyType"
+                                   data-biz-name="feemoney" placeholder="#springMessage('table.abAccrecords.feemoney')">
+                        </td>
+                        ##交票人
+                        <td class="textRight" width="15%">#springMessage('table.abAccrecords.receiveTrader')</td>
+                        <td width="35%">
+                            <input type="text" id="trader" name="trader" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abAccrecords.receiveTrader')"
+                                   lay-verify="strlength" data-maxlength="50">
+                        </td>
+                    </tr>
+                    <tr>
+                        ##承兑合同号/交易合同号
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.aContractNo')</td>
+                        <td width="35%">
+                            <input type="text" id="acontractNo" name="acontractNo" autocomplete="off"
+                                   class="layui-input" placeholder="#springMessage('table.abVoucherinfo.aContractNo')"
+                                   lay-verify="strlength" data-maxlength="250">
+                        </td>
+                        ##发票号
+                        <td class="textRight" width="15%">#springMessage('table.abVoucherinfo.aInvcnb')</td>
+                        <td width="35%">
+                            <input type="text" id="ainvcnb" name="ainvcnb" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfo.aInvcnb')" lay-verify="strlength"
+                                   data-maxlength="250">
+                        </td>
+                    </tr>
+                    <tr>
+                        ##摘要
+                        <td class="textRight">#springMessage('table.abAccrecords.abs')</td>
+                        <td>
+                            <input type="text" id="abs" name="abs" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfoVice.abs')" lay-verify="strlength"
+                                   data-maxlength="100">
+                        </td>
+                        ##备注
+                        <td class="textRight">#springMessage('table.abAccrecords.rmk')</td>
+                        <td>
+                            <input type="text" id="rmk" name="rmk" autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.abVoucherinfoVice.rmk')" lay-verify="strlength"
+                                   data-maxlength="100">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="layui-colla-item ignore-required-hide" id="budgetDiv" style="display:none">
+            <h2 class="layui-colla-title">#springMessage('table.fbsbudgetprocess.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <!-- 资金计划 -->
+                <div id="tagItemDetail"></div>
+            </div>
+        </div>
+    </div>
+    <!-- 附件上传 -->
+    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+    <br>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="submit" value="save">#springMessage(
+                'common.button.temp')</button>
+            <button class="layui-btn" lay-submit="" lay-filter="submit" value="submit">#springMessage(
+                'common.button.submit')</button>
+            <button type="reset" class="layui-btn layui-btn-primary" onclick="resetForm()">#springMessage(
+                'common.button.reset')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/sys/blackWhite/blackWhiteBase.check.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bill/accebill/abReceiveBill.add.js?_btv=${resourceVersion}"></script>
+</html>

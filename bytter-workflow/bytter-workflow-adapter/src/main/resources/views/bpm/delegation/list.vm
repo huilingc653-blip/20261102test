@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##授权时间
+            <td class="textRight">#springMessage('bpm.delegation.proxytime')</td>
+            <td>
+                <input type="text" name="ged_startTime" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="led_wishPayday">
+
+                <span class="date-mid">~</span>
+                <input type="text" name="led_startTime" class="layui-input bt-input-inline bt-biz-dateType"
+                       id="led_wishPayday">
+            </td>
+        ##授权人
+            <td class="textRight">#springMessage('bpm.delegation.principal')</td>
+            <td>
+                #if($currentUser.isAdmin==1)
+                    <div class="bt-biz-selectType" data-width="214px" data-biz-name="principal"
+                         data-url="${basePath}/sys/user/listByCorpId?corpId=$currentUser.corpId" data-valuefield="id"
+                         data-textfield="username"
+                         data-name="eqs_principal" data-search="false"
+                         data-width="100px"
+                    ></div>
+                #else
+                    <div class="bt-biz-selectType" data-width="214px" data-biz-name="principal"
+                         data-url="${basePath}/sys/user/listByUserIds?ids=$currentUser.id" data-valuefield="id"
+                         data-textfield="username"
+                         data-method="post"
+                         data-name="eqs_principal" data-search="false"
+                         data-width="100px"
+                    ></div>
+                #end
+            </td>
+        </tr>
+        <tr>
+        ##被授权人
+            <td class="textRight">#springMessage('bpm.delegation.proxy')</td>
+            <td>
+                <div class="bt-biz-selectType" data-width="214px" data-biz-name="proxy"
+                     data-url="${basePath}/sys/user/listByCorpId?corpId=$currentUser.corpId" data-valuefield="id"
+                     data-textfield="username"
+                     data-name="eqs_proxy" data-search="false"
+                     data-width="100px"
+                ></div>
+            </td>
+
+        ##状态
+            <td class="textRight">#springMessage('bpm.delegation.status')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" name="status"
+                     data-group="bpm.flow.delegation.status" data-name="eqi_status"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('bpm.delegation.delegation.no')</th>
+        <th>#springMessage('bpm.delegation.principal')</th>
+        <th>#springMessage('bpm.delegation.proxy')</th>
+        <th>#springMessage('bpm.delegation.starttime')</th>
+        <th>#springMessage('bpm.delegation.endtime')</th>
+        <th>#springMessage('bpm.delegation.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+##<script src="${basePath}/static/modules/netbank/nisBillhead.query.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form', 'datatable', 'selectType', 'dateType', 'corp', 'money', 'moneyType', 'dicts', 'bank'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.selectType.init();
+        bt.dateType.init();
+        bt.dicts.init();
+
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/bpm/delegation/datatable"
+            },
+            buttons: [
+                {
+                    hide: bt.isnotResource('bpm:delegation:add'),
+                    text: bt.lang('common.button.add'),
+                    action: function (e, dt, node, config) {
+                        // var data = dt.rows('.selected').data();
+                        add();
+                    }
+                },
+                {
+                    hide: bt.isnotResource('bpm:delegation:copy'),
+                    text: bt.lang('common.button.clone'),
+                    action: function (e, dt, node, config) {
+                        copy();
+                    }
+                    // columns: ':not(:first):not(:last)'
+                },
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {data: "delegationNo", bSortable: true, className: 'center'},
+                {
+                    data: "principalName", bSortable: true, className: 'center', render: function (data) {
+                        if (!data) {
+                            return [];
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: "proxyName", bSortable: true, className: 'center', render: function (data) {
+                        if (!data) {
+                            return [];
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: "startTime", bSortable: true, className: 'center', render: function (data) {
+                        if (!data) {
+                            return [];
+                        }
+                        return bt.date.format(data, "yyyy-MM-dd");
+                    }
+                },
+                {
+                    data: "endTime", bSortable: true, className: 'center', render: function (data) {
+                        if (!data) {
+                            return [];
+                        }
+                        return bt.date.format(data, "yyyy-MM-dd hh:mm:ss");
+                    }
+                },
+                {data: "statusStr", bSortable: true, className: 'center'},
+                {
+                    data: "null",
+                    bSortable: false,
+                    anCells: true,
+                    className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = '';
+                        if ((full.status == 1 || full.status == 3)) {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="edit(this)">' + bt.lang("common.button.edit") + '</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="del(this)">' + bt.lang("common.button.delete") + '</a><span class="text-explode">|</span>';
+                        }
+                        if (full.statusStr == bt.dict("bpm.flow.delegation.status", '4')) {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="finish(this)">' + bt.lang("common.button.turnBack") + '</a><span class="text-explode">|</span>';
+                        }
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="detail(this)">' + bt.lang("common.button.view") + '</a>';
+                        return html;
+                    }
+                },
+            ]
+        });
+
+    });
+
+    function detail(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/bpm/delegation/detailCategory?id=" + data.id,
+        });
+    }
+
+
+    function edit(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.update.data'), basePath + "/bpm/delegation/edit?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/bpm/delegation/edit?id=" + data.id,
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function finish(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        $.post(basePath + "/bpm/delegation/finish", {id: data.id}, function (result) {
+            parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            bt.datatable.refreshTable();
+        }, "JSON");
+    }
+
+
+    function del(el) {
+        var idList = [];
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        idList.push(data.id);
+        $.ajax({
+            type: "POST",
+            url: basePath + "/bpm/delegation/deleteBatch",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(idList),
+            success: function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                bt.datatable.refreshTable();
+            }
+        });
+    }
+
+    function add() {
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.add.data'), basePath + "/bpm/delegation/add");
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/bpm/delegation/add",
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+
+    function copy() {
+        idList = [];
+        var data = bt.datatable.getSelectData("#appTable");
+        if (data.length < 1) {
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 2});
+            return;
+        }
+        $.each(data, function (i, tr) {
+            idList.push(tr.id);
+        });
+        $.ajax({
+            type: "POST",
+            url: basePath + "/bpm/delegation/copyBatch",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(idList),
+            success: function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                bt.datatable.refreshTable();
+            }
+        });
+    }
+
+</script>

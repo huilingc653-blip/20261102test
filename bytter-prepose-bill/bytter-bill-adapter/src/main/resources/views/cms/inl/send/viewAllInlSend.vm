@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+        .inCenter{
+            text-align: center!important;
+        }
+        .addRow {
+            cursor: pointer;
+            color: rgb(0, 0, 204);
+        }
+
+        .noneElem {
+            display: none;
+        }
+
+        .input-bp input {
+            border: none;
+            width: 192px;
+        }
+        .input-bp span {
+            position: absolute;
+            right: 4px;
+            top: 1px;
+        }
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+    #parse("views/common/footer.vm")
+<input type="hidden" id="natualCurId" name="natualCurId" value="$!{corp.curId}">
+<form id="searchForm" class="layui-form">
+    ##    内部授信挂接参数
+    <input type="hidden" name="isHangCredit" value="$!{config.inl.is_hang_credit}">
+    ##    资金计划挂接参数
+    <input type="hidden" name="isBudget" value="$!{config.inl.is_budget}">
+    ##    担保合同挂接参数
+    <input type="hidden" name="isHangGua" value="$!{config.inl.is_hang_gua}">
+    ##  是否挂合同
+    <input type="hidden" name="isCon" value="$!{config.inl.is_con}">
+    ##    调用或者生成合同参数
+    <input type="hidden" name="conType" value="$!{config.inl.con_type}">
+    <input type="hidden" name="inlInfoId" value="$!{inlInfo.id}">
+    <div id="print">
+        <table class="layui-table">
+        <tr>
+            ##            内部拆借编号
+            <td class="textRight" style="width: 15%">#springMessage('cms.inl.info.billNo')</td>
+            <td style="width: 35%">
+                <div class="layui-inline">
+                    $!{inlInfo.billNo}
+                    <input type="hidden" name="billNo" value="$!{inlInfo.billNo}">
+                </div>
+            </td>
+            #parse("views/cms/inl/info/conCommonInlInfo.vm")
+        </tr>
+        <tr>
+            ##            拆入单位
+            <td class="textRight">#springMessage('cms.inl.info.borrowInCorp')</td>
+            <td>
+                <div class="layui-inline">
+                    $!{inlInfo.borrowInCorpName}
+                    <input type="hidden" id="borrowInCorp" value="$!{inlInfo.borrowInCorp}">
+                </div>
+            </td>
+            ##            拆出单位
+            <td class="textRight">#springMessage('cms.inl.info.borrowOutCorp')</td>
+            <td>
+                <div class="layui-inline">
+                    $!{inlInfo.borrowOutCorpName}
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##            拆借资金币种
+            <td class="textRight">#springMessage('cms.inl.info.curId')</td>
+            <td>
+                <div class="layui-inline">
+                    $!{inlInfo.curName}
+                    <input type="hidden" id="curId" value="$!{inlInfo.curId}">
+                </div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            ##            拆借金额
+            <td class="textRight">#springMessage('cms.inl.info.money')#springMessage('table.bisAccDtl.moneyLower')</td>
+            <td>
+                <div class="layui-inline">
+                    $!number.formatNumeric($!{inlInfo.money},'#,##0.00')
+                    <input type="hidden" class="layui-input bt-biz-moneyType" data-name="money" value="$!{inlInfo.money}" data-biz-name="money"
+                           data-toUp="upMoney" >
+                </div>
+            </td>
+            ##            拆借金额(大写)
+            <td class="textRight">#springMessage('cms.inl.info.money')#springMessage('table.bisAccDtl.moneyUpper')</td>
+            <td>
+                <div class="layui-inline">
+                    <div id="upMoney">
+
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            ##            拆借日期
+            <td class="textRight">#springMessage('cms.inl.info.startDate')</td>
+            <td>
+                <div class="layui-inline">
+                    $!date.format('yyyy-MM-dd',$!{inlInfo.startDate})
+                    <input type="hidden" id="startDate" value="$!date.format('yyyy-MM-dd',$!{inlInfo.startDate})">
+                </div>
+            </td>
+            ##            到期日期
+            <td class="textRight">#springMessage('table.cmsProvideLoanSend.repayDate')</td>
+            <td>
+                <div class="layui-inline">
+                    $!date.format('yyyy-MM-dd',$!{inlInfo.endDate})
+                </div>
+            </td>
+        </tr>
+        <tr>
+            #if($!{config.inl.is_hang_gua} == 1)
+                ##            担保合同
+                <td class="textRight">#springMessage('table.ratBkration.guaContract')</td>
+                <td>
+                    <div class="layui-inline">
+                        $!{inlInfo.guaContract}
+                    </div>
+                </td>
+                ##                内部拆借期限
+                <td class="textRight">#springMessage('cms.inl.info.term')</td>
+                <td>
+                    #if($!{inlInfo.term})
+                                $!{inlInfo.term}$dictTag.get("PrecativeLoanInfo.ternUnit",$!{inlInfo.unit})
+                            #end
+                </td>
+            #else
+                ##                内部拆借期限
+                <td class="textRight">#springMessage('cms.inl.info.term')</td>
+                <td>
+                    #if($!{inlInfo.term})
+                                $!{inlInfo.term}$dictTag.get("PrecativeLoanInfo.ternUnit",$!{inlInfo.unit})
+                            #end
+                </td>
+                <td></td>
+                <td></td>
+            #end
+        </tr>
+        #if($!{config.inl.is_hang_credit} == 1)
+            #if(${inlInfo.isHangCredit} == 1)
+                <tr>
+                    ##            授信品种
+                    <td class="textRight">#springMessage('table.cmsProvideLoanInfo.itemCode')</td>
+                    <td>
+                        <div class="layui-inline">
+                            $!{cpURationDTO.ratItemName}
+                            <input type="hidden" id="cpRatItemCode" value="$!{cpURationDTO.ratItemCode}">
+                        </div>
+                    </td>
+                    ##            授信额度单
+                    <td class="textRight">#springMessage('table.cmsProvideLoanInfo.rationSelect')</td>
+                    <td>
+                        <div class="layui-inline">
+                            <div id="cpRationBtn">
+                            <span id="cpItemCodeTd">
+                                <input type="hidden" id="cpRatCode"  name="cpRatCode" value="$!{cpURationDTO.ratCode}"/>
+                                <input type="hidden" id="cpItemFlag" name="cpItemFlag" value="$!{cpURationDTO.itemFlag}"/>
+                                <input type="hidden" id="cpItemMoney" name="cpItemMoney" value="$!{cpURationDTO.money}"/>
+                                <input type="hidden"  id="cpUrationId" name="cpUrationId" value="$!{cpURationDTO.urationId}"/>
+                            </span>
+                                <button type="button" onclick="viewCpRatCode()" class="layui-btn">#springMessage('common.button.view')</button>
+                            </div>
+                        </div>
+                        </span>
+                    </td>
+                </tr>
+            #end
+        #end
+        <tr>
+            ##            附件
+            <td class="textRight">#springMessage('cms.loan.attachment')</td>
+            <td colspan="3">
+                <input type="hidden" id="attachmentId" value="$!{inlInfo.attachmentId}">
+                <div id="uploader" class="layui-input-inline" style="width:100%;"></div>
+            </td>
+        </tr>
+
+        ##############################内部资金拆借放款信息######################################################################
+    </table>
+        <table id="appTable" class="layui-table layui-form">
+        <thead>
+        <tr>
+            <th>#springMessage('cms.inl.info.sendCode')</th>#*放款编号*#
+            <th>#springMessage('cms.inl.info.sendCurId')</th>#*放款币种*#
+            <th>#springMessage('cms.report.sendMoney')</th>#*放款金额*#
+            <th>#springMessage('cms.report.sendDate')</th>#*放款日期*#
+            <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>#*到期日期*#
+            <th>#springMessage('common.table.status')</th>#*状态*#
+            <th>#springMessage('common.table.thead.operation')</th>#*操作*#
+        </tr>
+        </thead>
+        #foreach($item in $!{inlSends})
+            <tr>
+                <td>$!{item.sendCode}</td>
+                <td>$!{item.curName}</td>
+                <td style="text-align: right">$!number.formatNumeric($!{item.sendMoney},'#,##0.00')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{item.sendDate})</td>
+                <td>$!date.format('yyyy-MM-dd',$!{item.endDate})</td>
+##                <td>$dictTag.get("inl.send.sendStatus2",$!{item.status})</td>
+                #if($!{item.status} == 96)
+                    <td>#springMessage('已放款')</td>#*状态*#
+                #else
+                    <td>#springMessage('在途')</td>#*状态*#
+                #end
+                <td style="text-align: center"><button type="button" class="layui-btn" onclick="bt.trackFlowByBusinessId('$!{item.id}')">#springMessage('common.button.trackFlow')</button></td>
+            </tr>
+        #end
+    </table>
+    </div>
+    <div style="width: 100%;text-align: center">
+        <button class="layui-btn" type="button" onclick="doClose()">#springMessage('common.button.close')</button>
+##        <button type="button" class="layui-btn" onclick="bt.trackFlowByBusinessId('')">#springMessage('common.button.trackFlow')</button>
+        <button class="layui-btn bt-biz-printType" type="button" data-printareaid="print">#springMessage('common.button.print')</button>
+    </div>
+</form>
+<script src="${basePath}/static/modules/cms/rat/cpration/ratCpUrationSet.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/loan/hookConOp.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(["jquery", "form", "btUpload", "moneyType", "conView", "printType"], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        bt.moneyType.init();//金额
+        bt.printType.init();
+        conView = bt.conView.init();//合同查看组件
+        var gid = $("#attachmentId").val();
+        var up = bt.btUpload.init({
+            elem: "#uploader",
+            hasUpload: false,
+            hasDelete: false,
+            isExpand: true,
+            auto: false,
+            gid: gid
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    //关闭窗口
+    function doClose() {
+        if (bt.navtab) {
+            bt.navtab.closeCurrent();
+        }
+    }
+
+    /**
+     * 设置授信参数
+     * @returns {{beginDate, corpId: *, ratItemCode, curCode: *}}
+     */
+    function beforeCpRation(){
+        var borrowInCorp = $("#borrowInCorp").val();
+        var curId = $("#curId").val();
+        var cpRatItemCode = $("#cpRatItemCode").val();
+        var startDate = $("#startDate").val();
+        var params = {
+            corpId: borrowInCorp,
+            curCode: curId,
+            ratItemCode: cpRatItemCode,
+            beginDate: startDate
+        };
+        return params;
+    }
+    
+    function print() {
+        
+    }
+</script>
+</body>
+</html>

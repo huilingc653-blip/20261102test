@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+   <form class="layui-form" id="searchForm">
+  		<input type="hidden" id="opType" value="$!{opType}">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+                    ##借款人
+                    <td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.loanOpp')</td>
+                    <td width="30%">
+                        <div class="layui-input-inline">
+                           <div class="bt-biz-corp" data-biz-type="corp"data-type="selectTree"data-name="eqs_loanOpp"data-scope="all"  data-defaultvalue="$!{precativePage.loanOpp}" ></div>
+                        </div>
+                    </td>
+                   ##单据编号
+					<td style="text-align:right;">#springMessage('table.cmsPrecativeLoanInfo.billCode')</td>
+					<td width="30%">
+						<input type="text layui-input" name="likes_sendCode"  autocomplete="off" class="layui-input">
+					</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+	    <tr>
+	        <th>#springMessage('cms.precative.send.billCode')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanInfo.loanOpp')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanSend.sendDate')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanSend.deadlineDate')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanInfo.billCode')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanSend.contractCode')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanInfo.curId')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanRepay.repayMoney')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanRepay.repayDate')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanSend.repayType')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanSend.interestWay')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanInfo.loanSendOutType')</th>
+	        <th>#springMessage('table.cmsPrecativeLoanRepay.status')</th>
+	        <th>#springMessage('common.table.thead.operation')</th>
+	    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','corp','moneyType'], function(){
+    $ = bt.jquery,form = bt.form();
+    var moneyType = bt.moneyType.init();
+    var moneyFun = bt.moneyType.getFun();
+    bt.corp.init();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/cms/precative/loanrepay/editDatatable"
+        },
+        buttons: [
+            {
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ]
+        ,columns: [
+            {data:"sendCode",bSortable:true,className:"center"},
+            {data:"loanOppName",bSortable:true,className:"center"},
+            {data:"sendDate",bSortable:true,className:"center"},
+            {data:"deadlineDate",bSortable:true,className:"center"},
+            {data:"infoBillCode",bSortable:true,className:"center"},
+            {data:"contractCode",bSortable:false,className:"center"},
+            {data:"curName",bSortable:true,className:"center"},
+            {data:"repayMoney",bSortable:true,className:"textRight",
+            	render: function (data, type, full, meta) {
+            		return moneyFun.format(full.repayMoney);
+            	}
+            },
+            {data:"repayDate",bSortable:true,className:"center"},
+            {data:"repayway",bSortable:true,className:"center",
+            	render: function (data, type, full, meta) {
+                    return full.repaywayName?full.repaywayName:bt.dict("Provide.RepayType",full.repayway)
+            	}
+            },
+            {data:"interestWay",bSortable:true,className:"center",
+            	render: function (data, type, full, meta) {
+            		return bt.dict("Admin.PredrawSign",full.interestWay);
+            	}
+            },
+            {data:"loanSendOutType",bSortable:true,className:"center",
+            	render: function (data, type, full, meta) {
+            		return bt.dict("cms.loan.loanSendOutType",full.loanSendOutType);
+            	}
+            },
+            {data:"bizStatus",bSortable:true,className:"center",
+            	render : function(data,type,full,meta){
+            		return bt.dict("cms.bizStatus",full.bizStatus);
+            	}
+            },
+            {data:null,bSortable:false,className:'center',
+            	render: function (data, type, full, meta) {
+					var html= '<a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>&nbsp;';
+					html += '<span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>&nbsp;';
+					html += '<span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+					html += '<span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("common.button.logInfo")+'</a>';
+//					html += '<span class="text-explode">|</span><a class="" href="#" data-row="'+meta.row+'" onclick="bt.trackFlowByBusinessId(\''+full.id+'\')">'+bt.lang("common.button.trackFlow")+'</a>';
+					return html; 
+            	}
+            }
+        ],
+        summary:{
+            pageSum: true,//小计功能开启
+            selectSum: false,//已选汇总功能开启
+            //groupColumn: 'curName',//分类汇总列参数
+            format: {
+                decimal: 2
+            },
+            sumList: [
+                {
+                    colNum: '8', //汇总列序号
+                    dataName: 'repayMoney' //汇总列还款金额
+                }
+            ]
+        }
+    });
+});
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/precative/loanrepay/view/?sendCode=" + data.sendCode+"&billCode="+ data.billCode);
+            return;
+        }
+	}
+}
+
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/cms/precative/loanrepay/repay?billCode=" + data.billCode+"&sendCode="+data.sendCode +"&infoBillCode="+data.infoBillCode);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/precative/loanrepay/repay?billCode=" + data.billCode+"&sendCode="+data.sendCode +"&infoBillCode="+data.infoBillCode,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+}
+
+function del(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm("#springMessage('confirm.delete.this.record')",function(){
+        $.post(basePath + "/cms/precative/loanrepay/delete/" + data.id, function(result){
+            location.reload();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+
+//日志列表
+function listMsg(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	if(data){
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.logInfo'),basePath + "/cms/basedata/cmsprocessmsg/list?billCode=" + data.billCode);
+            return;
+        }
+	}
+}
+</script>
+</html>

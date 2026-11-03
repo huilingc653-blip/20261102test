@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-table > thead th, .layui-table td {
+            position: static;
+        }
+        #page a, #page span {
+            height: 30px;
+            line-height: 30px;
+        }
+
+        #page .layui-laypage-total {
+            padding-right: 0px;
+        }
+
+        .layui-table-box{
+            overflow: auto;
+            width:100%;
+            height: 380px;
+            margin-top: 10px;
+            position: relative;
+            border: 0;
+            outline-color: #d2d2d2;
+            outline-style: solid;
+            outline-width: 1px;
+        }
+        .layui-tablenew thead {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1 !important;
+
+            border: 0;
+            outline-color: #d2d2d2;
+            outline-style: solid;
+            outline-width: 1px;
+        }
+        table thead tr:nth-child(2) th{
+            border: 0;
+            outline-color: #d2d2d2;
+            outline-style: solid;
+            outline-width: 1px;
+        }
+
+        .settings{
+            padding: 4px 8px;
+            top: 35px !important;
+            max-height: 300px;
+            min-width: 120px;
+            overflow-y: auto;
+        }
+        .layui-nav-item{
+            position: relative;
+        }
+        .layui-nav-child dd{
+            padding: 0px;
+            line-height: 30px !important;
+            margin-bottom: 4px;
+        }
+        .view-userinfo-btn{
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+
+
+         #foreach($bean in $!{model.list})
+         .vis-$velocityCount table thead tr:nth-child(1) th:nth-child($velocityCount),
+         .vis-$velocityCount table tr td:nth-child($velocityCount)#if(!!$foreach.hasNext), #end
+
+          #end
+        {
+            display: none !important;
+        }
+
+
+
+        #foreach($bean in $!{months})
+           #set($colIndex=$math.add($velocityCount,10))
+            #set($colSub=$math.sub($velocityCount,1))
+            #set($coladd=$math.add($colIndex,$colSub))
+            #set($coltSub=$math.sub($velocityCount,1))
+            #set($coltadd=$math.add($velocityCount,$coltSub))
+        .vis-$colIndex table tr:nth-child(2) th:nth-child($math.add($coltSub,$velocityCount)),
+        .vis-$colIndex table tr:nth-child(2) th:nth-child($math.add($coltadd,1)),
+           .vis-$colIndex table tr:nth-child(1) th:nth-child($colIndex),
+           .vis-$colIndex table tr td:nth-child($math.add($colIndex,$colSub)),
+           .vis-$colIndex table tr td:nth-child($math.add($coladd,1))#if(!!$foreach.hasNext), #end
+        #end
+        {
+            display: none !important;
+        }
+
+
+
+
+        #foreach($bean in $!{model.list})
+            .vis-$velocityCount dd:nth-child($velocityCount) a#if(!!$foreach.hasNext), #end
+        #end
+        {
+            color: #4E6DEC;
+            background-color: #EBEEF8;
+        }
+
+        #foreach($bean in $!{months})
+            #set($colIndex=$math.add($velocityCount,10))
+            .vis-$colIndex dd:nth-child($colIndex) a#if(!!$foreach.hasNext), #end
+        #end
+        {
+            color: #4E6DEC;
+            background-color: #EBEEF8;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" name="optType" id="optType" value="1">
+    <input type="hidden" id="total" value="${model.total}">
+    <input type="hidden" id="curr" value="${model.curr}">
+    <input type="hidden" id="resultCount" value="${model.resultCount}">
+    <input type="hidden" id="pageSize" value="${model.pageSize}">
+    <table class="layui-table layui-tabledit">
+        <tr>
+            <td class="textRight">#springMessage("table.cms.type")</td>
+            <td class="rCode">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="Loan.finType" data-defaultvalue="$!{vo.finType}"
+                         data-name="finType" data-biz-name="finType" data-value="">
+                    </div>
+                </div>
+            </td>
+            ##单位
+            <td class="textRight">#springMessage('table.report.corpId')</td>
+            <td class="rCode">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-biz-type="corp" data-type="selectTree" data-resource="bi:cms:capitalinterest:query"
+                         data-tree-type="check" data-checkkboxtype='{"Y":"s","N":"s"}'
+                         data-name="corpId" data-scope="all" data-biz-name="corpId" data-defaultvalue="$!{vo.corpId}"></div>
+                </div>
+            </td>
+            ##借款单位
+            <td class="textRight" style="width: 10%">#springMessage('contract.loan.corp')</td>
+            <td style="width: 25%" class="rCode">
+                <input type="text" class="layui-input" name="borrow" id="borrow" value="$!{vo.borrow}" placeholder="#springMessage('contract.loan.corp')"/>
+            </td>
+
+        </tr>
+        <tr>
+            ##申请单号
+            <td class="textRight" style="width: 10%">#springMessage('table.abBillTransfer.allocatedCode.apply')</td>
+            <td style="width: 25%" class="rCode">
+                <input type="text" class="layui-input" name="billCode" id="billCode" value="$!{vo.billCode}" placeholder="#springMessage('table.abBillTransfer.allocatedCode.apply')"/>
+            </td>
+            ##发放/发行单号
+            <td class="textRight" style="width: 10%">#springMessage('发放/发行单号')</td>
+            <td style="width: 25%" class="rCode">
+                <input type="text" class="layui-input" name="sendCode" id="sendCode" value="$!{vo.sendCode}" placeholder="#springMessage('发放/发行单号')"/>
+            </td>
+            ##还款年月
+            <td class="textRight">#springMessage('还款年月')</td>
+            <td class="rCode">
+                <div class="layui-inline">
+                    <input type="text" name="rbeginDate" class="layui-input bt-biz-dateType"
+                           id="rbeginDate"
+                           data-endid="rendDate" value="$!{vo.rbeginDate}"
+                           data-type="month" data-biz-name="rbeginDate">
+                </div>
+                <div class="layui-inline">
+                    <span class="date-mid">~</span>
+                </div>
+                <div class="layui-inline">
+                    <input type="text" name="rendDate" class="layui-input bt-biz-dateType" id="rendDate"
+                           data-type="month" data-biz-name="rendDate" value="$!{vo.rendDate}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##币别
+            <td class="textRight">
+                #springMessage('table.fcBusinessRuleDefine.curCode')
+            </td>
+            <td class="rCode">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id" data-textfield="curName" data-name="curId" data-defaultvalue="$!{vo.curId}"></div>
+                </div>
+            </td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<div  >
+    <div class="dt-buttonst" style="display: flex" >
+        <li class="layui-nav-item info-btn">
+            <a class="dt-button buttons-collection buttons-colvis"  tabindex="0"  href="javascript:">
+                <span>隐藏列</span>
+            </a>
+            <dl id="ddId" class="layui-nav-child settings" >
+                <dd>
+                    ##                    申请单位
+                    <a href="javascript:;" class="view-userinfo-btn" >
+                        #springMessage('table.cmsLoanInfo.corp')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    借款单位
+                    <a href="javascript:;" class="view-userinfo-btn" >
+                        #springMessage('table.cmsLoanInfo.borrowCorpId')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    融资类型
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('table.cms.type')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    申请单号
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('table.abBillTransfer.allocatedCode.apply')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    币种
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('table.fcBusinessRuleDefine.curCode')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    注册单号
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('借款/注册金额')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    发放/发行单号
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('发放/发行单号')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    发放/发行金额
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('发放/发行金额')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    发放/发行日期
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('发放/发行日期')
+                    </a>
+                </dd>
+                <dd>
+                    ##                    到期日期
+                    <a href="javascript:;" class="view-userinfo-btn">
+                        #springMessage('table.abVoucherinfo.endDate')
+                    </a>
+                </dd>
+                #foreach($month in $!{months})
+                <dd>
+                    ##                    到期日期
+                    <a href="javascript:;" class="view-userinfo-btn" data-index="10+$velocityCount">
+                        #springMessage($month)
+                    </a>
+                </dd>
+                #end
+            </dl>
+        </li>
+
+        <a class="dt-button buttons-collection"  tabindex="0"  href="#">
+            <span onclick="exports(0)">#springMessage('common.button.exportsCurrentPage')</span>
+        </a>
+        <a class="dt-button buttons-collection"  tabindex="0"  href="#">
+            <span onclick="exports(1)">#springMessage('common.button.exportsAll')</span>
+        </a>
+    </div>
+
+    <div id="addClass" class="layui-table-box">
+    <table id="appTable" class="layui-table layui-form dark-layui-table layui-tablenew vis" style="width:100%;margin-top:0" >
+        <thead>
+            ##需要新增表头字段的同事请将相应字段加入RatBkStatisticsDataExp.xls文件中，以便使导出表格和页面显示信息一致
+        <tr>
+            <th rowspan="2">#springMessage("table.cmsLoanInfo.corp")</th>##申请单位
+            <th rowspan="2">#springMessage("table.cmsLoanInfo.borrowCorpId")</th>##借款单位
+            <th rowspan="2">#springMessage("table.cms.type")</th>##融资类型
+            <th rowspan="2">#springMessage("table.abBillTransfer.allocatedCode.apply")</th>##申请单号
+            <th rowspan="2">#springMessage("table.fcBusinessRuleDefine.curCode")</th>##币种
+            <th rowspan="2">#springMessage("借款/注册金额")</th>##注册单号
+            <th rowspan="2">#springMessage("发放/发行单号")</th>##发放/发行单号
+            <th rowspan="2">#springMessage("发放/发行金额")</th>##发放/发行金额
+            <th rowspan="2">#springMessage("发放/发行日期")</th>##发放/发行日期
+            <th rowspan="2">#springMessage("table.abVoucherinfo.endDate")</th>##到期日期
+            #foreach($month in $!{months})
+                <th colspan="2">$month</th>
+            #end
+        </tr>
+        <tr>
+            #foreach($month in $!{months})
+                <th>#springMessage("table.eAccrualBill.money")</th>
+                <th>#springMessage("table.fcPredrawDtlTemp.interest")</th>
+            #end
+        </tr>
+        </thead>
+
+        <tbody >
+            #if($!{model.list})
+                #foreach($bean in $!{model.list})
+                <tr>
+                <td align="center" class="td--column--1">$!{bean.corpName}</td>
+                <td align="center">$!{bean.borrow}</td>
+                <td align="center">$!{bean.finTypeName}</td>
+                <td align="center">$!{bean.billCode}</td>
+                <td align="center">$!{bean.curName}</td>
+                <td align="right">#if($!{bean.borrowMoney})$number.formatNumeric($!{bean.borrowMoney}) #else 0.00#end</td>
+                <td align="center">$!{bean.sendCode}</td>
+                <td align="right">#if($!{bean.sendMoney})$number.formatNumeric($!{bean.sendMoney}) #else 0.00#end</td>
+                <td align="center">$!date.format('yyyy-MM-dd',$!{bean.sendDate})</td>
+                <td align="center">$!date.format('yyyy-MM-dd',$!{bean.endDate})</td>
+                 #foreach($repay in $!{bean.unMoney})
+                     <td align="right">$number.formatNumeric($!{repay})</td>
+                 #end
+                </tr>
+                #end
+            #end
+        </tbody>
+
+    </table>
+    </div>
+</div>
+<div id="page" ></div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/report/export.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+    var $;
+    var form;
+    var corpInit;
+    var dateType;
+    var selectType;
+    var dicts;
+    var moneyType;
+    var moneyFun;
+    var mulselect;
+    bt.use(['form','bttable','btdate','datatable','corp','moneyType','relaypage','dateType','selectType','date','dicts','jquery','element','selectTable','page','freezeTable','mulselect'], function(){
+        $ = bt.jquery;
+        form = bt.form();
+        dateType=bt.dateType.init();
+        selectType=bt.selectType.init();
+        dicts=bt.dicts.init();
+        moneyType=bt.moneyType.init();
+        moneyFun = bt.moneyType.getFun();
+        corpInit = bt.corp.init();
+        mulselect = bt.mulselect.init();
+
+        //监听提交
+        form.on('submit(search)', function(data) {
+            search($("#curr").val(),$("#pageSize").val());
+        });
+        //监听重置
+        resetCode = function(){
+            var inputs = $('.rCode').find('input');
+            inputs.each(function(i, item){
+                $(this).val("");
+            });
+
+            var selects = $('.rCode').find('.bt-biz-selectType,.bt-biz-dict');
+            bt.each(selects,function () {
+                $(this).find('select').val(' ');
+            })
+            form.render('select');
+            corpInit.get("corpId").val("");
+            selectType.get("curCode").val(" ");
+            dateType.get("rbeginDate").val("");
+            dateType.get("rendDate").val("");
+
+        }
+
+
+        bt.relaypage({
+            cont: 'page',
+            pages: $("#total").val(),
+            curr:$("#curr").val(),
+            resultCount:$("#resultCount").val(),
+            limit:$("#pageSize").val(), // 每页显示的数量
+            limits:[10,25,50,100,500], // 每页条数选项
+            layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip'],
+            skip:true,
+            jump:function(obj, first){
+                if(!first){
+                    search(obj.curr,obj.limit);
+                    var classList=$("#addClass")[0].className;
+                    window.localStorage.setItem('addClass',classList.replace("layui-table-box",""));
+                }else{
+                    var addClassList=window.localStorage.getItem('addClass')
+                    $("#addClass").addClass(addClassList);
+                    $("#ddId").addClass(addClassList);
+                    window.localStorage.removeItem('addClass');
+                }
+            }
+        });
+    });
+
+
+    function search(curr,len){
+        var action = basePath + "/bi/cms/capitalinterest/list?start=" +curr+'&len='+len;
+        $("#searchForm").attr("action", action);
+        $("#searchForm").attr("method", "post");
+        $("#searchForm").submit();
+    }
+
+    function exports(type){
+        var url = basePath + "/bi/cms/capitalinterest/export";
+        var formData;
+        if (type === 0) {
+            formData = {
+                exportType: "0",
+                start: $("#curr").val(),
+                pageSize: $("#pageSize").val(),
+                finType: dicts.get("finType").val(),
+                corpId: corpInit.get("corpId").val(),
+                borrow: $("#borrow").val(),
+                billCode: $("#billCode").val(),
+                sendCode: $("#sendCode").val(),
+                rbeginDate: dateType.get("rbeginDate").val(),
+                rendDate: dateType.get("rendDate").val(),
+                curId: selectType.get("curId").val(),
+            }
+        } else {
+            formData = {
+                exportType: "1",
+                rbeginDate: dateType.get("rbeginDate").val(),
+                rendDate: dateType.get("rendDate").val(),
+            }
+        }
+        DownLoadFile({url: url, data: formData, method: 'post'});
+    }
+
+    $(".buttons-colvis").click(function(e) {
+        $(".layui-nav-child").toggle();
+    })
+
+    $("#ddId dd").click(function () {
+        var index=$(this).index()+1;
+        $("#addClass").toggleClass("vis-"+index);
+        $("#ddId").toggleClass("vis-"+index);
+    });
+    // 添加点击事件监听器到页面上
+    $(document).on('click', function(event) {
+        if (! $('#ddId dd .view-userinfo-btn').is(event.target) && !$('.buttons-colvis span').is(event.target) && !$('#ddId').is(event.target)&& !$('#ddId dd').is(event.target)) {
+            $(".layui-nav-child").hide();
+        }
+    });
+</script>
+</html>

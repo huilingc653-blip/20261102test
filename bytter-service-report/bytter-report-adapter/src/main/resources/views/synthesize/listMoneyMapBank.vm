@@ -1,0 +1,152 @@
+#parse("views/common/head.vm")
+<form id="moneyMapBankForm" class="layui-form">
+    <input type="hidden" id="corpId" name="corpId" value="$!{moneyMapQueryVO.corpId}">
+    <input type="hidden" id="balanceDate" name="balanceDate" value="$!date.format('yyyy-MM-dd',$!{moneyMapQueryVO.balanceDate})">
+    <input type="hidden" id="curId" name="curId" value="$!{moneyMapQueryVO.curId}">
+    <input type="hidden" id="moneyUnit" name="moneyUnit" value="$!{moneyMapQueryVO.moneyUnit}">
+    <input type="hidden" id="bankName" name="bankName" value="$!{moneyMapQueryVO.bankName}">
+    <input type="hidden" id="bankAcc" name="bankAcc" value="$!{moneyMapQueryVO.account}">
+    <input type="hidden" id="balanceType" name="balanceType" value="$!{moneyMapQueryVO.balanceType}">
+    <input type="hidden" id="statisticalDimension" name="statisticalDimension" value="$!{moneyMapQueryVO.statisticalDimension}">
+    <input type="hidden" id="reducedCurId" name="reducedCurId" value="$!{moneyMapQueryVO.reducedCurId}">
+    <input type="hidden" id="reduceCurName" value="$!{reduceCurName}">
+</form>
+<table id="moneyMapBankTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('bi.money.map.bank')</th>
+        <th>#springMessage('bi.money.map.bank.name')</th>
+        <th>#springMessage('bi.money.map.balance.type.name')</th>
+        <th>#springMessage('bi.money.map.country.name')</th>
+        <th>#springMessage('bi.money.map.prov.name')</th>
+        <th>#springMessage('bi.money.map.account')</th>
+        <th>#springMessage('bi.money.map.acc.type.name')</th>
+        <th>#springMessage('bi.money.map.attribute.name')</th>
+        <th>#springMessage('bi.money.map.nature.name')</th>
+        <th>#springMessage('bi.money.map.is.online')</th>
+        <th>#springMessage('bi.money.map.cur.name')</th>
+        <th>#springMessage('bi.money.map.balance')</th>
+        <th>#springMessage('table.accountDTO.balance')_#springMessage('commom.converted.into.currency')</th>
+    </tr>
+    </thead>
+</table>
+
+<script>
+    bt.use(['form','datatable','select','moneyType'], function() {
+        $ = bt.jquery, form = bt.form();
+        bt.moneyType.init();
+        var table1 = new $.fn.dataTable.Api('#moneyMapCorpTable');
+        if(table1){
+            table1.destroy()
+        }
+        var table2 = new $.fn.dataTable.Api('#moneyMapBankTable');
+        if(table2){
+            table2.destroy()
+        }
+        //生成列表
+        bt.datatable.init({
+            elem: "#moneyMapBankTable",
+            colReorder: true,
+            searchForm: {
+                formElem: "#moneyMapBankForm",
+                formFilter: "search",
+                customizeFormSearchFunction:function(data){
+                    //var isLoadingMap = $.trim($('#mapContainer').html()).length > 0;
+                    if (data.field.showType == '2' ){
+                        layer.open({
+                            type: 2,
+                            area: ['100%', '100%'],
+                            title: bt.lang('bi.money.map.moneyMap'),//'资金地图',
+                            maxmin: true,
+                            content: basePath + "/bi/synthesize/moneyMap/queryByMap",
+                            end: function () {
+                                var date = bt.date.format(new Date,'yyyy-MM-dd hh:mm:ss');
+                                $('#mapDate').text(date)
+                            }
+                        });
+                        return
+                    }
+                    $.ajax({
+                        url: basePath + "/bi/synthesize/moneyMap/query", // 提交地址，该方法能够跳转到一个页面
+                        data: data.field,
+                        type: "POST",
+                        async: false,
+                        success: function(result) {
+                            $("#tableContainer").removeClass('layui-hide').html(result);
+                        }
+                    });
+                }
+            },
+            ajax: {
+                'url': basePath + "/bi/synthesize/moneyMap/datatable"
+            },
+            buttons: [],
+            columns: [
+                {data: "bankTypeName", bSortable: true},
+                {data: "bankName", bSortable: true},
+                {data: "balanceTypeName", bSortable: true},
+                {data: "countryName", bSortable: true},
+                {data: "provName", bSortable: true},
+                {data: "bankAcc", bSortable: true},
+                {data: "accTypeName", bSortable: true},
+                {data: "attributeName", bSortable: true},
+                {data: "natureName", bSortable: true},
+                {data: "isOnlineStr", bSortable: true},
+                {data: "curName", bSortable: true},
+                {data: "balance", bSortable: true, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(bt.money.unitConvert(full.balance, $("#moneyUnit").val()));
+                    }
+                },
+                {data: "balanceRmb", bSortable: true, className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return bt.money.format(bt.money.unitConvert(full.balanceRmb, $("#moneyUnit").val()));
+                    }
+                },
+            ],
+            btDrawCallback:function (setting) {
+                var tableData = setting.json.data;
+                if(tableData && tableData.length>0){
+                    var msg=bt.lang('alert.please.maintain')+ ' ';
+                    var flag=false;
+                    for(var i=0;i<tableData.length;i++){
+                        if(tableData[i].attributeId === '1' && $('#reduceCurName').val()){
+                            msg += tableData[i].curName+'-'+$('#reduceCurName').val()+' ';
+                            flag=true;
+                            break;
+                        }
+                    }
+                    msg += bt.lang('table.btCurrency.curExrate');
+                    if(flag){
+                        layer.msg(msg)
+                    }
+                }
+            },
+            summary: {
+                pageSum: true,
+                convertMoney: function () {
+                    return "yuan" === $("#moneyUnit").val() ? "" : $("#moneyUnit").val();
+                },
+                groupColumn: 'curName',//分类汇总列参数
+                createSummaryText:function(text){ //自定义汇总名称
+                    var dicts = bt.dictContext["common.moneyMap.unit"],name="",moneyUnit = $("#moneyUnit").val();
+                    if (moneyUnit){
+                        name = dicts[$("#moneyUnit").val()].name
+                    }
+                    return bt.lang('table.datatable.subtotal')+'('+name+')';
+                },
+                format:{decimal: 2},
+                sumList: [
+                    {
+                        colNum: '10',
+                        dataName: 'balance'
+                    },
+                    {
+                        colNum: '11',
+                        dataName: 'balanceRmb'
+                    },
+                ]
+            }
+        });
+    });
+</script>

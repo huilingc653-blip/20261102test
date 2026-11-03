@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form id="searchForm" class="layui-form" method="post">
+	    <input type="hidden" name="eqs_checkType" value="$!{checkType}"/>
+		<table class="layui-table">
+			<tbody>
+	    	<tr>
+	    		<!-- 发生日期 -->
+	    		<td class="textRight">#springMessage('finacial.check.centralityDataManager.occurDate')</td>
+	    		<td width="25%"><div class="date-interval" ></div></td>
+	    		<!-- 中心账号-->
+	    		<td class="textRight">#springMessage('finacial.check.centralityDataManager.centralityAcc')</td>
+	    		<td width="25%"><input id="acc"type="text" name="likes_compAcc" class="layui-input" placeholder="#springMessage('finacial.check.centralityDataManager.centralityAcc')"></td>
+	    		<!-- 对账标识-->
+	    		<td class="textRight">#springMessage('finacial.check.centralityDataManager.compareSign')</td>
+	    		<td width="25%">
+	    			<div class="layui-input-inline"> 
+##		    			#set ($compareSignMap = {"field":"eqs_compareSign","type":"select","typeGroupCode":"finacial.CompareSign"})
+##			            #set ($formCompareSign = $dictSelect.instance($compareSignMap))
+##			         	${formCompareSign.html()}
+						<div class="bt-biz-dict" data-type="select" data-group="finacial.CompareSign"
+							 data-name="eqs_compareSign" data-biz-name="eqs_compareSign"
+							 data-defaultvalue=" "></div>
+		         	</div>
+	    		</td>
+	    	</tr>
+			<tr>
+				<!-- 凭证号 -->
+				<td class="textRight">#springMessage('table.fcAccbook.voucherNo')</td>
+				<td width="25%">
+					<input type="text" name="likes_voucherNo"
+						   autocomplete="off" class="layui-input"
+						   placeholder="#springMessage('table.fcAccbook.voucherNo')">
+				</td>
+				<!-- 借方发生额 -->
+				<td class="textRight">#springMessage('table.fcCompareAcc.debitMoney')</td>
+				<td width="25%">
+					<div class="layui-inline">
+						<input type="text" data-name="geg_debitMoney"
+							   autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+							   data-moneyendid="t20" placeholder="#springMessage('table.fcCompareAcc.debitMoney')">
+					</div>
+					<span class="date-mid">~</span>
+					<div class="layui-inline">
+						<input type="text" data-name="leg_debitMoney"
+							   autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+							   id="t20" placeholder="#springMessage('table.fcCompareAcc.debitMoney')">
+					</div>
+				</td>
+				<!-- 贷方发生额 -->
+				<td class="textRight">#springMessage('table.fcCompareAcc.creditMoney')</td>
+				<td width="25%">
+					<div class="layui-inline">
+						<input type="text" data-name="geg_creditMoney"
+							   autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+							   data-moneyendid="t21" placeholder="#springMessage('table.fcCompareAcc.creditMoney')">
+					</div>
+					<span class="date-mid">~</span>
+					<div class="layui-inline">
+						<input type="text" data-name="leg_creditMoney"
+							   autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+							   id="t21" placeholder="#springMessage('table.fcCompareAcc.creditMoney')">
+					</div>
+				</td>
+			</tr>
+	    	<tr>
+	    		<td colspan="6" style="text-align: center;">
+	    			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+	            	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+	    		</td>
+	    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	    <thead>
+	    <tr>
+	        <th>#springMessage('table.fcCompareAcc.voucherNo')</th><!-- 凭证号 -->
+	        <th>#springMessage('finacial.check.centralityDataManager.centralityAcc')</th><!-- 中心帐号 -->
+	        <th>#springMessage('table.fcCompareAcc.tallyDate')</th><!-- 发生日期 -->
+	        <th>#springMessage('table.fcCompareAcc.debitMoney')</th><!-- 借方金额 -->
+	        <th>#springMessage('table.fcCompareAcc.creditMoney')</th><!-- 贷方金额 -->
+	        <th>#springMessage('table.fcCompareAcc.billNo')</th><!-- 票据号 -->
+	        <th>#springMessage('table.fcCompareAcc.redblueSign')</th><!-- 红蓝标识 -->
+	        <th>#springMessage('table.fcCompareAcc.compareSign')</th><!-- 对账标识 -->
+	        <th>#springMessage('common.table.thead.operation')</th>
+	    </tr>
+	    </thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<!-- <script src="${basePath}/static/modules/finacial/check/centralityDataManager.list.js?_btv=${resourceVersion}"></script> -->
+<style>
+    .myTableTr{
+        background-color: red;
+    }
+</style>
+
+<script type="text/javascript">
+	var table;
+	bt.use(['jquery','datatable','btdate','date','bank','moneyType','dicts'],function(){
+		$ = bt.jquery;
+		bt.moneyType.init();
+		bt.dicts.init();
+		//初始化日期控件
+	    bt.btdate.init({
+	        elem: ".date-interval",
+	        startname: "ged_tallyDate",
+	        endname: "led_tallyDate"
+	    });
+	    bt.bank.init({
+	        elem:'#acc',
+	        });
+
+		//表格控件初始化设置
+		table = bt.datatable.init({
+			elem: "#appTable",
+			dom: 'Brtlip',
+	        colReorder: true,
+			checkbox: true ,
+			searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+			ajax: {
+				url: basePath+"/finacial/check/centralityDataManage/datatable"
+			},
+			buttons: [
+			    {
+			    	text: '#springMessage("common.button.add")',
+			    	action: function( e, dt, node, config ){
+			    		add();
+			    	}
+			    },
+			    {
+			    	text: '#springMessage("common.button.batchDelete")',
+			    	action:function( e, dt, node, config ){
+			    		var data = dt.rows('.selected').data();
+			            var len = data.length;
+			            var rowData = data.splice(0,len);
+			            var ids = [];
+			            for(var i = 0; i < rowData.length; i++){
+			                ids.push(rowData[i].id);
+			            }
+			            if(ids.length>0){
+			            	parent.layer.confirm("#springMessage('common.message.confirm.batchDelete')",function(){
+				                $.post(basePath + "/finacial/check/centralityDataManage/batchDelete", {ids:ids}, function(result){
+				                	if(result.success){
+				    	        		table.draw();
+				    	        	}
+				                    parent.layer.alert(result.msg, {icon: result.success?1:2});
+				                },'JSON');
+				            });
+			            }else{
+			            	parent.layer.alert("#springMessage('common.message.confirm.selectData')");
+			            }
+			            
+			    	}
+			    }
+			],
+			columns: [
+			    {
+			    	data: "voucherNo",
+			    	className:'center',
+			    	bSortable:true
+			    },
+			    {
+			    	data: "compAcc",
+			    	className:'center',
+			    	bSortable:true
+			    },
+			    {
+			    	data: "tallyDate",
+			    	className:'center',
+			    	bSortable:true,
+			    	render: function( data, type, full, meta ){
+			    		return bt.date.format(full.tallyDate, "yyyy-mm-dd");
+			    	}
+			    },
+			    {
+			    	data: "debitMoney",
+			    	className:'center',
+			    	bSortable:true,
+			    	className:'textRight',render: function (data, type, full, meta) {
+		                return bt.money.format(full.debitMoney);
+		            }
+			    },
+			    {
+			    	data: "creditMoney",
+			    	className:'center',
+			    	bSortable:true,
+			    	className:'textRight',render: function (data, type, full, meta) {
+		                return bt.money.format(full.creditMoney);
+		            }
+			    },
+			    {
+			    	data: "billNo",
+			    	className:'center',
+			    	bSortable:true
+			    },
+			    {
+			    	data: "redblueSign",
+			    	className:'center',
+			    	bSortable:true,
+			    	render: function( data, type, full, meta ){
+			    		return bt.dict("Finacial.RedBlueSign",full.redblueSign);
+			    	}
+			    },
+			    {
+			    	data: "compareSign",
+			    	className:'center',
+			    	bSortable:true,
+			    	render: function( data, type, full, meta ){
+			    		return bt.dict("finacial.CompareSign",full.compareSign);
+			    	}
+			    },
+			    {
+			    	data: null,
+			    	bSortable:false,
+			    	className:'center',
+			    	render: function( data, type, full, meta ) {
+			    		var buts = "";
+			    		if(full.compareSign == '0'){
+			    			buts = '<a class="" href="#" data-row="'+meta.row+'" onclick="edit(this)">'+bt.lang("common.button.edit")+'</a>';
+				    		buts += '\<span class="text-explode">|</span>\<a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+			    		}
+			    		return buts;
+			    	}
+			    }
+			]
+		});
+		
+		
+	});
+	
+	//新增
+	function add(){
+		parent.layer.open({
+	    	title: "#springMessage('finacial.check.centralityDataManager.title.add')",
+	        type: 2,
+	        area: ['1000px', '600px'],
+	        maxmin: true,
+	        content: basePath + "/finacial/check/centralityDataManage/add",
+	        end:function(){
+	        	table.draw();
+            }
+	    });
+	}
+	
+	//修改
+	function edit(el){
+		var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	    parent.layer.open({
+	    	title: "#springMessage('finacial.check.centralityDataManager.title.edit')",
+	        type: 2,
+	        area: ['900px', '530px'],
+	        maxmin: true,
+	        content: basePath + "/finacial/check/centralityDataManage/update/" + data.id,
+	        end:function(){
+	        	table.draw();
+            }
+	    });
+	}
+	
+	//删除
+	function del(el){
+		var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+		parent.layer.confirm("#springMessage('common.message.confirm.delete')",function(){
+			var url = basePath + "/finacial/check/centralityDataManage/delete/" + data.id;
+	        $.post(url, function(result){
+	        	if(result.success){
+	        		table.draw();
+	        	}
+	            parent.layer.alert(result.msg, {icon: result.success?1:2});
+	        },'JSON');
+	    });
+	}
+</script>
+</html>

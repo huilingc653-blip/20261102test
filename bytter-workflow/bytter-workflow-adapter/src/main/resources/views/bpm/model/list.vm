@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>分配</title>
+    #parse("views/common/head.vm")
+    <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .task-left {
+            /*position: fixed;*/
+            height: 100%;
+            border-right: 1px solid #d3d3d3;
+            padding: 0 20px;
+        }
+
+        .task-left a {
+            color: #303343 !important;
+        }
+        .dark-skin .task-left a {
+            color: #d3d3d3 !important;
+        }
+        .task-left .ztree {
+            height: 85%;
+            overflow: auto;
+        }
+
+        .task-left .title {
+            padding: 5px;
+            font-size: 15px;
+            border-left: 4px solid #526DD9;
+        }
+
+        .task-left-header {
+            height: 60px;
+            line-height: 60px;
+            border-bottom: 1px solid #d3d3d3;
+        }
+
+        .task-right {
+            /*position: absolute;*/
+            right: 0;
+            min-height: 90%;
+        }
+
+        .task-right .layui-tab {
+            margin: 0;
+        }
+
+        .task-right .layui-tab-title .layui-this {
+            color: #f00;
+        }
+
+        .layui-tab-title .layui-this:after {
+        }
+
+        .layui-nav-itemed > a {
+            background-color: #fff !important;
+
+        }
+
+        .layui-nav-bar {
+            display: none;
+        }
+
+        .task-type-header {
+            height: 60px;
+            line-height: 60px;
+            border-bottom: 1px solid #d3d3d3;
+        }
+        .ui-jqgrid tr.jqgrow td {
+            white-space: inherit!important;
+        }
+        .task-left .ztree{
+            height: 85vh!important;
+            overflow: scroll!important;
+        }
+    </style>
+
+</head>
+<body>
+<div class="layui-row">
+    <div class="layui-col-xs3 task-left">
+        <div class="task-type-header">
+            <span class="title">#springMessage("bpm.flow.category")</span>
+        </div>
+        <div class="line margin-top margin-bottom">
+            <a href="javascript:void(0);" id="corpExpandAll">#springMessage("common.open.all")</a>
+            <span class="text-explode">|</span>
+            <a href="javascript:void(0);" id="corpCollapseAll">#springMessage("common.close.all")</a>
+        </div>
+        <ul id="flowCategoryTree" class="ztree ztree1"></ul>
+    </div>
+    <div class="layui-col-xs9 task-right">
+        <form class="layui-form" >
+        <table class="layui-table">
+            <tbody>
+            <tr>
+            ##单位
+                <td class="textRight">#springMessage('bpm.model.corp')</td>
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-name="corpId"
+                             data-biz-name="corpId"
+                             data-resource="bpm:mode:op"
+                             data-scope="all"></div>
+                    </div>
+                </td>
+            ##状态
+                <td class="textRight">#springMessage('common.table.status')</td>
+                <td>
+                    <div class="layui-inline">
+                        <select id="status" name="status">
+                            <option value=" ">#springMessage('common.placeholder.select')</option>
+                            <option value="0">#springMessage('bpm.model.unRelease')</option>
+                            <option value="1">#springMessage('bpm.model.running')</option>
+##                            <option value="2">#springMessage('bpm.model.suspend')</option>
+                        </select>
+                    </div>
+                </td>
+                <td>
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="button" id="queryReset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        </form>
+
+        <div class="tableGridWrapper margin">
+            <table id="table"></table>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+<script>
+    layui.use(['jquery', 'ztree', 'tableGrid', 'layer','corp','form'], function () {
+        var $ = bt.jquery, form = bt.form();
+        var layer = parent.bt.layer ? parent.bt.layer : bt.layer;
+        var corp =  bt.corp.init();
+        var flowCategoryId = null;
+
+        //查询重置
+        $("#queryReset").click(function(){
+            corp.get("corpId").val(null);
+            $("#status").val("");
+            form.render('select');
+        });
+
+        var table = bt.tableGrid.init({
+            elem: "#table",
+            url: basePath + "/bpm/model/tableGrid",
+            colModel: [
+                //名称
+                {name: "modelName", label: bt.lang("bpm.model.name"), sortable:false},
+                //所属单位
+                {
+                    name: "corpId",
+                    label: bt.lang("bpm.model.corp"),sortable:false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.corpName) {
+                            return "(" + rowObject.corpCode + ")" + rowObject.corpName;
+                        } else {
+                            return rowObject.corpId;
+                        }
+                    }
+                },
+                //模型版本
+                {name: "modelVersion", label: bt.lang("bpm.model.version"), align: "right", width: 100, sortable:false},
+                //创建时间
+                {name: "modelCreateTime", label: bt.lang("common.table.createTime")},
+                //模型最后更新时间
+                {name: "modelLastUpdateTime", label: bt.lang("bpm.model.lastUpdateTime")},
+                //发布版本
+                {
+                    name: "deploymentVersion",
+                    label: bt.lang("bpm.model.releaseVersion"),
+                    align: "right",
+                    width: 100,
+                    sortable:false
+                },
+                //发布时间
+                {name: "modelLastUpdateTime", label: bt.lang("bpm.model.releaseTime")},
+                //
+                {
+                    name: "status",
+                    label: bt.lang("common.table.status"),
+                    sortable:false,
+                    width: 80,
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (!rowObject.deploymentVersion) {
+                            //未发布
+                            return bt.lang("bpm.model.unRelease")
+                        }
+                        if (rowObject.status == 1) {
+                            //运行中
+                            return '<span style="color:#1E9FFF">' + bt.lang("bpm.model.running") + '</span>';
+                        } else {
+                            //暂停
+                            return '<span style="color:#FF5722">' + bt.lang("bpm.model.suspend") + '</span>';
+                        }
+                    }
+                },
+                {name: "modelId", hidden: true, key: true},
+                {
+                    name: 'op',
+                    label: bt.lang("common.table.thead.operation"),
+                    width: 250,
+                    sortable: false,
+                    template: "booleanCheckbox",
+                    formatter: function (cellvalue, options, rowObject) {
+                        var html = '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-edit">' + bt.lang("common.button.edit") + '</a>';
+                        html += '<span class="text-explode">|</span>';
+                        //发布
+                        html += '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-deploy">' + bt.lang("bpm.model.deploy") + '</a>';
+                        html += '<span class="text-explode">|</span>';
+                        html += '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-update">' + bt.lang("common.button.update") + '</a>';
+                        html += '<span class="text-explode">|</span>';
+
+                        /*if(rowObject.processDefinitionId){
+                            if(rowObject.processDefinitionSuspensionState==1){
+                                html += '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-status">挂起</a>';
+                                html += '<span class="text-explode">|</span>';
+                            }else{
+                                html += '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-status">激活</a>';
+                                html += '<span class="text-explode">|</span>';
+                            }
+                        }*/
+
+                        html += '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-copy">' + bt.lang("common.button.clone") + '</a>';
+                        html += '<span class="text-explode">|</span>';
+                        html += '<a href="javascript:void(0);" data-row="' + rowObject.modelId + '" class="model-delete">' + bt.lang("common.button.delete") + '</a>';
+                        return html;
+                    }
+                }
+            ],
+            addFunc: function () {
+                if (!flowCategoryId) {
+                    //未选择流程分类
+                    layer.alert(bt.lang("bpm.model.alert.unselectedFlowCategory"), {icon: 3});
+                    return;
+                }
+                layer.open({
+                    type: 2,
+                    area: ['600px', '500px'],
+                    content: basePath + "/bpm/model/view/" + flowCategoryId,
+                    end: function () {
+                        table.trigger("reloadGrid");
+                    }
+                });
+            },
+            delFunc: function (rowData) {
+                var ids = [];
+                var names = "";
+                for (var i = 0; i < rowData.length; i++) {
+                    if (!rowData[i]) {
+                        continue;
+                    }
+                    ids.push(rowData[i].modelId);
+                    names += rowData[i].username;
+                    if (i != rowData.length - 1) {
+                        names += ",";
+                    }
+                }
+                batchDelete(ids);
+            }
+        });
+
+        table.on('click', '.model-status', function (event) {
+            var data = table.getOriginalData($(this).data('row'));
+            var action = data.processDefinitionSuspensionState == 2 ? "activate" : "suspend";
+            doUpdateState(action, [data.processDefinitionId]);
+        });
+
+        table.on('click', '.model-edit', function (event) {
+            var data = table.getOriginalData($(this).data('row'));
+            var url = basePath + "/flowDesign/index.html?modelId=" + data.modelId + "&corpId=" + data.corpId+"&resourceContent="+data.resourceContent;
+            if (bt.navtab) {
+                var title = data.modelName + bt.lang("common.button.edit");
+                bt.navtab.addNavtab(title, url);
+            } else {
+                window.open(url);
+            }
+        });
+
+        table.on('click', '.model-deploy', function (event) {
+            var data = table.getOriginalData($(this).data('row'));
+            layer.confirm(bt.lang("bpm.model.deploy") + "?", function () {
+                bt.loading.show();
+                $.post(basePath + "/bpm/model/deploy", {ids: [data.modelId]}, function (result) {
+                    bt.loading.hide();
+                    if (result.success) {
+                        table.trigger("reloadGrid");
+                    }
+                    layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+            event.stopPropagation();
+        });
+
+        //修改
+        table.on('click', '.model-update', function (event) {
+            var data = table.getOriginalData($(this).data('row'));
+            var deploymentId = data.modelDeploymentId;
+            var modelId = data.modelId;
+            var param = "?modelId=" + modelId;
+            if (deploymentId) {
+                param = param + "&deploymentId=" + deploymentId
+            }
+            layer.open({
+                type: 2,
+                area: ['400px', '500px'],
+                content: basePath + "/bpm/model/update" + param,
+                end: function () {
+                    table.trigger("reloadGrid");
+                }
+            });
+        });
+
+        table.on('click', '.model-delete', function (event) {
+            var data = table.getOriginalData($(this).data('row'));
+            //删除后将不可恢复是否继续？
+            layer.confirm(bt.lang("confirm.delete.this.record"), {icon: 3}, function () {
+                layer.closeAll();
+                batchDelete([data.modelId]);
+            });
+        });
+
+        table.on('click', '.model-copy', function (event) {
+            var data = table.getOriginalData($(this).data('row'));
+            layer.open({
+                type: 2,
+                area: ['40%', '80%'],
+                content: basePath + "/bpm/model/copyPage?modelId=" + data.modelId,
+                end: function () {
+                    //这里只刷新表格数据会导致页面出问题
+                    // location.reload();
+                    table.trigger("reloadGrid");
+                }
+            });
+        });
+
+        table.customButton({
+            //"发布"
+            title: bt.lang("bpm.model.deploy"),
+            buttonicon: "fa-send",
+            onClickButton: function () {
+                var rowData = table.getSelectRowsData();
+                if (rowData && rowData.length == 0) {
+                    //请选择行
+                    layer.alert(bt.lang("common.message.confirm.selectData"), {icon: 2});
+                    return;
+                }
+                var ids = [];
+                var names = "";
+                for (var i = 0; i < rowData.length; i++) {
+                    var data = rowData[i];
+                    ids.push(data.modelId);
+                    names += data.corpName;
+                    if (i != rowData.length - 1) {
+                        names += ",";
+                    }
+                }
+                layer.confirm(bt.lang("bpm.model.deploy") + ":" + names, function () {
+                    $.post(basePath + "/bpm/model/deploy", {ids: ids}, function (result) {
+                        if (result.success) {
+                            table.trigger("reloadGrid");
+                        }
+                        layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    }, 'JSON');
+                });
+            }
+        });
+
+        var activateSuspend = function (action) {
+            var rowData = table.getSelectRowsData();
+            if (rowData && rowData.length == 0) {
+                //请选择行
+                layer.alert(bt.lang("common.message.confirm.selectData"), {icon: 2});
+                return;
+            }
+            var ids = [];
+            var names = "";
+            for (var i = 0; i < rowData.length; i++) {
+                var data = rowData[i];
+                if (action === 'activate') {
+                    if (data.processDefinitionSuspensionState !== 2) {
+                        continue;
+                    }
+                } else if (action === 'suspend') {
+                    if (data.processDefinitionSuspensionState !== 1) {
+                        continue;
+                    }
+                }
+                ids.push(data.processDefinitionId);
+                names += data.corpName;
+                if (i != rowData.length - 1) {
+                    names += ",";
+                }
+            }
+            var actionWord = action === 'activate' ? bt.lang("table.processDefinitions.active") : bt.lang("table.processDefinitions.suspend");
+            layer.confirm(bt.lang("common.conj.whether") + actionWord + bt.lang("bpm.model.message.following.corp.flow") + names, function () {
+                doUpdateState(action, ids);
+            });
+        }
+        //执行更新的方法
+        var doUpdateState = function (action, ids) {
+            bt.loading.show();
+            $.post(basePath + "/bpm/processDefinitions/update/" + (action === 'activate' ? "activate" : "suspend"), {ids: ids}, function (result) {
+                bt.loading.hide();
+                table.trigger("reloadGrid");
+                layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, "JSON");
+        }
+
+        var batchDelete = function (ids) {
+            if (!ids || 0 == ids.length ){
+                layer.alert(bt.lang("common.table.firstSelectedRow"));
+                return false;
+            }
+            bt.loading.show();
+            $.post(basePath + "/bpm/model/delete", {ids: ids}, function (result) {
+                bt.loading.hide();
+                if (result.success) {
+                    table.trigger("reloadGrid");
+                }
+                layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, 'JSON');
+        }
+
+        /*table.customButton({
+            title: "激活",
+            buttonicon:"fa-play",
+            onClickButton: function(){
+                activateSuspend('activate');
+            }
+        });
+        table.customButton({
+            title: "挂起",
+            buttonicon:"fa-pause",
+            onClickButton: function(){
+                activateSuspend('suspend');
+            }
+        });*/
+
+        var setting = {
+            data: {simpleData: {enable: true}},
+            callback: {
+                onClick: zTreeOnClick,
+                beforeClick: function (treeId, treeNode, clickFlag) {
+                    return !treeNode.isParent
+                }
+            }
+        }
+
+        function filter(treeId, parentNode, childNodes) {
+            if (!childNodes) return null;
+            for (var i = 0, l = childNodes.length; i < l; i++) {
+                if (childNodes[i].level != 4) {
+                    childNodes[i].isParent = true;
+                }
+                childNodes[i].name = childNodes[i].name.replace(/\.n/g, '.');
+            }
+            return childNodes;
+        }
+
+        function zTreeOnClick(event, treeId, treeNode) {
+            flowCategoryId = treeNode.id;
+            table.jqGrid('setGridParam', {
+                postData: {
+                    categoryId: flowCategoryId
+                }
+            }).trigger("reloadGrid");
+        }
+
+        var ztree;
+        $.get(basePath + "/bpm/flowCategory/tree?time=" + new Date().getTime(), function (nodes) {
+            ztree = $.fn.zTree.init($("#flowCategoryTree"), setting, nodes);
+            ztree.expandAll(true);
+        }, "JSON");
+        $("#corpCollapseAll").click(function () {
+            ztree.expandAll(false);
+        });
+        $("#corpExpandAll").click(function () {
+            ztree.expandAll(true);
+        });
+    });
+</script>
+</body>
+</html>

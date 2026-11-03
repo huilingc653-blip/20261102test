@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+
+<form id="searchForm" class="layui-form">
+	<input type="hidden" name="ini_status" value="1" />
+	<input type="hidden" name="auditManual" value="1" />
+	<div class="layui-collapse" lay-filter="collapse">
+	<div class="layui-colla-item">
+	<h2 class="layui-colla-title"></h2>
+	<div class="layui-colla-content layui-show">
+    <table class="layui-table">
+        <tbody>
+        <tr> 
+            ##所属单位
+            <td class="textRight">#springMessage('sys.user.corpContain.show')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-biz-name="corpId"
+                         data-type="selectTree"
+                         data-name="eqs_corpId"
+                         data-scope="all"
+                         data-callbackData="corpCallback"
+                         data-resource="ras:manualAudit:op"
+                         placeholder="#springMessage('table.rasPosBinding.corpName')">
+                    </div>
+                </div>
+            </td>
+            ##门店名称
+            <td class="textRight">#springMessage('table.rasPosBinding.shopName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-rasShop" data-name="eqs_shopId" data-biz-name="shopId" data-grant-type="audit"> </div>
+                </div>
+            </td>
+            ##缴款方式
+            <td class="textRight" >#springMessage('table.rasBackOp.payType')</td>
+            <td>
+				<div class="layui-input-inline">
+					<div class="bt-biz-dict" data-type="mulselect" data-group="RAS_PAY_TYPE" data-name="ins_payType" data-biz-name="payType"></div>
+				</div>
+            </td>
+        </tr>
+        <tr>
+            ##数据来源
+            <td class="textRight">#springMessage('table.received.dataSource')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="mulselect" data-group="RAS_AUDIT_DATASOURCE" data-name="ins_dateSource" data-biz-name="dateSource"></div>
+                </div>
+            </td>
+            ##金额
+            <td class="textRight">#springMessage('ras.money')</td>
+            <td >
+                <div class="layui-input-inline">
+                    <input type="text" name="geg_money" id="moneyStart" data-moneyendid="moneyEnd" autocomplete="off"
+                           class="layui-input bt-input-inline  bt-biz-moneyType" placeholder="#springMessage('ras.money')">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="leg_money" id="moneyEnd" autocomplete="off"
+                           class="layui-input bt-input-inline  bt-biz-moneyType" placeholder="#springMessage('ras.money')">
+                </div>
+            </td>
+            <td class="textRight"></td>
+            <td>
+            </td>
+        </tr>
+        <tr>
+            ##营收交易日期
+            <td class="textRight" >#springMessage('ras.revenue.transDate')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="ged_revenueTransDate" class="layui-input bt-input-inline bt-biz-dateType" id="revenueTransDateStart" data-endid="revenueTransDateEnd" value="$!{beginRevenueDate}" >
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_revenueTransDate" class="layui-input bt-input-inline bt-biz-dateType" id="revenueTransDateEnd" data-today="true">
+                </div>
+            </td>
+            ##实收交易日期
+            <td class="textRight" >#springMessage('ras.received.transDate')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="ged_receivedTransDate" class="layui-input bt-input-inline bt-biz-dateType" id="receivedTransDateStart" data-endid="receivedTransDateEnd" value="$!{beginReceivedDate}" >
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_receivedTransDate" class="layui-input bt-input-inline bt-biz-dateType" id="receivedTransDateEnd" data-today="true">
+                </div>
+            </td>
+            <td class="textRight"></td>
+            <td>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" type="button" onclick="searchData()">#springMessage('common.button.search')</button>
+                <button class="layui-btn layui-btn-primary" type="reset">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+	</div>
+	</div>
+	</div>
+</form>
+<button class="layui-btn" type="button" onclick="auditFun('manual')">#springMessage('ras.button.audit.manual')</button>
+<button class="layui-btn" type="button" onclick="auditFun('less')">#springMessage('ras.button.audit.less')</button>
+<button class="layui-btn" type="button" onclick="auditFun('auto')">#springMessage('ras.button.audit.auto')</button>
+<table class="layui-table">
+    <tr>
+        <td width="48%" colspan="2">
+            <big><b>#springMessage("ras.revenue.dataTable")</b></big>
+       	</td>
+        <td width="50%" colspan="2">
+			<big><b>#springMessage("ras.received.dataTable")</b></big>
+        </td>
+    </tr>
+</table>
+
+<div>
+<div style='display:inline-block;width:49%'>
+<table id="revenueTb">
+    <thead>
+        <tr>
+            <th>#springMessage("ras.revenue.Conf.serialNo")</th>##流水号
+            <th>#springMessage("ras.revenue.Conf.orderNo")</th>##订单号
+        	<th>#springMessage("table.rasPosBinding.corpName")</th>##单位名称
+        	<th>#springMessage("ras.revenue.Conf.shopName")</th>##门店名称
+            <th>#springMessage("table.rasBackOp.payType") </th>##缴款方式
+            <th>#springMessage("ras.money") </th>##金额
+            <th>#springMessage("ras.revenue.transDate") </th>##交易日期
+        </tr>
+    </thead>
+</table>
+</div>
+<div style='display:inline-block;width:49%'>
+<table id="receivedTb">
+    <thead>
+        <tr>
+            <th>#springMessage("ras.received.Conf.serialNo")</th>##流水号
+            <th>#springMessage("ras.received.Conf.orderNo")</th>##订单号
+        	<th>#springMessage("table.rasPosBinding.corpName")</th>##单位名称
+        	<th>#springMessage("ras.received.Conf.shopName")</th>##门店名称
+            <th>#springMessage("table.rasBackOp.payType") </th>##缴款方式
+            <th>#springMessage("ras.received.Conf.money") </th>##实收金额
+            <th>#springMessage("ras.received.Conf.transMoney") </th>##交易日期
+            <th>#springMessage("ras.received.transDate") </th>##交易日期
+            <th>#springMessage("ras.received.Conf.payeeAcc") </th>##收款账号
+            <th>#springMessage("ras.received.Conf.payeeAccName") </th>##收款户名
+            <th>#springMessage("ras.received.Conf.payeeBankName") </th>##收款开户行
+            <th>#springMessage("table.received.dataSource") </th>##数据来源
+        </tr>
+    </thead>
+</table>
+</div>
+</div>
+
+<form id="auditForm" class="layui-form">
+<input type="hidden" id="payType" name="payType" value="" />
+<input type="hidden" id="shopId" name="shopId" value="" />
+<input type="hidden" id="transDate" name="transDate" value="" />
+ <table class="layui-table">
+    <tr>
+    	##选中笔数
+        <td width="48%" colspan="2">
+			#springMessage("ras.revenue.selectSize")：
+			<span id="revenueSizeSpan">0</span>
+			<input type="hidden" id="revenueTransDate" name="revenueTransDate" value="" />
+			<input type="hidden" id="revenueShopId" name="revenueShopId" value="" />
+			<input type="hidden" id="revenuePayType" name="revenuePayType" value="" />
+			<input type="hidden" id="revenueId" name="revenueId" value="" />
+			<input type="hidden" id="revenueSize" name="revenueSize" value="0" />
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+       		##实收合计
+       		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			 #springMessage("ras.revenue.totalMoney")：
+			 <span id="revenueMoneySpan">0.00</span>
+			<input type="hidden" id="revenueMoney" name="revenueMoney" value="0" />
+       	</td>
+       	##选中笔数
+        <td width="50%" colspan="2">
+			#springMessage("ras.received.selectSize")：
+			<span id="receivedSizeSpan">0</span>
+			<input type="hidden" id="receivedTransDate" name="receivedTransDate" value="" />
+			<input type="hidden" id="receivedShopId" name="receivedShopId" value="" />
+			<input type="hidden" id="receivedPayType" name="revenuePayType" value="" />
+			<input type="hidden" id="receivedId" name="receivedId" value="" />
+			<input type="hidden" id="receivedSize" name="receivedSize" value="0" />
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        	##实收合计
+        	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			#springMessage("ras.received.totalMoney")： 
+			<span id="receivedMoneySpan">0.00</span>
+			<input type="hidden" id="receivedMoney" name="receivedMoney" value="0" />
+        </td>
+    </tr>
+    <tr>
+    	##差异额
+        <td colspan="2" >
+			#springMessage("ras.audit.lessMoney")：
+			<span id="lessMoneySpan">0</span>
+			<input type="hidden" id="lessMoney" name="lessMoney" value="0" />
+		</td>
+        <td colspan="2">
+			<div class="layui-inline">
+            <label class="layui-form-label">#springMessage("ras.revenue.Conf.rmk")：</label>
+                <div class="layui-inline">
+                    <input type="text" id="rmk" name="rmk" class="layui-input" lay-verify="strlength" data-maxlength="200"  placeholder="#springMessage('ras.revenue.Conf.rmk')" value="" >
+                </div>
+            </div>
+		</td>
+    </tr>
+</table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/ras/rasAuditManual.list.js?_btv=${resourceVersion}"></script>

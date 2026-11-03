@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    #set ($selectableSignRepayDate = "" )  ##所选计划的还款日期
+<div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th >#springMessage('table.cmsEquity.equityCode')</th>##融资编号
+            <th > #springMessage('cms.equity.payDate')</th>##缴付日期/过户日期
+            <th >#springMessage('cms.equity.payMoney')</th>##本次缴付金额
+            <th >#springMessage('cms.equity.rePayMoney')</th>##剩余缴付金额
+            <th >#springMessage('cms.equity.accounted')</th>##本次占比
+            <th >#springMessage('cms.equity.assName')</th>##资产名称
+            <th >#springMessage('cms.equity.rmk')</th>##备注
+            <th >#springMessage('common.table.thead.operation')</th>##操作
+        </tr>
+        </thead>
+        <tbody>
+            #set ($index = 1 )
+            #foreach($detail in $planDetailList)
+            <tr>
+                <td align="center">$!{detail.equityCode}</td>
+                <td align="center"> $!date.format('yyyy-MM-dd',$!{detail.payDate})</td>
+                <td align="right">
+                    $number.formatNumeric($!{detail.payMoney})
+                </td >
+                <td align="right">
+                    $number.formatNumeric($!{detail.rePayMoney})
+                </td >
+                <td align="right">  <span class="mui-badge mui-badge-inverted">
+                    #if($!{detail.accounted})
+                        $number.formatNumeric($math.mul($!{detail.accounted},100))%
+                    #end</span>
+                </td>
+                <td align="center">$!{detail.assName}</td>
+                <td align="center">$!{detail.rmk}</td>
+                <td align="center">
+                #if("$!{detailPlanID}" == $!{detail.id})##还款已经选中的数据
+                    <span  style="color:#009688">#springMessage('cms.msg.select')</span>
+                    #set ($index = $index + 1 )
+                #else
+                    #if("$!{detail.isPay}" == "1")
+                        <span  style="color:#5FB878"> #springMessage('cms.equity.plan.pay') </span>
+                        #else
+                            #if("$!{index}" == "1")
+                                #set ($index = $index + 1 )
+                                <button class="layui-btn" type="button" onClick="interest('$!date.format('yyyy-MM-dd',$!detail.payDate)','$!{detail.payMoney}','$!{detail.id}');" >#springMessage('common.button.select')</button>
+                            #else
+                                #springMessage('cms.equity.plan.unpay')
+                            #end
+                        #end
+                #end
+                </td>
+            </tr>
+            #end
+        </tbody>
+    </table>
+
+</div>
+<div style="text-align: center;">
+    <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage('common.button.close')</button>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['jquery',"form",'bttable','moneyType'], function() {
+        var $ = bt.jquery;
+        moneyFun = bt.moneyType.getFun();
+    });
+
+    function interest(payDate,payMoney,id){
+        var webObj = bt.navtab.getParentDom();
+        webObj.setSelectInterestData(payDate,payMoney,id);
+        bt.navtab.closeCurrent();
+    }
+
+
+
+</script>
+</html>

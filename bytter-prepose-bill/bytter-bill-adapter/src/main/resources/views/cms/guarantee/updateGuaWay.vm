@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input name="id" type="hidden" value="$!{guaWay.id}">
+    <input id="isPledge" type="hidden" value="$!{guaWay.isPledge}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage("table.cms.guaway.code")</td>
+            <td width="35%">
+                <input type="text" name="code"  lay-verify="required|strlength" data-maxlength="15" maxlength="15" class="layui-input" value="$!{guaWay.code}">
+            </td>
+
+            <td class="textRight">#springMessage("table.cms.guaway.name")</td>
+            <td width="35%">
+                <div class="layui-inline">
+                    <input type="text" style="display: inline;" name="name"  lay-verify="required|strlength" data-maxlength="50" maxlength="50" class="layui-input"
+                           value="$!{guaWay.name}">
+##                    <span data-toggle="i18n" data-key-id="$!{guaWay.id}"/>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage("table.cms.guaway.ispledge")</td>
+            <td width="35%">
+                <div class="layui-form">
+                    <div class="bt-biz-dict" data-type="radio" data-defaultvalue="$!{guaWay.isPledge}"
+                         data-callback="callProperty"
+                         data-name="isPledge" data-biz-name="isPledge" data-group="cms.guaway.isPledge"></div>
+                </div>
+            </td>
+
+            <td class="textRight">#springMessage("table.guaPledge.pledgeAttr")</td>
+            <td width="35%">
+                <div class="layui-form">
+                    <div class="bt-biz-dict" data-type="select" data-name="pledgeProperty"
+                         data-biz-name="pledgeProperty" data-group="guarantee.pledge.TypeAttr"
+                         data-defaultvalue="$!{guaWay.pledgeProperty}"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage("table.fbsBudgetPeriod.rmk")</td>
+            <td colspan="3">
+                <input type="text" name="rmk" maxlength="40" style='width:92%;' autocomplete="off" class="layui-input"
+                       value="$!{guaWay.rmk}">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage(
+                    "common.button.submit")</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage("common.button.reset")</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form', 'layedit', 'corp', 'selectType', 'dicts'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.corp.init();
+        bt.selectType.init();
+        bt.dicts.init();
+
+        var isPledge = $("#isPledge").val();
+        callProperty(isPledge);
+        //监听提交
+        form.on('submit(submit)', function (data) {
+            bt.loading.show();//显示加载中
+            var action = "/cms/guarantee/guaway/modify";
+            $.post(basePath + action, data.field, function (result) {
+                if (result.success) {
+                    parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                }
+                bt.loading.hide(); //关闭加载中
+                parent.layer ? parent.layer.alert(bt.lang(result.msg), {icon: result.success ? 1 : 2}) : layer.alert(bt.lang(result.msg), {icon: result.success ? 1 : 2});
+                // parent.layer ? parent.layer.alert(bt.lang('common.message.success'), {icon: result.success ? 1 : 2}) : layer.alert(bt.lang('common.message.success'), {icon: result.success ? 1 : 2});
+            }, 'JSON');
+            return false;
+        });
+    });
+
+
+    function callProperty(data) {
+        var dict = bt.dicts.init();
+        if (data.value == '0' || data == '0') {
+            dict.get("pledgeProperty").attr({"data-disabled": true});
+        } else {
+            dict.get("pledgeProperty").attr({"data-disabled": false});
+        }
+        dict.render();
+    }
+
+</script>

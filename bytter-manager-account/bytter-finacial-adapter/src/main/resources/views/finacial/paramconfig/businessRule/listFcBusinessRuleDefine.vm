@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tr>
+			<td class="textRight">#springMessage('table.fcBusinessRuleDefine.sysRaceCode')</td>
+			<td>
+                <div class="layui-inline">
+                    <input type="text" name="likes_sysRaceCode"
+                            autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBusinessRuleDefine.sysRaceCode')">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.fcBusinessRuleDefine.sysRaceName')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" name="likes_sysRaceName"
+                            autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcBusinessRuleDefine.sysRaceName')">
+                </div>
+            </td>
+         </tr>
+         <tr>
+           	<td colspan="4" align="center">
+	            <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+	            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+
+       		</td>
+        </tr>
+    </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcBusinessRuleDefine.netId')</th>
+        <th>#springMessage('table.fcBusinessRuleDefine.sysRaceName')</th>
+        <th>#springMessage('table.fcBusinessRuleDefine.subjCode')</th>
+        <th>#springMessage('table.fcBusinessRuleDefine.curCode')</th>
+        <th>#springMessage('table.fcBusinessRuleDefine.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+bt.use(['form','datatable'], function(){
+    $ = bt.jquery,form = bt.form();
+    //生成列表
+    bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        searchForm: {
+        	formElem: "#searchForm",
+        	formFilter: 'search'
+        },
+        checkbox:true,order: [1,'desc'],
+        ajax: {
+            'url': basePath+"/paramconfig/fcbusinessruledefine/datatable"
+        },
+        buttons: [
+            {
+                text: bt.lang('common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            },
+            {
+                text: bt.lang('common.button.init'),
+                action: function ( e, dt, node, config ) {
+                	importRule();
+                }
+            }
+            /* ,{
+                text: '<i class="layui-icon">&#xe642;</i> '+bt.lang('common.button.edit'),
+                action: function ( e, dt, node, config ) {
+                    var data = dt.rows('.selected').data();
+                    var len = data.length;
+                    var rowData = data.splice(0,len);
+                    layer.msg(JSON.stringify(rowData));
+                }
+            } */,{
+                extend: "colvis",
+                text: bt.lang('common.button.theadHide'),
+                columns: ':not(:first):not(:last)'
+            }
+        ],
+        fixedColumns: {
+            rightColumns:1//代表冻结右边一列
+        }
+        ,columns: [
+            {data:"netName",bSortable:true},
+            {data:"sysRaceCode",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+                    return "(" + full.sysRaceCode + ")" + full.sysRaceName;
+                }
+            },
+            {data:"subjCode",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+            		if(null == full.subjCode || "" == full.subjCode || undefined == full.subjCode){
+            			return "";
+            		}
+                    return "(" + full.subjCode + ")" + full.subName;
+                }
+            },
+            {data:"curName",bSortable:true},
+            {data:"validSign",bSortable:true,
+            	render: function ( data, type, full, meta ) {
+                    return bt.dict("sf_yn",full.validSign);
+                }
+            },
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>\
+                <a class="" href="#" data-row="'+meta.row+'" onclick="deleteColumn(this)">'+bt.lang("common.button.delete")+'</a>';
+                return html;
+            }}
+        ]
+    });
+});
+function add(){
+	if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/paramconfig/fcbusinessruledefine/add");
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/paramconfig/fcbusinessruledefine/add",
+        end:function(){
+           bt.navtab.refreshCurrentTable();
+        }
+    });
+}
+function view(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/paramconfig/fcbusinessruledefine/view/" + data.id
+    });
+}
+function update(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/paramconfig/fcbusinessruledefine/update?id=" + data.id);
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/paramconfig/fcbusinessruledefine/update?id=" + data.id,
+        end:function(){
+            bt.navtab.refreshCurrentTable();
+        }
+    });
+}
+function deleteColumn(el){
+    var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+    parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+        $.post(basePath + "/paramconfig/fcbusinessruledefine/delete/" + data.id, function(result){
+            bt.datatable.refreshCurrentPage();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+    });
+}
+
+/**
+ * 记账规则初始化
+ */
+function importRule(){
+	parent.layer.confirm(bt.lang('common.message.confirm.ruleinit'),function(){
+        bt.loading.show();
+     	$.post(basePath + "/paramconfig/fcbusinessruledefine/ruleInit", function(result){
+            bt.loading.hide();
+     		bt.datatable.refreshCurrentPage();
+            parent.layer.alert(result.msg + bt.lang("table.fcBusinessRuleDefine.confirm"), {icon: result.success?1:2});
+        },'JSON');
+ 	});
+
+	/* if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.button.init'),basePath + "/paramconfig/fcbusinessruledefine/initList");
+		location.reload();
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/paramconfig/fcbusinessruledefine/initList",
+        end:function(){
+            location.reload();
+        }
+    }); */
+
+}
+</script>

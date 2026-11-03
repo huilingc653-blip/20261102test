@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="hisSearchForm" class="layui-form">
+    <input type="hidden" name="docId" id="docId" value="$!{docId}"/>
+
+    <table id="appTableHis" class="layui-table layui-form" style="width:100%;" data-biz-name="appTableHis">
+        <thead>
+            <tr>
+                <th>批次号</th>
+                <th>核销类型</th>
+                <th>结算方式</th>
+                <th>核销日期</th>
+            </tr>
+        </thead>
+    </table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+var moneyType;
+bt.use(['form', 'datatable', 'dateType', 'corp', 'dicts', 'money', 'selectType', 'accountTable', 'bank', 'moneyType', 'mulselect', 'externalCorpBankAcc'], function () {
+     var $ = bt.jquery, form = bt.form();
+     moneyType = bt.moneyType.init();
+
+     var appTableHis = bt.datatable.initMultiTables({
+             elem: "#appTableHis",
+             checkbox: true,
+             mulselect: false,
+             selectCss: true,
+             jumpPageSelect: true,//开启跨页选择
+             isInitData: true,
+             searchForm: {
+                formElem: "#hisSearchForm"
+             },
+             order: [[1, 'desc']],
+             ajax: {
+                 'url': basePath + "/accountReceivable/writeOff/hisDatatable"
+             },
+             buttons: [
+                {
+                     extend: "colvis",
+                     text: bt.lang('common.button.theadHide'),
+                     columns: ':not(:first):not(:last)'
+                 }
+             ],
+             columns: [
+                 {data: "batchNo", bSortable: true,className:'center'},
+                 {data: "writeOffType", bSortable: true,className:'center',
+                      render: function (data, type, full, meta) {
+                          return bt.dict("writeOff.type", full.writeOffType);
+                      }
+                 },
+                 {data: "paymentMeans", bSortable: true,className:'center',
+                      render: function (data, type, full, meta) {
+                          return bt.dict("basic.paymentMeans", full.paymentMeans);
+                      }
+                  },
+                  {data: "createDate", bSortable: true,className:'center'}
+             ],
+             btClickRowCallback: function (data1) {
+
+             },
+             btDrawCallback: function (setting) { //回调方法
+             }
+         });
+
+
+     form.on('submit(submit)', function (data) {
+        bt.loading.show();
+        var selData = bt.datatable.getSelectData("#appTableHis");
+        if(selData.length < 1){
+            bt.loading.hide();
+            layer.alert("请选择取消核销批次！", {icon: 2});
+            return false;
+        }else if(selData.length > 1){
+            bt.loading.hide();
+            layer.alert("单次仅支持取消一个批次核销数据！", {icon: 2});
+            return false;
+        }
+        var action = "/accountReceivable/writeOff/cancelWriteOff";
+        data.field.batchNo = selData[0].batchNo;
+        $.post(basePath + action,data.field,function(result){
+            bt.loading.hide();
+            parent.layer.open({content:result.msg, yes: function(){
+                parent.layer?parent.layer.closeAll():layer.closeAll();
+            }
+            });
+        },'JSON');
+        return false;
+     });
+});
+
+function cancle(){
+    parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+</script>

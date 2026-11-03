@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form" method="post" action="${basePath}/finacial/paramconfig/FcSubjectPool/queryList">
+	    <table class="layui-table">
+	    	<tbody>
+	    	<tr>
+	    		<td class="textRight">#springMessage('finacial.paramConfig.fcSubject.subjectCode')</td>
+	    		<td width="25%">
+	    			<input type="text" id="subjectCode" name="subjectCode" class="layui-input" value="$!{FcSubjectPool.subjectCode}" placeholder="#springMessage('finacial.paramConfig.fcSubject.subjectCode')">
+	    		</td>
+	    		<td class="textRight">#springMessage('finacial.paramConfig.fcSubject.subjectName')</td>
+	    		<td width="25%">
+	    			<input type="text" id="subjectName" name="subjectName" class="layui-input" value="$!{FcSubjectPool.subjectName}" placeholder="#springMessage('finacial.paramConfig.fcSubject.subjectName')">
+	    		</td>
+	    		<td class="textRight">#springMessage('finacial.paramConfig.fcSubject.subjectSort')</td>
+	    		<td width="25%">
+		         	<div class="bt-biz-dict"
+		         		data-name="subjectSort"
+		         		data-type="select"
+		         		data-biz-name="subjectSort"
+		         		data-group="Admin.SubjectSort"
+						data-filterData="G"
+		         		data-value="$!{FcSubjectPool.subjectSort}">
+		         	</div>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td colspan="6" style="text-align: center;">
+	    			<button type="submit" class="layui-btn" >#springMessage('common.button.search')</button>
+	            	<button type="button" onclick="resetting();" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    <button type="button" class="layui-btn" onclick="selectSub();" >#springMessage('common.button.select')</button>##选择
+				</td>
+	    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+
+<div>
+	<table id="subjectTable" class="layui-table treetable layui-form" style="width:100%;">
+	    <thead>
+	    <tr>
+	        <th>#springMessage('finacial.paramConfig.fcSubject.subjectName')</th>
+	        <th>#springMessage('finacial.paramConfig.fcSubject.balanceWay')</th>
+	        <th>#springMessage('finacial.paramConfig.fcSubject.interestSign')</th>
+			<th>#springMessage('finacial.paramConfig.fcSubject.accType')</th>
+	        <th>#springMessage('common.table.thead.operation')</th>
+	    </tr>
+	    </thead>
+	    <tbody>
+	    	#foreach($sub in $treeDate)
+	    		<tr data-tt-id="$!{sub.id}" data-tt-parent-id="$!{sub.fatherId}" data-tt-subject-sort="$!{sub.subjectSort}" >
+	    			<td>
+						#if( $!{sub.fatherId} == "" )
+							${sub.subjectName}
+						#else
+                            <span #if($!{sub.validSign} == "0") style="color: #FF5722;" #end>
+##								#if($!i18nTag.getBusinessBaseContext($!{sub.id}) == "")
+									${sub.subjectCode}-${sub.subjectNameShow}
+##								#else
+##									${sub.subjectCode}-$!i18nTag.getBusinessBaseContext($!{sub.id})
+##								#end
+	    					</span>
+						#end
+	    			</td>
+	    			<td>
+	    				#if("G" == "$!{sub.subjectSort}")
+	    					$dictTag.get("Tally.Direction",$sub.balanceWay)
+	    				#else
+	    					$dictTag.get("Admin.BalanceWay",$sub.balanceWay)
+	    				#end
+	    			</td>
+	    			<!-- <td>$dictTag.get("fcSubject.measureUnit",$sub.measureUnit)</td> -->
+	    			<td>
+	    				$dictTag.get("Admin.InterestSign",$!{sub.interestSign})
+	    			</td>
+	    			<td>
+						$dictTag.get("InnerAccount.AccType",$!{sub.accType})
+					</td>
+
+	    			<td>
+	    				#if( $!{sub.fatherId} == "" )
+	    					<a  class="" href="#" name="add"  name="add" class="layui-btn layui-btn-mini layui-btn-normal">#springMessage('common.button.add')</a>
+	    				#else
+		    				#if($!{sub.validSign} != "0")
+		    					<a class="" href="#" name="add" class="layui-btn layui-btn-mini layui-btn-normal">#springMessage('common.button.add')</a>
+		    					 <span class="text-explode">|</span> <a class="" href="#" name="edit" class="layui-btn layui-btn-mini layui-btn-normal">#springMessage('common.button.edit')</a>
+	    						 <span class="text-explode">|</span>
+	    					#end
+	    					<a class="" href="#" name="view" class="layui-btn layui-btn-mini">#springMessage('common.button.view')</a>
+	    				#end
+	    			</td>
+	    		</tr>
+	    	#end
+	    </tbody>
+	</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+
+</html>
+<script>
+	bt.use(['jquery','treeTable','form','dicts'], function(){
+	    $ = bt.jquery,form = bt.form();
+	    bt.dicts.init();
+	    bt.treeTable.init({elem:"#subjectTable",column:0});
+
+	    $getId = function(currnet){
+            var id = currnet.parents('tr').data('tt-id');
+            return id?id:"";
+        }
+
+	    $getSort = function(currnet){
+            var sort = currnet.parents('tr').data('tt-subject-sort');
+            return sort?sort:"";
+        }
+
+	    $("#send").click(function(){
+	    	var action = basePath + "/finacial/paramconfig/FcSubjectPool/queryList?";
+	    	action += "subjectCode=" + $("#subjectCode").val() + "&subjectName=" + $("#subjectName").val() + "&subjectSort=" + bt.dicts.init().get("subjectSort").val();
+	    	$("#searchForm").attr("action",action);
+	    	window.location.href =  action;
+	    });
+
+	    $("[name='add']").click(function(){
+	    	var fatherId = $getId($(this));
+	    	var subjectSort = $getSort($(this));
+	    	if(bt.navtab){
+	            bt.navtab.addNavtab(bt.lang('finacial.paramConfig.fcSubject.title.add'),basePath + "/finacial/paramconfig/FcSubjectPool/add/?fatherId="+fatherId+"&subjectSort="+subjectSort);
+	            return;
+	        }
+	    	parent.layer.open({
+	        	title: "#springMessage('finacial.paramConfig.fcSubject.title.add')",
+	            type: 2,
+	            area: ['850px', '630px'],
+	            maxmin: true,
+	            content: basePath + "/finacial/paramconfig/FcSubjectPool/add/?fatherId="+fatherId+"&subjectSort="+subjectSort,
+	            end:function(){
+	            }
+	        });
+	    });
+
+	    $("[name='edit']").click(function(){
+	    	var id = $getId($(this));
+	    	if(bt.navtab){
+	            bt.navtab.addNavtab(bt.lang('finacial.paramConfig.fcSubject.title.update'),basePath + "/finacial/paramconfig/FcSubjectPool/update/"+id);
+	            return;
+	        }
+	    	parent.layer.open({
+	        	title: "#springMessage('finacial.paramConfig.fcSubject.title.update')",
+	            type: 2,
+	            area: ['850px', '630px'],
+	            maxmin: true,
+	            content: basePath + "/finacial/paramconfig/FcSubjectPool/update/"+id,
+	            end:function(){
+	            }
+	        });
+	    });
+
+	    $("[name='view']").click(function(){
+	    	var id = $getId($(this));
+	    	if(bt.navtab){
+	            bt.navtab.addNavtab(bt.lang('finacial.paramConfig.fcSubject.title.view'),basePath + "/finacial/paramconfig/FcSubjectPool/view/"+id);
+	            return;
+	        }
+	    	parent.layer.open({
+	        	title: "#springMessage('finacial.paramConfig.fcSubject.title.view')",
+	            type: 2,
+	            area: ['850px', '530px'],
+	            maxmin: true,
+	            content: basePath + "/finacial/paramconfig/FcSubjectPool/view/"+id,
+	        });
+	    });
+
+	});
+
+	function resetting (){
+		$("#subjectCode").val("");
+		$("#subjectName").val("");
+		bt.dicts.init().get("subjectSort").val("");
+	}
+
+    function selectSub (){
+        parent.layer.open({
+            title: "#springMessage('table.fcAccBalance.subjectId')",
+            type: 2,
+            area: ['1000px', '630px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/FcSubjectPool/selectSubject",
+        });
+
+    }
+</script>

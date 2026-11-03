@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/waphead.vm")
+    <style>
+        html,body{
+            width: 100%;height:100%;position: relative;
+            background-color: transparent !important;
+        }
+        /*body{
+            background-color:rgba(0,0,0,0.4);
+        }*/
+        .mui-off-canvas-wrap.mui-active .mui-off-canvas-backdrop{
+            transition: unset;
+            background: unset;
+            box-shadow: unset;
+            -webkit-tap-highlight-color: unset;
+        }
+        .mui-off-canvas-wrap .mui-inner-wrap.mui-transitioning {
+            -webkit-transition: unset;
+            transition: unset;
+        }
+        #offCanvasSide{
+            z-index:100;
+            visibility: visible;
+            transform: translate3d(0px, 0px, 0px);
+        }
+        .closeDiv{
+            position: absolute;
+            z-index: 998;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: block;
+            -webkit-tap-highlight-color: transparent;
+            width: 30%;
+        }
+    </style>
+</head>
+<body class="H-flexbox-vertical">
+    #parse("views/common/wapRslider.vm")
+    <div class="closeDiv" id="closeBody" style="z-index: 0;background:rgba(0,0,0,.4)" tapmode></div>
+</body>
+#parse("views/common/wapfooter.vm")
+<script>
+    mui('#offCanvasSideScroll').scroll();
+    $("#right-mui-inner-wrap").remove();
+    var type = "";
+    H.ready(function () {
+        H.fixStatusBar(function (offset) {}, "#header");
+        type = H.pageParam.type;
+        H.hideLoading();
+        H.ajax(function (data) {
+            if(data && data.categoryList && data.categoryList.length>0){
+                var gettpl = $("#cate_list_tpl").html();
+                laytpl(gettpl).render({list:data.categoryList}, function(html) {
+                    $("#category_index").html(html);
+                });
+                gettpl = $("#cate_list_c_tpl").html();
+                var ckey = H.getStorage("categoryKey")||"";
+                if(ckey){
+                    $("#allData li:first").removeClass("choosed");
+                }else{
+                    $("#allData li:first").addClass("choosed");
+                    $("#subCategory_index li").removeClass("choosed");
+                }
+                laytpl(gettpl).render({list:data.categoryList,counts:data.counts,ckey:ckey}, function(html) {
+                    $("#subCategory_index").html(html);
+                });
+            }
+        },basePath+(type=="todo"?"/bpm/my/todoPage.json":"/bpm/my/dealPage.json"),"get",{},"json");
+        document.getElementById('closeBody') && document.getElementById('closeBody').addEventListener('tap', function(e) {
+            H.closeFrame();
+        });
+        //点击第一类目
+        mui('#offCanvasSide').on('tap', '#category_index li', function() {
+            var name = $(this).data("index");
+            if(name){
+                $("#backSide").show();
+                $("#closeSide").hide();
+                $("#itemDIV_index li.category").hide();
+                $("#itemDIV_index li."+name).show();
+                $("#itemDIV_index").show();
+                $("#typeDIV_index").hide();
+            }
+            H.stopBubble();
+        });
+        //点击第二类目
+        mui('#offCanvasSide').on('tap', '#subCategory_index li', function() {
+            var key = $(this).data("key"),categoryid = $(this).data("categoryid");
+            if(key){
+                $("#subCategory_index li").removeClass("choosed");
+                $(this).addClass("choosed");
+                H.setStorage("categoryKey",key);
+                //刷新列表
+                var frameName = "";
+                if(type=="todo"){
+                    frameName = "bpmTodo";
+                }else{
+                    frameName = "bpmHistoric";
+                }
+                H.execScript("index_m",frameName,"freshenList('"+key+"')");
+                setTimeout(function () {
+                    H.closeFrame();
+                },200);
+            }
+            H.stopBubble();
+        });
+        //点击全部
+        mui('#offCanvasSide').on('tap', '#allData li', function() {
+            $("#subCategory_index li").removeClass("choosed");
+            $(this).addClass("choosed");
+            H.setStorage("categoryKey","");
+            //刷新列表
+            var frameName = "";
+            if(type=="todo"){
+                frameName = "bpmTodo";
+            }else{
+                frameName = "bpmHistoric";
+            }
+            H.execScript("index_m",frameName,"freshenList()");
+            setTimeout(function () {
+                H.closeFrame();
+            },200);
+            H.stopBubble();
+        });
+    });
+</script>
+</html>

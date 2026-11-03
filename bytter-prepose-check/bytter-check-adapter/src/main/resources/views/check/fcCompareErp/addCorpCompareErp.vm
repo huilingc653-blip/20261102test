@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" action="" method="post">
+    <table class="layui-table">
+        <tr>
+        ##银行账号
+            <td class="textRight">#springMessage("table.nisBillhead.bankAcc")</td>
+            <td>
+                $!{checkVO.bankAcc}/$!{checkVO.account}
+                <input type="hidden" name="bankAcc" id="bankAcc"  value="$!{checkVO.bankAcc}">
+            </td>
+
+        ##开始日期
+            <td class="textRight" width="7%">#springMessage("table.fbsBudgetPeriod.beginDate")</td>
+            <td width="17.5%">
+                <span id="beginDate"></span>
+			</td>
+			##结束日期
+			<td class="textRight" width="7%">#springMessage("table.fbsBudgetPeriod.endDate")</td>
+			<td width="17.5%">
+				<input type="text" name="transTime" class="layui-input bt-biz-dateType" data-min="$!{carryDate}" data-type="date" data-biz-name="transTime"
+                       lay-verify="required" data-callback="dateChangeCallback" value="$!date.format('yyyy-MM-dd',$!{checkVO.transTime})">##value="${initNetOverDate}"
+			</td>
+		</tr>
+		<tr>
+			##核对标准
+			<td class="textRight" width="7%">#springMessage("table.fcCompare.Check_the_standard")</td>
+			<td width="17.5%">
+				<div class=layui-form>
+					<div class=bt-biz-dict data-type="select" data-width="150px" data-biz-name="checkType" data-name="checkType" data-group="fcCompare.checkType" data-defaultvalue="1" data-required="true" data-filterData="2,4" ></div>
+					#*<div class="bt-biz-selectType" data-url="${basePath}/finacial/paramconfig/fccomparechecktype/json" data-valuefield="sort" data-textfield="checkTypeName" data-name="checkType" data-required="true"></div>*#
+				</div>
+			</td>
+			<td class="textRight">#springMessage("table.fcBankBalanceAdjust.blnInitBalance")</td>##单位账面余额
+			<td>
+			<input type="hidden"  class="layui-input" name="blnBalance" id="blnBalance" value=""  readonly="readonly"/>
+			<span id="blnBalanceShow"></span>
+			</td>
+			<td class="textRight">#springMessage("table.fcBankBalanceAdjust.bankInitBalance")</td>##银行账面余额
+			<td>
+			<input type="hidden"  class="layui-input" name="bankBalance" id="bankBalance" value=""  readonly="readonly"/>
+			<span id="bankBalanceShow"></span>
+			</td>
+		</tr>
+		<tr>
+			<td class="textRight">#springMessage("table.btBankAcc.corpId")</td>
+			<td colspan="2">$!{checkVO.corpName}</td>
+			<td class="textRight">#springMessage("table.accountDTO.bankName")</td>
+			<td colspan="2">$!{checkVO.bankName}</td>
+		</tr>
+		<tr>
+			<td class="textRight">#springMessage("enterprise.journal.amount")</td>
+			<td colspan="2">
+				<div class="layui-input-inline">
+					<input type="text" style="display: inline-block;width: 100px" data-name="companyStartMoney"  data-moneyendid="companyEndMoney" id="companyStartMoney"
+						   class="layui-input bt-biz-moneyType" data-biz-name="companyStartMoney">
+					-
+					<input type="text" style="display: inline-block;width: 100px" data-name="companyEndMoney" id="companyEndMoney"
+						   class="layui-input bt-biz-moneyType" data-biz-name="companyEndMoney">
+				</div>
+			</td>
+			<td class="textRight">#springMessage("bank.journal.amount")</td>
+			<td colspan="2">
+				<input type="text" style="display: inline-block;width: 100px" data-name="bankStartMoney" id="bankStartMoney" data-moneyendid="bankEndMoney"
+					   class="layui-input bt-biz-moneyType" data-biz-name="bankStartMoney">
+				-
+				<input type="text" style="display: inline-block;width: 100px" data-name="bankEndMoney" id="bankEndMoney"
+					   class="layui-input bt-biz-moneyType" data-biz-name="bankEndMoney">
+			</td>
+		</tr>
+		<tr>
+			<td colspan="8" align="center">
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="doCheck" >#springMessage("table.fcCompare.check")</button>##对  账
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="doHandOver" >#springMessage("table.fcCompare.doHandOver")</button>##勾对保存
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="doReverseHandOver" >#springMessage("table.fcCompare.doReverseHandOver")</button>##反勾对
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="doAdjustOver" >#springMessage("table.fcCompare.doAdjustOver")</button>##结   转
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="doHandStay" >#springMessage("table.fcCompare.doHandStay")</button>##确认未达
+				<button class="layui-btn layui-btn-small" lay-submit lay-filter="doPrint" >#springMessage("common.button.print")</button>##打印
+                <button class="layui-btn"  onClick="doClose()">#springMessage('common.button.close')</button>
+			</td>
+		</tr>
+	</table>
+	 
+	 <table class="layui-table">
+	    	<tr>
+	           	<td colspan="2">#springMessage("table.fcCompare.bankmsg")</td>##上期企业已记，银行未达账（提取企业日记账）
+	           	<td colspan="2">#springMessage("table.fcCompare.qymsg")</td>##上期银行已记，企业未达账（提取银行日记账）
+	        </tr>
+	        <tr>
+	            <td width="50%" colspan="2" style="vertical-align:top">
+	            <div style='width:100%;height:370px;overflow:auto;'>
+	                <table id="cntrTb" class="bttable" style='width:100%'>
+	                    <thead>
+	                        <tr>
+	                            <th width="15%">#springMessage("table.fcAccuBalance.date")</th>##日期
+                            	<th width="10%">#springMessage("table.fcCompare.provide")</th>##借/贷
+                            	<th width="25%">#springMessage("table.fcUnionAccbook.sendMoney")</th>##金额
+	                            <th width="30%">#springMessage("table.fcCompareAcc.summaryContent")</th>##摘要
+	                            <th width="20%">#springMessage("table.fcAccbookHis.voucherNo") </th>##凭证号
+	                        </tr>
+	                    </thead>
+	                </table>
+	                </div>
+	            </td>
+	            <td width="50%" colspan="2" style="vertical-align:top">
+	            <div style='width:100%;height:370px;overflow:auto;'>
+	                <table id="bankTb" class="bttable" style='width:100%'>
+	                    <thead>
+	                        <tr>
+	                            <th width="15%">#springMessage("table.fcAccuBalance.date")</th>##日期
+                            	<th width="10%">#springMessage("table.fcCompare.provide")</th>##借/贷
+                            	<th width="25%">#springMessage("table.fcUnionAccbook.sendMoney")</th>##金额
+	                            <th width="30%">#springMessage("table.btBankAccDtl.oppAccName")</th>##对方账户名称
+	                            <th width="20%">#springMessage("table.fcAccbookHis.voucherNo") </th>##凭证号
+	                        </tr>
+	                    </thead>
+	                </table>
+	                </div>
+	            </td>
+	        </tr>
+	            <tr>
+	                <td width="50%" colspan="2">
+						##选中笔数
+								#springMessage("table.fcUnionAccbook.pitch_on.num")：<span id="cntrCount">0</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	               		##借方合计
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#springMessage("table.fcUnionAccbook.debit.total")：<span id="cntrDebMoney">0.00</span>
+	               		##贷方合计
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#springMessage("table.fcUnionAccbook.lender.total")：<span id="cntrCreMoney">0.00</span>
+						##erp差额
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<span title="#springMessage("table.report.difference")=#springMessage("finacial.check.erpDataManager.debitMoney")-#springMessage("finacial.check.erpDataManager.creditMoney")">#springMessage("table.report.difference")：<span id="cntrDifferenceMoney">0.00</span></span>
+	               	</td>
+	                <td width="50%" colspan="2">
+						##erp差额
+						<span title="#springMessage("table.report.difference")=#springMessage("finacial.check.erpDataManager.debitMoney")-#springMessage("finacial.check.erpDataManager.creditMoney")">#springMessage("table.report.difference")：<span id="bankDifferenceMoney">0.00</span></span>
+						##选中笔数
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#springMessage("table.fcUnionAccbook.pitch_on.num")：<span id="bankCount">0</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	                	##借方合计
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#springMessage("table.fcUnionAccbook.debit.total")： <span id="bankDebMoney">0.00</span>
+	                	##贷方合计
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#springMessage("table.fcUnionAccbook.lender.total")： <span id="bankCreMoney">0.00</span>
+	                </td>
+	            </tr>
+	            <tr>
+	            	##调节后余额
+	                <td width="40%" colspan="1" align="center">#springMessage("table.fcUnionAccbook.adjust.balance")：<span id="adjustCntrMoney"></span></td>
+					##总差额
+	                <td width="20%" colspan="2" align="center" title="#springMessage("total.balance")=(#springMessage("debit.amount.of.enterprise.account")-#springMessage("credit.amount.of.bank.account"))-(#springMessage("credit.amount.of.enterprise.account")-#springMessage("debit.amount.of.bank.account")))">#springMessage("total.balance")：<span id="differenceMoney"></span></td>
+					##调节后余额
+	                <td width="40%" colspan="1" align="center">#springMessage("table.fcUnionAccbook.adjust.balance")：<span id="adjustBankMoney"></span></td>
+	            </tr>
+	    </table>
+	    <div class="layui-collapse">
+		  <div class="layui-colla-item">
+		    <h5 class="layui-colla-title">#springMessage("table.fcUnionAccbook.color.checking")</h5>##颜色标识对账记录
+		    <div class="layui-colla-content">
+				<table class="layui-table" align="center">
+	    	<tr>
+	           	<td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #FFFF80;">&#xe617;</i>  </td>
+	           	<td width="100px" align="center">#springMessage("table.fcUnionAccbook.To_check_for")</td>##未勾对记录
+	           	<td width="280px" align="center">
+		           	<div class="layui-input-block">
+						<input type="radio" name="noHandRadios"  title="#springMessage('common.sc_yn.yes')" value="1" checked lay-filter="noHandRadios">
+						<input type="radio" name="noHandRadios"  title="#springMessage('common.sc_yn.no')" value="0" lay-filter="noHandRadios"/>
+					</div>
+	           	</td>
+	           	<td>&nbsp;</td>
+	        </tr>
+	    	<tr>
+	           	<td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #FF8080;">&#xe617;</i></td>
+	           	<td width="100px" align="center">#springMessage("table.fcUnionAccbook.outstanding.entry")</td>##未达账记录
+	           	<td width="280px" align="center">
+	           	<div class="layui-input-block">
+						<input type="radio" name="stayRadios"  title="#springMessage('common.sc_yn.yes')" value="1" lay-filter="stayRadios">
+						<input type="radio" name="stayRadios"  title="#springMessage('common.sc_yn.no')" value="0" checked lay-filter="stayRadios"/>
+				</div>
+				</td>
+	           	<td ><span style="color: red">#springMessage("table.fcUnionAccbook.To_check_for.msg")</span></td>##当勾对完成，并标记未达账，余额调节表显示平衡。
+	        </tr>
+	    	<tr>
+	           	<td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #B0DC81;">&#xe617;</i></td>
+	           	<td width="100px" align="center">#springMessage("table.fcUnionAccbook.To_check_for.yes")</td>##已经勾对记录
+	           	<td width="280px" align="center">
+	           	<div class="layui-input-block">
+						<input type="radio" name="handRadios"  title="#springMessage('common.sc_yn.yes')" value="1" lay-filter="handRadios">
+						<input type="radio" name="handRadios"  title="#springMessage('common.sc_yn.no')" value="0" checked lay-filter="handRadios"/>
+				</div>
+				</td>
+	           	<td ><span style="color:red">#springMessage("table.fcUnionAccbook.To_check_for.yes.msg")</span></td>##显示已经勾对数据，点击勾对，还原勾对数据，变成未勾对数据。
+	        </tr>
+	    	<tr>
+	           	<td width="150px" align="center"><i class="layui-icon" style="font-size: 20px; color: #4FBAE6;">&#xe617;</i></td>
+	           	<td width="100px" align="center">#springMessage("table.fcUnionAccbook.checking.yes")</td>##已经对账记录
+	           	<td width="280px" align="center">
+	           	<div class="layui-input-block">
+						<input type="radio" name="checkRadios"  title="#springMessage('common.sc_yn.yes')" value="1" lay-filter="checkRadios">
+						<input type="radio" name="checkRadios"  title="#springMessage('common.sc_yn.no')" value="0" checked lay-filter="checkRadios"/>
+				</div>
+				</td>
+	           	<td >&nbsp;</td>
+	        </tr>
+		</table>
+			</div>
+		  </div>
+		</div>
+<input type="hidden" id="paramType" name="paramType" value="1"><!-- Erp对账 -->
+<input type="hidden" name="checkFlag" id="checkFlag" value="2" />
+<input type="hidden" name="account" id="account" value="$!{checkVO.account}"/>
+<input type="hidden" name="adjustId" id="adjustId" value="" />
+<input type="hidden" name="accDisplayType" id="accDisplayType" value="0"/><!--余额初始化账号显示 ERP-银行账号  -->
+<input type="hidden" name="checkDate" id="checkDate" value=""/>
+<input type="hidden" name="blnAdjustBalance" id="blnAdjustBalance"/>
+<input type="hidden" name="bankAdjustBalance" id="bankAdjustBalance"/>
+<input type="hidden" id="searchNatureId" value="">
+<input type="hidden" id="curId" name="curId" value="$!{checkVO.curId}">
+<input type="hidden" id="netId" name="netId" value="$!{checkVO.netId}">
+</form>
+
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/check/corpCompareErp.add.js?_btv=${resourceVersion}"></script>
+</html>

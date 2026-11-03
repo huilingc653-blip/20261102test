@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="eqs_contractId" value="$!{id}"/>
+    <input type="hidden" name="eqs_syscode" value="rat"/>##查询授信业务使用担保的标识
+</form>
+<div>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.ratBkration.ratCode')</th>##授信编号
+        <th>#springMessage('table.ratBkration.contractNo')</th>##授信合同号
+        <th>#springMessage('table.ratBkration.ratMode')</th>##授信模式
+        <th>#springMessage('table.ratBkration.money')</th>##授信额度
+        <th>#springMessage('table.ratBkration.begindate')</th>##授信开始时间
+        <th>#springMessage('table.ratBkration.enddate')</th>##授信结束时间
+        <th>#springMessage('table.guaContract.applyDate')</th>##使用时间
+        <th>#springMessage('common.table.status')</th>##状态
+    </tr>
+    </thead>
+</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form','element','datatable','dicts','date','moneyType'],function () {
+        $ = bt.jquery,form = bt.form(),element = layui.element,moneyFun = bt.moneyType.getFun();
+        bt.dicts.init();
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            order: [1,'desc'],
+            ajax: {
+                'url': basePath+"/cms/guarantee/guaContractOccup/getUseContractList"
+            },
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            columns: [
+                {data:"itemNo",className:'center',bSortable:false},//授信编号
+                {data:"ratContractNo",className:'center',bSortable:false},//授信合同号
+                {data:"ratMode",className:'center',bSortable:false,//授信模式
+                    render: function ( data, type, full, meta ) {
+                        return bt.dict("RatBkration.RatMode",full.ratMode);
+                    }
+                },
+                {data:"money",className:'textRight',bSortable:false,//授信额度
+                    render: function (data, type, full, meta) {
+                        var money = moneyFun.format(full.money);
+                        return money;
+                    }
+                },
+                {data:"beginDate",className:'center',bSortable:false,//授信开始时间
+                    render: function (data, type, full, meta) {
+                        return bt.date.format(full.beginDate, "yyyy-mm-dd");
+                    }
+                },
+                {data:"endDate",className:'center',bSortable:false,//授信结束时间
+                    render: function (data, type, full, meta) {
+                        return bt.date.format(full.endDate, "yyyy-mm-dd");
+                    }
+                },
+                {data:"useDate",className:'center',bSortable:false,//使用时间
+                    render: function (data, type, full, meta) {
+                        return bt.date.format(full.useDate, "yyyy-mm-dd");
+                    }
+                },
+                {data:"status",bSortable:false,className:"center",//状态
+                    render:function(data,type,full,meta){
+                        return bt.dict("Contract.UseStatus",full.status );
+                    }
+                }
+            ],
+            btInitComplete:function(setting,json){
+                tableData = json.data;
+            },
+            btDrawCallback:function(setting){
+                tableData = setting.json.data;
+            }
+        });
+    });
+</script>
+</html>

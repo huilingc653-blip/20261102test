@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form">
+		<input type="hidden" id="isOk"/>
+
+        <table class="layui-table">
+			<tbody>
+        	<tr>
+        		##所属网点
+				<td class="textRight">#springMessage('table.fcDayClose.netCode')</td>
+				<td width="40%">
+					<div class="layui-inline">
+                		<div class="bt-biz-corp" data-name="netCode" data-biz-name="netCode" data-biz-type="net" data-type="selectTree" data-callback="getCloseDate" data-required="true"  data-scope="net" data-defaultvalue="$!{dayStart.netCode}"
+                             data-resource="fcl:start:common:apply"
+
+                        ></div>##data-resource="fcl:close:common:apply"
+					</div>
+				</td>
+        		##上次日初日期
+				<td class="textRight">#springMessage('table.fcDayStart.lastStartDate')</td>
+				<td width="40%">
+					<input type="text" id="lastStartDate" name="lastStartDate" disabled="disabled" class="layui-input" value="$!date.format('yyyy-MM-dd',$dayStart.lastStartDate)">
+				</td>
+			</tr>
+        	<tr>
+        		##日初处理天数
+				<td class="textRight">#springMessage('table.fcDayStart.startDay')</td>
+				<td >
+                	<input type="text" id="closeDay" name="startDay"  class="layui-input bt-money" lay-verify="required" value="1" data-min="1" data-type="int" minus="false"></div>
+				</td>
+        		##日初处理日期
+				<td class="textRight">#springMessage('table.fcDayStart.startDate')</td>
+				<td >
+                	<input type="text" data-biz-name="startDate" name="startDate" lay-verify="required" class="layui-input bt-biz-dateType" data-type="date" data-callback="setStartDay" value="$!date.format('yyyy-MM-dd',$!dayStart.startDate)" data-min="$!date.format('yyyy-MM-dd',$!dayStart.startDate)"></div>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit="" type="button" lay-filter="submit">#springMessage('日初处理')</button>
+                    <button class="layui-btn" lay-submit="" type="button" lay-filter="reSubmit">#springMessage('反日初处理')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+        	</tbody>
+        </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','btdate','corp','dateType','datatable', 'bttable', 'moneynum','date'], function(){
+	var $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+
+    startDayMoney = bt.moneynum.init({elem:$('[data-type="int"]'),decimal:0,minus:false,callback : function(data){
+        bt.callStartDate(data);
+    }});
+
+    var startDate = bt.dateType.init();
+
+    bt.getNetCloseDate = function(netId){
+        var action = "/finacial/closedeal/fcdaystart/toViewStartDate?netId="+netId;
+        $.post(basePath + action, null,function(result){
+            if(result){
+                if(result.msg){
+                    $("#isOk").val("1");
+                    layer.alert(result.msg) ;
+                }else{
+                    $("#isOk").val("0");
+                }
+                $("#lastStartDate").val(result.lastStartDateStr);
+                $("#startDay").val(result.startDay);
+                //设置时间
+                startDate.get("startDate").val(result.startDateStr);
+            }
+        },'JSON');
+    };
+
+    bt.callStartDate = function (startDay){
+        var lastStartDate = $("#lastStartDate").val();
+        //设置时间
+        var datestr = bt.date.format(bt.date.addDay(lastStartDate, startDay));
+        startDate.get("startDate").val(datestr);
+    };
+
+    //监听提交
+    form.on('submit(submit)', function(data) {
+        bt.loading.show();//显示加载中
+        action = "/finacial/closedeal/fcdaystart/doDayStart";
+        $.post(basePath + action, data.field, function (result) {
+            bt.loading.hide(); //关闭加载中
+            var isOk = $("#isOk").val();
+            if(isOk == "1"){
+                layer.alert(bt.lang("fin.start.net.not.close"));
+                return ;
+            }
+            parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            if (result.success) {
+                bt.getNetCloseDate(data.field.netCode);
+            }
+        }, 'JSON');
+
+    })
+
+    //监听提交
+    form.on('submit(reSubmit)', function(data){
+        bt.loading.show();//显示加载中
+        var action = "/finacial/closedeal/fcdaystart/doReverseDayStart";
+        $.post(basePath + action,data.field,function(result){
+            bt.loading.hide(); //关闭加载中
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            if(result.success){
+                bt.getNetCloseDate(data.field.netCode);
+            }
+        },'JSON');
+    });
+
+})
+
+var getCloseDate = function(data){
+	bt.jquery("#closeTable").hide();
+	bt.getNetCloseDate(data);
+};
+
+var setStartDay = function(startDateStr){
+    var lastStartDate = $("#lastStartDate").val();
+    var startDay = getBetweenDay(lastStartDate, startDateStr);
+    startDayMoney.setValue(startDay);
+}
+
+/**
+ * 得到两个日期之间的天数
+ * @param startDate
+ * @param endDate
+ */
+function getBetweenDay(startDate,endDate){
+    var date1 = bt.date.get(startDate);
+    var date2 = bt.date.get(endDate);
+    var btt = date2 - date1;
+    return btt/(1000*60*60*24);
+}
+</script>
+</html>

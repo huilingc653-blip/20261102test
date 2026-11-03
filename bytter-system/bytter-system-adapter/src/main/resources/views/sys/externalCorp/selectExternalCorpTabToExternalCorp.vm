@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<input type="hidden" name="ids" value="">
+<form id="searchForm" class="layui-form input150-container">
+	<input type="hidden" id="ids" name="ids" value="">
+	#if($!paramsVO.isView eq "1")
+		<input type="hidden" name="isSelect" value="1">
+	#else
+	<input id="corpId" name="corpId" type="hidden" value="$!{params.corpId}">
+	<input id="eqi_status" name="eqi_status" type="hidden" value="1">
+	<input id="eqi_auditStatus" name="eqi_auditStatus" type="hidden" value="95">
+	<table class="layui-table">
+		<tbody>
+		<tr>
+			<td width="20%" class="textRight">
+				#springMessage('table.externalCorp.name')
+			</td>
+			<td width="30%">
+				<input type="text" id="likes_name" name="likes_name"
+					   autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalCorp.name')"/>
+			</td>
+			<td width="20%" class="textRight">
+				#springMessage('table.externalCorp.code')
+			</td>
+			<td width="30%">
+				<input type="text" id="likes_code" name="likes_code"
+					   autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalCorp.code')"/>
+			</td>
+		</tr>
+		<tr>
+			<td width="20%" class="textRight">
+				#springMessage('table.externalCorp.externalType')
+			</td>
+			<td width="30%">
+				<div class=layui-form>
+				<div class="bt-biz-dict"
+					 data-group="external.type"
+					 data-name="eqs_externalType"
+					 data-type="select">
+				</div>
+				</div>
+			</td>
+			<td width="20%" class="textRight">
+				#springMessage('sys.common.isSelect')
+			</td>
+			<td width="30%">
+				<div class=layui-form>
+					<div class="bt-biz-dict"
+						 data-group="sf_yn"
+						 data-name="isSelect"
+						 data-type="select">
+					</div>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td width="20%" class="textRight">#springMessage('sys.externalCorp.bwType')</td>
+			<td width="30%">
+				<div class="bt-biz-dict" data-type="select" data-group="SYS_BUS_ENTITY_TYPE"
+					 data-defaultvalue="" data-name="eqs_bwTypeName"></div>
+			</td>
+			<td width="20%" class="textRight">
+			</td>
+			<td width="30%">
+			</td>
+		</tr>
+		<tr>
+			<td colspan="6" style="text-align: center;">
+				<div class="layui-inline">
+					<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</div>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+	#end
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis" >
+</table>
+<br />
+<br />
+	#parse("views/common/footer.vm")
+<script type="text/javascript">
+	var isShow="$!{paramsVO.isView}";
+	if(isShow=="1"){
+		$("#ids").val(parent.getExternalIdValArray());
+	}
+	var billTable={};
+	bt.use(['form','jquery','select','element','datatable','dicts'], function(){
+		$ = bt.jquery,form = bt.form();
+		var element = bt.element();
+		bt.dicts.init();
+		//生成列表
+		billTable = bt.datatable.init({
+			elem: "#appTable",
+			dom: 'Brtlip',
+			#if($!paramsVO.isView eq "1")
+				paging:false,
+				checkbox:false,
+				order: [[0,'asc']],
+			#else
+				checkbox:true,
+				order: [[1,'asc']],
+			#end
+			colReorder: true,
+			ignoreButtons:['colvis'],
+			searchForm: {
+				formElem: "#searchForm",
+				formFilter: "search"
+			},
+			ajax: {
+				'url': basePath+"/sys/externalCorp/dataTableForSelect"
+			},columns: [
+				{data:"code" ,title:bt.lang('table.externalCorp.code') ,bSortable:true},
+				{data:"name",title:bt.lang('table.externalCorp.name'),bSortable:true},
+				{data:"abbreviate",title:bt.lang('table.externalCorp.abbreviate'),bSortable:true},
+				{data:"isCommonStr",title:bt.lang('table.externalCorp.isCommon'),bSortable:true},
+				{data:"sourceSystem",title:bt.lang('table.externalCorp.source'),bSortable:true},
+				{
+					data: "externalType",title:bt.lang('table.externalCorp.externalType'),bSortable:true, className: 'center',
+					render: function (data, type, full, meta) {
+						return bt.dict("external.type", full.externalType);
+					}
+				},
+				{data:"bwTypeName",title:bt.lang('sys.externalCorp.bwType'),bSortable:true}
+			],
+			btClickRowCallback:function(data){
+				parent.opExternalIdValArray(data);
+				$("#ids").val(parent.getExternalIdValArray());
+			},
+			btDrawCallback:function(setting){
+				if(parent.externalIdValArray && parent.externalIdValArray.length>0 && isShow!="1"){
+					bt.datatable.onCheckRow("appTable",{"key":"id","value":parent.externalIdValArray,"checked":true});
+					$("#ids").val(parent.getExternalIdValArray());
+				}
+			}
+		});
+	});
+</script>
+</body>
+</html>

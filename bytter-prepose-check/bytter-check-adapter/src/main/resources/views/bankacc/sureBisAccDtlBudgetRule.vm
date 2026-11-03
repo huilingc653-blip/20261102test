@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<baby>
+    <form id="searchForm" class="layui-form">
+    <input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+    ##是否认领到业务类别
+    <input id="isClaimBusType" name="isClaimBusType" type="hidden" value="$!{isClaimBusType}">
+    <input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+    <input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+    <input id="id" name="id" type="hidden" value="$!{bisAccDtl.id}">
+    <input id="cdSign" name="cdSign" type="hidden" value="$!{bisAccDtl.cdSign}">
+    <input id="corpId" name="corpId" type="hidden" value="$!{bisAccDtl.corpId}">
+    <input id="curId" name="curId" type="hidden" value="$!{bisAccDtl.curId}">
+    <input id="remark" name="remark" type="hidden" value="$!{bisAccDtl.remark}">
+    <input id="bankAcc" name="bankAcc" type="hidden" value="$!{bisAccDtl.bankAcc}">
+    <input id="oppAccName" name="oppAccName" type="hidden" value="$!{bisAccDtl.oppAccName}">
+    <input id="oppAccNo" name="oppAccNo" type="hidden" value="$!{bisAccDtl.oppAccNo}">
+    <input id="oppAccBank" name="oppAccBank" type="hidden" value="$!{bisAccDtl.oppAccBank}">
+    <input id="bankSerialNo" name="bankSerialNo" type="hidden" value="$!{bisAccDtl.bankSerialNo}">
+    <input id="amt" name="amt" type="hidden" value="$!{bisAccDtl.amt}">
+    <input id="billId" name="billId" type="hidden" value="$!{bisAccDtl.billId}">
+    <input id="fbsStatus" name="fbsStatus" type="hidden" value="$!{bisAccDtl.fbsStatus}">
+    <input id="itemInfo" name="itemInfo" type="hidden" value="$!{bisAccDtl.itemInfo}">
+
+    <table class="layui-table">
+        <tr>
+        ##结算类型
+            <td class="textRight">#springMessage('table.fbsBudgetProcess.settlType')</td>
+            <td class="textLeft">
+                <div class="bt-biz-dict" data-type="select" data-group="settlType" data-name="settlType" data-biz-name="settlType" data-defaultvalue="$!{bisAccDtl.settlType}"></div>
+            </td>
+            ##收款单号
+            <td class="textRight">#springMessage('table.nisReceivable.billNo')</td>
+            <td class="textLeft">
+                <input type="text" name="billNo" data-biz-name="billNo" readonly="readonly"  class="layui-input bt-input-inline " value="$!{bisAccDtl.billNo}" placeholder="#springMessage('table.choBankFinance.bankBillNo')">
+                <button class="layui-btn" onclick="$genNisReceivable()" type="button">#springMessage('common.button.select')</button>
+            </td>
+        </tr>
+        #if($!{budgetSel} == 1)
+            <tr>
+            ##执行日期
+                <td class="textRight">#springMessage('table.bisAccDtlBudgetRule.processTime')</td>
+                <td class="textLeft">
+                    #if ($!{bisAccDtl.processDate} == "" )
+                        <input type="text" name="processDate" data-biz-name="processDate" style="width: 214px;" class="layui-input bt-input-inline bt-biz-dateType" data-type="date" value="$!{bisAccDtl.transTime}" data-btns= "clear,now,confirm">
+                    #else
+                        <input type="text" name="processDate" data-biz-name="processDate" style="width: 214px;" class="layui-input bt-input-inline bt-biz-dateType" data-type="date" value="$!{bisAccDtl.processDate}" data-btns= "clear,now,confirm">
+                    #end
+                </td>
+            ##匹配资金计划科目
+                <td class="textRight">#springMessage('table.bisAccDtlBudgetRule.matchBudget')</td>
+                <td class="textLeft">
+                    <div class="layui-input-inline">
+                        <input type="text" id="itemCode" name="itemCode" class="layui-input" readonly="readonly" placeholder="#springMessage("table.bisAccDtlBudgetRule.selectBudget")" value="$!{bisAccDtl.itemInfo}">
+                    </div>
+                    <div class="layui-input-inline">
+                        <input type="hidden" id="budget"  name="budget" >
+                        <button class="layui-btn"  onclick="$genOtherHtml()" type="button">#springMessage('common.button.browse')</button>
+                    </div>
+                </td>
+            </tr>
+        #end
+        <tr>
+        ##备注
+            <td class="textRight">#springMessage('table.fbsBudgetPeriod.rmk')</td>
+            <td class="textLeft">
+                <input type="text" name="rmk" id="rmk" style="width: 214px;"  class="layui-input" placeholder="#springMessage("table.fbsBudgetPeriod.rmk")" value="$!{bisAccDtl.rmk}">
+            </td>
+            #if($!{isClaimBusType} ==1)
+            ##业务类型
+                <td class="textRight">#springMessage('table.nisBillhead.busType')</td>
+                <td class="textLeft">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-selectType" data-name="busType" data-biz-name="busType" data-defaultvalue="$!{bisAccDtl.busType}"
+                             data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=0&corpId=$!{bisAccDtl.corpId}"
+                             data-valuefield="busId" data-textfield="busTypeName" data-search="true" data-beforeinit="busBefore" ></div>
+                        <button class="layui-btn"  onclick="toChooseBillId()" type="button">#springMessage('common.button.select')</button>
+                        <button class="layui-btn"  onclick="toViewBillId()" type="button">#springMessage('common.button.view')</button>
+                    </div>
+                </td>
+            #else
+            <td></td>
+            <td></td>
+            #end
+        </tr>
+    </table>
+        <div style="text-align: center; padding-top: 10px;">
+            <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+        </div>
+    </form>
+    #parse("views/common/footer.vm")
+</baby>
+<script>
+    var BUDGET_PROCESS_SPLIT = "!-!";
+    var selectType;
+    bt.use(['form', 'dateType', 'dicts','selectType', 'itemType','moneyType'], function () {
+        var $ = bt.jquery, form = bt.form();
+        var dateType = bt.dateType.init();
+        selectType = bt.selectType.init();
+        var dicts = bt.dicts.init();
+        var itemType = bt.itemType.init();
+        var moneyFun = bt.moneyType.getFun();
+        /**
+         * 弹出收款单页面
+         * @return
+         */
+            $genNisReceivable = function () {
+            var isClaimBusType = $("#isClaimBusType").val()
+            var busType = "";//业务类别
+            if(isClaimBusType == 1){
+                busType = selectType.get("busType").getData();
+            }
+            var bankSerialNo = $("#bankSerialNo").val();//银行流水号
+            var bankAcc = $("#bankAcc").val();//本方账号
+            var oppAccNo = $("#oppAccNo").val();//对方账号
+            var curId = $("#curId").val();//币别
+            var id = $("#id").val();//id
+            var amt = $("#amt").val();
+            var url = "/receivable/nisreceivable/receivablePage?bankAcc="+bankAcc+"&oppAccNo="+oppAccNo+"&curId="+curId+"&amt="+amt+"&bankSerialNo=";
+            // //如果bankSerialNo 为空。则更新为id
+            // if(isNull(bankSerialNo) || bankSerialNo.trim() == ""){
+            //     bankSerialNo = id;
+            //     $.ajax({
+            //         url: basePath + "/bankacc/paymentblending.do?updateDtlBankSerialNo",
+            //         method: 'POST',
+            //         data: {id: id},
+            //         dataType: 'json',
+            //         success: function (data) {
+            //
+            //         }
+            //     });
+            // }
+            url = url+id;
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.button.select'), basePath + url);
+                return;
+            }
+        };
+        /**
+         * 弹出资金计划页面
+         * @return
+         */
+            $genOtherHtml = function () {
+            var itemCode = "";
+            var sign = 1;
+            if ($("#cdSign").val() == "0") {//根据收支确定科目
+                sign = 1;
+            } else {
+                sign = -1;
+            }
+            var settlType = dicts.get("settlType").val();
+            var processDate = dateType.get("processDate").val();
+            var param = {
+                "corpId": $("#corpId").val(),
+                "itemCode": itemCode,
+                "sign" : sign,
+                "defItemCode": itemCode,
+                "processDate": processDate,
+                "type": 'open',
+                "date": (new Date()).getTime(),
+                "budget": $("#budget").val(),
+                "detailControl": true,
+                "curId": $("#curId").val()? $("#curId").val() : "",
+                "settlType": settlType ? settlType : 0,
+                "purpose": $("#remark").val() ? $("#remark").val()  : "",
+                "wishPayday": processDate,
+                "payerAcc": $("#bankAcc").val()  ? $("#bankAcc").val() : "",
+                "payeeAccName": $("#oppAccName").val() ? $("#oppAccName").val() : "",
+                "payeeAcc": $("#oppAccNo").val() ? $("#oppAccNo").val() : "",
+                "payeeBank": $("#oppAccBank").val() ? $("#oppAccBank").val()  : ""
+            };
+            var url = basePath + "/budget/fbsBudgetProcess/getOpenItemDetail";
+            parent.layer.open({
+                type: 2,
+                area: ['1000px', '530px'],
+                maxmin: true,
+                content: url + "?" + parseParam(param),
+                end: function () {
+                }
+            });
+        };
+        itemFormat($("#itemInfo").val());
+        //监听提交
+        form.on('submit(submit)', function (data) {
+            bt.loading.show();
+            sure(data.field);
+            bt.loading.hide();
+            return false;
+        });
+    });
+    //业务种类初始化前回调
+    busBefore = function (data,arguments) {
+        var show = "("+arguments.busType+")" + arguments.busTypeName;
+        return show;
+    }
+    function isNull(data) {
+        if (data == null || data == "null" || data == "" || data == undefined) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function itemFormat(temp) {
+        if (temp != null && temp != "" && typeof(temp) != "undefined") {
+            var tempStr = "";
+            var arr = temp.split(",");
+            $(arr).each(function (i, item) {
+                it = item.split(BUDGET_PROCESS_SPLIT);
+                if (i == 0) {
+                    tempStr += "(" + it[0] + ")" + "" + it[1];
+                } else {
+                    tempStr = tempStr + ";" + "(" + it[0] + ")" + "" + it[1];
+                }
+            });
+            var itemCode = $("#itemCode").val(tempStr);
+            $("#budget").val(temp);
+        }
+    }
+    /**
+     * 重新组装参数
+     * @param param
+     * @param key
+     * @returns {string}
+     */
+    var parseParam = function (param, key) {
+        var paramStr = "";
+        if (param instanceof String || param instanceof Number || param instanceof Boolean) {
+            paramStr += "&" + key + "=" + encodeURIComponent(param);
+        } else {
+            $.each(param, function (i) {
+                var k = key == null ? i : key + (param instanceof Array ? "[" + i + "]" : "." + i);
+                paramStr += '&' + parseParam(this, k);
+            });
+        }
+        return paramStr.substr(1);
+    };
+    /**
+     * 确认
+     * @param el
+     */
+    function sure(data) {
+        var busType ="";//业务类别
+        if($("#isClaimBusType").val() == 1){
+            busType = selectType.get("busType").getData().value.trim();
+        }
+        data.busType = busType;
+        if($("#isClaimBusType").val() == 1 && data.busType.length < 1){
+            layer.alert(bt.lang('nis.pay.message.bustype.null'), {icon: 7});
+            return false;
+        }
+        if($("#budgetSel").val() == 1) {
+            data.budget = $("#budget").val();
+            data.processDate = bt.dateType.get("processDate").val();
+            if (data.budget.length < 1) {
+                layer.alert(bt.lang('table.bisAccDtlBudgetRule.selectBudget'), {icon: 7});
+                return false;
+            }
+        }
+        data.settlType = bt.dicts.get("settlType").val();
+        var action = "/bankacc/bisaccdtlbudgetrule/sure"
+        $.post(basePath + action, data, function (result) {
+            parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            bt.loading.hide(); //关闭加载中
+            if (result.success) {
+                if (result.success) {
+                    bt.navtab.closeCurrent();
+                }
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }
+        }, 'JSON');
+        return false;
+    }
+    /**
+     * 资金计划回调
+     * @param sumMoney
+     * @param datas
+     * @param rowNum
+     */
+    function budgetProcessCallback(sumMoney, datas, rowNum) {
+        var it = "";
+        var temp = "";
+        var amt = $("#amt").val();
+        if (bt.money.toNumber(amt) !== bt.money.toNumber(sumMoney)) {
+            layer.alert(bt.lang('common.message.money.noEqual'), {icon: 7});
+            return;
+        }
+        $(datas).each(function (i, item) {
+            it = item.split(BUDGET_PROCESS_SPLIT);
+            if (i == 0) {
+                temp += "(" + it[0] + ")" + "" + it[1];
+            } else {
+                temp = temp + ";" + "(" + it[0] + ")" + "" + it[1];
+            }
+        });
+        var itemCode = $("#itemCode").val(temp);
+        $("#budget").val(datas);
+    }
+    //业务类型选择后
+    toChooseBillId = function () {
+        var id = $("#id").val();
+        var corpId = $("#corpId").val();
+        var url = "";
+        var row = 1;
+        if(selectType.get("busType").getData() && selectType.get("busType").val() != "") {
+            var sysbustype = selectType.get("busType").getData().obj.sysBusType;
+            if (sysbustype == 4) {
+                url = basePath + "/chowmatistic/chobankfinance/mulSelectBankFinancePage?corpId=" + corpId + "&busType=11&row=" + row + "&id=" + id;
+            }
+            if (sysbustype == 5) {
+                url = basePath + "/chowmatistic/chobankfinance/mulSelectBankFinancePage?corpId=" + corpId+ "&busType=13&row=" + row + "&id=" + id;
+            }
+            if (sysbustype == 6) {
+                url = basePath + "/chowmatistic/choproductredeem/select?corpId=" + corpId + "&row=" + row + "&id=" + id;
+            }
+            if (sysbustype == 7) {
+                url = basePath + "/bill/accebill/abBillDiscountAccount/listDiscountAccount?corpId=" + corpId + "&row=" + row + "&id=" + id;
+            }
+            if (sysbustype == 8) {
+                url = basePath + "/bill/accebill/abbillcollectionaccount/listCollectionAccount?corpId=" + corpId + "&row=" + row + "&id=" + id;
+            }
+            if (sysbustype == 9) {
+                url = basePath + "/cms/provide/loansend/proLoanSendData?id=" + id + "&row=" + row;
+            }
+            if (sysbustype == 10) {
+                url = basePath + "/international/credit/incomingletter/selectIncoming?row=" + row + "&id=" + id;
+            }
+            if (sysbustype == 11 || sysbustype == 12 || sysbustype == 13 || sysbustype == 14) {
+                var tranType;
+                if(sysbustype == 11){
+                    tranType = 1;
+                }else if(sysbustype == 12){
+                    tranType = 2;
+                }else if(sysbustype == 13){
+                    tranType = 3;
+                }else if(sysbustype == 14){
+                    tranType = 4;
+                }
+
+                url = basePath + "/foreign/fexcashflow/choose?row=" + row + "&id=" + id+"&tranType="+tranType;
+            }
+            if (url != "") {
+                parent.layer.open({
+                    type: 2,
+                    area: ['850px', '530px'],
+                    maxmin: true,
+                    content: url,
+                    end: function () {
+
+                    }
+                });
+            }
+        }else{
+            layer.alert(bt.lang('nis.pay.message.bustype.null'), {icon: 7});
+        }
+    }
+
+    toViewBillId = function () {
+        var id = $("#billId").val();
+        var url = "";
+        if(id!="null" && id != "") {
+            if (selectType.get("busType").getData()) {
+                var sysbustype = selectType.get("busType").getData().obj.sysBusType;
+                if (sysbustype == 4 || sysbustype == 5) {
+                    url = basePath + "/chowmatistic/chobankfinance/view/" + id;
+                }
+                if (sysbustype == 6) {
+                    url = basePath + "/chowmatistic/choproductredeem/view/" + id;
+                }
+                if (sysbustype == 7 || sysbustype == 8) {
+                    url = basePath + "/bill/accebill/abreceivebill/view?accId=" + id;
+                }
+                if (sysbustype == 9) {
+                    url = basePath + "/cms/provide/loansend/viewLoanInfo?id=" + id;
+                }
+                if (sysbustype == 10) {
+                    url = basePath + "/international/credit/arrivalletter/viewArrovalInfo?flag=0&id=" + id;
+                }
+                if (sysbustype == 11 || sysbustype == 12 || sysbustype == 13 || sysbustype == 14) {
+                    url = basePath + "/foreign/fexcashflow/view/"+id;
+                }
+                if (url != "") {
+                    parent.layer.open({
+                        type: 2,
+                        area: ['850px', '530px'],
+                        maxmin: true,
+                        content: url,
+                        end: function () {
+
+                        }
+                    });
+                }
+            } else {
+                layer.alert(bt.lang('nis.pay.message.bustype.null'), {icon: 7});
+            }
+        }
+    }
+
+    function busTypeCallback(data,row) {
+        if(data){
+            $("#billId").val(data.id);
+        }
+        parent.layer.closeAll();
+    }
+</script>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##调拨策略代码
+            <td class="textRight">#springMessage('table.bisGatherPolicy.gatherPolicyCode')</td>
+            <td width="40%">
+                <input type="text" id="gatherPolicyCode" name="gatherPolicyCode"
+                       value="$!{bisGatherPolicyPage.gatherPolicyCode}"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.bisGatherPolicy.gatherPolicyCode')">
+            </td>
+        ##调拨类型
+            <td class="textRight">#springMessage('table.bisGatherPolicy.gatherType')</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <select lay-filter="gatherType" id="gatherType" name="gatherType">
+                        <option value="" selected></option>
+                        #foreach($dict in $dictTag.list("bisGatherPolicy.gatherType"))
+                            #if("$dict.code" == "$!{bisGatherPolicyPage.gatherType}")
+                                <option value="$dict.code" selected>$dict.name</option>
+                            #end
+                            #if("$dict.code" != "$!{bisGatherPolicyPage.gatherType}")
+                                <option value="$dict.code">$dict.name</option>
+                            #end
+                        #end
+                    </select>
+                </div>
+            </td>
+        ## 父账号
+            <td class="textRight">#springMessage('table.bisAccGatherPolicy.parentAccId')</td>
+            <td width="40%">
+                <input type="text"
+                       autocomplete="off" class="layui-input" id="parentAccName" name="parentAccName"
+                       value="$!{parentAccName}"
+                       placeholder="#springMessage('table.bisAccGatherPolicy.parentAccId')">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" id="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" onclick="resetButton()">#springMessage(
+                    'common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<form class="layui-form" method="post" id="treeDiv">
+    <div style="display: none">
+    <table id="accTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('table.bisAccGatherPolicy.gatherPolicyId')</th>
+            <th>#springMessage('table.bisAccGatherPolicy.bankName')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+        <tbody>
+            #foreach($date in $treeDate)
+            <tr data-tt-id="$!{date.treeId}" data-tt-parent-id="$!{date.treePrentId}"
+                data-tt-subject-sort="$!{date.id}">
+                <td>
+                    #if($!{date.fatherId} == "")
+                        $dictTag.get("bisGatherPolicy.gatherType",$!{date.id})
+                    #else
+                        #if($!{date.gatherPolicyCode} != "")
+                            ($!{date.gatherPolicyCode})$!{date.gatherPolicyName}
+                            ($!{currencyTag.getCurName($!{date.curId})})
+                        #else
+                            ($!{date.bankAcc})$!{date.accName}
+                        #end
+                    #end
+                </td>
+                <td>
+                    $!{date.bankName}
+                </td>
+                <td style="text-align:center">
+                    #if($!{date.fatherId} != "")
+                        #if($!{date.bankAcc} == "" || $!{date.bankAcc} == "null")
+##                            #if($shiro.hasPermission("netbank:allocation:bisAccGatherPolicy:apply"))
+                                <a class="" href="#"
+                                   onclick="addParentAcc('$!{date.id}','$!{date.curId}')">#springMessage(
+                                    'common.button.addParentAcc')</a>
+                                <span class="text-explode">|</span>
+##                            #end
+                            <a class="" href="#" onclick="viewGatherPolicy('$!{date.id}')">#springMessage(
+                                'common.button.view')</a>
+                        #else
+                            #if($!{date.prentAccId} != "")
+##                                #if($shiro.hasPermission("netbank:allocation:bisAccGatherPolicy:apply"))
+                                    <a class="" href="#"
+                                       onclick="delBankAcc('$!{date.id}','$!{date.prentAccId}','$!{date.gatherPolicyId}')">#springMessage(
+                                        'common.button.delBankAcc')</a>
+                                    <span class="text-explode">|</span>
+##                                #end
+                                <a class="" href="#" onclick="viewBankAcc('$!{date.id}')">#springMessage(
+                                    'common.button.view')</a>
+                            #else
+##                                #if($shiro.hasPermission("netbank:allocation:bisAccGatherPolicy:apply"))
+                                    <a class="" href="#"
+                                       onclick="addBankAcc('$!{date.fatherId}','$!{date.id}','$!{date.curId}')">#springMessage(
+                                        'common.button.addBankAcc')</a>
+                                    <span class="text-explode">|</span>
+                                    <a class="" href="#"
+                                       onclick="delBankAcc('$!{date.id}','$!{date.prentAccId}','$!{date.gatherPolicyId}','$!{date.curId}')">#springMessage(
+                                        'common.button.delBankAcc')</a>
+                                    <span class="text-explode">|</span>
+##                                #end
+                                <a class="" href="#" onclick="viewBankAcc('$!{date.id}')">#springMessage(
+                                    'common.button.view')</a>
+                            #end
+                        #end
+                    #end
+                </td>
+            </tr>
+            #end
+        </tbody>
+    </table>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/allocation/bisAccGatherPolicy.list.js?_btv=${resourceVersion}"></script>
+</html>

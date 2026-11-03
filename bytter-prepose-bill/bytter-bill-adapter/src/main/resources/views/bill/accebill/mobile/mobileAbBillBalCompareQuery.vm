@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+#set($basePath=$springMacroRequestContext.contextPath)
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <title>票据余额分析</title>
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css"/>
+    <link rel="stylesheet1" href="${basePath}/static/plugins/frozen/css/base.css" />
+    <link rel="stylesheet" href="${basePath}/static/css/mobile/index.css" media="all"/>
+    <link rel="stylesheet" href="${basePath}/static/mobile/js/calendar/calendar.css" media="all"/>
+    <style>
+        html {
+            font-size: 26.66667vw;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        .bt-chart-container {
+            margin: 0.2rem;
+        }
+
+        .popup-block * {
+            font-size: 0.14rem;
+        }
+
+        .td {
+            font-size: 0.11rem;
+            overflow : hidden;
+        }
+        .sp_head_lines{
+            line-height:0.40rem;
+            height: 0.4rem;
+            font-size: 0.14rem;
+            background: #f3f3f3;
+        }
+        .bt-select-popup {
+            margin-right: 0.2rem;
+        }
+        .bt-popup-container {
+		    position: relative;
+		    background-color: #fff;
+		    max-height: calc(100% - 1.3rem);
+		    overflow-y: auto;
+		    height: calc(100% - 0.5rem);
+		}
+
+		.bt-card-item.active {
+		  	color: #2988FF;
+		  	background-color: #E9F1FF
+		 }
+
+		 .bt-check-over{
+		 	display: none;
+		 }
+
+    </style>
+</head>
+<body>
+<ul class="ui-tab-content" style="width:100%">
+    <li class="bt-show">
+        <form action="">
+            <div class="ui-row-flex">
+                <!-- 搜索框 -->
+                <div class="ui-col ui-col">
+                    <div class="ui-searchbar-wrap ui-border-b">
+                        <div class="ui-searchbar ui-border-radius" id="corpDiv">
+                            <i class="ui-icon-search"></i>
+                            <div class="ui-searchbar-text">请选择单位</div>
+                            <div class="ui-searchbar-input" >
+                                <input value="" id="corpId" name="corpId" type="text" placeholder="请选择单位"
+                                       autocapitalize="off"  readonly="readonly">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ui-btn-wrap">
+                <div class="bt-select-popup" style="margin-right: 0.1rem;">
+                    <input type="text" value="票据类型" id="btn1" readonly="readonly" style="width:0.7rem;">
+                </div>
+                <div class="bt-select-popup" style="margin-right: 0.1rem;">
+                    <input type="text" value="统计月份" id="btn2" readonly="readonly" style="width:0.65rem;">
+                </div>
+                <div class="bt-select-popup" >
+                    <input type="text" value="#springMessage('statisticsReport.IntegratedQuery.comparedCycle')"
+                           id="btn3" readonly="readonly" style="width:0.6rem;">
+                </div>
+
+                <div class="popup-block">
+                  <div class="ui-actionsheet" id="actionsheet1" style="height:calc(100%-  2.25rem);top:1rem;" data-link="btn1">
+		                    <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1rem;">
+		                        <section class="bt-popup-container" id="m-t-vt">
+		                           <div class="bt-card-header">
+						           	票据类型
+						           <input type="hidden" id="billFlag" value="">
+						          </div>
+						          <div class="bt-card-body">
+						    		<div class="ui-row-flex ui-whitespace">
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item active" data-value="">全部</div>
+	                                     </div>
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="11">商票</div>
+	                                     </div>
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="10">银票</div>
+	                                     </div>
+                                    </div>
+                                  </div>
+		                        </section>
+		                         <div class="bt-popup-bottom">
+						          <button type="button" id="typeRest" class="bt-popup-reset" style=" border:1px solid rgba(212,212,212,1);">重置</button>
+						          <button type="button" class="bt-popup-submit" id="submitTypeValue" style="margin-left:0.15rem;">确定</button>
+						        </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="popup-block">
+                    <div class="ui-actionsheet" id="actionsheet2" style="top:1.3rem;" data-link="btn2" >
+
+                        <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1.0rem;" id="monthContainer">
+
+                    	</div>
+
+                        <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1.3rem;height:1rem;display: none;">
+                            <div style="background: #fff;">
+                                <div class="ui-form-item ">
+                                    <div class="ui-select-group" style="margin-left:1.1rem;height: 0.3rem">
+                                        <input type="month" class="form-control" id="monthDate" name="monthDate"
+                                               value="" max=""/>
+                                    </div>
+                                </div>
+                                <div class="bt-popup-bottom" style="text-align:center;" >
+                                    <button type="button" class="bt-popup-submit" id="monthDateSubmit" style="color: #ffffff;">确定</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="popup-block">
+                    <div class="ui-actionsheet" id="actionsheet3" style="height:calc(100%-2.25rem);top:2.25rem;"  data-link="btn3">
+                        <div class="ui-actionsheet-cnt am-actionsheet-down" style="top: 1rem;">
+                            <section class="bt-popup-container" id="m-t-ct">
+		                           <div class="bt-card-header">
+						           	对比周期
+						           	<div style="display: none;">
+						           	</div>
+						          </div>
+						          <div class="bt-card-body">
+						    		<div class="ui-row-flex ui-whitespace">
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="1">较上月末
+	                                           <input type="checkbox" class="bt-check-over" name="comparedCycle" value="1" data-value="1"/>
+	                                         </div>
+	                                     </div>
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="2">较上季度
+	                                         	<input type="checkbox" class="bt-check-over" name="comparedCycle" value="2" data-value="2"/>
+	                                         </div>
+	                                     </div>
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="3">较三个月前
+	                                         	<input type="checkbox" class="bt-check-over" name="comparedCycle" value="3" data-value="3"/>
+	                                         </div>
+	                                     </div>
+                                    </div>
+						    		<div class="ui-row-flex ui-whitespace">
+	                                    <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="4">较上年同期
+	                                         	<input type="checkbox" class="bt-check-over" name="comparedCycle" value="4" data-value="4"/>
+	                                         </div>
+	                                     </div>
+	                                     <div class="ui-col ui-col">
+	                                         <div class="bt-card-item" data-value="5">较年初
+	                                         	<input type="checkbox" class="bt-check-over" name="comparedCycle" value="5" data-value="5"/>
+	                                         </div>
+	                                     </div>
+	                                     <div class="ui-col ui-col">
+
+	                                     </div>
+                                    </div>
+                                  </div>
+		                        </section>
+		                         <div class="bt-popup-bottom">
+						          <button type="button" id="comparedRest" class="bt-popup-reset" style="border:1px solid rgba(212,212,212,1);">重置</button>
+						          <button type="button" class="bt-popup-submit" id="submitComparedValue" >确定</button>
+						        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bt-chart-title ui-border-b" style="background: #ffffff;margin-bottom: 0.15rem;">
+                <div class="fl bt-chart-title-left" id="dataList" style="margin-left: 0.15rem;font-size: 0.14rem;">
+                    数据列表
+                </div>
+                <div class="fl bt-chart-title-left" id="dataChart"
+                     style="margin-left: 0.15rem;font-size: 0.14rem;display:none;">可视化图表
+                </div>
+                <div class="sp-tab-switch fr bt-chart-title-right">
+                        <span data-name="map" class="sp-tab-map ">
+                        </span>
+                    &nbsp; &nbsp;
+                    <span style="margin-right: 0.19rem;" data-name="list" class="sp-tab-list active">
+                        </span>
+                </div>
+            </div>
+            <div class="sp-pack" style="width:100%; background: #ffffff;height:calc(100vh - 1.85rem);overflow-y:auto;" id="balDiv">
+
+            </div>
+                <div class="sp-pack" style="width:100%; background: #ffffff;height:calc(100vh - 1.85rem);overflow-y:auto;display: none" id="balChartDiv">
+                </div>
+        </form>
+    </li>
+    <li>余额分析</li>
+</ul>
+</div>
+</body>
+<script src="${basePath}/static/modules/bill/accebill/lib/f2.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bill/accebill/lib/zepto.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/calendar/calendar.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/popup.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/plugins/web-view/webView.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/webViewScriptBridage.js?_btv=${resourceVersion}"></script>
+<script>
+
+    var seachType = ""
+    window.getBalCompareApp = (data)=>{
+        console.log(seachType+"seachType")
+
+        postBalData(data)
+        postBalChartData(data)
+    }
+
+    window.getBalCompareApSeach = (data)=>{
+        seachType = "seach"
+        console.log("搜索")
+        searchActionCallback(JSON.parse(data))
+    }
+    (function (doc, win) {
+    	F2.track(false);
+
+        $('.ui-tab-nav > li').on('click', function () {
+            $(this).addClass('current').siblings('li').removeClass('current');
+            $('.ui-tab-content>li').removeClass('bt-show');
+            $('.ui-tab-content li').eq($(this).index()).addClass('bt-show');
+        });
+
+        //搜索框点击
+        $('.ui-searchbar').on('click', function () {
+            $('.ui-searchbar-wrap').addClass('focus');
+            $('.ui-searchbar-input input').focus();
+        });
+        $('.ui-searchbar-cancel').on('click', function () {
+            $('.ui-searchbar-wrap').removeClass('focus');
+        });
+
+        var month = bt.calendar.init({
+            elem:'#monthContainer', //组件容器
+            value:$('#monthDate').val(),//默认值
+            min:'1980', // 最小值，默认为2000
+            max:'2030', // 最大值，默认为当前年
+            change:function(value){ //点击提交按钮回调方法
+            	$('#monthDate').val(value);
+            	initBalData();
+            }
+        })
+
+
+        //图标tab切换 列表和图表切换
+        $('.sp-tab-switch > span').on('click', function () {
+            var name = $(this).data('name');
+            $(this).addClass('active').siblings('span').removeClass('active');
+            if (name == 'list') {
+                //列表显示
+                $("#dataList").show();
+                $("#balDiv").show();
+                //图表隐藏
+                $("#dataChart").hide();
+                $("#balChartDiv").hide();
+            } else {
+                //列表隐藏
+                $("#dataList").hide();
+                $("#balDiv").hide();
+                //图表显示
+                $("#dataChart").show();
+                $("#balChartDiv").show();
+            }
+            //加载数据
+            initBalData();
+        });
+
+        //弹框选择显示和隐藏
+        function showPopup($this, id) {
+            if ( $this.parent().hasClass('active')) {
+                hidePopup($this);
+                return
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+            $this.parent().addClass('active');
+            $(id).addClass('show');
+        }
+        //票据类型
+        $("#btn1").click(function () {
+            showPopup($(this), '#actionsheet1');
+        });
+        //统计月份
+        $("#btn2").click(function () {
+            showPopup($(this), '#actionsheet2');
+        });
+        //对比周期
+        $("#btn3").click(function () {
+            showPopup($(this), '#actionsheet3');
+        });
+        //单位选择
+        $("#corpDiv").click(function () {
+            openCorpSelectionPage();
+        });
+        //统计月份 选项确定
+        $("#monthDateSubmit").click(function () {
+            hidePopup($('#btn2'));
+            initBalData();
+        });
+        //对比周期 选项确定
+        $("#submitValue").click(function () {
+            hidePopup($('#btn3'));
+            initBalData();
+        });
+        //对比周期 选项清空
+        $("#clearValue").click(function () {
+            //hidePopup($('#btn3'));
+            $("input[name='comparedCycle']").prop("checked",false);
+            //initBalData();
+        });
+
+        //查询条件下拉框点选项或者点确定时
+        $('.popup-block').on('click', '.bt-popup-item', function () {
+            var linkId = $(this).parents('.ui-actionsheet').data('link');
+            hidePopup($('#' + linkId));
+            $('.bt-popup-item').removeClass('active');//清除原来选中的样式
+            $(this).addClass('active');//添加文字选中样式
+            if(linkId=="btn1"){
+                $('#' + linkId).val($(this).text());
+                if($(this).text()=="全部"){
+                    $('#billFlag').val("");
+                }else if($(this).text()=="商票"){
+                    $('#billFlag').val("11");
+                }else if($(this).text()=="银票"){
+                    $('#billFlag').val("10");
+                }
+            }
+            initBalData();
+        })
+
+        //弹框隐藏
+        function hidePopup($this) {
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+            $this.parent().removeClass('active');
+        }
+
+        // 用于记录页面的查询参数
+        const searchParams = {
+            corpIds: [],
+            corpNames: [],
+            datePickData: {
+                startDate: null,
+                endDate: null,
+            }
+        };
+
+        //单位搜索组件
+        function openCorpSelectionPage() {
+            setTimeout(function(){
+            var data = BTAppBridge.openCorpSelectionPage && BTAppBridge.openCorpSelectionPage('searchActionCallback',{
+            		resource: "${balcompareReson}"
+                });
+            uni.postMessage({
+                data:data
+            })
+            },100);
+
+        }
+
+        /**
+         * 搜索回调方法
+         * @param data
+         */
+        window.searchActionCallback = function (data) {
+            // 根据data参数，查询数据
+            if (data.corpNames && data.corpNames.length > 0) {
+               /* let msg = "选择的成员单位名称：" + JSON.stringify(data.corpNames);
+                msg = msg + ", 成员单位ID：" + JSON.stringify(data.corpIds)*/
+                searchParams.corpNames = data.corpNames;
+                $("#corpId").val(data.corpNames);
+            }else{
+                $("#corpId").val('');
+            }
+            if (data.corpIds) {
+                searchParams.corpIds = data.corpIds;
+            }
+            initBalData();
+        }
+
+        //初始化列表或图表数据
+        function initBalData(){
+
+            //判断列表div是否隐藏
+            if($("#balDiv").css("display")!="none"){
+                initBal();
+            }else{
+                initBalChart();
+            }
+        }
+
+        //票据类型选中
+        $('#m-t-vt >div .bt-card-item').on('click',function(){
+       		$('#m-t-vt >div .bt-card-item').removeClass('active');
+          	$(this).addClass('active');
+         });
+
+        //对比周期选中
+        $('#m-t-ct >div .bt-card-item').on('click',function(){
+        	if($(this).hasClass('active')){
+        		$(this).children("input[name='comparedCycle']").prop("checked",false);
+        	 	$(this).removeClass('active');
+        	}else{
+        		$(this).children("input[name='comparedCycle']").prop("checked",true);
+           	   	$(this).addClass('active');
+        	}
+         });
+
+         $("#typeRest").click(function () {
+         	$('#m-t-vt >div .bt-card-item').removeClass('active');
+         	$('#billFlag').val('');
+         });
+
+         $("#comparedRest").click(function () {
+         	$('#m-t-ct >div .bt-card-item').removeClass('active');
+	       	$("input[name='comparedCycle']").prop("checked",false);
+			$("input[name='comparedCycle']").val('');
+         });
+
+         $("#submitTypeValue").click(function () {
+    	   	 $('.ui-actionsheet').removeClass('show');
+    		 $('.bt-select-popup').removeClass('active');
+    		 $('#billFlag').val($('#m-t-vt >div .bt-card-item.active').data('value'));
+    		 initBalData();
+         });
+
+         $("#submitComparedValue").click(function () {
+    	   	 $('.ui-actionsheet').removeClass('show');
+    		 $('.bt-select-popup').removeClass('active');
+    		 initBalData();
+         });
+
+        /**
+         * 初始化日期
+         */
+        function initDate() {
+            //得到当前时间
+            var date = new Date();
+            //得到当前年份
+            var year = date.getFullYear();
+            //得到当前月份
+            //注：
+            //  1：js中获取Date中的month时，会比当前月份少一个月，所以这里需要先加一
+            //  2: 判断当前月份是否小于10，如果小于，那么就在月份的前面加一个 '0' ， 如果大于，就显示当前月份
+            var month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1);
+            //得到当前日子（多少号）
+            var day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+            $('#monthDate').val(year + "-" + month);
+            //$('#startDate').val(year+"-01-01");
+            //设置input标签的max属性
+            $("#monthDate").attr("max", year + "-" + month);
+        }
+
+        //获取日期的
+        function getDate(){
+            var date = new Date();
+            var year = date.getFullYear()
+            var month = date.getMonth()+1;
+            var toDay = date.getDate();
+            var setDate;
+            var setYear;
+            var setMonth;
+            if($('#monthDate').val()==null || $('#monthDate').val()==""){
+                setYear = year;
+                setMonth = month;
+            }else{
+                setDate = $('#monthDate').val().split("-");
+                setYear = setDate[0];
+                setMonth = setDate[1];
+            }
+            var toDate;
+            //当前月份，设值为当天
+            if(setYear == year && setMonth == month){
+                if (month >= 1 && month <= 9) {
+                    month = "0" + month;
+                }
+                if (toDay >= 1 && toDay <= 9) {
+                    toDay = "0" + toDay;
+                }
+                toDate = year +"-"+ month + "-" + toDay;
+                $('#monthDate').val(year + "-" + month);
+            }else{
+                //选择月份，设值最后一天
+                var day = new Date(setYear,setMonth,0);
+                var endDay = day.getDate();
+                toDate = setYear +"-"+ setMonth + "-" + endDay;
+            }
+            return toDate;
+        }
+
+
+
+        //初始化列表数据
+        function initBal() {
+            var billFlag,statisticsMonth,comparedCycle;
+            billFlag= $('#billFlag').val();
+            statisticsMonth=getDate();
+            $("input[name='comparedCycle']:checked").each(function(i) {
+                if(comparedCycle == ''){
+                    comparedCycle=$(this).val();
+                }else{
+                    comparedCycle+=","+$(this).val();
+                }
+            })
+            //通过Ajax获取数据
+            var url = "/bill/accebill/balCompare/getBalCompareList";
+
+//             $.ajax({
+//             	 url:url,//请求地址
+//                  type: "POST",
+//                  data:'comparedCycle='+comparedCycle+'&billFlag='+billFlag+'&corpId='+searchParams.corpIds+"&statisticsMonth="+statisticsMonth,
+//                  dataType: "json",
+//                  success: function(result) {
+//                 	  setBalDataDiv(result);
+//                  }
+//             })
+
+            setTimeout(function () {
+                var data = BTAppBridge.post(url,{"comparedCycle":comparedCycle,"billFlag":billFlag,"corpId":searchParams.corpIds,"statisticsMonth":statisticsMonth},'postBalData');
+             	uni.postMessage({
+                    data:data
+                })
+                },100);
+        	postBalData = function (result) {
+
+	            //var data = JSON.parse(result.series);
+	            setBalDataDiv(result);
+	        }
+    }
+
+        //设置列表数据
+        function setBalDataDiv(data) {
+            if(seachType && seachType != 'seach'){
+                return
+            }
+            //对比周期（多选）
+            var comparedCycle = '';
+            $("input[name='comparedCycle']:checked").each(function(i) {
+                if(comparedCycle == ''){
+                    comparedCycle=$(this).val();
+                }else{
+                    comparedCycle+=","+$(this).val();
+                }
+            })
+            var balDivHtml ='';
+            var monthDate = $('#monthDate').val().split("-");
+            var setDate = monthDate[0]+'.'+monthDate[1];
+            for(var i=0;i<data.length;i++){
+                //单位名称
+                balDivHtml += '<div class="fl bt-chart-title-left" id=""style="margin-left: 0.15rem;font-size:0.14rem;color:#333333">';
+                balDivHtml += data[i].corpName;
+                balDivHtml += '</div><div  id=""style="margin-right:0.2rem;font-size:0.12rem;color:#999999;float:right">单位:万元</div>';
+                balDivHtml += '<div class="fl bt-chart-title-left" id=""style="margin-right: 0.6rem;font-size:0.12rem;color:#999999;float:right">'+setDate+'</div>';
+                //单位表格数据
+                balDivHtml += '<table style="font-size:0.14rem;border-collapse: collapse;border-spacing: 0; width: 92%; text-align: center;margin-left: 0.15rem;text-align: center;margin-right: 0.15rem;">';
+                //列表头标题
+                balDivHtml += '<thead>';
+                balDivHtml += '<tr style="width:100%; background: #FFFBDF;color:#333333;height: 0.35rem">';
+                //  对比周期
+                balDivHtml += '<th style="width:0.92rem;margin-left: 0.15rem;text-align:left">#springMessage('statisticsReport.IntegratedQuery.comparedCycle')</th>';
+                //  余额
+                balDivHtml += '<th style="width:1.15rem;text-align:right">#springMessage('statisticsReport.IntegratedQuery.balance')</th>';
+                //  差额
+                balDivHtml += '<th style="width:1.15rem;text-align:right">#springMessage('statisticsReport.IntegratedQuery.differenceBal')</th>';
+                //  比例
+                balDivHtml += '<th style="width:0.7rem;text-align:right">#springMessage('statisticsReport.IntegratedQuery.proportion')</th>';
+                balDivHtml += '</tr>';
+                balDivHtml += '</thead>';
+                //  列表内容
+                balDivHtml += '<tbody style="background: #fff;color:#666666;font-size:0.11rem;">';
+                //      较上月末
+                if(comparedCycle.indexOf("1") != -1 || comparedCycle==''){
+                    balDivHtml += '<tr>' +
+                            '<td align="left" class="td">'+'较上月末' +'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befMonthBal)+'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befMonthDifBal)+'</td>'+
+                            '<td align="right" class="td"> <span class="td"';
+                    if(data[i].befMonthProportion>0){
+                        balDivHtml += 'style="color:#F96037;">+';
+                    }else if(data[i].befMonthProportion<0){
+                        balDivHtml += ' style="color:#28DB8D;">';
+                    }else{
+                        balDivHtml += '>';
+                    }
+                    balDivHtml += ''+data[i].befMonthProportion+'%  </span></td>';
+                    balDivHtml += '</tr>';
+                }
+                //      较上季度
+                if(comparedCycle.indexOf("2") != -1 || comparedCycle==''){
+                    balDivHtml += '<tr>' +
+                            '<td align="left" class="td">'+'较上季度' +'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befQuarterBal)+'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befQuarterDifBal)+'</td>'+
+                            '<td align="right" class="td"> <span class="td"';
+                    if(data[i].befQuarterProportion>0){
+                        balDivHtml += ' style="color:#F96037;">+';
+                    }else if(data[i].befQuarterProportion<0){
+                        balDivHtml += ' style="color:#28DB8D;">';
+                    }else{
+                        balDivHtml += '>';
+                    }
+                    balDivHtml += ''+data[i].befQuarterProportion+'% </span></td>';
+                    balDivHtml += '</tr>';
+                }
+                //      较三个月前
+                if(comparedCycle.indexOf("3") != -1 || comparedCycle==''){
+                    balDivHtml += '<tr>' +
+                            '<td align="left" class="td">'+'较三个月前' +'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befThreeMonthBal)+'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befThreeMDifBal)+'</td>'+
+                            '<td align="right" class="td"> <span class="td"';
+                    if(data[i].befThreeMProportion>0){
+                        balDivHtml += 'style="color:#F96037;">+';
+                    }else if(data[i].befThreeMProportion<0){
+                        balDivHtml += ' style="color:#28DB8D;">';
+                    }else{
+                        balDivHtml += '>';
+                    }
+                    balDivHtml += ''+data[i].befThreeMProportion+'%  </span></td>';
+                    balDivHtml += '</tr>';
+                }
+                //      较上年同期
+                if(comparedCycle.indexOf("4") != -1 || comparedCycle==''){
+                    balDivHtml += '<tr>' +
+                            '<td align="left" class="td">'+'较上年同期' +'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befYearBal)+'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].befYearDifBal)+'</td>'+
+                            '<td align="right" class="td"> <span class="td"';
+                    if(data[i].befYearProportion>0){
+                        balDivHtml += 'style="color:#F96037;">+';
+                    }else if(data[i].befYearProportion<0){
+                        balDivHtml += ' style="color:#28DB8D;">';
+                    }else{
+                        balDivHtml += '>';
+                    }
+                    balDivHtml += data[i].befYearProportion+'%</span></td>';
+                    balDivHtml += '</tr>';
+                }
+                //      较年初
+                if(comparedCycle.indexOf("5") != -1 || comparedCycle==''){
+                    balDivHtml += '<tr>' +
+                            '<td align="left" class="td">'+'较年初' +'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].yearEarlyBal)+'</td>'+
+                            '<td align="right" class="td">'+moneyFormat(data[i].yearEarlyDifBal)+'</td>'+
+                            '<td align="right" class="td"> <span class="td"';
+                    if(data[i].yearEarlyProportion>0){
+                        balDivHtml += 'style="color:#F96037;">+';
+                    }else if(data[i].yearEarlyProportion<0){
+                        balDivHtml += ' style="color:#28DB8D;">';
+                    }else{
+                        balDivHtml += '>';
+                    }
+                    balDivHtml += ''+data[i].yearEarlyProportion+'%</span></td>';
+                    balDivHtml += '</tr>';
+                }
+                balDivHtml += '</tbody>';
+                balDivHtml += '</table>';
+                balDivHtml += '<div class="f1" id="" style="text-align:center;font-size:0.14rem;color:#2988FF;margin-bottom: 0.15rem;height: 0.21rem">';
+                balDivHtml += '#springMessage('statisticsReport.IntegratedQuery.balance')&nbsp;&nbsp;'+moneyFormat(data[i].bal);
+                balDivHtml += '</div>';
+            }
+            var balDiv = document.getElementById("balDiv");
+            balDiv.innerHTML = balDivHtml;
+            seachType=""
+        }
+
+        //初始化图表表数据
+        function initBalChart() {
+
+            var billFlag,statisticsMonth,comparedCycle;
+            billFlag= $('#billFlag').val();
+            statisticsMonth=getDate();
+            $("input[name='comparedCycle']:checked").each(function(i) {
+                if(comparedCycle == ''){
+                    comparedCycle=$(this).val();
+                }else{
+                    comparedCycle+=","+$(this).val();
+                }
+            })
+            //通过Ajax获取数据
+            var url = "/bill/accebill/balCompare/getBalCompareList";
+             setTimeout(function () {
+                var data = BTAppBridge.post(url,{"comparedCycle":comparedCycle,"billFlag":billFlag,"corpId":searchParams.corpIds,"statisticsMonth":statisticsMonth},'postBalChartData');
+                uni.postMessage({
+                    data:data
+                })
+                },100);
+        }
+
+        postBalChartData = function (result) {
+            //var data = JSON.parse(result.series);
+            setBalChartDiv(result);
+        }
+
+        //设置图表Div
+        function setBalChartDiv(data) {
+            var balChartDivHtml ='';
+            var monthDate = $('#monthDate').val().split("-");
+            var setDate = monthDate[0]+'.'+monthDate[1];
+            for(var i=0;i<data.length;i++){
+                //单位名称
+                balChartDivHtml += '<div class="fl bt-chart-title-left" id=""style="margin-left: 0.15rem;font-size:0.14rem;color:#333333">';
+                balChartDivHtml += data[i].corpName;
+                balChartDivHtml += '</div><div  id=""style="margin-right:0.2rem;font-size:0.12rem;color:#999999;float:right">单位:万元</div>';
+                balChartDivHtml += '<div class="fl bt-chart-title-left" id=""style="margin-right: 0.6rem;font-size:0.12rem;color:#999999;float:right">'+setDate+'</div>';
+
+                //单位图表数据
+                balChartDivHtml += '<canvas id="container'+data[i].corpId+'" style="width:3.7rem;height:2.6rem;margin-bottom: 0.15rem"></canvas>';
+
+            }
+            var balChartDiv = document.getElementById("balChartDiv");
+            balChartDiv.innerHTML = balChartDivHtml;
+            setBalChartData(data);
+            seachType=""
+        }
+        //设置图表数据 根据查询条件动态加载
+        function setBalChartData(data) {
+            //对比周期（多选）
+            var comparedCycle = '';
+            $("input[name='comparedCycle']:checked").each(function(i) {
+                if(comparedCycle == ''){
+                    comparedCycle=$(this).val();
+                }else{
+                    comparedCycle+=","+$(this).val();
+                }
+            })
+            var params = [];
+            for(var i=0;i<data.length;i++){
+                params = [];
+                //余额
+                var object = {};
+                if(comparedCycle.indexOf("1") != -1 || comparedCycle==''){
+                    object['time'] = '较上月末';
+                    object['value'] = data[i].befMonthBal;
+                    object['type'] = '余额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("2") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较上季度末';
+                    object['value'] = data[i].befQuarterBal;
+                    object['type'] = '余额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("3") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较三个月前';
+                    object['value'] = data[i].befThreeMonthBal;
+                    object['type'] = '余额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("4") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较上年同期';
+                    object['value'] = data[i].befYearBal;
+                    object['type'] = '余额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("5") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较年初';
+                    object['value'] = data[i].yearEarlyBal;
+                    object['type'] = '余额';
+                    params.push(object);
+                }
+                //差额
+                if(comparedCycle.indexOf("1") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较上月末';
+                    object['value'] = data[i].befMonthDifBal;
+                    object['type'] = '差额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("2") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较上季度末';
+                    object['value'] = data[i].befQuarterDifBal;
+                    object['type'] = '差额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("3") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较三个月前';
+                    object['value'] = data[i].befThreeMDifBal;
+                    object['type'] = '差额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("4") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较上年同期';
+                    object['value'] = data[i].befYearDifBal;
+                    object['type'] = '差额';
+                    params.push(object);
+                }
+                if(comparedCycle.indexOf("5") != -1 || comparedCycle==''){
+                    object = {};
+                    object['time'] = '较年初';
+                    object['value'] = data[i].yearEarlyDifBal;
+                    object['type'] = '差额';
+                    params.push(object);
+                }
+                var datajson = JSON.stringify(params);//JSON.stringify() 方法用于将 JavaScript 值转换为 JSON 字符串。
+                var id = 'container'+data[i].corpId;
+                //图表对象
+                const chart = new F2.Chart({
+                    id: id,
+                    pixelRatio: window.devicePixelRatio
+                });
+                //json转换为对象
+                const dataArray=JSON.parse(datajson);
+                //x轴分类
+                var num = 5;
+                if(comparedCycle!=''){
+                    num=comparedCycle.split(",").length;
+                }
+                //图表写入
+                chart.source(dataArray, {
+                    time: {
+                        type: 'cat',
+                        tickCount: num,
+                        range: [ 0, 1 ]
+                    },
+//                     value: {
+//                         tickCount: 5,
+//                         formatter: function (ivalue) {
+//                             return ivalue + '';
+//                         }
+//                     }
+                });
+                chart.axis('time', {
+                    line: null,
+                    label: function label(text, index, total) {
+                        const textCfg = {};
+                        if (index === 0) {
+                            textCfg.textAlign = 'left';
+                        } else if (index === total - 1) {
+                            textCfg.textAlign = 'right';
+                        }
+                        return textCfg;
+                    }
+                });
+                chart.axis('tem', {
+                    grid: function grid(text) {
+                        if (text === '0%') {
+                            return {
+                                lineDash: null,
+                                lineWidth: 1
+                            };
+                        }
+                    }
+                });
+                chart.legend({
+                    position: 'bottom',
+                    offsetY: -5
+                });
+                chart.line()
+                        .position('time*value')
+                        .color('type')
+                        .shape('smooth');
+
+                chart.render();
+            }
+        }
+        //金额格式化
+        function moneyFormat(val){
+            if(val=='' || val==null){
+                return 0.00;
+            }
+            //金额转换 元 保留2位小数 并每隔3位用逗号分开 1,234.56
+            var str = val.toFixed(2) + '';
+            var intSum = str.substring(0,str.indexOf(".")).replace( /\B(?=(?:\d{3})+$)/g, ',' );//取到整数部分
+            var dot = str.substring(str.length,str.indexOf("."))//取到小数部分搜索
+            var ret = intSum + dot;
+            return ret;
+        }
+
+        initDate();
+        initBal();
+
+    })(document, window);
+</script>
+</html>

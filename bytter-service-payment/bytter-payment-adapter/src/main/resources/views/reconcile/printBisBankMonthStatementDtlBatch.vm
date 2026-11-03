@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<div id="content">
+    #foreach($id in $listId)
+      <div style="page-break-after:always">
+            <img alt="" src="${basePath}/bisBank/bisBankMonthStatementDtl/initImg?id=$!{id}" width="100%" data-id="$!{id}">
+     </div>
+    #end
+</div>
+    #parse("views/common/footer.vm")
+    <script src="${basePath}/static/plugins/Lodop/LodopFuncs1.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form','layer'],function () {
+        window.onload = function () {
+            var layerObj =  parent.layer ?parent.layer:layer;
+            if (isIE()) {
+                if (needCLodop()) {
+                    parent.layer.open({
+                        title: bt.lang('fbs.budget.input.message.info'), //不显示标题栏
+                        closeBtn: 0,
+                        content: bt.lang('common.msg.installPrintSoft')
+                        , btn: [bt.lang('common.print.doInstalling'), 'common.button.cancel']
+                        , yes: function () {
+                            layerObj.closeAll();
+                            window.open('/download/resource?code=402880455c5dcd90015c5dcdda790L00','_self');
+                        }
+                    })
+                } else {
+
+                    var LODOP = getLodop();
+                    LODOP.PRINT_INIT("");
+                    //解决批量打印白屏的问题
+                    // LODOP.ADD_PRINT_HTM(0, 0, "100%", "100%", document.getElementById("content").innerHTML);
+                    var imgs = $("#content").find('div');
+                    bt.each(imgs, function () {
+                        // LODOP.ADD_PRINT_IMAGE(0,0,800,"100%",$(this).html());
+                        LODOP.ADD_PRINT_IMAGE(0,0,800,"100%",'<img src="'+basePath+'/bisBank/bisBankMonthStatementDtl/initImg?id='+$(this).find("img").data("id")+'" width="800">');
+                        LODOP.SET_PRINT_STYLEA(0,"Stretch",2);//(不可变形)扩展缩放模式
+                        LODOP.NewPage();
+                    })
+                    LODOP.SET_PRINT_STYLEA(0,"HtmWaitMilSecs",1000)//设置上面打印项延迟
+                    LODOP.PREVIEW();
+                    layerObj.closeAll();
+                }
+            } else {
+                window.document.body.innerHTML = document.getElementById("content").innerHTML;
+                window.print();
+                layerObj.closeAll();
+            }
+        };
+    });
+
+    //判断是否IE浏览器
+    function isIE() {
+        return !!(window.ActiveXObject || "ActiveXObject" in window);
+    }
+
+</script>
+</body>
+</html>

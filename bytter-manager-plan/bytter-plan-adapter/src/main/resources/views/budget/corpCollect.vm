@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="get">
+    <table class="layui-table" id="table" lay-skin="line" lay-even="">
+        <thead>
+        <tr>
+            <td id="rCode">#springMessage('budget.corpBudget.seach')
+                <div class="layui-input-inline" style="padding-left: 10px">
+                    <input type="text" id="seachShow" name="seachShow" value="$!{seach}"  autocomplete="off" class="layui-input" >
+                    <input type="hidden" id="seach" name="seach" value="$!{seach}"  autocomplete="off" class="layui-input" >
+                </div>
+                <div class="layui-input-inline" id="serialDayDiv" style="padding-left: 20px">
+                    <button class="layui-btn" lay-submit="" lay-filter="seach" type="button">#springMessage('common.button.search')</button>
+                    <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                </div>
+            </td>
+        <tr>
+        </thead>
+    </table>
+</form>
+<form class="layui-form" method="post">
+    <table class="layui-table" id="corp-table" lay-even="">
+       	<thead>
+        <tr>
+            <th class="center">#springMessage('common.ratCorp.corp')</th>
+            <th class="center" colspan="2">
+                <input type="checkbox" name="" lay-skin="primary" lay-filter="checkAllCollectCorp">&nbsp;&nbsp; #springMessage('budget.corpBudget.collect')
+            </th>
+            <th style="width: 200px;text-align: left">#springMessage('old.collect.status')</th>##原汇总状态
+        </tr>
+        </thead>
+        <tbody>
+            #foreach($corp in $!{corpList})
+                #set($corpBudget=$corpBudgetMap.get($corp.id))
+                <tr data-tt-id="$!{corpBudget.corpId}" data-tt-parent-id="$!{corpBudget.corpParentId}">
+                    <td width="40%">
+                        ($!{corpBudget.corpCode})&nbsp;&nbsp;$!{corpBudget.corpName}
+                        #if($!{corpBudget.corpType} == 0)<font color="red">(#springMessage('table.fbsBudget.net'))</font>#end
+                    </td>
+                ## 选择要资金上报的单位
+                #if($!{corpBudget.corpType} == 0 && $!{corpBudget.childCount} > 0)
+                    <td width="10%" class="center" >
+                        <input type="checkbox" class="checkAll" name="checkCollectAll" data-name="checkCollectAll" data-collect-child-id="$!{corpBudget.corpId}" data-collect-parent-id="$!{corpBudget.corpParentId}"
+                               data-childCount="$!{corpBudget.childCount}" lay-skin="primary" lay-filter="checkCollectCorp">&nbsp;&nbsp;#springMessage('common.check.all')
+                    </td>
+                #else
+                    <td width="10%" class="center" >
+                        #if($!{corpBudget.childCount} > 0)
+                            <input type="checkbox" class="checkAll" name="checkCollectAll" data-name="checkCollectAll" data-collect-child-id="$!{corpBudget.corpId}" data-collect-parent-id="$!{corpBudget.corpParentId}"
+                                   data-childCount = "$!{corpBudget.childCount}" lay-skin="primary" lay-filter="checkCollectCorp">&nbsp;&nbsp;#springMessage('common.check.all')
+                        #end
+                    </td>
+                #end
+                <td width="25%" class="center" >
+                    <input type="checkbox" class="check" name="checkCollect" data-name="checkCollect" value="$!{corpBudget.corpId}" lay-skin="primary" lay-filter="checkCollectCorp"
+                           #if($!{corpBudget.collectFlag} == 1)checked="checked"#end data-collect-id="$!{corpBudget.corpId}" data-collect-parent-id="$!{corpBudget.corpParentId}"
+                            data-controlBudget = "$!{corpBudget.reportBudget}">
+                </td>
+                <td>##不汇总
+                    <span>
+                        #if($!{corpBudget.collectFlag} == 1)
+                            &nbsp;&nbsp;<span style="color:red;">#springMessage('common.button.collect')</span>&nbsp;&nbsp;
+                        #else
+                            <span>#springMessage('common.button.notcollect')</span>
+                        #end
+                        #if($!{corpBudget.reportBudget} == 1)
+                            &nbsp;&nbsp;|&nbsp;&nbsp;<a class="" href="#" onclick="initZeroBudget('$!{corpBudget.corpId}')">#springMessage('budget.corpCollect.initializeZero')</a>##初始化零预算
+                        #end
+                </td>
+            </tr>
+        #end
+        </tbody>
+    </table>
+
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/budget/corpCollect.js?_btv=${resourceVersion}"></script>
+</html>

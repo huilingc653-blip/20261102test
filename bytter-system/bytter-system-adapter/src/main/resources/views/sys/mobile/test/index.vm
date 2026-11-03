@@ -1,0 +1,302 @@
+#set($basePath=$springMacroRequestContext.contextPath)
+#set($resourceVersion=$resourceVersion.get())
+<html>
+<head>
+    <title>测试APP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="${basePath}/static/plugins/layui/css/layui.css">
+    <script>
+        var basePath = "${basePath}";
+    </script>
+
+</head>
+<body>
+
+<div>
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+        <legend>测试APP消息推送</legend>
+    </fieldset>
+
+    <form class="layui-form" action="#" onsubmit="return false;">
+        <table class="layui-table">
+            <tr>
+                <td class="textRight" width="150">
+                    客户前缀
+                </td>
+                <td>
+                    <div>
+                        ${customerPrefix}
+                    </div>
+                </td>
+                <td>
+                    <div style="color:gray;">
+                        客户前缀用于区分不同的客户，在推送消息时，系统根据这个前缀把消息推送给对应的客户。
+                    </div>
+                </td>
+
+            </tr>
+
+            <tr>
+                <td class="textRight" width="150">推送账号</td>
+                <td colspan="2">
+                    <input type="text"
+                           id="account"
+                           lay-verify="title"
+                           autocomplete="off"
+                           class="layui-input"
+                           placeholder="推送账号"
+                           value=""/>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="textRight">推送消息内容</td>
+                <td colspan="2">
+                    <textarea id="messageBody" maxlength="300" class="layui-textarea" placeholder="推送消息内容"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">推送结果</td>
+                <td colspan="3" id="pushingResultElement"></td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: center;">
+                    <button class="layui-btn" id="pushNotificationElement">推送</button>
+                    <button type="reset" id="resetElement" class="layui-btn layui-btn-primary">重置</button>
+                </td>
+            </tr>
+        </table>
+
+    </form>
+
+</div>
+
+<br>
+
+<div>
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+        <legend>测试APP人脸识别</legend>
+    </fieldset>
+
+    <table class="layui-table">
+        <tr>
+            <td class="textRight" width="150">图片1</td>
+            <td>
+            ##                <input width="300" height="300" type="image" id="image1Element" src="${basePath}/static/images/testFace/testFace1.jpg" />
+                <input onchange="uploadFileChange('uploadImageElement_1','showImageElement_1')"
+                       type="file" id="uploadImageElement_1"/>
+                <input width="200" height="200" style="display: none;" type="image" id="showImageElement_1"/>
+            </td>
+            <td class="textRight" width="150">图片2</td>
+            <td>
+            ##                <input width="300" height="300" type="image" id="image2Element" src="${basePath}/static/images/testFace/testFace2.jpg" />
+                <input onchange="uploadFileChange('uploadImageElement_2','showImageElement_2')"
+                       type="file" id="uploadImageElement_2"/>
+                <input width="200" height="200" style="display: none;" type="image" id="showImageElement_2"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="textRight" width="150">匹配结果</td>
+            <td colspan="3" id="matchResultElement">
+
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" id="matchElement">人脸匹配</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<script type="text/javascript" src="${basePath}/static/plugins/layui/layui.js" charset="utf-8"></script>
+<script type="text/javascript" src="${basePath}/static/plugins/jquery/jquery.min.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript" src="${basePath}/static/plugins/store/store.legacy.min.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript" src="${basePath}/static/plugins/bytter/oprate.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script>
+
+    var $ = bt.jquery, layer = bt.layer;
+
+    $(function () {
+
+        $("#pushNotificationElement").click(function () {
+            pushNotification();
+        });
+
+        $("#resetElement").click(function () {
+            clearPushingResult();
+        });
+
+
+        $("#matchElement").click(function () {
+            matchFaceImg();
+        });
+
+    });
+
+
+    /**************************************  消息推送测试 start ******************************************************/
+
+    function pushNotification() {
+
+        var parameter = {};
+        var account = $("#account").val();
+        if (account.length == 0) {
+            //showMessage("请输入推送账号");
+            layer.msg('请输入推送账号', {icon: 2});
+            $("#account").focus();
+            return;
+        }
+        var messageBody = $("#messageBody").val();
+        if (messageBody.length === 0) {
+            layer.msg('请输入要推送的消息', {icon: 2});
+            $("#messageBody").focus();
+            return;
+        }
+        clearPushingResult();
+        var layLoading = layer.msg('消息推送中...', {
+            icon: 16
+            , shade: 0.01
+        });
+
+        parameter.account = account;
+        parameter.body = messageBody;
+
+
+        $.post(basePath + '/app/test/api/testNotificationPushing', parameter, function (reslut) {
+            layer.close(layLoading);
+            if (reslut) {
+                var html = "";
+                html += "状态码：" + reslut.state + "<br>";
+                html += "结果描述：" + reslut.message + "<br>";
+                $("#pushingResultElement").html(html);
+            }
+        }, 'JSON', function (jqXHR, status, error) {
+            layer.close(layLoading);
+            console.log(jqXHR);
+            console.log(status);
+            console.log(error);
+            alert("异常：" + error);
+        });
+    }
+
+    function clearPushingResult() {
+        $("#pushingResultElement").html("");
+    }
+
+    /**************************************  消息推送测试 end ******************************************************/
+
+
+
+
+    /**************************************** 人脸识别测试 start  **************************************/
+
+    /**
+     * input组件上传文件预览
+     */
+    function uploadFileChange(uploadFileElementId, showImgElementId) {
+        var file = $("#" + uploadFileElementId)[0].files[0];
+        if (!/image\/\w+/.test(file.type)) {
+            alert("请确保文件为图像类型");
+            document.getElementById(uploadFileElementId).value = "";
+            return false;
+        }
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (e) {
+            $("#" + showImgElementId).attr("src", this.result);
+            $("#" + showImgElementId).show();
+        };
+    }
+
+    /**
+     * 人脸匹配
+     */
+    function matchFaceImg() {
+
+        var imageFile1 = $("#uploadImageElement_1")[0].files[0];
+        var imageFile2 = $("#uploadImageElement_2")[0].files[0];
+
+        if (!imageFile1 || !imageFile2) {
+            showMessage("请上传图片");
+            return;
+        }
+
+        clearFaceMatchResult();
+
+        getImageBase64(imageFile1, function (imageFile1Base64) {
+            //console.log('base64:'+base64);
+            getImageBase64(imageFile2, function (imageFile2Base64) {
+
+                var layLoading = layer.msg('匹配中...', {
+                    icon: 16
+                    , shade: 0.01
+                });
+
+                var parameter = {};
+
+                parameter.faceImage1 = imageFile1Base64;
+                parameter.faceImage2 = imageFile2Base64;
+
+                $.post(basePath + '/app/test/api/testFaceDetection', parameter, function (reslut) {
+                    layer.close(layLoading);
+                    if (reslut) {
+                        var html = "";
+                        html += "状态码：" + reslut.state + "<br>";
+                        html += "结果描述：" + reslut.message + "<br>";
+                        $("#matchResultElement").html(html);
+                    }
+                }, 'JSON', function (jqXHR, status, error) {
+                    layer.close(layLoading);
+                    console.log(jqXHR);
+                    console.log(status);
+                    console.log(error);
+                    alert("异常：" + error);
+                });
+
+            });
+        });
+
+    }
+
+    function clearFaceMatchResult() {
+        $("#matchResultElement").html("");
+    }
+
+
+    /**
+     * 将图片文件转化成base64编码格式
+     * @param imageFile
+     * @param callback
+     * @returns {boolean}
+     */
+    function getImageBase64(imageFile, callback) {
+        if (!/image\/\w+/.test(imageFile.type)) {
+            alert("请确保文件为图像类型");
+            return false;
+        }
+        var imgUrlBase64;
+        var reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        reader.onload = function (e) {
+            //imgUrlBase64 = this.result;
+            imgUrlBase64 = this.result.split(",")[1];
+            callback && callback(imgUrlBase64);
+        }
+    }
+
+    /**************************************** 人脸识别测试 end  **************************************/
+
+
+    function showMessage(message) {
+        layer.msg(message);
+    }
+
+</script>
+
+</body>
+</html>

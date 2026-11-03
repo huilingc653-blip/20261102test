@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .isShowReferIncome  i {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" method="post" id="inputForm">
+    <table class="layui-table">
+        <input id="status" name="status" type="hidden" value="0">
+        <input id="id" name="id" type="hidden" value="$!{choProductReqPage.id}">
+        <input id="billNo" name="billNo" type="hidden" value="$!{choProductReqPage.billNo}">
+        <input id="corpIdHidden" name="corpIdHidden" type="hidden" value="$!{choProductReqPage.corpId}">
+        <input id="bankTypeidHidden" type="hidden" value="$!{choProductReqPage.bankTypeId}">
+        <input name="curId" id="curId" type="hidden" value="$!{choProductReqPage.curId}">
+        <input name="bankName" id="bankName" type="hidden">
+        <input name="bankAccId" id="bankAccId" type="hidden" value="$!{choProductReqPage.bankAccId}">
+        <input name="createBy" id="createBy" type="hidden" value="$!{choProductReqPage.createBy}">
+        <input name="createDate" id="createDate" type="hidden" value="$!{choProductReqPage.createDate}">
+        <input name="lastProductCode" id="lastProductCode" type="hidden" value="$!{choProductReqPage.productCode}">
+        <input name="buyApplyStatus" id="buyApplyStatus" type="hidden" value="$!{choProductReqPage.buyApplyStatus}">
+        <input name="buyReferIncomeRate" id="buyReferIncomeRate" type="hidden" value="$!{choProductReqPage.buyReferIncomeRate}">
+        <input name="buyEndReferIncomeRate" id="buyEndReferIncomeRate" type="hidden" value="$!{choProductReqPage.buyEndReferIncomeRate}">
+        <input id="rateDetailIds" value="$!{rateDetailIds}" type="hidden"/>
+        <input id="productId" value="$!{choProductReqPage.productId}" type="hidden"/>
+        <tbody>
+        <tr>
+            ##单位名称
+            <td class="textRight" width="14%">#springMessage("table.choBankFinance.corpId")</td>
+            <td width="36%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-callback="callbackCorp"
+                         data-biz-name="corpId"
+                         data-resource="cho:productReq:choProductReq:apply"
+                         data-scope="all"
+                         data-required="true"
+                        #if($!{choProductReqPage.buyApplyStatus})
+                         data-disabled="true"
+                        #end
+                         data-defaultvalue="$!{choProductReqPage.corpId}">
+                    </div>
+                </div>
+            </td>
+            ##理财类型
+            <td class="textRight">#springMessage("table.choProduct.financialType")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="financial.type" data-callback="financialTypeCallback" data-defaultvalue="$!{choProductReqPage.financialType}"
+                     data-required="true" data-name="financialType" data-biz-name="financialType" id="financialType"  ></div>
+            </td>
+
+        </tr>
+        <tr>
+            ##产品类型
+            <td class="textRight">#springMessage("table.choProduct.productType")1</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="cho.productType" data-defaultvalue="$!{choProductReqPage.productType}" data-required="true"
+                     data-name="productType" data-biz-name="productType" id="productType" ></div>
+            </td>
+            ##产品代码
+            <td class="textRight">#springMessage("table.choProduct.productCode")</td>
+            <td>
+                #*<input type="type" lay-verify="required" name="productCode" id="productCode" class="layui-input productCode"
+                       data-clear="false" data-biz-name="productCode" value="$!{choProductReqPage.productCode}" data-callback="choProductTypeButCallback">*#
+                <div class="layui-input-inline">
+                    <input type="text" id="productCode" name="productCode" value="$!{choProductReqPage.productCode}" lay-verify="required" autocomplete="off" class="layui-input" placeholder="#springMessage('table.choProduct.productCode')">
+                    <div class="bt-div-search">
+                        <button class="bt-biz-choProductType" id="choProductTypeBut" type="button"  data-callback="bt.choProductTypeButCallback" data-beforeClick="bt.choProductTypeBeforeClick" title="#springMessage('common.button.select')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##产品名称
+            <td class="textRight">#springMessage("table.choProduct.productName")</td>
+            <td>
+                <input type="text" lay-verify="required" name="productName" id="productName" class="layui-input" data-biz-name="productName" value="$!{choProductReqPage.productName}" >
+            </td>
+            ##银行类别
+            <td class="textRight" width="14%">#springMessage("table.choProduct.bankTypeId")</td>
+            <td width="36%">
+                <input name="bankTypeDef" id="bankTypeDef" type="hidden" value="$!{choProductReqPage.bankTypeId}">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/json" data-required="true"
+                     data-name ="bankTypeId" data-biz-name ="bankTypeId"  data-valueField="id" data-textField="typeName"
+                    #if($!{choProductReqPage.buyApplyStatus})
+                     data-disabled="true"
+                    #end
+                     data-defaultvalue="$!{choProductReqPage.bankTypeId}" data-callback="bankTypeIdCallback"></div>
+            </td>
+        </tr>
+        <tr>
+            ##购买银行
+            <td class="textRight">#springMessage("table.choProductReq.bankName")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="bankName" name="bankName" lay-verify="required"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.bankCode')" value="$!{choProductReqPage.bankName}"
+                        #if($!{choProductReqPage.buyApplyStatus}) readonly="readonly" #end>
+                    <input name="bankInfoId" id="bankInfoId" type="hidden" value="$!{choProductReqPage.bankInfoId}">
+                    <div class="bt-div-search">
+                        <button class="bt-biz-bankInfo" type="button"  data-callback="callbackBuyBank" data-beforeClick="bt.bankInfoBeforeClick" title="#springMessage('common.button.bank')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+            ##币别
+            <td class="textRight">#springMessage("table.choProduct.curId")</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-required="true"
+                     data-name ="curId" data-biz-name ="curId" name="curId" id="curId" data-valueField="id" data-textField="curName"
+                    #if($!{choProductReqPage.buyApplyStatus})
+                     data-disabled="true"
+                    #end
+                     data-defaultvalue="$!{choProductReqPage.curId}" data-callback="curIdCallback"></div>
+            </td>
+        </tr>
+        <tr>
+            ##购买金额(小写)
+            <td class="textRight">#springMessage("table.choProductReq.buyMoneyLow")</td>
+            <td>
+                <input type="text" id="buyMoney" name="buyMoney" style="text-align:right" lay-verify="required" data-name="buyMoney" data-biz-name="buyMoney" data-toUp="buyMoneyUp"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.nisBillhead.payMoney.lower')"
+                       value="$!{choProductReqPage.buyMoney}" data-callback="callbackBuyMoney">
+            </td>
+            ##理财账号
+            <td class="textRight">#springMessage("table.choProductReq.bankAcc")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="bankAcc" name="bankAcc" data-biz-name="bankAcc"
+                           value="$!{choProductReqPage.bankAcc}"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.choBankFinance.currentAcc')">
+                    <table id="bankAccTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.choBankFinance.acc')</th>
+                            <th>#springMessage('table.choBankFinance.accName')</th>
+                            <th>#springMessage('table.choBankFinance.accBank')</th>
+                            <th>#springMessage('table.choBankFinance.curId')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##购买金额(大写)
+            <td class="textRight">#springMessage("table.choProductReq.buyMoneyUpper")</td>
+            <td>
+                <div id="buyMoneyUp"></div>
+            </td>
+            ##收益条款
+            <td class="textRight">#springMessage("table.choProductReq.incomeClause")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="choProduct.incomeClause" data-required="true" data-name="incomeClause"
+                     data-biz-name="incomeClause" id="incomeClause" data-defaultvalue="$!{choProductReqPage.incomeClause}" data-callback="incomeClause"></div>
+            </td>
+        </tr>
+        <tr>
+            ##购买日期
+            <td class="textRight">#springMessage("table.choProductReq.buyDate")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="buyDate" name="buyDate" data-name="buyDate" data-biz-name="buyDate" lay-verify="required" value="$!{choProductReqPage.buyDate}"
+                           class="layui-input bt-biz-dateType" data-today="true" data-type="date" data-endid="interestStartDate" data-callback="buyDateCallback">
+                </div>
+            </td>
+            ##期限
+            <td class="textRight">#springMessage("table.choProductReq.dayLimit")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input id="dayLimitYear" name="dayLimitYear" class="layui-input text" readonly="readonly"></input>
+                    <input id="dayLimit" name="dayLimit" hidden="hidden" value="$!{choProductReqPage.dayLimit}"></input>
+                </div>
+                <div class="layui-inline">
+                    <label>#springMessage("table.fbsBudgetReport.year")</label>
+                </div>
+                <div class="layui-input-inline">
+                    <input id="dayLimitMonth" name="dayLimitMonth" class="layui-input text" readonly="readonly"></input>
+                </div>
+                <div class="layui-inline">
+                    <label>#springMessage("table.fbsBudgetPeriod.month")</label>
+                </div>
+                <div class="layui-input-inline">
+                    <input id="dayLimitDay" name="dayLimitDay" class="layui-input text" readonly="readonly"></input>
+                </div>
+                <div class="layui-inline">
+                    <label>#springMessage("table.choProductReq.day")</label>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##起息日期
+            <td class="textRight">#springMessage("table.choProductReq.interestStartDate")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="interestStartDate" name="interestStartDate" data-name="interestStartDate" data-biz-name="interestStartDate"
+                           lay-verify="required" class="layui-input bt-biz-dateType" data-today="true" data-type="date"
+                           data-callback="interestStartDateCallback" value="$!{choProductReqPage.interestStartDate}">
+                </div>
+            </td>
+            ##到期日期
+            <td class="textRight">#springMessage("table.choProductReq.deadlineDate")</td>
+            <td>
+            <div class="layui-input-inline">
+                #if($!{choProductReqPage.productType} == '1' || $!{choProductReqPage.productType} == '7')
+                    <input type="text" id="deadlineDate" name="deadlineDate" data-name="deadlineDate" data-biz-name="deadlineDate" class="layui-input bt-biz-dateType" data-type="date" data-callback="deadlineDateCallback" data-min="$!{choProductReqPage.interestStartDate}" value="$!{choProductReqPage.deadlineDate}">
+                #else
+                    <input type="text" id="deadlineDate" name="deadlineDate" data-name="deadlineDate" data-biz-name="deadlineDate" lay-verify="required" class="layui-input bt-biz-dateType" data-type="date"  data-callback="deadlineDateCallback" data-min="$!{choProductReqPage.interestStartDate}" value="$!{choProductReqPage.deadlineDate}">
+                </div>
+                #end
+            </td>
+        </tr>
+        <tr>
+            ##兑付日期
+            <td class="textRight">#springMessage("table.choProductReq.cashDate")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="cashDate" name="cashDate" data-name="cashDate" data-biz-name="cashDate" class="layui-input bt-biz-dateType"
+                           data-type="date" value="$!{choProductReqPage.cashDate}">
+                </div>
+            </td>
+            ##参考收益率
+            <td class="textRight isShowReferIncome referIncomeRate" #if($!{choProductReqPage.financialType} eq '2' || $!{choProductReqPage.productType} eq '7') style="display: none" #end>#springMessage("table.choProductReq.referIncomeRate")</td>
+            <td class="isShowReferIncome referIncomeRate" #if($!{choProductReqPage.financialType} eq '2' || $!{choProductReqPage.productType} eq '7') style="display: none" #end>
+                <div class="layui-inline" style="vertical-align: baseline; ">
+                    <input type="text" data-name="referIncomeRate" data-biz-name="referIncomeRate" class="layui-input bt-biz-rateType" data-decimal="4"
+                           placeholder="#springMessage("table.choProductReq.referIncomeRate")"
+                        #if($!{choProductReqPage.financialType} ne '2'  && $!{choProductReqPage.productType} ne '7') lay-verify="required" #end
+                           data-callback="referIncomeRateCallback" value="$!{choProductReqPage.referIncomeRate}">
+                </div>
+                <span id="addBox" #if(!$!{choProductReqPage.endReferIncomeRate}) style="display: none" #end>
+                    ~
+                    <div class="layui-inline" style="vertical-align: baseline;">
+                        <input type="text" data-name="endReferIncomeRate" data-biz-name="endReferIncomeRate" class="layui-input bt-biz-rateType" data-decimal="4"
+                               placeholder="#springMessage("table.choProductReq.referIncomeRate")"
+                               data-callback="endReferIncomeRateCallback" value="$!{choProductReqPage.endReferIncomeRate}">
+                    </div>
+                </span>
+                <i class="layui-icon" data-key="add" #if($!{choProductReqPage.endReferIncomeRate}) style="display: none" #end>&#xe608;</i>
+                <i class="layui-icon" data-key="remove" #if(!$!{choProductReqPage.endReferIncomeRate}) style="display: none" #end>ဆ</i>
+            </td>
+            <td class="textRight interestRateBasedOnTiers #if($!{choProductReqPage.productType} ne '7') layui-hide #end">#springMessage("cho.button.confirm.rate.detail")</td>
+            <td class="interestRateBasedOnTiers #if($!{choProductReqPage.productType} ne '7') layui-hide #end">
+                <button class="layui-btn interestRateBasedOnTiers #if($!{choProductReqPage.productType} ne '7') layui-hide #end "
+                        type="button" onclick="confirmRateInterest()">#springMessage("cho.button.confirm.rate.detail")</button>
+            </td>
+            ##购买日净值
+            <td class="textRight isShowDaily" #if($!{choProductReqPage.financialType} ne '2') style="display: none" #end>#springMessage("table.choProductReq.dailyNetVal")</td>
+            <td class="isShowDaily" #if($!{choProductReqPage.financialType} ne '2') style="display: none" #end>
+                <input type="text" data-name="dailyNetVal" data-biz-name="dailyNetVal" class="layui-input bt-biz-moneyType" data-decimal="6" value="$!{choProductReqPage.dailyNetVal}"
+                       placeholder="#springMessage("table.choProductReq.dailyNetVal")"
+                    #if($!{choProductReqPage.financialType} eq '2') lay-verify="required" #end
+                       data-callback="dailyNetValCallback">
+            </td>
+        </tr>
+        <tr>
+            ##申购费
+            <td class="textRight">#springMessage("table.choProductReq.subFeeMoney")</td>
+            <td>
+                <input type="text" id="subFeeMoney" name="subFeeMoney" style="text-align:right" data-name="subFeeMoney" data-biz-name="subFeeMoney"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage("table.choProductReq.subFeeMoney")" value="$!{choProductReqPage.subFeeMoney}">
+            </td>
+            ##参考收益
+            <td class="textRight isShowReferIncome"  #if($!{choProductReqPage.financialType} eq '2') style="display: none" #end>#springMessage("table.choProductReq.referIncomeMoney")</td>
+            <td class="isShowReferIncome"  #if($!{choProductReqPage.financialType} eq '2') style="display: none" #end>
+                <div class="layui-inline" style="vertical-align: baseline; ">
+                    <input type="text" id="referIncomeMoney" name="referIncomeMoney" style="text-align:right" data-name="referIncomeMoney" data-biz-name="referIncomeMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType"  value="$!{choProductReqPage.referIncomeMoney}" readonly>
+                </div>
+                <span id="addBox2" #if(!$!{choProductReqPage.endReferIncomeMoney}) style="display: none" #end>
+                    ~
+                    <div class="layui-inline" style="vertical-align: baseline;">
+                        <input type="text" id="endReferIncomeMoney" name="endReferIncomeMoney" style="text-align:right" data-name="endReferIncomeMoney" data-biz-name="endReferIncomeMoney"
+                               autocomplete="off" class="layui-input bt-biz-moneyType"  value="$!{choProductReqPage.endReferIncomeMoney}" readonly>
+                    </div>
+                </span>
+            </td>
+            ##份额
+            <td class="textRight isShowDaily" #if($!{choProductReqPage.financialType} ne '2') style="display: none" #end>#springMessage("table.choProductReq.portion")</td>
+            <td class="isShowDaily" #if($!{choProductReqPage.financialType} ne '2') style="display: none" #end>
+                <input type="text" id="portion" name="portion" style="text-align:right" data-name="portion" data-biz-name="portion" data-decimal="6"
+                       autocomplete="off" class="layui-input bt-biz-moneyType"  value="$!{choProductReqPage.portion}"  readonly>
+            </td>
+        </tr>
+        <tr>
+            ##其他手续费
+            <td class="textRight">#springMessage("table.choProductReq.chargeMoney")</td>
+            <td>
+                <input type="text" id="chargeMoney" name="chargeMoney" style="text-align:right" data-name="chargeMoney" data-biz-name="chargeMoney"
+                       autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{choProductReqPage.chargeMoney}">
+            </td>
+            ##资金来源
+            <td class="textRight">#springMessage("table.choProductReq.capitalSource")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="choProduct.capitalSource"
+                     data-name="capitalSource" data-biz-name="capitalSource" id="capitalSource" data-defaultvalue="$!{choProductReqPage.capitalSource}"></div>
+            </td>
+        </tr>
+        <tr>
+            ##是否可提前回购
+            <td class="textRight">#springMessage("table.choProductReq.isMoveUp")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="isMoveUp"
+                     data-biz-name="isMoveUp" data-defaultvalue="$!{choProductReqPage.isMoveUp}"></div>
+            </td>
+            ##到期是否续存
+            <td class="textRight fType"
+                #if($!{choProductReqPage.financialType} eq '1') style="display: none" #end >#springMessage("table.choProduct.isStore")</td>
+            <td class="fType" #if($!{choProductReqPage.financialType} eq '1') style="display: none" #end>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{choProductReqPage.isStore}" data-name="isStore" data-biz-name="isStore"></div>
+            </td>
+        </tr>
+        <tr >
+            ##付息方式
+            <td class="textRight fType" #if($!{choProductReqPage.financialType} eq '2') style="display: none" #end>#springMessage("table.cmsProvideLoanInfo.cplInterestPayment")</td>
+            <td class="fType" #if($!{choProductReqPage.financialType} eq '2') style="display: none" #end>
+                <div class="bt-biz-dict fType" data-type="select" data-group="financial.payWay" data-defaultvalue="$!{choProductReqPage.payWay}"
+                     data-name="payWay" data-biz-name="payWay"></div>
+            </td>
+            ##收益类型
+            <td class="textRight  fType fType2">#springMessage("table.choProduct.incomeType")</td>
+            <td class="fType fType2">
+                <div class="bt-biz-dict" data-type="select" data-group="financial.type" data-required="false"
+                     data-name="incomeType" data-biz-name="incomeType" id="incomeType"  data-defaultvalue="$!{choProductReqPage.incomeType}"></div>
+            </td>
+            ##是否维护日净值
+            <td class="textRight isMaintainVal" #if($!{choProductReqPage.financialType} ne '2') style="display: none" #end>#springMessage("table.choProductReq.isMaintainVal")</td>
+            <td class="isMaintainVal" #if($!{choProductReqPage.financialType} ne '2') style="display: none" #end>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{choProductReqPage.isMaintainVal}" data-name="isMaintainVal" data-biz-name="isMaintainVal"></div>
+            </td>
+        </tr>
+        <tr class="fType fType2">
+            ##合同号
+            <td class="textRight">#springMessage("table.ratUrationApply.contactNo")</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" name="contractNo" id="contractNo" class="layui-input" value="$!{choProductReqPage.contractNo}">
+                </div>
+                <div class="layui-inline">
+                    ## 自动生成
+                    <button class="layui-btn" type="button" lay-filter="create" onclick="createContractNo()">#springMessage('table.choProductReq.btn.auto')</button>
+                </div>
+            </td>
+            ##合同利率
+            <td class="textRight">#springMessage('table.choProductReq.contractRate')</td>
+            <td>
+                <div class="layui-inline" style="vertical-align: baseline; ">
+                    <input type="text" class="layui-input bt-biz-rateType"
+                           value="$!{choProductReqPage.startContractRate}"
+                           data-name="startContractRate" data-biz-name="startContractRate">
+                </div>
+                ~
+                <div class="layui-inline" style="vertical-align: baseline;">
+                    <input type="text" class="layui-input bt-biz-rateType" data-name="endContractRate"
+                           data-biz-name="endContractRate" value="$!{choProductReqPage.endContractRate}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##提前回购条约
+            <td class="textRight">#springMessage("table.choProductReq.moveUpRmk")</td>
+            <td colspan="3">
+                <textarea type="text" id="moveUpRmk" name="moveUpRmk" class="layui-textarea" placeholder="#springMessage("table.choProductReq.moveUpRmk")">$!{choProductReqPage.moveUpRmk}</textarea>
+            </td>
+        </tr>
+        <tr>
+            ##备注
+            <td class="textRight">#springMessage("table.choProduct.rmk")</td>
+            <td colspan="3">
+                <textarea type="text" id="rmk" name="rmk" class="layui-textarea" placeholder="#springMessage("table.choProduct.rmk")">$!{choProductReqPage.rmk}</textarea>
+            </td>
+        </tr>
+        <tr>
+            ##附件
+            <td class="textRight">#springMessage("table.choProductReq.attachmentId")</td>
+            <td colspan="3">
+                <input id="attachmentId" name="attachmentId" type="hidden" value="$!{choProductReqPage.attachmentId}">
+                <div id="uploader" class="layui-input-inline" style="width: 100%"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage('common.button.temp')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                <button type="button" class="layui-btn" onclick="closeTab()">#springMessage('common.button.close')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/chowmatistic/choProductReq.update.js?_btv=${resourceVersion}"></script>
+</html>

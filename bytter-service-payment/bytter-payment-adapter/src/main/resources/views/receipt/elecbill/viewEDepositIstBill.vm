@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        .voucher-title {
+            font-weight: bold;
+            font-size: 22px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form layui-form-pane">
+    <input type="hidden" id="fileName" value="$!{eVisaTypePage.fileName}">
+    <input type="hidden" id="corpId" value="$!{eAccrualBillPage.corpId}">
+    <input type="hidden" id="billNo" value="$!{eAccrualBillPage.billNo}">
+    <input type="hidden" id="opType" value="$!{opType}">
+    <div id="print_doc1" class="print-list">
+        ##凭证头部
+        <div class="print-header">
+        ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{eAccrualBillPage.netName}</div>
+                <div class="print-header-title">
+                    #if($!{eAccrualBillPage.billType} eq "04")
+                        #springMessage('table.eTransBill.fixedDepositIst')##定期存款利息单
+                    #end
+                    #if($!{eAccrualBillPage.billType} eq "05")
+                        #springMessage('table.eTransBill.noticeDepositIst')##通知存款利息单
+                    #end
+                </div>
+            </div>
+        </div>
+        ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                    <td width="50%">#springMessage('table.eTransBill.date')：$!date.format('yyyy-MM-dd',$!{eAccrualBillPage.tallyDate})</td>
+                    <td width="50%">#springMessage('table.eTransBill.billNo')：$!{eAccrualBillPage.billNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table">
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.corp')</td>##单位名称
+                    <td>&nbsp;$!{eAccrualBillPage.corpName}</td>
+                    <td>&nbsp;#springMessage('table.eTransBill.depositType')</td>##存款类型
+                    <td>&nbsp;$!{eAccrualBillPage.depositName}</td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eAccrualBill.accNo')</td>##账号
+                    <td>&nbsp;$!{eAccrualBillPage.accNo}</td>
+                    <td>&nbsp;#springMessage('table.eAccrualBill.accName')</td>##账号名称
+                    <td>&nbsp;$!{eAccrualBillPage.accName}</td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eAcceptBill.accrualDate')</td>##起息日期
+                    <td>&nbsp;$!date.format('yyyy-MM-dd',$!{eAccrualBillPage.startDate})</td>
+                    ##if($!{eAccrualBillPage.billType} eq "05")##通知没有止息日期
+                    ##    <td></td>
+                    ##   <td></td>
+                    ##else
+                    <td>&nbsp;#springMessage('table.interet.blnInstDate')</td>##止息日期
+                    <td>&nbsp;$!date.format('yyyy-MM-dd',$!{eAccrualBillPage.endDate})</td>
+                    ##end
+
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.days')</td>##天数
+                    <td>&nbsp;$!{eAccrualBillPage.days}</td>
+                    <td></td>
+                    <td></td>
+                    ##                <td>&nbsp;#springMessage('table.eTransBill.cumu')</td>##积数
+                    ##                <td align="right">$!number.formatDoubles($!{eAccrualBillPage.cumu},2)</td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.moneyUpper')</td>##大写金额
+                    <td>
+                        <span id="moneyUpper"></span>
+                        ##                    <div id="moneyUpper" name="moneyUpper" readonly="true" data-name="moneyUpper" autocomplete="off" class="layui-input"></div>
+                    </td>
+                    <td>&nbsp;#springMessage('table.eTransBill.moneyLower')</td>##小写金额
+                    <td align="right">
+                        ￥$!number.formatNumeric($!{eAccrualBillPage.accrual},2)
+                        <input type="hidden" class="layui-input bt-biz-moneyType" data-name="money" value="$!{eAccrualBillPage.accrual}"
+                               data-toup="moneyUpper" data-biz-name="money" data-decimal="2" type="text">
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.voucherNo')</td>##凭证号
+                    <td>&nbsp;$!{eAccrualBillPage.voucherNo}</td>
+                    <td>&nbsp;#springMessage('table.eAccrualBill.rate')(%)</td>##利率
+                    #set($rate=$!{eAccrualBillPage.interest}*100)
+                    <td align="right">$!number.formatDoubles($!rate,4)</td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.content')</td>##摘要
+                    <td colspan="3">&nbsp;$!{eAccrualBillPage.summaryContent}</td>
+                </tr>
+                <tr class="bodytext">
+                    <td valign="middle">&nbsp;#springMessage('table.eTransBill.verificationCode')</td>
+                    <td colspan="3">
+                            <span id="validateCode1">
+                                &nbsp;$!{eAccrualBillPage.validateCode}</span>
+
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td style="height: 100px">&nbsp;#springMessage('table.eVisaType.fileName')</td>##签章
+                    <td colspan="3" style="height: 100px" nowrap align="center" valign="bottom">
+                                                    <span id="encryImg1">
+                                                        <img id="imger"
+                                                             src="${basePath}/download/attachment?id=$!{eVisaTypePage.fileName}"
+                                                             width="$!{eVisaTypePage.picWidth}px"
+                                                             ;height="$!{eVisaTypePage.picHeight}px"/>
+                                                    </span>
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.tallierName')</td>##记账员
+                    <td>&nbsp;$!{eAccrualBillPage.tallierName}</td>
+                    <td>&nbsp;#springMessage('table.eTransBill.checkerName')</td>##复核员
+                    <td>&nbsp;$!{eAccrualBillPage.checkerName}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</form>
+<object  id="LODOP_OB" classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0>
+    <embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0></embed>
+</object>
+<br />
+<br />
+<div class="layui-form-item layui-form-submit" id="buttonDiv">
+    <div>
+        <button type="button" class="layui-btn" onclick="prints()">#springMessage('common.button.print')</button>
+        <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/receipt/elecbill/eImagerPrint.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form'],function () {
+        window.onload = function () {
+            var opType = $("#opType").val();
+            if(opType == "1") {
+                prints();
+            }
+        };
+    });
+</script>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input type="hidden" name="categoryId" value="$!{categoryId}" id="categoryId">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                <td class="textRight">#springMessage('sys.notification.categoryName')</td>
+                <td width="40%">
+                    <div class="layui-input-inline">
+                        <div class="notification"></div>
+                    </div>
+                </td>
+                <td class="textRight">#springMessage('sys.userMessage.sendTime')</td>
+                <td>
+                    <input type="text" name="ged_createDate" class="layui-input bt-input-inline bt-biz-dateType"
+                           data-endid="led_createDate" value="">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_createDate" class="layui-input bt-input-inline bt-biz-dateType"
+                           id="led_createDate">
+                </td>
+            </tr>
+            <tr >
+                <td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('sys.notification.categoryName')</th>
+            <th>#springMessage('sys.index.msg')</th>
+            <th>#springMessage('sys.userMessage.sendTime')</th>
+        </tr>
+        </thead>
+    </table>
+    #parse("views/common/footer.vm")
+<script type="text/javascript">
+    bt.use(['form', 'datatable', 'dateType', 'selectTree'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.dateType.init();
+        bt.selectTree.init({
+            url: basePath + "/sys/notification/categoryTree",
+            elem: ".notification",
+            name: 'eqs_categoryId',
+            selected: '$!{categoryId}'
+        });
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            query: "search",
+            checkbox: false,
+            order: [[2, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/sys/notification/datatable"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {data: "categoryName", className: "center"},
+                {data: "message", bSortable: false,
+                    render: function (data, type, full, meta) {
+                        if(data){
+                            return data.replace(/\\n/g, ' ');
+                        }
+                        return '';
+                }},
+                {data: "createDate", bSortable: true, className: "center"}
+            ],
+            btInitComplete:function(setting,json){ //初始化完成的回调
+                $("#categoryId").remove();
+            },
+        });
+    });
+</script>
+</body>
+</html>

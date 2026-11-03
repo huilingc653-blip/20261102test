@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        .article-required-icon {color: red;margin: 5px;font-weight: bold;}
+
+        /* 只为编辑器内容区域添加换行样式，不影响编辑按钮 */
+        .w-e-text {
+            word-wrap: break-word !important;      /* 允许长单词或URL地址换行到下一行 */
+            word-break: break-all !important;      /* 允许在单词内换行 */
+            white-space: pre-wrap !important;      /* 保留空白符序列，正常换行 */
+            overflow-wrap: break-word !important;  /* 现代浏览器的换行属性 */
+            line-height: 1.6 !important;           /* 设置合适的行高 */
+        }
+
+        /* 确保编辑器内的所有内容也继承换行样式 */
+        .w-e-text * {
+            word-wrap: inherit !important;
+            word-break: inherit !important;
+            white-space: inherit !important;
+            overflow-wrap: inherit !important;
+            max-width: 100% !important;
+        }
+
+        /* 图片自适应 */
+        .w-e-text img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        /* 表格响应式 */
+        .w-e-text table {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            display: block !important;
+        }
+
+        /* 保留原有的编辑器容器样式，但不影响按钮 */
+        #article-context {
+            border: 1px solid #e6e6e6;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" action="">
+    <div class="layui-form-item">
+        ## 信息类型
+        <label class="layui-form-label"><span class="article-required-icon">*</span>#springMessage("sys.article.type")</label>
+        <div class="layui-input-block">
+            <input type="hidden" name="id" value="$!{article.id}"/>
+            ## 重要通知
+            <input type="radio" name="type" lay-filter="type" value="1" #if($editView)disabled#end #if($article.type=="1") checked #end title="#springMessage("sys.article.notice")">
+            ## 资金政策法规
+            <input type="radio" name="type" lay-filter="type" value="2" #if($editView)disabled#end #if($article.type=="2") checked #end title="#springMessage("sys.article.law")">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        ## 信息标题
+        <label class="layui-form-label"><span class="article-required-icon">*</span>#springMessage("sys.article.title")</label>
+        <div class="layui-input-block">
+            <input type="text" name="title" required autocomplete="off" class="layui-input" #if($editView)disabled#end value="$!{article.title}">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        ## 是否置顶
+        <label class="layui-form-label"><span class="article-required-icon">*</span>#springMessage("sys.article.isTopLabel")</label>
+        <div class="layui-input-block">
+            <input type="radio" name="isTop" value="1" #if($editView)disabled#end #if($article.isTop=="1") checked #end title="#springMessage("common.sc_yn.yes")">
+            <input type="radio" name="isTop" value="0" #if($editView)disabled#end #if(!$article.isTop || $article.isTop=="0") checked #end title="#springMessage("common.sc_yn.no")">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        ## 信息接收者
+        <label class="layui-form-label"><span class="article-required-icon">*</span>#springMessage("sys.article.receiver")</label>
+        <div class="layui-input-block">
+            <div style="height: 30px;">
+                ## 所有角色
+                <input type="radio" name="receiverType" lay-filter="receiverType" #if($editView)disabled#end #if($article.receiverType=="1") checked #end value="1" title="#springMessage("sys.article.allUser")">
+                ## 指定角色
+                <input type="radio" name="receiverType" lay-filter="receiverType" #if($editView)disabled#end #if($article.receiverType=="2") checked #end value="2" title="#springMessage("sys.article.orderUser")">
+            </div>
+            <div id="role-container" #if($article.receiverType!="2")style="display: none;"#end>
+                #foreach($role in $roles)
+                    #set($currentId="")
+                    #foreach($cRole in $checkRoles)
+                        #if($role.id==$cRole)
+                            #set($currentId = $role.id)
+                        #end
+                    #end
+                    <input type="checkbox" lay-skin="primary" name="roleList" title="$!{role.name}" #if($editView)disabled#end #if($currentId!="") checked #end value="$!{role.id}" />
+                #end
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-form-text">
+        ## 信息内容
+        <label class="layui-form-label">#springMessage("sys.article.context")</label>
+        <div class="layui-input-block">
+            <div id="article-context"></div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        ## 附件
+        <label class="layui-form-label">#springMessage("netbank.common.attachment")</label>
+        <div class="layui-input-block">
+            <!-- 附件上传 -->
+            <input id="attachmentId" name="attachmentId" type="hidden" value="$!{article.attachmentId}">
+            <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+        </div>
+    </div>
+
+    <div class="layui-form-item layui-form-submit" style="z-index: 999999">
+        <div class="layui-input-block" style="margin-left: 0">
+            #if(!$editView)
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="2">#springMessage('common.button.submit')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage('common.button.temp')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="articleReset()">#springMessage('common.button.reset')</button>
+            #else
+                <button type="button" class="layui-btn layui-btn-primary close-button">#springMessage('common.button.close')</button>
+            #end
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script type="text/javascript" src="${basePath}/static/plugins/wangEditor/wangEditor.min.js"></script>
+<script src="${basePath}/static/plugins/js-xss/xss.min.js?_btv=${resourceVersion}"></script>
+<script type="application/javascript">
+    bt.use(['jquery', 'form', 'btUpload'], function () {
+        var form = layui.form();
+        var E = window.wangEditor;
+        var editor = new E('#article-context');
+        editor.create();
+        var up = bt.btUpload.init({elem: "#uploader", auto: false,#if($editView)hasDelete:false,hasUpload:false,#end gid: $("#attachmentId").val()});
+        #if($article.id)
+            editor.txt.html('$!esc.javascript($article.context)');
+        #end
+        #if($editView)
+            editor.$textElem.attr('contenteditable', false)
+        #end
+        form.on('radio(receiverType)', function (data) {
+            if(data.value==="2"){
+                $('#role-container').show();
+            }else{
+                $('#role-container').hide();
+            }
+        });
+        $('.close-button').click(function(){parent.layer.closeAll();});
+        form.on('submit(submit)', function (data) {
+            if (!data.field.type) {
+                //请选择信息类型！
+                parent.layer.alert(bt.lang("sys.article.alert.selectType"), {icon: 7});
+                return false;
+            }
+            if (!data.field.title) {
+                //信息标题不能为空！
+                parent.layer.alert(bt.lang("sys.article.alert.titleEmpty"), {icon: 7});
+                return false;
+            }
+            if (data.field.title.length<5||data.field.title.length > 60) {
+                //信息标题长度应在5到60之间！
+                parent.layer.alert(bt.lang("sys.article.alert.titleLength"), {icon: 7});
+                return false;
+            }
+            if (!data.field.receiverType) {
+                //请选择信息接收者！
+                parent.layer.alert(bt.lang("sys.article.alert.selectReceiver"), {icon: 7});
+                return false;
+            }
+            if (!editor.txt.text()) {
+                //信息内容不能为空！
+                parent.layer.alert(bt.lang("sys.article.alert.contextEmpty"), {icon: 7});
+                return false;
+            }
+            data.field.roleList = $('input[name="roleList"]:checked').map(function () {
+                return this.value;
+            }).get();
+            if(data.field.receiverType==="2"&&data.field.roleList.length===0){
+                //请选择角色！
+                parent.layer.alert(bt.lang("sys.article.alert.selectRole"), {icon: 7});
+                return false;
+            }
+            data.field.context = editor.txt.html();
+           // data.field.context = filterXSS(editor.txt.html());
+            data.field.summary = editor.txt.text().substring(100);
+            data.field.attachmentId = up.getGroupId();
+            data.field.status = $(this).attr('value');
+            var action = $('input[name="id"]').val() ? "update" : "save";
+            $.post(basePath + "/sys/article/" + action, data.field, function (result) {
+                if (result.success) {
+                    parent.layer.closeAll();
+                }
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, 'JSON');
+            return false;
+        });
+    });
+
+    // 重置
+    function articleReset(){
+        window.location.reload();
+    }
+</script>
+</body>
+</html>

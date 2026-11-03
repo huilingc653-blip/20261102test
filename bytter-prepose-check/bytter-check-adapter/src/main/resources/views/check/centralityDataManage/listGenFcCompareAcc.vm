@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<!-- 中心对账数据生成	 -->
+<body>
+	<form id="searchForm" class="layui-form" method="post">
+		<table class="layui-table">
+			<tbody>
+			<tr>
+				<td class="textRight">#springMessage('结算中心')</td>
+				<td>
+					<div class="bt-biz-corp" data-biz-name="corpId" data-name="corpId" data-type="select" data-required="true" data-biz-type="net"></div>
+				</td>
+				<!-- 发生日期 -->
+				<td class="textRight"><span class="pl"><span class="required-icon">*</span></span>#springMessage('finacial.check.centralityDataManager.occurDate')</td>
+				<td width="35%"><div class="date-interval" ></div></td>
+			</tr>
+	    	<tr>
+				<!-- 中心账号-->
+				<td class="textRight">#springMessage('finacial.check.centralityDataManager.centralityAcc')</td>
+				<td width="35%"><input type="text" name="likes_account" id="account" class="layui-input" placeholder="#springMessage('finacial.check.centralityDataManager.centralityAcc')"></td>
+	    	</tr>
+	    	<tr>
+	    		<td colspan="6" style="text-align: center;">
+	    			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+	            	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+	    		</td>
+	    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+    
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	    <thead>
+	    <tr>
+	        <th>#springMessage('table.fcCompareAcc.voucherNo')</th><!-- 凭证号 -->
+	        <th>#springMessage('finacial.check.centralityDataManager.centralityAcc')</th><!-- 中心帐号 -->
+	        <th>#springMessage('table.fcCompareAcc.tallyDate')</th><!-- 发生日期 -->
+	        <th>#springMessage('table.fcCompareAcc.debitMoney')</th><!-- 借方金额 -->
+	        <th>#springMessage('table.fcCompareAcc.creditMoney')</th><!-- 贷方金额 -->
+	      <!--   <th>#springMessage('table.fcCompareAcc.balance')</th>余额 -->
+	        <th>#springMessage('table.fcCompareAcc.billNo')</th><!-- 票据号 -->
+	        <th>#springMessage('table.fcCompareAcc.redblueSign')</th><!-- 红蓝标识 -->
+	        <th>#springMessage('table.fcCompareAcc.summaryContent')</th><!-- 摘要 -->
+	    </tr>
+	    </thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<!-- <script src="${basePath}/static/modules/finacial/check/centralityDataManager.list.js?_btv=${resourceVersion}"></script> -->
+<script type="text/javascript">
+	var table;
+	var corp;
+	bt.use(['jquery','form','datatable','btdate','moneyType','corp'],function(){
+		$ = bt.jquery;
+		var form = layui.form();
+		corp = bt.corp.init();
+		var moneyFun = bt.moneyType.getFun();
+		//初始化日期控件
+	    bt.btdate.init({
+	        elem: ".date-interval",
+	        startname: "ged_queryDate",
+	        endname: "led_queryDate",
+			required: true
+	    });
+		//表格控件初始化设置
+		table = bt.datatable.init({
+			elem: "#appTable",
+			dom: 'Brtlip',
+	        colReorder: true,
+			// checkbox: true ,
+			searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+			ajax: {
+				url: basePath+"/finacial/check/centralityDataManage/genDataTable"
+			},
+			buttons: [
+			    {
+			    	text: '#springMessage("common.button.save")',
+			    	action: function( e, dt, node, config ){
+						if (form.verifyFun("#searchForm")) {
+							var params = {};
+							params.corpId = corp.get("corpId").val();
+							params.queryBeginDate = $("input[name='ged_queryDate']").val();
+							params.queryEndDate = $("input[name='led_queryDate']").val();
+							params.account = $("#account").val();
+							$.ajax({
+								url: basePath + "/finacial/check/centralityDataManage/doAccImportAgain",
+								method: "post",
+								data: JSON.stringify(params),
+								dataType: "json",
+								contentType: "application/json",
+								success: function (result) {
+									if (result.success) {
+										table.draw();
+									}
+									parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+								}
+							});
+/*							$.post(basePath + "/finacial/check/centralityDataManage/doAccImportAgain", params, function(result){
+								if(result.success){
+									table.draw();
+								}
+								parent.layer.alert(result.msg, {icon: result.success?1:2});
+							},'JSON');*/
+						}
+			    	}
+			    }
+			],
+			columns: [
+			    {
+			    	data: "voucherNo",
+			    	className:"center",
+			    	bSortable:true
+			    },
+			    {
+			    	data: "compAcc",
+			    	className:"center",
+			    	bSortable:false
+			    },
+			    {
+			    	data: "tallyDate",
+			    	className:"center",
+			    	bSortable:false
+			    },
+			    {data: "debitMoney",className:"textRight",bSortable:true,
+			    	 render : function(data,type,full,meta) {
+	    	              return moneyFun.format(full.debitMoney);
+	  				 }
+			    },
+			    {data: "creditMoney",className:"textRight",bSortable:true,
+			    	 render : function(data,type,full,meta) {
+	    	              return moneyFun.format(full.creditMoney);
+	    			}
+			    },
+			  /*   {
+			    	data: "balance",
+			    	className:'center',
+			    	bSortable:false
+			    }, */
+			    {
+			    	data: "billNo",
+			    	className:"center",
+			    	bSortable:false
+			    },
+			    {
+			    	data: "redblueSign",
+			    	className:"center",
+			    	bSortable:false,
+			    	render: function( data, type, full, meta ){
+			    		return bt.dict("Finacial.RedBlueSign",full.redblueSign);
+			    	}
+			    },
+			    {
+			    	data: "summaryContent",
+			    	className:"center",
+			    	bSortable:false
+			    }
+			]
+		});
+		
+		
+	});
+	
+</script>
+</html>

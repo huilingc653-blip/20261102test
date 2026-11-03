@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+		 <table class="layui-table">
+            <tbody>
+                <tr>
+                    <td class="textRight">接口名称</td>
+                    <td>
+                        <div class="layui-inline">
+                            <div class="bt-biz-dict" data-group="dsl.interface.logType" data-name="eqs_interfaceCode" data-type="select" ></div>
+                        </div>
+                    </td>
+                    <td class="textRight">状态</td>
+                    <td>
+                        <div class="layui-inline">
+                            <select name="eqs_type">
+                                <option value="2">全部</option>
+                                <option value="1">成功</option>
+                                <option value="0">失败</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td class="textRight">时间</td>
+                    <td>
+                        <input type="text" name="ged_logTime" class="layui-input bt-input-inline bt-biz-dateType"
+                               data-endid="led_logTime" >
+                        <span class="date-mid">~</span>
+                        <input type="text" name="led_logTime" class="layui-input bt-input-inline bt-biz-dateType"
+                               id="led_logTime" >
+                    </td>
+				</tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+    </form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>接口编码</th>
+        <th>接口名称</th>
+        <th>主键来源</th>
+        <th>状态</th>
+        <th>时间</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form', 'datatable', 'selectType', 'moneyType', 'dicts', 'date', 'corp', 'dateType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.moneyType.init();
+        bt.corp.init();
+        bt.selectType.init();
+        bt.dateType.init();
+        bt.dicts.init();
+        var moneyFun = bt.moneyType.getFun();
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            order: [[1, 'asc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/dataexchange2/interfacelog/query"
+            },
+            fixedColumns: {
+                leftColumns: 3//代表冻结右边一列
+            },
+            columns: [
+                {data: "interfaceCode", bSortable: true, className: "center"},
+                {data: "interfaceName", bSortable: true, className: "center"},
+                {data: "sourceId", bSortable: true, className: "center"},
+                {
+                    data: "type", bSortable: true, className: "center",
+                    render: function (data, type, full, meta) {
+                        if (full.type == '1') {
+                            return "成功";
+                        } else {
+                            return "失败";
+                        }
+                    }
+                },
+                {data: "logTimeStr", bSortable: true, className: "center"},
+                {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                        var html = '<a class="" href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a>';
+                        return html;
+                    }
+                }
+            ]
+        });
+    });
+
+
+    function view(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/dataexchange2/interfacelog/view/" + data.id
+        });
+    }
+</script>
+</html>

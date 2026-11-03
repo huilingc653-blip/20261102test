@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-input{
+            width:148px;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="joinBankType" name="joinBankType" value="$!{joinBankType}">
+    <input type="hidden" id="layerType" name="layerType" value="$!{layerType}">
+    <table class="layui-table">
+        <tr>
+##            <td class="textRight">#springMessage('单位')</td>
+##            <td>
+##                <input type="text" name="corpId" autocomplete="off" class="layui-input"
+##                       placeholder="#springMessage('单位')">
+##            </td>
+            <td class="textRight" width="16%">
+                #springMessage('单位')
+            </td>
+            <td width="34%">
+                <div class="bt-biz-corp"
+                     data-tree-type="radio"
+                     data-biz-name="corpId"
+                     data-type="selectTree"
+                     data-name="corpId"
+##                     data-required=""
+                     data-defaultvalue="$!{corpId}"
+                     data-placeholder="#springMessage('单位')">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('仓库编码')</td>
+            <td>
+                <input type="text" name="storeCode" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('仓库编码')">
+            </td>
+            <td class="textRight">#springMessage('仓库名称')</td>
+            <td>
+                <input type="text" name="storeName" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('仓库名称')">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+##                <button class="layui-btn" type="button" id="searchBtn">查询</button>
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<div>
+    <table id="appTable" class="layui-table layui-form">
+        <thead>
+        <tr>
+            <th width="30">#springMessage('单位编码')</th>
+            <th width="30">#springMessage('单位名称')</th>
+            <th width="30">#springMessage('仓库编码')</th>
+            <th width="80">#springMessage('仓库名称')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['form','jquery','select','element','datatable','dicts','corp','dateType','moneyType','users','moneyType','btImport','region','corp','selectType'], function () {
+        var $ = bt.jquery,table;
+        var region = bt.region.init();
+        bt.dicts.init();
+        bt.moneyType.init();
+        form.renderIcon();
+        bt.corp.init();
+        bt.selectType.init();
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            checkbox: true,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/sys/unitStore/selectUnitStore"
+            },
+            ignoreButtons:['colvis','output','print','state'],
+            buttons: [
+                {
+                    text:bt.lang('common.button.select'),
+                    action: function ( e, dt, node, config ) {
+                        // debugger;
+                        if(!$("#layerType").val()){
+                            bt.navtab.getCurrentDom().inputUnitStoreCallback(bt.datatable.getSelectData('#appTable'))
+                            parent.layer.closeAll()
+                        }else if($("#layerType").val() == 1){
+                            var name = top.$('.layui-layer-iframe iframe')[0].name
+                            var layerIframeWindow = top.frames[name];
+                            layerIframeWindow.inputUnitStoreCallback(bt.datatable.getSelectData('#appTable'))
+                           // var layerIndex = top.$('.layui-layer-iframe iframe').eq(1).parents('.layui-layer-iframe').attr('times');
+                           // parent.layer.close(layerIndex)
+                        }
+
+                    }
+                }
+            ]
+            , columns: [
+                {data: "corpCode", sortable: true},
+                {data: "corpName", sortable: true},
+                {data: "storeCode", sortable: true},
+                {data: "storeName", sortable: false}
+            ]
+        });
+    });
+</script>
+</body>
+</html>

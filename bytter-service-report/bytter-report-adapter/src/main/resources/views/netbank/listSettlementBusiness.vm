@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="corpIdHidden" name="ins_corpId" data-name="eqs_corpId" value="$!{corpIds}"/>
+    <input type="hidden" id="curIdHidden" name="eqs_curId" data-name="eqs_curId" value="$!{curId}"/>
+    <input type="hidden"  id="rmbCur" value="$!{rmbCur.id}"/>
+    <input type="hidden" id="voucherTypeId" name="voucherTypeId"/>
+    <table class="layui-table breakRow">
+        <tbody>
+        <tr>
+            ##网点
+            <td width="10%" class="textRight">#springMessage("table.fbsBudget.net")</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="net"
+                         data-type="selectTree"
+                         data-biz-name="netId"
+                         data-name="netId"
+                         data-group="corpGroup"
+                         data-change="corpId"
+                         data-defaultvalue="$!{netId}"
+                         data-resource="netbank:report:settlement:business:query"
+                         data-scope="net"></div>
+                </div>
+            </td>
+            ##单位
+            <td width="10%" class="textRight">#springMessage("table.fbsBudget.corpId")</td>
+            <td width="40%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-biz-name="corpId"
+                         data-name="corpId"
+                         data-defaultvalue="$!{search.corpId}"
+                         data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"
+                         data-group="corpGroup"
+                         data-weakcontrol="true"
+                         data-resource="netbank:report:settlement:business:query"
+                         data-scope="all"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">#springMessage('btAssignPayWay.voucherCode')</td>
+            <td colspan="3">
+                <div class="layui-input-inline" style="padding-top: 10px;padding-bottom: 10px">
+                    <input type="checkbox" lay-skin="primary" title="#springMessage('common.check.all')" lay-filter="allChoose" />
+                    #foreach($type in $voucherTypes)
+                        <input type="checkbox" name="voucherTypeIdCheck" lay-skin="primary" value="${type.id}" title="${type.voucherName}" lay-filter="voucherTypeIdCheck"/>
+                    #end
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##查询时间
+            <td class="textRight">#springMessage("netbanck.reporter.checktime")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="ged_searchDate" data-biz-name="ged_searchDate" class="layui-input bt-input-inline  bt-biz-dateType" value="$!{beginSerachDate}" data-endid="endDate">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_searchDate" data-biz-name="led_searchDate" class="layui-input bt-input-inline  bt-biz-dateType" data-today="true" id="endDate">
+                </div>
+            </td>
+            ##币别
+            <td class="textRight">#springMessage("table.btBankAccCur.cur")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="curId"
+                     data-biz-name="curId"
+                     data-search="true"
+                     data-defaultvalue="$!{curId}"
+                     data-initcallback="bt.initSelectValue"
+                ></div>
+            </td>
+        </tr>
+        <tr>
+            ##是否折合币种
+            <td class="textRight">#springMessage("common.isConvert.currency")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="changeCur"
+                     data-biz-name="changeCur" data-callback="callToCurr"
+                     data-defaultvalue="0"></div>
+            </td>
+            ##折合币种
+            <td class="textRight">#springMessage("commom.converted.into.currency")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-biz-name="reducedCurId"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="reducedCurId"
+                     data-search="true"
+                     data-disabled = "true"
+                     data-callback="checkConvertCurCallBack"
+                ></div>
+            </td>
+        </tr>
+        <tr>
+            ##折算汇率类型
+            <td class="textRight">#springMessage('table.fexForeign.report.convert.rateType')</td>
+            <td>
+                <div type="list" data-name="rateType" class="bt-biz-selectType" data-disabled = "true" data-biz-name="rateType"
+                     data-url="${basePath}/basic/business/btratetype/json" data-valueField="id" data-textField="typeName" data-callback="checkConvertCurCallBack"></div>
+            </td>
+            ##汇率日期
+            <td class="textRight">#springMessage('report.fcExcrateAdjust.preTime')</td>
+            <td>
+                <input type="text" name="rateDate"  class="layui-input bt-input-inline bt-biz-dateType" data-callback="checkConvertCurCallBack"
+                       data-endid="rateDate" data-biz-name="rateDate" data-today="true" readonly="readonly">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr class="title">
+        <th rowspan="2">#springMessage('btAssignPayWay.voucherCode')</th>
+        <th rowspan="2">#springMessage('table.bisAccDtl.curName')</th>
+        <th colspan="2">#springMessage('table.settlementStatistics.tallyTitle')</th>
+    </tr>
+    <tr class="title">
+        <th>#springMessage('table.settlementStatistics.tallyNumbers')</th>
+        <th>#springMessage('table.settlementStatistics.tallyMoney')</th>
+    </tr>
+    </thead>
+</table>
+##<div id="chartSum" style="width:75%;height:500px; float:left;"></div>
+    #parse("views/common/footer.vm")
+</body>
+</body>
+<script src="${basePath}/static/modules/bi/settlementBusiness.list.js?_btv=${resourceVersion}"></script>
+</html>

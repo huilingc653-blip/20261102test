@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #if($approve=="approve")
+        #parse("views/flow/flow.vm")
+    #end
+    <style>
+        .hide{display: none;}
+        .more-msg{word-break: break-all;white-space: normal;}
+    </style>
+</head>
+<body>
+<form class="layui-form" action="">
+    <div>
+        ## 单位名称
+        <div style="text-align: left;float: left">#springMessage("table.externalCorp.corp.name")：${entity.corpName}</div>
+        ## 对账月份
+        <div style="text-align: right">#springMessage("fc.corpCompareBill.checkMonth")：#if($entityMonth) ${compareDate} #else $!{entity.billMonth}#end</div>
+    </div>
+    <table class="layui-table">
+        <thead>
+        <tr>
+            ## 账号
+            <th>#springMessage("sys.login.label.account")</th>
+            ## 账户名称
+            <th>#springMessage("table.fcAcc.accName")</th>
+            ## 币别
+            <th>#springMessage("table.fcAccBalance.curId")</th>
+            ## 账户类型
+            <th>#springMessage("accountGrant.sysAccountType")</th>
+            ## 账户余额
+            <th>#springMessage("table.nisBillhead.balance")</th>
+            ## 企业账面余额
+            <th>#springMessage("fc.corpCompareBill.erpBalance")</th>
+            ## 核对结果
+            <th>#springMessage("fc.corpCompareBill.checkResult")</th>
+            ## 状态
+            <th>#springMessage("common.table.status")</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>$!{entity.account}</td>
+            <td>$!{entity.accountName}</td>
+            <td>$!{entity.currencyName}</td>
+            <td>$dictTag.get("InnerAccount.AccType",$!{entity.accountType})</td>
+            <td align="right">$!number.formatNumeric($!{balance})</td>
+            #if($approve=="approve")
+            <td align="right">$!number.formatNumeric($!{erpBalance})</td>
+            #else
+            <td>
+                <input type="text" data-name="erpBalance" class="layui-input bt-biz-moneyType"
+                           value="$!{entity.erpBalance}"
+                           lay-verify data-minus="false"
+                       #if($entity.same=="1")disabled#end data-biz-name="erpBalance" />
+            </td>
+            #end
+            <td>
+                #if($approve=="approve")
+                    $dictTag.get("fc.corpCompareBillSame",$entity.same)
+                #else
+                    #foreach($dict in $dictTag.list("fc.corpCompareBillSame"))
+                        <input type="radio" name="same" lay-filter="same" value="$dict.code" title="$dict.name" #if($entity.same==$dict.code)checked#end />
+                    #end
+                #end
+
+            </td>
+            <td>$dictTag.get("fc.corpCompareBill",$!{entity.status})</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table class="layui-table #if($entity.same=="1")hide#end" id="notSameTable">
+        <thead>
+        <tr>
+            ## 兹将不符款项列示如下
+            <th colspan="4">#springMessage("fc.corpCompareBill.unSameDemo")</th>
+        </tr>
+        <tr>
+            ## 我单位账上无以下款项
+            <th colspan="2">#springMessage("fc.corpCompareBill.ownerBill")</th>
+            ## 贵单位账上无以下款项
+            <th colspan="2">#springMessage("fc.corpCompareBill.otherBill")</th>
+        </tr>
+        <tr>
+            ## 借方
+            <th>#springMessage("table.fcVoucherEntryDefine.debit")</th>
+            ## 贷方
+            <th>#springMessage("table.fcVoucherEntryDefine.credit")</th>
+            ## 借方
+            <th>#springMessage("table.fcVoucherEntryDefine.debit")</th>
+            ## 贷方
+            <th>#springMessage("table.fcVoucherEntryDefine.credit")</th>
+        </tr>
+        </thead>
+        <tbody>
+        #if($approve=="approve")
+        <tr>
+            <td align="center">
+                <div class="more-msg">$!{entity.accountDebitMoney}</div>
+            </td>
+            <td align="center"><div class="more-msg">$!{entity.accountCreditMoney}</div></td>
+            <td align="center"><div class="more-msg">$!{entity.erpDebitMoney}</div></td>
+            <td align="center"><div class="more-msg">$!{entity.erpCreditMoney}</div></td>
+        </tr>
+        #else
+        <tr>
+            <td align="center">
+                <textarea rows="10" cols="30" name="accountDebitMoney">$!{entity.accountDebitMoney}</textarea>
+            </td>
+            <td align="center">
+                <textarea rows="10" cols="30" name="accountCreditMoney">$!{entity.accountCreditMoney}</textarea>
+            </td>
+            <td align="center">
+                <textarea rows="10" cols="30" name="erpDebitMoney">$!{entity.erpDebitMoney}</textarea>
+            </td>
+            <td align="center">
+                <textarea rows="10" cols="30" name="erpCreditMoney">$!{entity.erpCreditMoney}</textarea>
+            </td>
+        </tr>
+        #end
+        </tbody>
+    </table>
+    <input type="hidden" name="billMonth" value="$!{compareDate}"/>
+    <input type="hidden" name="account" value="$!{entity.account}"/>
+    <input type="hidden" name="corpId" value="$!{entity.corpId}"/>
+    <input type="hidden" name="billId" value="$!{entity.billId}"/>
+    <input type="hidden" name="accountBalance" value="$!{entity.balance}"/>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block" style="margin:0">
+            <button class="layui-btn" lay-submit type="button" lay-filter="temp">#springMessage('common.button.temp')</button>
+            <button class="layui-btn" lay-submit type="button" lay-filter="submit">#springMessage('common.button.submit')</button>
+            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+    #if($approve=="approve")
+        #paymentWorkFlowHtml()
+        #paymentWorkFlowScript()
+    #else
+    <script>
+        bt.use(['form','moneyType'], function () {
+            var form = bt.form(), $ = bt.jquery;
+            var moneyType = bt.moneyType.init();
+            form.on('radio(same)', function (data) {
+                if (data.value === "0") {
+                    moneyType.get("erpBalance").attr("disabled", false);
+                    moneyType.get("erpBalance").val('$!{entity.erpBalance}');
+                    $("#notSameTable").removeClass("hide");
+                } else {
+                    moneyType.get("erpBalance").attr("disabled", true)
+                    moneyType.get("erpBalance").val('');
+                    $("#notSameTable").addClass("hide");
+                }
+            })
+            form.on('submit(submit)', function(data){
+                data.field.status = 11;
+                submitData(data);
+                return false;
+            });
+            form.on('submit(temp)', function(data){
+                data.field.status = 0;
+                submitData(data);
+                return false;
+            });
+            function submitData(data){
+                data.field.isCheck = data.field.same;
+                if(data.field.same==="0"){
+                    var erpBalance = $('input[name="erpBalance"]').val();
+                    if(!erpBalance){
+                        parent.layer.alert(bt.lang("fc.corpCompareBill.inputBillBalance"), {icon: 2});
+                        return;
+                    }
+                    var accountDebitMoney = $('textarea[name="accountDebitMoney"]').val();
+                    var accountCreditMoney = $('textarea[name="accountCreditMoney"]').val();
+                    var erpDebitMoney = $('textarea[name="erpDebitMoney"]').val();
+                    var erpCreditMoney = $('textarea[name="erpCreditMoney"]').val();
+                    if(!accountDebitMoney && !accountCreditMoney && !erpDebitMoney && !erpCreditMoney){
+                        parent.layer.alert(bt.lang("fc.corpCompareBill.validate.money"), {icon: 2});
+                        return;
+                    }
+                }
+                parent.layer.confirm(bt.lang("fc.corpCompareBill.submitResult"),{icon: 3}, function () {
+                    $.post(basePath + "/corpCompareBill/compare",data.field,function(result){
+                        if(result.success){
+                            parent.layer.closeAll();
+                        }
+                        parent.layer.alert(result.msg, {icon: result.success?1:2});
+                    },'JSON');
+                });
+            }
+        });
+    </script>
+    #end
+</body>
+</html>

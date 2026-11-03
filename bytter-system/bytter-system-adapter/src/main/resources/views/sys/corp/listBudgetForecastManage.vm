@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <link rel="stylesheet"
+          href="${basePath}/static/plugins/scrollbar/jquery.mCustomScrollbar.min.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts2/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/modules/bi/statics/homeBankAccBalDistribute.css?_btv=${resourceVersion}"
+          media="all">
+
+    <style>
+        .forecast-wapper {
+            padding: 0 20px 20px 20px;
+        }
+        .header {
+            height: 24px;
+            padding: 10px 0;
+        }
+        .header > * {
+            float: left;
+            height: 24px;
+            line-height: 24px;
+            margin-right: 8px;
+        }
+        .header .bt-biz-dict .layui-input {
+            width: 120px;
+        }
+        .forecast-card {
+            background: #FBFCFE;
+            box-shadow: 0px 4px 28px 0px rgba(42,86,209,0.1000);
+            border-radius: 6px;
+            padding: 16px 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .forecast-card .card-title {
+            height: 22px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333333;
+            line-height: 22px;
+            margin: 0px 20px 16px 18px;
+            width: auto;
+            position: relative;
+        }
+        .forecast-card .card-title img {
+            position: absolute;
+            width: 12px;
+            left: -18px;
+            top: 3px;
+        }
+        .text-color1 {
+            color: #3857D6!important;
+        }
+        .manager-card1 {
+            height: 290px;
+        }
+        .manager-card3,
+        .table-card1 {
+            height: 356px;
+        }
+        .manager-card4,
+        .manager-card5,
+        .manager-card6{
+            height: 346px;
+        }
+        .manager-card6 .card-form {
+            font-size: 12px;
+            color: #333;
+            font-weight: 400;
+            position: absolute;
+            right: -20px;
+            top: 3px;
+        }
+        .manager-card6 .card-form .layui-input {
+            width: 152px;
+        }
+        #chartForecastLine {
+            height: 240px;
+        }
+        .table-card1 .card-content {
+            height: 290px;
+        }
+        .balance-info .money {
+            height: 34px;
+            font-size: 24px;
+            font-weight: 500;
+            color: #333333;
+            line-height: 34px;
+            margin-bottom: 4px;
+        }
+        .balance-info .text-color1 {
+            font-size: 16px;
+            height: 22px;
+            margin-bottom: 2px;
+        }
+        .balance-type .text-color1 {
+            background: #D8E1FC;
+        }
+        .table1 {
+            width: 100%;
+        }
+        .table1 th {
+            background: #D8E1FC;
+            color: #666;
+        }
+        .table1 th,
+        .table1 td {
+            height: 28px;
+            border-bottom: 1px solid #E7EAF2;
+            text-align: right;
+            padding: 0 16px;
+        }
+        .table1 th.not-money,
+        .table1 td.not-money {
+            text-align: left;
+        }
+        .table1 tr.bg1 td {
+            background: #F4F7FD;
+            font-weight: 500;
+            color: #333333;
+        }
+        .table-card2 .table2 th {
+            height: 32px;
+            font-size: 12px;
+            color: #666666;
+            line-height: 32px;
+            text-align: center;
+        }
+        .table-card2 .table2 tr td {
+            color: #333333;
+            padding: 6px 0;
+            text-align: center;
+
+        }
+        .table-card2 .table2 tr td.not-money,
+        .table-card2 .table2 th.not-money{
+            text-align: left;
+        }
+        .table-card2 .table2 tr td div {
+            background: #F4F7FD;
+            height: 38px;
+            line-height: 38px;
+            position: relative;
+        }
+        .table-card2 .table2 tr td div img {
+            width: 30px;
+            margin-left: 10px;
+        }
+        .table-card1 .card-content {
+            overflow: hidden;
+        }
+        .table-card1 .card-content.scroll-card-content {
+            overflow: auto;
+        }
+    </style>
+</head>
+<body class="$!{shiro.getPrincipal().sysSkin}">
+<input id="uiStyle" name="uiStyle" type="hidden" value="$!{configTag.getConfig('sys','uiStyle')}">
+<div class="forecast-wapper">
+    <div class="layui-form">
+        ##浅色：文字：#9497AC  边线：#EBEDF1
+        ##深色：文字：#797979  边线：#2E2F34
+        ##边线颜色
+        <input id="lineColor" name="lineColor" type="hidden"
+            #if($shiro.getPrincipal().sysSkin == 'dark-skin')
+               value="#2E2F34"
+            #else
+               value="#EBEDF1"
+            #end
+        >
+        ##文字颜色
+        <input id="textColor" name="textColor" type="hidden"
+            #if($shiro.getPrincipal().sysSkin == 'dark-skin')
+               value="#797979"
+            #else
+               value="#9497AC"
+            #end
+        >
+        <input id="curId" name="curId" type="hidden" value="$!{currencyTag.getNatualCurrency().id}">
+        <input id="bal" name="bal" type="hidden" value="$!{curBal.bal}">
+        <input id="standardBal" name="standardBal" type="hidden" value="$!{curBal.standardBal}">
+        <input id="foreignBal" name="foreignBal" type="hidden" value="$!{curBal.foreignBal}">
+        <div class="header">
+            #*<span class="panel-time">2022-07-22 12:05</span>*#
+            <label>#springMessage('table.fcBond.corpName')</label>
+            <div class="layui-inline">
+                <div class="bt-biz-corp"
+                     data-biz-type="corp"
+                     data-type="selectTree"
+                     data-name="corpId"
+                     data-biz-name="corpId"
+                     data-resource="fbs:report:fbsBudget:query"
+                     data-scope="all"
+                     ##data-tree-type="check"
+                     data-defaultvalue="$!{corpId}"
+                     data-callback="bt.corpCallback"></div>
+            </div>
+            <label style="margin-left: 12px;">#springMessage('周期')</label>
+            <div class="layui-inline">
+                <div class="bt-biz-dict" data-type="select" data-defaultvalue="1"
+                     data-group="budgetForecast.timeType" data-name="timeType" data-biz-name="timeType" style="position: absolute;top: 0;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-row layui-col-space20">
+        <div class="layui-col-lg12 layui-col-sm12 layui-col-xs12">
+            <div class="forecast-card manager-card1">
+                <div class="card-title" style="margin-bottom: 0px">
+                    <img src="${basePath}/static/v3.2/images/report/card_icon@2x.png">
+                    资金预测分布图
+                </div>
+                <div class="card-content" id="chartForecastLine" >
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-lg8 layui-col-sm8 layui-col-xs8">
+            <div class="forecast-card table-card1">
+                <div class="card-title">
+                    <img src="${basePath}/static/v3.2/images/report/card_icon@2x.png">
+                    预测表执行分析汇总表（2022年7月）
+                </div>
+                <div class="card-content">
+                    <table class="table1">
+                        <thead>
+                        <tr>
+                            <th class="not-money">项目</th>
+                            <th>实际金额</th>
+                            <th>预算金额</th>
+                            <th>差额</th>
+                            <th>占比</th>
+                            <th>大周期预算</th>
+                            <th>余额</th>
+                            <th>余额占比</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr class="bg1">
+                            <td class="text-color1 not-money">1.期初资金</td>
+                            <td>322,629,080.00</td>
+                            <td>3,335,522,950.00</td>
+                            <td>-4,660,472,500.00</td>
+                            <td>-1.36%</td>
+                            <td>6,035,750,350.00</td>
+                            <td>2,670,305,735.00</td>
+                            <td>54.25%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">1-1.现汇回款</td>
+                            <td>322,629,080.00</td>
+                            <td>3,335,522,950.00</td>
+                            <td>-4,660,472,500.00</td>
+                            <td>-1.36%</td>
+                            <td>6,035,750,350.00</td>
+                            <td>2,670,305,735.00</td>
+                            <td>32.82%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">1-2.银行票据回款</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">1-3.信用证回款</td>
+                            <td>8,901,250.78</td>
+                            <td>1,107,600,000.00</td>
+                            <td>244,149.14</td>
+                            <td>3.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>27.82%</td>
+                        </tr>
+                        <tr class="bg1">
+                            <td class="text-color1 not-money">2.现金流入</td>
+                            <td>322,629,080.00</td>
+                            <td>3,335,522,950.00</td>
+                            <td>-4,660,472,500.00</td>
+                            <td>-1.36%</td>
+                            <td>6,035,750,350.00</td>
+                            <td>2,670,305,735.00</td>
+                            <td>44.25%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">2-1.销售回款</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>32.82%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">2-2.其他收入</td>
+                            <td>8,901,250.78</td>
+                            <td>1,107,600,000.00</td>
+                            <td>244,149.14</td>
+                            <td>3.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr class="bg1">
+                            <td class="text-color1 not-money">3.现金流出</td>
+                            <td>322,629,080.00</td>
+                            <td>322,629,080.00</td>
+                            <td>322,629,080.00</td>
+                            <td>-1.36%</td>
+                            <td>6,035,750,350.00</td>
+                            <td>2,670,305,735.00</td>
+                            <td>44.25%</td>
+                        </tr>
+                        <tr class="bg1">
+                            <td class="text-color1 not-money">3-1.流动资金计划</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>32.82%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">3-1-1.现款采购材料</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">3-1-2.到期材料挂账</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">3-1-3.其他费用</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr class="bg1">
+                            <td class="text-color1 not-money">3-2.专项资金计划</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">3-2-1.现款采购材料</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">3-2-2.到期材料挂账</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        <tr>
+                            <td class="not-money">3-2-3.其他费用</td>
+                            <td>126,901,490.00</td>
+                            <td>1,207,600,000.00</td>
+                            <td>614,149.14</td>
+                            <td>5.08%</td>
+                            <td>23,009,800.00</td>
+                            <td>10,319,650.86</td>
+                            <td>11.33%</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+            <div class="forecast-card manager-card3">
+                <div class="card-title">
+                    <img src="${basePath}/static/v3.2/images/report/card_icon@2x.png">
+                    直属单位预算支出预测数排行前五名（2022年7月）
+                </div>
+                <div class="card-content" id="chartForecastBar">
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+            <div class="forecast-card manager-card4">
+                <div class="card-title">
+                    <img src="${basePath}/static/v3.2/images/report/card_icon@2x.png">
+                    主要支出项目预测数占比（2022年7月）
+                </div>
+                <div class="card-content" id="chartForecastPie">
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+            <div class="forecast-card manager-card5">
+                <div class="card-title">
+                    <img src="${basePath}/static/v3.2/images/report/card_icon@2x.png">
+                    主要支出项目执行数占比（2022年7月）
+                </div>
+                <div class="card-content" id="chartExecutePie">
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+            <div class="forecast-card manager-card6">
+                <div class="card-title">
+                    <img src="${basePath}/static/v3.2/images/report/card_icon@2x.png">
+                    直属单位预算支出预测数同比、环比分析
+                    #*<div class="card-form">
+                        <label>#springMessage('table.fcBond.corpName'):</label>
+                        <div class="layui-inline">
+                            <div class="bt-biz-corp"
+                                 data-biz-type="corp"
+                                 data-type="selectTree"
+                                 data-name="corpId"
+                                 data-biz-name="corpId"
+                                 data-resource="netbank:bankAcc:bisAccBal:query"
+                                 data-scope="all"
+                                 ##data-tree-type="check"
+                                 data-defaultvalue="$!{corpId}"
+                                 data-callback="bt.corpCallback"></div>
+                        </div>
+                    </div>*#
+                </div>
+                <div class="card-content" id="chartForecastPayLine">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript"
+        src="${basePath}/static/plugins/scrollbar/jquery.mCustomScrollbar.concat.min.js?_btv=${resourceVersion}"></script>
+<script>
+    var corp;
+    var selectType;
+    var myChartSum;
+    var search;
+    bt.use(['form', 'selectType', 'corp', 'datatablecore','customTable','jquery','form', 'dicts'], function () {
+        var $ = bt.jquery, form = bt.form();
+        selectType = bt.selectType.init();
+        corp = bt.corp.init();
+        bt.dicts.init();
+        var uiStyle = $('#uiStyle').val();
+        if(uiStyle != '1') {
+            $('body').addClass('old-skin');
+        }
+        var webSkin = store.get('web-skin')
+        if(webSkin === 'dark-skin'){
+            $('body').addClass('dark-skin')
+        }else {
+            $('body').removeClass('dark-skin')
+        }
+        // 美化滚动条
+        $('.table-card1 .card-content').addClass('scroll-card-content')
+        $('.table-card1 .card-content').mCustomScrollbar({theme: "minimal-dark",axis:'xy'});
+        // 美化滚动条
+        window.onresize = function () {
+            myChartForecastLine.resize()
+            myChartForecastBar.resize()
+            myChartForecastPieChart.resize()
+            myChartExecutePieChart.resize();
+            myChartForecastPayLine.resize();
+        }
+
+        //资金预测分布图
+        var myChartForecastLine = echarts.init(document.getElementById('chartForecastLine'));
+        initForecastLine = function () {
+            var option = initForecastLineChart();
+            myChartForecastLine.setOption(option, true);
+            myChartForecastLine.resize();
+        };
+        initForecastLine();
+
+        function initForecastLineChart() {
+            var option = {
+                color: ['#4e6dec','#d2585d'],
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['2022-07', '2022-09', '2022-10', '2022-11', '2022-12', '2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06', '2023-07']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        data: [400, 932, 901, 934, 1290, 1330, 1320,820, 932, 901, 934, 1290],
+                        type: 'line',
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x1: 0,
+                                y1: 0,
+                                colorStops: [{
+                                    offset: 0, color: 'red'
+                                },{
+                                    offset: 1, color: 'blue'
+                                }]
+                            }
+                        }
+                    }
+                ]
+            };
+            return option;
+        }
+
+        //直属单位预算支出预测数排行前五名
+        var myChartForecastBar = echarts.init(document.getElementById('chartForecastBar'));
+        initForecastBar = function () {
+            var option = initForecastBarChart();
+            myChartForecastBar.setOption(option, true);
+            myChartForecastBar.resize();
+        };
+        initForecastBar();
+        function initForecastBarChart() {
+            var option = {
+                color: ['#4e6dec','#d2585d'],
+                xAxis: {
+                    type: 'category',
+                    data: ['深圳市拜特科技股份有限公司','深圳市前海拜特科技有限公司', '深圳市拜特数字科技有限公司', '上海市拜特股份有限公司', '北京市拜特科技股份有限公司']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        barWidth:6,
+                        yAxisIndex:0,
+                        data: [120,150,80,110,130],
+                        type: 'bar'
+                    }
+                ]
+            }
+            return option;
+        }
+
+        //主要支出项目预测数占比
+        var myChartForecastPieChart = echarts.init(document.getElementById('chartForecastPie'));
+        initForecastPie = function () {
+            var option = initForecastPieChart();
+            myChartForecastPieChart.setOption(option, true);
+            myChartForecastPieChart.resize();
+        };
+        initForecastPie();
+        function initForecastPieChart() {
+            var industryData = [
+                { value: 200, name: '流动资金计划/现款采购材料' },
+                { value: 160, name: '流动资金计划/到期材料挂账' },
+                { value: 100, name: '流动资金计划/其他费用' },
+                { value: 150, name: '专项资金计划' },
+                { value: 120, name: '其他' }
+            ];
+            var option = {
+                color: ['#4e6dec','#d2585d','#ed955a','#ecda6c','#ec8b92'],
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    type: 'scroll',
+                    orient: 'vertical',
+                    x: 'left',
+                    y: '5%',
+                    data: ['流动资金计划/现款采购材料', '流动资金计划/到期材料挂账', '流动资金计划/其他费用', '专项资金计划', '其他'],
+                    formatter:function(name){  //该函数用于设置图例显示后的百分比
+                        var total = 0;
+                        var value;
+                        industryData.forEach(function (item) {
+                            total += Number(item.value);
+                            if (item.name == name) {
+                                value = item.value;
+                            }
+                        })
+                        var p = Math.round(((value / total) * 100)); //求出百分比
+                        return name+" "+p+"%";  //返回出图例所显示的内容是名称+百分比
+                    }
+                },
+                series: [
+                    {
+                        name: '',
+                        type: 'pie',
+                        radius: ['40%', '60%'],  // 设置饼状图大小，100%时，最大直径=整个图形的min(宽，高)
+                        //radius: ['30%', '60%'],  // 设置环形饼状图， 第一个百分数设置内圈大小，第二个百分数设置外圈大小
+                        center: ['60%', '60%'],  // 设置饼状图位置，第一个百分数调水平位置，第二个百分数调垂直位置
+                        label: {
+                            normal: {
+                                //formatter: '{b}:{c}' + '\n\r' + '({d}%)',
+                                show: false,
+                                position: 'center'
+                            }
+                        },
+                        data: industryData,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ],
+            };
+            return option;
+        }
+
+        //主要支出项目执行数占比
+        var myChartExecutePieChart = echarts.init(document.getElementById('chartExecutePie'));
+        initExecutePie = function () {
+            var option = initExecutePieChart();
+            myChartExecutePieChart.setOption(option, true);
+            myChartExecutePieChart.resize();
+        };
+        initExecutePie();
+        function initExecutePieChart() {
+            var industryData = [
+                { value: 120, name: '流动资金计划/现款采购材料' },
+                { value: 150, name: '流动资金计划/到期材料挂账' },
+                { value: 80, name: '流动资金计划/其他费用' },
+                { value: 110, name: '专项资金计划' },
+                { value: 130, name: '其他' }
+            ];
+            var option = {
+                color: ['#4e6dec','#d2585d','#ed955a','#ecda6c','#ec8b92'],
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    type: 'scroll',
+                    orient: 'vertical',
+                    x: 'left',
+                    y: '5%',
+                    data: ['流动资金计划/现款采购材料', '流动资金计划/到期材料挂账', '流动资金计划/其他费用', '专项资金计划', '其他'],
+                    formatter:function(name){  //该函数用于设置图例显示后的百分比
+                        var total = 0;
+                        var value;
+                        industryData.forEach(function (item) {
+                            total += Number(item.value);
+                            if (item.name == name) {
+                                value = item.value;
+                            }
+                        })
+                        var p = Math.round(((value / total) * 100)); //求出百分比
+                        return name+" "+p+"%";  //返回出图例所显示的内容是名称+百分比
+                    }
+                },
+                series: [
+                    {
+                        name: '',
+                        type: 'pie',
+                        radius: ['40%', '60%'],  // 设置饼状图大小，100%时，最大直径=整个图形的min(宽，高)
+                        //radius: ['30%', '60%'],  // 设置环形饼状图， 第一个百分数设置内圈大小，第二个百分数设置外圈大小
+                        center: ['60%', '60%'],  // 设置饼状图位置，第一个百分数调水平位置，第二个百分数调垂直位置
+                        label: {
+                            normal: {
+                                //formatter: '{b}:{c}' + '\n\r' + '({d}%)',
+                                show: false,
+                                position: 'center'
+                            }
+                        },
+                        data: industryData,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ],
+            };
+            return option;
+        }
+
+        //直属单位预算支出预测数同比、环比分析
+        var myChartForecastPayLine = echarts.init(document.getElementById('chartForecastPayLine'));
+        initForecastPayLine = function () {
+            var option = initForecastPayLineChart();
+            myChartForecastPayLine.setOption(option, true);
+            myChartForecastPayLine.resize();
+        };
+        initForecastPayLine();
+
+        function initForecastPayLineChart() {
+            var option = {
+                color: ['#4e6dec','#d2585d'],
+                gradientColor: ['#4e6dec','#d2585d'],
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: ['同比', '环比']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['2022-01', '2022-02', '2022-03', '2022-04', '2022-05', '2022-06', '2022-07', '2022-08', '2022-09', '2022-10', '2022-11', '2022-12']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name: '同比',
+                        type: 'line',
+                        stack: 'Total',
+                        markPoint: {
+                            data: [
+                                { type: 'max', name: 'Max' }
+                            ]
+                        },
+                        data: [820, 932, 901, 934, 1290, 1330, 1320,820, 932, 901, 934, 1290],
+                    },
+                    {
+                        name: '环比',
+                        type: 'line',
+                        stack: 'Total',
+                        markPoint: {
+                            data: [
+                                { type: 'max', name: 'Max' }
+                            ]
+                        },
+                        data: [820, 932, 901, 934, 1290, 1330, 1320,820, 932, 901, 934, 1290],
+                    }
+                ]
+            };
+            return option;
+        }
+    });
+</script>
+</html>

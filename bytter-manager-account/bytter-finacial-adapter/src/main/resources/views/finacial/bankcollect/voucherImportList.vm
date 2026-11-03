@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+
+<body>
+<table class="layui-table">
+    <tbody>
+    <tr>
+        <td class="textRight" width="50%">#springMessage('common.button.imports')</td>
+        <td width="50%">##导入
+            <button class="layui-btn" id="import">#springMessage('common.button.imports')</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAccbook.tallyDate')</th><!-- 记账日期 -->
+        <th>#springMessage('table.fcAccbook.interestStartDate')</th><!-- 起息日期 -->
+        <th>#springMessage('table.fcAccbookDtlHis.summaryContent')</th><!-- 摘要 -->
+        <th>#springMessage('table.fcCompareAcc.bankId')</th><!-- 序号 -->
+        <th>#springMessage('table.btInnerAccApp.innerAcc')</th><!-- 内部账号 -->
+        <th>#springMessage('finacial.check.erpDataManager.debitMoney')</th><!-- 借方金额 -->
+        <th>#springMessage('table.eCompareBill.creditMoney')</th><!-- 贷方金额 -->
+        <th>#springMessage('table.fcAccbook.busRaceId')</th><!-- 业务种类 -->
+        <th>#springMessage('table.fcUnionAccbook.voucherType')</th><!-- 凭证种类 -->
+        <th>#springMessage('table.erpType.rmk')</th><!-- 备注 -->
+        <th>#springMessage('table.fcAccbook.affixAmount')</th><!-- 附件张数 -->
+    </tr>
+    </thead>
+</table>
+
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form','upload','bttable','datatable','btImport','date','moneyType'], function(){
+        $ = bt.jquery,form = bt.form();
+        var moneyFun = bt.moneyType.getFun();
+
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true ,
+            ignoreButtons:['colvis','output','print'],// 忽略的表单默认按钮
+            searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+            ajax: {
+                url: basePath+"/finacial/bankcollect2/voucherimport/voucherImpDatatable"
+            },
+            buttons: [
+                {
+                    text: '#springMessage("common.button.submit")',
+                    action: function( e, dt, node, config ){
+                        var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        var ids="";
+                        var rowData = data.splice(0,len);
+                        for(var i=0;i<rowData.length;i++){
+                            if (ids == "") {
+                                ids += rowData[i].id;
+                            } else {
+                                ids += "," + rowData[i].id;
+                            }
+                        };
+                        if(ids.length>0){
+                            parent.layer.confirm("#springMessage('table.fcBankBill.isSave')",function(){
+                                $.post(basePath + "/finacial/bankcollect2/voucherimport/submit", {ids:ids}, function(result){
+                                    if(result.success){
+                                        bt.navtab.refreshCurrentTable();
+                                    }
+                                    parent.layer.alert(result.msg, {icon: result.success?1:2});
+                                },'JSON');
+                            });
+                        }else{
+                            parent.layer.alert("#springMessage('common.message.confirm.selectData')");
+                        }
+                    }
+                },
+                {
+                    text: '#springMessage("common.button.delete")',
+                    action: function( e, dt, node, config ){
+                        var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        var rowData = data.splice(0,len);
+                        var ids="";
+                        for(var i=0;i<rowData.length;i++){
+                            if (ids == "") {
+                                ids += rowData[i].id;
+                            } else {
+                                ids += "," + rowData[i].id;
+                            }
+                        };
+                        if(ids.length>0){
+                            parent.layer.confirm("#springMessage('common.message.confirm.delete')",function(){
+                                $.post(basePath + "/finacial/bankcollect2/voucherimport/deletevoucher", {ids:ids}, function(result){
+                                    if(result.success){
+                                        bt.navtab.refreshCurrentTable();
+                                    }
+                                    parent.layer.alert(result.msg, {icon: result.success?1:2});
+                                },'JSON');
+                            });
+                        }else{
+                            parent.layer.alert("#springMessage('common.message.confirm.selectData')");
+                        }
+                    }
+                }
+            ],
+            columns: [
+                {
+                    data: "tallyDate",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "interestStartDate",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "summaryContent",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "lineNo",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "account",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "debitMoney",
+                    className:'textRight',
+                    bSortable:false,
+                    render: function( data, type, full, meta ){
+                        return moneyFun.format(full.debitMoney, {decimal:2});
+                    }
+                },
+                {
+                    data: "creditMoney",
+                    className:'textRight',
+                    bSortable:false,
+                    render: function( data, type, full, meta ){
+                        return moneyFun.format(full.creditMoney, {decimal:2});
+                    }
+                },
+                {
+                    data: "raceName",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "voucherName",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "rmk",
+                    className:'center',
+                    bSortable:false
+                },
+                {
+                    data: "affixAmount",
+                    className:'center',
+                    bSortable:false
+                },
+            ]
+        });
+
+        $("#import").click(function(){
+            up = bt.btImport.init({
+                code: "30000004",
+                titleRows: 0,
+                width: "100%",
+                height: "100%",
+                headRows: 1,
+                success: function (head, data, select) {
+                    $.ajax({
+                        type: "POST",
+                        url: basePath + "/finacial/bankcollect2/voucherimport/impDataSave",
+                        dataType: "json",
+                        contentType: "application/json",
+                        data: JSON.stringify(up.getSelectData()),
+                        success: function (result) {
+                            bt.navtab.refreshCurrentTable();
+                            parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                        }
+                    });
+                }
+            });
+        });
+
+    });
+</script>
+</html>

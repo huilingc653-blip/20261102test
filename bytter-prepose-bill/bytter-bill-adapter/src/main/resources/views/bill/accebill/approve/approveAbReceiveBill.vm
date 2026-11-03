@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+#parse("views/common/head.vm")
+#parse("views/flow/flow.vm")
+</head>
+<body>
+	#parse("views/bill/accebill/viewAbReceiveBill.vm")
+	<input type="hidden" id="corpId" name="corpId" value="$!{abReceiveBillPage.corpId}"></input>
+	<input type="hidden" id="vvid" name="vvid" value="$!{abReceiveBillPage.vvid}"></input>
+	<input type="hidden" id="businessDate" name="businessDate" value="$!{abReceiveBillPage.businessDate}"></input>
+	<input type="hidden" id="insideSing" name="insideSing" value="$!{abReceiveBillPage.insideSing}"></input>
+	<!-- 系统参数 -->
+	<input id="recItem" name="recItem" type="hidden" value="$!{recItem}" />
+	<input id="businessName" name="businessName" type="hidden" value="$!{businessName}" />
+	<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}" />
+    <!-- 预算界面-->
+	<h2 class="layui-colla-title" id="budgetTitle" style="display:none">#springMessage('table.fbsbudgetprocess.title')</h2>
+	<div id="tagItemDetail"></div>	
+	
+	#workFlowHtml()
+	#workFlowScript()
+<script type="text/javascript">
+bt.use('form',function(){
+//初始化
+    if($("#corpId").val()&&$("#businessDate").val()){
+			$renderBudget();
+    }
+});
+
+/**
+ * 生成公共的属性
+ * @return
+ */
+$genOtherHtml=function(corpId,processDate){
+	var url = basePath + "/budget/fbsBudgetProcess/getViewItemDetail";
+	var param = {
+		corpId: corpId,
+		itemCode: $("#payItem").val(),
+		billId: $("#vvid").val(),
+		businessName: $("#businessName").val(),
+		processSysname: $("#processSysname").val(),
+		processDate: processDate,
+		type: 'select',
+		date: (new Date()).getTime()
+	};
+	$.ajax({
+		url: url, method: 'POST', data: param, success: function (json) {
+			$("#tagItemDetail").html("");
+			$("#tagItemDetail").html(json);
+			form.render();
+		}
+	});
+};
+
+/**
+ * 资金计划挂接
+ */
+$renderBudget=function(){
+	//debugger;
+	$.ajax({ 
+		type: 'POST',
+		url: basePath+"/bill/accebill/abvoucherinfoVice/isBudget", 
+		data:{'corpId':$("#corpId").val(),'briefId':'6001'},  
+		async: false, 
+		dataType:'json',
+		success: function(result){
+			if(result.success){
+				if(result.attributes.isBudget){
+					$genOtherHtml(); 
+				}else{
+					$("#budgetTitle").hide();
+				    $("#tagItemDetail").html("");
+				}
+			}else{
+			    $("#budgetTitle").hide();
+				$("#tagItemDetail").html("");
+			}
+		}
+		});
+}
+</script>
+</body>
+</html>

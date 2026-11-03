@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/common/caData.vm")
+</head>
+<body>
+<form class="layui-form" method="post" id="inputForm">
+    <input id="billNo" name="billNo" type="hidden" value="$!{nisReceivablePage.billNo}">
+    <!-- 所用账号单位代码 -->
+    <input id="accCorpId" name="accCorpId" type="hidden" value="">
+    <!-- 新增默认 -->
+    <input id="billFrom" name="billFrom" type="hidden" value="1">
+    <input id="status" name="status" type="hidden" value="0">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight">#springMessage('table.nisBillhead.corpId')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-biz-name="corpId"
+                         data-scope="all"
+                         data-resource="netbank:netBank:nisReceivable:apply"
+                         data-required="true"
+                         data-callback="bt.corpCallback"></div>
+                </div>
+            </td>
+        ##业务类别
+            <td class="textRight">#springMessage('table.nisBillhead.busType')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="" data-name="busType" data-biz-name="busType"
+                         data-valuefield="busId" data-textfield="showName" data-search="true" data-required="true"
+                         data-beforeinit="busBefore"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##本方账号
+            <td class="textRight">#springMessage('table.btBankAccDtl.bankAcc')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="bankAcc" name="bankAcc" lay-verify="required|tableData"
+                           data-biz-name="bankAcc"
+                           autocomplete="off" class="layui-input text"
+                           placeholder="#springMessage('table.btBankAccDtl.bankAcc')">
+                    <table id="bankAccTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.nisBillhead.payerAcc')</th>
+                            <th>#springMessage('table.nisBillhead.payerAccName')</th>
+                            <th>#springMessage('table.nisBillhead.payerBank')</th>
+                            <th>#springMessage('table.nisBillhead.curId')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        ##对方账号
+            <td class="textRight">#springMessage('table.btBankAccDtl.oppAccNo')</td>
+            <td>
+                <div class="layui-input-inline">
+                    #if("$!{externalCorp}" == "1")
+                        <input type="text" id="oppAccNo" name="oppAccNo" lay-verify="required" readonly="readonly"
+                               autocomplete="off" class="layui-input"
+                               placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+                    #else
+                        <input type="text" id="oppAccNo" name="oppAccNo" lay-verify="required"
+                               autocomplete="off" class="layui-input"
+                               placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+                    #end
+                    <div class="bt-div-search">
+                        <button class="bt-biz-externalCorpBankAcc" id="selPayeeAccBut" type="button"
+                                data-beforeClick="bt.externalCorpBankAccParams" data-callback="bt.externalCorpCallback"
+                                title="#springMessage('common.button.select')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##本方账户名称
+            <td class="textRight">#springMessage('table.btBankAccDtl.accName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="accName" name="accName" lay-verify="required" readonly="readonly"
+                           style="width:300px;"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAccDtl.accName')">
+                </div>
+            </td>
+        ##对方账户名称
+            <td class="textRight">#springMessage('table.btBankAccDtl.oppAccName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    #if("$!{externalCorp}" == "1")
+                        <input type="text" id="oppAccName" class="layui-input bt-biz-inputExternalCorpBankAcc"
+                               data-url="" name="oppAccName" data-biz-name="oppAccName" readonly="readonly"
+                               data-valuefield="inputExternalValue" data-textfield="inputExternalText"
+                               data-search="seachExternalCorpBankAcc" lay-verify="required"
+                               placeholder="#springMessage('table.nisBillhead.payeeAccName')"
+                               data-callback="inputExternalCorpCallback" style="width:321px;">
+                    #else
+                        <input type="text" id="oppAccName" class="layui-input bt-biz-inputExternalCorpBankAcc"
+                               data-url="" name="oppAccName" data-biz-name="oppAccName"
+                               data-valuefield="inputExternalValue" data-textfield="inputExternalText"
+                               data-search="seachExternalCorpBankAcc" lay-verify="required"
+                               placeholder="#springMessage('table.nisBillhead.payeeAccName')"
+                               data-callback="inputExternalCorpCallback" style="width:321px;">
+                    #end
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##本方开户行
+            <td class="textRight">#springMessage('table.btBankAccDtl.bankName')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="bankName" name="bankName" lay-verify="required" style="width:300px;"
+                           readonly="readonly"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAccDtl.bankName')">
+                </div>
+            </td>
+        ##对方开户行
+            <td class="textRight">#springMessage('table.btBankAccDtl.oppAccBank')</td>
+            <td>
+                <div class="layui-input-inline">
+                    #if("$!{externalCorp}" == "1")
+                        <input type="text" id="oppBankCode" name="oppBankCode" lay-verify="required" readonly="readonly"
+                               style="width:130px;"
+                               autocomplete="off" class="layui-input"
+                               placeholder="#springMessage('table.nisBillhead.payeeBankCode')">
+                    #else
+                        <input type="text" id="oppBankCode" name="oppBankCode" lay-verify="required" readonly="readonly"
+                               style="width:130px;"
+                               autocomplete="off" class="layui-input"
+                               placeholder="#springMessage('table.nisBillhead.payeeBankCode')">
+                        <div class="bt-div-search">
+                            <button class="bt-biz-bankInfo" id="selPayeeBankBut" type="button"
+                                    data-callback="bt.bankinfoCallback" title="#springMessage('common.button.select')">
+                                <i class="layui-icon">&#xe615;</i>
+                            </button>
+                        </div>
+                    #end
+                </div>
+                <div class="layui-input-inline">
+                    <input type="text" id="oppAccBank" name="oppAccBank" lay-verify="required" style="width:300px;"
+                           readonly="readonly"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.nisBillhead.payeeBank')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##账户余额
+            <td class="textRight">#springMessage('table.nisBillhead.balance')</td>
+            <td>
+                <div id="balanceDiv" name="balanceDiv"></div>
+                <input type="hidden" id="balance" name="balance" style="text-align:right" readonly="readonly"
+                       data-name="balance" data-biz-name="balance"
+                       autocomplete="off" class="layui-input bt-biz-moneyType"
+                       placeholder="#springMessage('table.nisBillhead.balance')">
+            </td>
+        ##币别
+            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+            <td>
+                <div id="curDiv" name="curDiv">$!{nisReceivablePage.curName}</div>
+                <input type="hidden" id="curId" name="curId" value="$!{nisReceivablePage.curId}">
+            </td>
+        </tr>
+        <tr>
+        ##金额
+            <td class="textRight">#springMessage('table.nisBillhead.payMoney.lower')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="" name="amt" style="text-align:right" lay-verify="required|number2"
+                           data-name="amt" data-toUp="amtUp" data-biz-name="amt"
+                           autocomplete="off" class="layui-input bt-biz-moneyType"
+                           placeholder="#springMessage('table.nisBillhead.payMoney.lower')">
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.nisBillhead.payMoney.upper')</td>
+            <td style="padding-left:0px">
+                <div id="amtUp"></div>
+            </td>
+        </tr>
+        <tr>
+        ##交易日期
+            <td class="textRight">#springMessage('table.btNetChalk.transTime')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" name="transTime" lay-verify="required" class="layui-input bt-biz-dateType"
+                           data-today="true" data-type="date" data-name="transTime" data-biz-name="transTime">
+                </div>
+            </td>
+        ##备注
+            <td class="textRight">#springMessage('table.fcCorpPool.rmk')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="rmk" name="rmk"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcCorpPool.rmk')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage(
+                    'common.button.submit')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="0">#springMessage(
+                    'common.button.temp')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <!-- 附件上传 -->
+    <input id="attachmentId" name="attachmentId" type="hidden">
+    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/receivable/nisReceivable.add.js?_btv=${resourceVersion}"></script>

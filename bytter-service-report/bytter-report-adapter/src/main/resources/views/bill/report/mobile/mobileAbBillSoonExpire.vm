@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+<script type="text/javascript">var basePath = "${basePath}";var basePathAll=window.location.protocol+"//"+window.location.host+basePath;</script>
+#set($resourceVersion=$resourceVersion.get())
+#set($basePath=$springMacroRequestContext.contextPath)
+<title>即将到期票据分析</title>
+<link rel="stylesheet"
+	href="${basePath}/static/mobile/plugins/fixedTable/table.min.css?_btv=${resourceVersion}"
+	media="all">
+<link rel="stylesheet"
+	href="${basePath}/static/plugins/frozen/css/frozenui.css?_btv=${resourceVersion}"
+	media="all" />
+<link rel="stylesheet"
+	href="${basePath}/static/css/mobile/index.css?_btv=${resourceVersion}"
+	media="all" />
+<style>
+html {
+	width: 100%
+}
+
+body {
+	-webkit-user-select: initial;
+	background-color: #FFFFFF;
+	width: 100%;
+	margin: 0;
+}
+
+p {
+	margin: 0;
+}
+
+.index-wrap .header {
+	text-align: center;
+	padding-top: 0;
+	height: 245px;
+	line-height: 245px;
+	-webkit-background-size: 100% auto;
+	background-image:
+		url("${basePath}/static/images/bg/bg_report@3x.png?v=165623");
+	background-size: 100% 100%;
+	margin-top: -1px;
+}
+
+.index-wrap {
+	width: 100%;
+	overflow-x: hidden;
+}
+
+a.nav-box {
+	height: 124px;
+	width: 50%;
+	float: left;
+	position: relative;
+	color: #686868;
+	font-size: .6875rem;
+	display: block;
+	padding-bottom: 10px;
+	text-align: center;
+	font-family: PingFang-Medium, PingFangSC-Regular, Helvetica;
+	background-color: #FFFFFF;
+	box-sizing: border-box;
+}
+
+.nav-box>span {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.nav-box>div {
+	height: 40%;
+	margin-bottom: 18px;
+}
+
+.nav-box>p {
+	color: #656565;
+	font-size: 14px;
+	margin-top: 30px;
+}
+
+.nav-box>div>img {
+	margin-top: 30px;
+}
+
+.nav-boder {
+	border-left: 1px solid #E4E4E4;
+	border-right: 1px solid #E4E4E4;
+	border-bottom: 1px solid #E4E4E4;
+}
+
+.boderBottom {
+	border-bottom: 1px solid #E4E4E4;
+}
+
+.header>h1 {
+	margin: 0;
+	color: #FFFFFF;
+	font-size: 32px;
+}
+
+
+.sp_lines {
+	height: 0.55rem;
+	font-size: 0.105rem;
+}
+
+.sp_lines span {
+	height: 0.55rem;
+}
+
+.sp_head_lines {
+	line-height: 0.40rem;
+	height: 0.4rem;
+	font-size: 0.14rem;
+	background: #f3f3f3;
+}
+
+.sp_block {
+	display: inline-block;
+}
+
+.sp_vertical {
+	vertical-align: top;
+}
+
+.sp_margin {
+	margin-left: 0.01rem;
+}
+
+.data-table {
+	overflow: hidden;
+	height: 100%;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	word-break: break-all;
+}
+.cho-tab-title {
+	/*   height: 0.44rem; */
+	background-color: #fff;
+	padding-left: 0.15rem;
+}
+
+.cho-tab-title span {
+	display: inline-block;
+	height: 0.24rem;
+	border-radius: 0.12rem;
+	background-color: rgba(245, 245, 245, 1);
+	margin: 0.06rem;
+	margin-top: 0.1rem;
+	color: #333;
+	padding: 0 0.1rem;
+	font-size: 0.14rem;
+	font-family: PingFangSC-Regular, PingFang SC;
+	margin-left: 0;
+}
+
+.cho-tab-title span:nth-child(3) {
+	margin-right: 0;
+}
+
+.cho-tab-title .active {
+	color: #2988FF;
+	background-color: #E9F1FF;
+}
+
+/*加载动画*/
+.bt-loading {
+	display: none;
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 9999;
+	border-radius: 0.05rem;
+	height: 100%;
+	background-color: #000;
+	width: 100%;
+	opacity: 0.4;
+}
+
+.bt-loading center {
+	margin-top: 2rem;
+}
+
+.bt-popup-container {
+	position: relative;
+	background-color: #fff;
+	max-height: calc(100% -   1.35rem);
+	overflow-y: auto;
+	height: calc(100% -   0.55rem);
+}
+
+.bt-card-item.active {
+	color: #2988FF;
+	background-color: #E9F1FF;
+}
+ .data-table .t_r {
+    margin-left: 0;
+}
+</style>
+</head>
+<body>
+	<ul class="ui-tab-content" style="width: 100%;">
+		<li class="bt-show">
+			<form action="">
+				<div class="ui-row-flex" style="height: 0.44rem;">
+					<!-- 搜索框 -->
+					<div class="ui-col ui-col">
+						<div class="ui-searchbar-wrap ui-border-b">
+							<div class="ui-searchbar ui-border-radius" id="corpDiv">
+								<i class="ui-icon-search"></i>
+								<div class="ui-searchbar-text">请选择单位</div>
+								<div class="ui-searchbar-input">
+									<input id="corpId" name="corpId" type="text"
+										placeholder="请选择单位" autocapitalize="off" readonly="readonly">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="ui-btn-wrap ui-border-b" style="background: #ffffff;">
+					<div class="bt-select-popup" style="margin-right: 0.2rem;">
+						<input type="text" value="流通介质" id="btn1" readonly="readonly"
+							style="width: 0.60rem;"> <input type="hidden"
+							name="billTypeName" id="billTypeName" value="" />
+					</div>
+					<div class="bt-select-popup" style="margin-right: 0.2rem;">
+						<input type="text" value="收付类型" id="btn2" readonly="readonly"
+							style="width: 0.60rem;"> <input type="hidden" name="type"
+							id="type" value="" /> <input type="hidden" name="bisName"
+							id="bisName" value="应付票据" />
+					</div>
+					<div class="bt-select-popup">
+						<input type="text" value="到期期限" id="btn3" readonly="readonly"
+							style="width: 0.60rem;">
+					</div>
+
+					<div class="popup-block">
+						<div class="ui-actionsheet" id="actionsheet1"
+							style="height: calc(100% -   1rem); top: 1rem; overflow-y: auto;"
+							data-link="btn1">
+							<div class="ui-actionsheet-cnt am-actionsheet-down"
+								style="top: 1rem;">
+								<section class="bt-popup-container" id="m-t-vt">
+									<div class="bt-card-header">流通介质</div>
+									<div class="bt-card-body">
+										<div class="ui-row-flex ui-whitespace">
+											<div class="ui-col ui-col">
+												<div class="bt-card-item" data-value="11">电票</div>
+											</div>
+											<div class="ui-col ui-col">
+												<div class="bt-card-item" data-value="10">纸票</div>
+											</div>
+										</div>
+									</div>
+								</section>
+								<div class="bt-popup-bottom">
+									<button type="button" id="typeRest" class="bt-popup-reset"
+										style="border: 1px solid rgba(212, 212, 212, 1);">重置</button>
+									<button type="button" class="bt-popup-submit"
+										id="submitTypeValue" style="margin-left: 0.15rem;">确定</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="popup-block">
+						<div class="ui-actionsheet" id="actionsheet2"
+							style="height: calc(100% -2.25rem); top: 1rem;" data-link="btn2">
+							<div class="ui-actionsheet-cnt am-actionsheet-down"
+								style="top: 1rem;">
+								<section class="bt-popup-container" id="m-t-ct">
+									<div class="bt-card-header">收付类型</div>
+									<div class="bt-card-body">
+										<div class="ui-row-flex ui-whitespace">
+											<div class="ui-col ui-col">
+												<div class="bt-card-item active" id="yfBill" data-value="0">应付票据</div>
+											</div>
+											<div class="ui-col ui-col">
+												<div class="bt-card-item" data-value="1">应收票据</div>
+											</div>
+										</div>
+									</div>
+								</section>
+								<div class="bt-popup-bottom">
+									<button type="button" id="busRest" class="bt-popup-reset"
+										style="border: 1px solid rgba(212, 212, 212, 1);">重置</button>
+									<button type="button" class="bt-popup-submit"
+										id="submitBusValue" style="margin-left: 0.15rem;">确定</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="bt-chart-title ui-border-b" style="background: #ffffff;">
+					<div class="fl bt-chart-title-left"
+						style="margin-left: 0.05rem; font-size: 0.14rem;">
+						<span class="sp_head_vHeads" id="sp_head_vHeads">数据列表</span>
+					</div>
+					<div class="sp-tab-switch fr bt-chart-title-right">
+						<span data-name="map" class="sp-tab-map"> </span> &nbsp; &nbsp; <span
+							style="margin-right: 0.1rem;" data-name="list"
+							class="sp-tab-list active"> </span>
+					</div>
+				</div>
+				<div id="sp_cycleDate" class="cho-tab-title" style="display: none">
+					#foreach($info in $dataList) <span>$!{info.termName} <input
+						type="hidden" id="termId" value="$!{info.id}" /> <input
+						type="hidden" id="termName" value="$!{info.termName}" />
+					</span> #end
+				</div>
+			</form> <!-- 列表和图表切换 -->
+			<div class="sp-pack"
+				style="width: 100%; background: #ffffff; height: calc(100vh -   1.6rem);">
+				<div class="sp-pack-list sp-show" id="sp-list" style="height: 100%;">
+						<div class="data-table">
+						<div class="t_l" style="width: 150px;">
+							<!--1.1 冻结列表头-->
+							<table>
+								<tbody>
+									<tr>
+										<th>单位名称</th>
+									</tr>
+								</tbody>
+							</table>
+							<div class="t_l_freeze">
+								<table width="100%">
+									<tbody id="tb-corp">
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div class="t_r">
+							<div class="t_r_t">
+								<table width="100%" style="width: 5rem">
+									<tbody>
+										<tr>
+											<th>类型</th>
+											<th>商票</th>
+											<th>银票</th>
+											<th>期限</th>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="t_r_content">
+								<table width="100%" style="width: 5rem">
+									<tbody id="tb-vg">
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+
+
+				<div style="height: 0.1rem;"></div>
+				</div>
+
+				<div class="sp-pack-map" id="sp-map" style="display: none;">
+					<div class="sp_map_view" id="sp_map_view" style="display: none;">
+						<div class="bt-chart-title">
+							<div class="fl bt-chart-title-left">
+
+							</div>
+							<div class="fr bt-chart-title-right">单位:万元</div>
+						</div>
+						<div class="chart-wrapper">
+							<canvas id="mountNode" style="width: 3.65rem; height: 2.35rem;"></canvas>
+						</div>
+					</div>
+				</div>
+			</div>
+		</li>
+		<li>余额分析</li>
+		<div id="bt-loading" class="bt-loading" style="display: none;">
+			<center>
+				<img style="width: 25px;"
+					src="${basePath}/static/modules/bill/accebill/lib/loadinggif.gif" />
+			</center>
+		</div>
+	</ul>
+	</div>
+</body>
+<script src="${basePath}/static/mobile/plugins/f2/f2.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/js/iscroll-probe.min.js?_btv=${resourceVersion}"id="probe"></script>
+<script src="${basePath}/static/mobile/plugins/fixedTable/table.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/plugins/web-view/webView.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/webViewScriptBridage.js?_btv=${resourceVersion}"></script>
+<script>
+
+	window.getSoonExpireBill = (data)=>{
+		console.log("票据")
+		postBalDataTable(data)
+	}
+
+//单位搜索组件
+function openCorpSelectionPage() {
+    setTimeout(function(){
+        var data = BTAppBridge.openCorpSelectionPage && BTAppBridge.openCorpSelectionPage('searchActionCallback',{
+        	resource:"${billSoonExpireReson}"
+        });
+        uni.postMessage({
+			data:data
+		})
+    },100);
+}
+(function (doc, win) {
+	 // 用于记录页面的查询参数
+     const searchParams = {
+         corpIds: [],
+         corpNames: [],
+         type: "0",
+         billTypeName: null
+
+     };
+     waitLoading();
+     //图标tab切换
+     $('.sp-tab-switch > span').on('click',function(){
+ 	 	  $(".sp_head_vHeads").empty();
+    	  var name = $(this).data('name');
+    	  if($("#btn3").parent().hasClass('active')){
+    		  $('.ui-actionsheet').removeClass('show');
+//          	  $('.bt-select-popup').removeClass('active');
+//          	  $('#sp_cycleDate').hide();
+    	  }
+    	  $(this).addClass('active').siblings('span').removeClass('active');
+    	  if(name == 'list'){
+    		  $("#sp-list").show();
+    		  adjustHeight();
+              initTableSize();
+    		  $("#sp-map").hide();
+    		  $("#sp_head_vHeads").append("数据列表");
+    		  $("#sp-map").hide();
+    		  $('#sp_map_view').hide();
+//     		  $('#sp_cycleDate span').removeClass('active');
+    		  waitLoading();
+    	  }else {
+    		  $("#sp-list").hide();
+    		  $("#sp-map").show();
+    		  adjustHeight();
+              initTableSize();
+    		  $("#sp_head_vHeads").append("可视化图表");
+    		  $("#sp-map").show();
+    		  $('#sp_map_view').show();
+    		  loadViewMap();
+    	  }
+      });
+
+     //切换
+     $('.cho-tab-title > span').on('click',function(){
+    	 if($(this).hasClass('active')){
+    		 $(this).removeClass('active')
+    	 }else{
+    		 $(this).addClass('active')
+    	 }
+    	 adjustHeight();
+         initTableSize();
+//     	  $(this).addClass('active').siblings('span').removeClass('active');
+    	  loadInfoToData();
+      });
+
+     $("#typeRest").click(function () {
+     	$('#m-t-vt >div .bt-card-item').removeClass('active');
+     	searchParams.billTypeName = null;
+     });
+     $("#busRest").click(function () {
+     	$('#m-t-ct >div .bt-card-item').removeClass('active');
+     	$('#yfBill').addClass('active');
+     	$('#bisName').val('应付票据');
+		searchParams.type = "0";
+     });
+
+     $("#submitTypeValue").click(function () {
+	   	 $('.ui-actionsheet').removeClass('show');
+		 $('.bt-select-popup').removeClass('active');
+		 searchParams.billTypeName = $('#m-t-vt >div .bt-card-item.active').data('value');
+    	 loadInfoToData();
+     });
+
+     $("#submitBusValue").click(function () {
+	   	 $('.ui-actionsheet').removeClass('show');
+		 $('.bt-select-popup').removeClass('active');
+		 searchParams.type =$('#m-t-ct >div .bt-card-item.active').data('value');
+		 $('#bisName').val($('#m-t-ct >div .bt-card-item.active').text());
+		 loadInfoToData();
+     });
+
+     $('.bt-card-item').on('click',function(){
+    	if($(this).data('value')=="1" || $(this).data('value')=="0"){
+    		$('#m-t-ct >div .bt-card-item').removeClass('active');
+    	}else{
+    		$('#m-t-vt >div .bt-card-item').removeClass('active');
+    	}
+    	$(this).addClass('active');
+     });
+
+     //搜索框点击
+     $('.ui-searchbar').on('click',function(){
+         $('.ui-searchbar-wrap').addClass('focus');
+         $('.ui-searchbar-input input').focus();
+     });
+
+     $('.ui-searchbar-cancel').on('click',function(){
+         $('.ui-searchbar-wrap').removeClass('focus');
+     });
+
+     //搜索框
+     $('.ui-icon-search').on('click',function(){
+    	 loadInfoToData();
+     });
+
+     function loadInfoToData(){
+    	 $('#bt-loading').show();
+         setTimeout(function(){
+             $('#bt-loading').hide();
+	    	 if($('.sp-tab-map').hasClass('active')){
+	    		 loadBillView();
+	    	 }else{
+	        	 loadListFormData();
+	    	 }
+         },500)
+     }
+
+     //弹框选择
+     function showPopup($this,id,flag){
+         if( $this.parent().hasClass('active')){
+        	 $('.ui-actionsheet').removeClass('show');
+        	 $('.bt-select-popup').removeClass('active');
+        	 if(id=="#actionsheet3"){
+        		 $('#sp_cycleDate').hide();
+        	 }
+             return
+         }
+         $('.ui-actionsheet').removeClass('show');
+         $('.bt-select-popup').removeClass('active');
+         $this.parent().addClass('active');
+         $(id).addClass('show');
+         if(flag){
+        	 $('#sp_cycleDate').show();
+        	 //加载图表数据
+        	 $('#sp_map_view').show();
+//         	 if(!$('.sp-tab-map').hasClass('active')){
+        	 if(!$('.cho-tab-title > span').hasClass('apostBalDatactive')){
+        		 $('.cho-tab-title > span').addClass('active').siblings('span').removeClass('active');
+        		 $('#sp_cycleDate span').eq(0).addClass('active');
+//         	 }
+         	}
+        	 loadInfoToData();
+         }else {
+        	$('#sp_cycleDate').hide();
+        	 if(id=="#actionsheet3"){
+        		 $('#sp_cycleDate').hide();
+        		 $('#sp_map_view').hide();
+        	 }
+         }
+     }
+     $("#btn1").click(function(){
+         showPopup($(this),'#actionsheet1');
+     });
+
+     $("#btn2").click(function(){
+         showPopup($(this),'#actionsheet2');
+     });
+
+     $("#btn3").click(function(){
+         showPopup($(this),'#actionsheet3',true);
+     });
+
+     $('.popup-block').on('click','.bt-popup-item',function(){
+         var linkId = $(this).parents('.ui-actionsheet').data('link');
+         $(this).addClass('active');
+         $(this).addClass('active').siblings('div').removeClass('active');
+         hidePopup($('#'+linkId));
+         loadInfoToData();
+     })
+
+     //弹框隐藏
+     function hidePopup($this){
+          $('.ui-actionsheet').removeClass('show');
+          $this.parent().removeClass('active');
+     }
+
+     //单位选择
+     $("#corpDiv").click(function () {
+         openCorpSelectionPage();
+     });
+
+     /**
+      * 搜索回调方法
+      * @param data
+      */
+     window.searchActionCallback = function (data) {
+         // 根据data参数，查询数据
+         if (data.corpNames && data.corpNames.length > 0) {
+             searchParams.corpNames = data.corpNames;
+             $("#corpId").val(data.corpNames);
+         }else{
+             $("#corpId").val('');
+         }
+         if (data.corpIds) {
+             searchParams.corpIds = data.corpIds;
+         }
+         loadInfoToData();
+     }
+
+     F2.track(false);
+     //加载图表
+     function loadBillView(){
+ 		 var billType =$('#m-t-ct >div .bt-card-item.active').data('value');
+       	 var billTypeName= $('#btn1').siblings('input').val();
+       	 var buisTypeName= $('#bisName').val();
+    	 var remainMonId="";
+    	 if($("#sp_cycleDate >span").hasClass('apostBalDatactive')){
+//     		 $("#lastMonth").empty();
+//         	 $('#lastMonth').append($('#sp_cycleDate >span.active #termName').val());
+        	 $("#sp_cycleDate >span.active #termId").each(function() {
+                 if(remainMonId == ''){
+                 	remainMonId=$(this).val();
+                 }else{
+                 	remainMonId+=","+$(this).val();
+                 }
+             })
+    	 }
+         var url = "/bill/report/soonExpireBill/getMapAppData";
+  	     setTimeout(function () {
+            var data = BTAppBridge.post(url,{"billTypeName":searchParams.billTypeName,"corpId":searchParams.corpIds,"billType":billType,"buisTypeName":buisTypeName,"remainMonId":remainMonId},"postBalData");
+			 uni.postMessage({
+				 data:data
+			 })
+            },100);
+
+  	    var chart=null;
+  	    postBalData = function (result) {
+  	    	console.log("result"+result)
+// 	    	alert(JSON.stringify(result.data));
+ 	        if(chart==null){
+	 	           chart = new F2.Chart({
+	        		   id: 'mountNode',
+	        		   pixelRatio: window.devicePixelRatio, // 指定分辨率
+	 	           });
+	 	           var originDates = result.originDate;
+	 	           chart.source(result.data,{
+	 	        	   'corpName':{
+	 	        		  type: 'cat',
+	        		      tickCount: 5,
+		        		  values: originDates
+	 	        	   },
+	 	        	   steps: { 
+	 	        		  tickCount:6
+	 	        	   },
+	 	        	   'money':{
+	 	        			tickCount: 5,
+	 	        			min:0
+	 	        	   }
+
+	 	           });
+	 	          chart.tooltip({
+	 	        	  showItemMarker: false,
+	 	        	  background: {
+	 	        	    fill: '#69A4FF',
+	 	        	    radius: 4,
+	 	        	  },
+	 	        	  valueStyle: {
+	 	        	    fontSize:10,
+	 	        	    fill: '#fff',
+	 	        	  },
+	 	        	  titleStyle: {
+	 	        	    fontSize:10,
+	 	        	    fill: '#fff',
+	 	        	  }, // tooltip 标题的文本样式配置，showTitle 为 false 时不生效
+	 	        	  nameStyle: {
+	 	        	    fontSize:10,
+	 	        	    fill: '#fff',
+
+	 	        	  },
+	 	         });
+
+ 	           //设置横坐标样式
+ 	           chart.axis('corpName', { // 横坐标样式
+ 	                 tickLine: { // 横坐标名字上面那个突出的小线段
+ 	                   length: 0,
+ 	                   stroke: '#EFEFEF' //小线段的颜色
+ 	                 },
+ 	                 label: function (text, index, total) {  //横坐标文字设置
+ 	                   return {
+ 	                     text:text,//内容
+ 	                     fill: '#666666' //字体颜色
+ 	                   }
+ 	                 },
+ 	                 line: {
+ 	                   top: true
+ 	                 }
+ 	          });
+ 	          //设置纵坐标样式
+	          chart.axis('money', {
+	                position: 'left', // 纵坐标位置
+	                label: function label(text) {
+	                  return {
+	                    text: text,
+	                    fill: '#666666'
+	                  };
+	                },
+	                tickCount: 5,
+	                grid: { //网格线
+	                  stroke: '#EFEFEF',
+	                  border:'line'
+	                }
+	            });
+	            chart.interval().position('corpName*money').color('name',function(name) { //设置柱状图的颜色
+	     		    if (name == '商票') {
+	     		      return '#14D2B8'
+	     		    } else if(name == '银票') {
+	     		      return '#FD9574'
+	     		    }
+	     		  }).adjust({
+	 	    		    type: 'dodge',
+	 	    		    marginRatio: 0.05 // 设置分组间柱子的间距
+	     		  }).style('type',{
+	     		    radius:function radius() {　//设置柱状图圆角
+	     		        return [3,3,3,3]
+	     		    }
+	     		  });
+	     		chart.interaction("pan");
+		     	chart.scrollBar({
+		     	      xStyle: {
+		     	        backgroundColor: "#e8e8e8",
+		     	        fillerColor: "#808080",
+		     	        offsetY: -2
+		     	      }
+	         	});
+	     	    chart.render();
+    		}else{
+    			chart.clear();
+    			chart.souce(result.data);
+    			chart.render();
+    			chart.repaint();
+    	    }
+        }
+     }
+
+     //加载列表
+     function loadListFormData(){
+     	$(".sp_tab_tbody").empty();
+     	$("#tb-corp").empty();
+     	$("#tb-vg").empty();
+		var billType =$('#m-t-ct >div .bt-card-item.active').data('value');
+     	var billTypeName= $('#btn1').siblings('input').val();
+     	var buisTypeName= $('#bisName').val();
+     	var remainMonId="";
+     	//弹框3是开启状态的
+     	if(
+     			//$("#btn3").parent().hasClass('active') &&
+     			$("#sp_cycleDate >span").hasClass('active')){
+//      		remainMonId=$('#sp_cycleDate >span.active #termId').val();
+    	     $("#sp_cycleDate >span.active #termId").each(function() {
+                if(remainMonId == ''){
+                	remainMonId=$(this).val();
+                }else{
+                	remainMonId+=","+$(this).val();
+                }
+            })
+     	}
+        var url = "/bill/report/soonExpireBill/getAppData";
+           $('#bt-loading').show();
+	  	   setTimeout(function () {X
+	  	       $('#bt-loading').hide();
+	           var data =  BTAppBridge.post(url,{"billTypeName":searchParams.billTypeName,"corpId":searchParams.corpIds,"type":type,"buisTypeName":buisTypeName,"remainMonId":remainMonId},"postBalDataTable");
+			   uni.postMessage({
+				   data:data
+			   })
+	           },100);
+		 postBalDataTable = function (result) {
+	  	  	console.log("result"+result.flag)
+	           	//操作成功，且有值做拼接操作
+	           	if(result.flag){
+	           		var appendContent='';
+	           		var tbCorp='';
+	           		var tbVg='';
+	           		for(var i=0;i<result.data.length;i++){
+	           			tbCorp = tbCorp+'<tr><td>'+result.data[i].corpName+'</td></tr>';
+	           			tbVg = tbVg+'<tr>';
+	           			tbVg = tbVg+'<td>'+result.data[i].billTypeName+'</td>';
+	           			tbVg = tbVg+'<td style="text-align: right;">'+result.data[i].businessMoneyStr+'</td>';
+	           			tbVg = tbVg+'<td style="text-align: right;">'+result.data[i].silverMoneyStr+'</td>';
+	           			tbVg = tbVg+'<td>'+result.data[i].timeLimitName+'</td>';
+	           			tbVg = tbVg+'</tr>';
+	           			//追加总计金额
+	           			if(i==result.data.length-1){
+	           				i++;
+	               			tbCorp = tbCorp+'<tr><td>总计：'+result.count+' (笔)</td></tr>';
+	               			tbVg = tbVg+'<tr>';
+	               			tbVg = tbVg+'<td></td>';
+	               			tbVg = tbVg+'<td style="text-align: right;">'+result.busineSumMoeny+'</td>';
+	               			tbVg = tbVg+'<td style="text-align: right;">'+result.bankSumMoney+'</td>';
+	               			tbVg = tbVg+'<td></td>';
+	               			tbVg = tbVg+'</tr>';
+	           			}
+	           		}
+	           	$("#tb-corp").append(tbCorp);
+           		$("#tb-vg").append(tbVg);
+           	    adjustHeight();
+                initTableSize();
+           	}else{
+           		$(".sp_tab_tbody").append("暂无数据");
+           	}
+
+         }
+     }
+     function waitLoading(){
+    	  $('#bt-loading').show();
+          setTimeout(function(){
+              $('#bt-loading').hide();
+              loadListFormData();
+          },500)
+     }
+
+     function loadViewMap(){
+   	  $('#bt-loading').show();
+         setTimeout(function(){
+             $('#bt-loading').hide();
+             loadBillView();
+         },500)
+    }
+
+ })(document, window);
+</script>
+<script>
+
+</script>
+</html>

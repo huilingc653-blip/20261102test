@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post" id="inputForm" enctype="mutipart/form-data">
+    <div class="layui-colla-item">
+        <div class="layui-colla-content layui-show" >
+            <table class="layui-table">
+                <tbody>
+                <tr>
+                    ##编号
+                    <td class="textRight" width="35%">#springMessage('table.nisWageDetail.wageDtlNo')</td>
+                    <td width="65%">
+                        <div class="layui-input-inline">
+                            <input type="text" name="code" class="layui-input" lay-verify="required|strlength" onblur="checkNO(this)"
+                                   data-maxlength="20"  placeholder="#springMessage('table.nisWageDetail.wageDtlNo')" value="" >
+                        </div>
+                    </td>
+
+                </tr>
+                <tr>
+                    ##商户类型
+                    <td class="textRight" >#springMessage('ttpay.shopType.type')</td>
+                    <td width="35%">
+                        <div class="layui-input-inline">
+                            <input type="text" name="shopType" class="layui-input" lay-verify="required|strlength" data-maxlength="20"  placeholder="#springMessage('ttpay.shopType.type')" value="" >
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    ##备注
+                    <td class="textRight" >#springMessage('ttpay.rmk')</td>
+                    <td >
+                        <div class="layui-input-inline">
+                            <input type="text" name="rmk" class="layui-input" lay-verify="strlength" data-maxlength="200"  placeholder="#springMessage('ttpay.rmk')" value="" >
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    ##有效标志
+                    <td class="textRight">#springMessage('table.btCurrency.validSign')</td>
+                    <td>
+                        <div class="bt-biz-dict" data-type="radio" data-group="valid_sign" data-defaultvalue="1" data-name="isFlag" data-required = "true"></div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="layui-form-submit-adaptive">
+            <div style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="submit">#springMessage('common.button.submit')</button>
+                <a type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</a>
+                <button class="layui-btn layui-btn-primary" type="button" onclick="closeForms()">#springMessage('common.button.close')</button>
+            </div>
+        </div>
+
+    </div>
+
+</form>
+    #parse("views/common/footer.vm")
+
+<script>
+    bt.use(['form','layedit','select','btdate','dicts','dateType','selectType'], function(){
+        var $ = bt.jquery,form = bt.form();
+        var moneynum = bt.moneynum;
+        bt.dicts.init();
+        bt.dateType.init();
+        bt.selectType.init();
+
+        //监听提交
+        form.on('submit(submit)', function(data){
+            bt.loading.show();
+            var action = "/ttpay/shopType/save";
+            $.post(basePath + action,data.field,function(result){
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                if(result.success){
+                    if(!bt.navtab){
+                        parent.layer?parent.layer.closeAll():layer.closeAll();
+                    } else {
+                        bt.navtab.closeCurrent();
+                        bt.navtab.refreshCurrent();
+                    }
+                }
+                bt.loading.hide();
+            },'JSON');
+            return false;
+        });
+
+    });
+    /**
+     * 检查不允许输入汉字及特殊字符
+     * @param obj
+     */
+    function checkNO(obj) {
+        var regx =/[\u4e00-\u9fa5]/,//汉字
+                regEn = /[`~!@#$%^&*()_+<>?:"{},.\/;'[\]]/im,//英文特殊字符
+                regCn = /[·！#￥（——）：；“”‘、，|《。》？、【】[\]]/im;//中文特殊字符
+        if (regx.test(obj.value)||regEn.test(obj.value)||regCn.test(obj.value)) {
+            obj.value = "";
+        }
+    }
+</script>
+</body>
+</html>

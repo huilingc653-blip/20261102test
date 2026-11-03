@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight" width="20%">#springMessage("finacial.paramconfig.fcCashItem.itemCode")</td>
+            <td width="30%">
+                <input type="text" name="likes_itemCode" autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.fcCashItem.itemCode')">
+            </td>
+            <td class="textRight" width="20%">#springMessage("finacial.paramconfig.fcCashItem.itemName")</td>
+            <td width="30%">
+                <input type="text" name="likes_itemName" autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.fcCashItem.itemName')">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('finacial.paramconfig.fcCashItem.itemCode')</th>
+        <th>#springMessage('finacial.paramconfig.fcCashItem.itemName')</th>
+        <th>#springMessage('finacial.paramconfig.fcCashItem.rmk')</th>
+        <th>#springMessage('table.btCurrency.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','datatable','corp'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.corp.init();
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:true,
+            order: [1,'asc'],
+            ajax: {
+                'url': basePath+"/finacial/paramconfig/cashItem/datatable"
+            },searchForm:{
+                formFilter:"search",
+                formElem:"#searchForm"
+            },
+            buttons: [
+                {
+                    text: "#springMessage('common.button.add')",
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                }
+            ],
+            columns: [
+           		{data:"itemCode",bSortable:true,className:'center'},
+           		{data:"itemName",bSortable:true,className:'center'},
+                {data:"rmk",bSortable:true,className:'center'},
+                {data:"validSign",bSortable:true,className:'center',
+           			render: function ( data, type, full, meta ) {
+                		var validSign = bt.dict("sf_yn",full.validSign);
+                        return validSign;
+           			}
+                },
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                    var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+	                    html += '  <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>';
+	                    html += '  <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+                    return html;
+                }}
+            ]
+        });
+    });
+    function add(){
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/cashItem/add",
+            end:function(){
+            	bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/finacial/paramconfig/cashItem/view/" + data.id
+        });
+    }
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/finacial/paramconfig/cashItem/update/" + data.id,
+                end: function () {
+                    bt.navtab.refreshCurrentTable();
+                }
+            });
+        }
+    }
+    function del(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            parent.layer.confirm("" + bt.lang('common.message.confirm.delete') + "", function () {
+                $.post(basePath + "/finacial/paramconfig/cashItem/delete?cashItemId=" + data.id, function (result) {
+                    bt.datatable.refreshCurrentPage();
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+        }
+    }
+</script>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+        .inCenter{
+            text-align: center!important;
+        }
+        .addRow {
+            cursor: pointer;
+            color: rgb(0, 0, 204);
+        }
+
+        .noneElem {
+            display: none;
+        }
+
+        .input-bp input {
+            border: none;
+            width: 192px;
+        }
+        .input-bp span {
+            position: absolute;
+            right: 4px;
+            top: 1px;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="accType" value="$!{accType}">
+    <input type="hidden" name="accId" id="accId" value="$!{accId}">
+    <input type="hidden" name="flag" id="flag" value="$!{flag}">
+    <input type="hidden" name="borrowInCorp" id="borrowInCorp" value="$!{borrowInCorp}">
+    <input type="hidden" name="borrowOutCorp" id="borrowOutCorp" value="$!{borrowOutCorp}">
+    <input type="hidden" name="eqs_curId" id="curId" value="$!{curId}">
+    <input type="hidden" name="eqs_corpId"
+        #if($!{flag} == 'borrowInAcc')
+           value="$!{borrowInCorp}"
+        #else
+           value="$!{borrowOutCorp}"
+        #end
+    >
+    <table class="layui-table">
+        <tr>
+            ##            账号
+            <td width="10%" class="textRight">#springMessage('table.fcFreeze.blnctrAcc')</td>
+            <td width="23%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_bankAcc" class="layui-input">
+                </div>
+            </td>
+            ##            户名
+            <td width="10%" class="textRight">#springMessage('table.accountDTO.accName')</td>
+            <td width="23%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_accName" class="layui-input">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center">
+                <button class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+                <button type="reset" class="layui-btn layui-btn-primary layui-btn-small">#springMessage("common.button.reset")</button>
+            </td>
+        </tr>
+    </table>
+</form>
+#if($!{accType} == 'bankAcc')
+    <table id="appTable1" class="layui-table layui-form">
+        <thead>
+        <tr>
+            <th>#springMessage('table.accountDTO.accName')</th>#*户名*#
+            <th>#springMessage('table.fcInstrateAdjust.account')</th>#*账户*#
+            <th>#springMessage('table.accountDTO.bankName')</th>#*开户行*#
+            <th>#springMessage('table.bisAccDtl.curName')</th>#*币种*#
+        </tr>
+        </thead>
+    </table>
+    #else
+    <table id="appTable2" class="layui-table layui-form">
+        <thead>
+        <tr>
+            <th>#springMessage('table.accountDTO.accName')</th>#*户名*#
+            <th>#springMessage('table.fcInstrateAdjust.account')</th>#*账户*#
+            <th>#springMessage('table.bisAccDtl.curName')</th>#*币种*#
+        </tr>
+        </thead>
+    </table>
+#end
+
+<!-- 这里填写新HTML的代码 -->
+    #parse("views/common/footer.vm")
+<script>
+    var form, element;
+    var columns1 = [
+        {
+            data: "accName",
+            className: "center"
+        }, {
+            data: "blnctrAcc",
+            className: "center"
+        }, {
+            data: "curName",
+            className: "center"
+        }
+    ];
+    var columns2 = [
+        {
+            data: "accName",
+            className: "center"
+        }, {
+            data: "bankAcc",
+            className: "center"
+        }, {
+            data: "bankName",
+            className: "center"
+        }, {
+            data: "curName",
+            className: "center"
+        }
+    ];
+    bt.use(["jquery", "datatable", "form", "selectType","element"], function () {
+        $ = bt.jquery;
+        form = bt.form()
+        element = layui.element();
+        bt.selectType.init();
+        var columns;
+        if ($("#accType").val() == "bankAcc") {
+            columns = columns2;
+        } else {
+            columns = columns1;
+        }
+        datatable1 = bt.datatable.initMultiTables({
+            elem: "#appTable1",
+            colReorder: true,
+            ordering: false,
+            checkbox: true,
+            mulselect: false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                "url": basePath + "/inl/info/listAccDataTable"
+            }
+            , columns: columns
+        });
+
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    /**
+     * 为空判断
+     * @param value
+     * @returns {boolean}
+     */
+    function isEmpty(value) {
+        if (value == null || value == "" || value == undefined || value == " ") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param value
+     * @returns {boolean}
+     */
+    function isNotEmpty(value) {
+        return !isEmpty(value);
+    }
+
+    /**
+     * 获取选中数据
+     * @returns {null}
+     */
+    function getSelectDate() {
+        return bt.datatable.getSelectData("#appTable1");
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" name="fexTranType" value="$!{fexTranType}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##日期
+            <td class="textRight">#springMessage('table.fcOutSubjectDay.optDate')</td>
+            <td>
+                <input type="text" name="date" class="layui-input bt-biz-dateType" data-type="date" lay-verify="required"
+                >
+            </td>
+            ##币种
+            <td class="textRight">#springMessage('table.ratBkrationRelief.curCode')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                     data-name="curId" data-callback="clearCur"  data-biz-name="curId"
+                     data-valueField="id" data-textField="englishCode"></div>
+            </td>
+            ##折算币种
+            <td class="textRight">#springMessage('table.fexForeign.report.convert.currency')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                     data-name="reducedCurId" data-callback="checkConvertCurCallBack" data-biz-name="reducedCurId"
+                     data-valueField="id" data-textField="englishCode" data-required="true"></div>
+            </td>
+        </tr>
+        <tr>
+            ##汇率类型
+            <td class="textRight">#springMessage('table.fexForeign.report.convert.rateType')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btratetype/json"
+                     data-name="currencyType"
+                     data-valueField="id" data-textField="typeName" data-required="true"></div>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button" id="tips">#springMessage(
+                                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage(
+                                    'common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcOutSubjectDay.optDate')</th>
+        <th>#springMessage('table.ratBkrationRelief.curCode')</th>
+        <th>#springMessage('table.fexForeign.report.foreign.funds')</th>
+        <th>#springMessage('table.fexForeign.report.foreign.funds')(#springMessage('table.fexForeign.report.convert.currency'))</th>
+        <th>#springMessage('table.fexForeign.report.stock.share')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    var dicts;
+    var selectType;
+    bt.use(['form', 'dateType', 'corp', 'datatable', 'jquery', 'selectType', 'dicts', 'rateType', 'date'], function () {
+        var $ = bt.jquery, form = bt.form();
+        dicts = bt.dicts.init();
+        bt.dateType.init();
+        var rateType = bt.rateType.getFun();
+
+        /** 币别下拉框 begin*/
+        selectType = bt.selectType.init();
+        /** 币别下拉框 end*/
+
+        /** 数据列表,组件：datatable begin*/
+        bt.datatable.init({
+            elem: '#appTable',
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: '#searchForm',
+                formFilter: 'search',
+            },
+            ajax: {
+                'url': basePath + '/foreign/report/bankacc/list'
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns: [
+                {data: "balDate", className: 'center',},
+                {data: "englishCode",className: 'center'},
+                {data: "bal", bSortable: true,className: 'textRight',
+                    render: function (data, type, full, meta) {
+                            return bt.money.format(data);
+                    }},
+                {data: "reducedBal", bSortable: true,className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if(data ==null){
+                            return '-';
+                        }
+                        return bt.money.format(data);
+                    }},
+                {data: "stockShare", bSortable: true,className: 'center',
+                    render: function (data, type, full, meta) {
+                        if(data ==null){
+                            return '-';
+                        }else if(data === 0){
+                            return '0.00%'
+                        }
+                        return rateType.format(data, 'percent', 2)
+                    }},
+            ],
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: true,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '4',
+                        dataName: 'reducedBal'
+                    }
+                ]
+            },
+            btDrawCallback:function (setting) {
+                var tableData = setting.json.data;
+                if(tableData && tableData.length>0){
+                    var msg=bt.lang('alert.please.maintain')+ ' ';
+                    var flag=false;
+                    for(var i=0;i<tableData.length;i++){
+                        if(tableData[i].reducedBal === null){
+                            msg += tableData[i].englishCode+'-'+selectType.get('reducedCurId').getData().text+' ';
+                            flag=true;
+                        }
+                    }
+                    msg += bt.lang('table.btCurrency.curExrate');
+                    if(flag){
+                        layer.msg(msg)
+                    }
+                }
+            }
+        });
+
+        /** 数据列表，组件：datatable end*/
+
+        /** 单位 begin*/
+        bt.corp.init();
+        /** 单位 end*/
+        bt.dicts.init();
+
+    });
+
+    function clearCur(){
+        selectType.get("reducedCurId").val("");
+    }
+
+    /**
+     * 币种转换校验
+     */
+    function checkConvertCurCallBack() {
+        var origCur = selectType.get("curId").val();
+        var reducedCurId = selectType.get("reducedCurId").val();
+        if (isNotEmpty(origCur) && isNotEmpty(reducedCurId)) {
+            $.ajax({
+                url: basePath + "/report/deposit/balance/checkConvertCurId",
+                type:"post",
+                data:{
+                    "origCurId": origCur,
+                    "convertCurId": reducedCurId,
+                    "date": bt.date.format(new Date(), 'yyyy-mm-dd')
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("reducedCurId").val("");
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " " || stringData == "null") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+</script>
+</html>
+
+
+
+
+
+
+

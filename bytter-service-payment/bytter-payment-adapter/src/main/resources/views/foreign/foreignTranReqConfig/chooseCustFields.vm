@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    ##应用范围1 0-交易对手、1-交易
+    #*<input type="hidden" id="appRange1" name="eqs_appRange1" value="1">*#
+    ##应用范围1=1时，1-交易时：包含1-外汇交易、2-外汇期权交易、3-调拨交易、4-资金收付交易、5-货币市场交易、6-债券交易
+    <input type="hidden" id="appRange2" name="eqs_appRange2" value="4">
+    <input type="hidden" id="appRange2" name="eqs_validSign" value="1">
+    <input type="hidden" id="excludeIds" name="excludeIds" value="$!{excludeCustFieldIds}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##字段名称
+            <td class="textRight">#springMessage('table.field.name')</td>
+            <td>
+                <input type="text" name="likes_fieldName" id="fieldName"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.field.name')">
+            </td>
+            ##应用范围
+            <td class="textRight">#springMessage('table.fex.appRange1')</td>
+            <td>
+                <div class="layui-inline">
+                    ## <div class="bt-biz-dict" data-type="select" data-group="application.scope" data-name="eqs_appRange1"></div>
+                    <div class="bt-biz-dict"
+                         id="appRange2"
+                         data-type="select"
+                         data-defaultvalue="$!{fexCustFieldRuleVO.appRange2}"
+                         data-group="application.scope2"
+                         data-name="appRange2"
+                         #if($!{scope}=='4')
+                         data-disabled="true"
+                         data-value="4"
+                         #end
+                         data-displayData="1,2,3,4"
+                         ></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##字段类型
+            <td class="textRight">#springMessage('contract.field.type')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="mulselect" data-group="field.type" data-name="ins_fieldType"></div>
+            </td>
+            ##银行标签
+            <td class="textRight">#springMessage('table.label.bank')</td>
+            <td>
+                <input type="text" name="likes_fieldCode" id="fieldCode"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.label.bank')">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-biz-name="chooseCustFields">
+        <thead>
+        <tr>
+            <th>#springMessage('table.field.name')</th>
+            <th>#springMessage('table.fex.fieldDesc')</th>
+            <th>#springMessage('table.fex.appRange1')</th>
+            <th>#springMessage('contract.field.type')</th>
+            <th>#springMessage('table.label.bank')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+    #parse("views/common/footer.vm")
+
+<script>
+    bt.use(['form', 'datatable', 'dicts', 'mulselect'], function () {
+        var $ = bt.jquery, form = bt.form();
+        var dicts = bt.dicts.init();
+        var idIndex = 1;
+        bt.mulselect.init();
+        
+        var selectedIds = getUrlParam('selectedIds') || '';
+        var selectedIdArray = selectedIds ? selectedIds.split(',') : [];
+
+        //生成列表
+        var datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:true,
+            clickRowSelected:true,
+            mulselect:true,
+            jumpPageSelect: true,
+            ignoreButtons:['colvis','output','print','state'],// 忽略的表单默认按钮 state取消状态保存按钮
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/foreign/fexcustfieldrule/datatable"
+            },
+            buttons: [
+                {
+                    text: bt.lang('选择'),
+                    action: function (e, dt, node, config) {
+                        add();
+                    }
+                },
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {data: "fieldName", bSortable: true, className: 'center'},
+                {data: "fieldDesc", bSortable: true, className: 'center'},
+                {data:"appRange2",bSortable:true, className: 'center',
+                    render:function (data, type, full, meta){
+                        return bt.dict("application.scope2",full.appRange2);
+                }},
+                {data:"fieldType",bSortable:true, className: 'center',
+                    render: function ( data, type, full, meta ) {
+                        return bt.dict("field.type",full.fieldType);
+                    }
+                },
+                {data: "fieldCode", bSortable: true, className: 'center'}
+            ],
+            btDrawCallback:function(setting){
+                if(selectedIdArray.length > 0){
+                    bt.datatable.onCheckRow("appTable", {
+                        "key": "id",
+                        "value": selectedIdArray,
+                        "checked": true
+                    });
+                }
+            },
+        });
+        function add() {
+            var selectedData = bt.datatable.getJumpSelectedData('chooseCustFields')
+            if(!selectedData.length){
+                layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+                return false
+            }
+            var currentTabWin = bt.navtab.getCurrentDom();
+            if(currentTabWin){
+                currentTabWin.addFieldCallBack &&　currentTabWin.addFieldCallBack(selectedData)
+            }
+            parent.layer.closeAll();
+        }
+    })
+
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return decodeURIComponent(r[2]);
+        return null;
+    }
+
+</script>
+</body>
+</html>

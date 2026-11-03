@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="orgtId" name="orgtId" value="$!{orgtId}" />
+    <input type="hidden" id="orgtCorpIds" name="orgtCorpIds" value="$!{orgtCorpIds}" />
+    <h2 class="layui-colla-title">#springMessage('sys.organtype.addOrgtFirstCorp')</h2>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight" width="30%">#springMessage('sys.organtype.corp')</td>
+            <td  width="70%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-tree-type="check"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-scope="all"
+                         data-required="true"
+                         data-beforeInit="beforeInitCorp"
+                        ##data-callback="corpCallback"
+                        ##data-resource="bill:accebill:abbillendorse:query"
+                    >
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.save')</button>
+            <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script language="javascript" type="text/javascript">
+    var form;
+    var corp;
+    bt.use(['form','btdate','dateType','corp'], function(){
+        var $ = bt.jquery;
+        form = bt.form();
+        //监听提交
+        form.on('submit(submit)', function (data) {
+            bt.loading.show();
+            var orgtId = $("#orgtId").val();
+            var action = "/sys/organtype/organtype/saveOrgtFirstCorp";
+            $.post(basePath + action, data.field, function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success) {
+                    if (bt.navtab) {
+                        parent.layer.closeAll();//重载当前页面
+                    } else {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                    }
+                   /*var iframeName =  top.$('#tab-content').children('.layui-show').find('iframe').attr('name');
+                    if(iframeName){
+                        top.frames[iframeName].loadOrgtCorpTree(orgtId);
+                    }*/
+                }
+                bt.loading.hide();
+            }, 'JSON');
+            return false;
+        });
+
+        initCorp();
+
+    });
+
+    //初始化单位
+    var setTimeNum=0;
+    function initCorp(){
+        if($("#orgtCorpIds").val()==""){
+            if(setTimeNum<4){
+                setTimeout("initCorp()",500);
+            }
+            setTimeNum++;
+        }else{
+            corp = bt.corp.init();
+        }
+    }
+
+    /**
+     * 单位树加载时    已选择的单位不可选择
+     * @param nodes
+     * @returns {Array}
+     */
+    function beforeInitCorp(nodes) {
+        var corpIds = $("#orgtCorpIds").val();
+        var corpIdArr= corpIds.split(",");
+        for (k in nodes) {
+            var node = nodes[k];
+            var index=corpIdArr.indexOf(node.id);
+            if (index>=0) {
+                node.chkDisabled = true;
+            }
+            if (node.children && node.children.length > 0) {
+                node.children = beforeInitCorp(node.children);
+            }
+        }
+        return nodes;
+    }
+
+</script>
+</html>

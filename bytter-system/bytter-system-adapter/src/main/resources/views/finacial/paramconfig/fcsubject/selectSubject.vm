@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    	<tr>
+			<th>#springMessage('table.fbsBudgetDetail.itemCode')</th>##科目代码
+			<th>#springMessage('table.fbsBudgetDetail.itemName')</th>##科目名称
+			<th>#springMessage('finacial.paramConfig.fcSubject.subjectSort')</th>##科目类别
+			<th>#springMessage('finacial.paramConfig.fcSubject.balanceWay')</th>##余额方向
+			<th>#springMessage('finacial.paramConfig.fcSubject.accType')</th>##开户种类
+    	</tr>
+   </thead>
+</table>
+	#parse("views/common/footer.vm")
+</body>
+</html>
+
+<script>
+	bt.use(['form','datatable'], function(){
+	    $ = bt.jquery;
+
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'rtlip',
+            colReorder: true,
+            checkbox: true,
+            mulselect: true,
+            selectCss: true,
+            buttonsLayout:false,
+            ignoreButtons:['print'],
+            fixedColumns: {
+                leftColumns: 0
+            },
+            buttons:[
+                {
+                    text: bt.lang('common.button.save'),
+                    action: function ( e, dt, node, config ) {
+                        check(e, dt, node, config);
+                    }
+                }
+            ],
+            ajax: {
+                'url': basePath + "/finacial/paramconfig/FcSubjectPool/datatable"
+            },
+            columns: [
+                {data: "subjectCode", bSortable: false, className: "center"},
+                {data: "subjectName", bSortable: false, className: "center"},
+                {
+                    data: "subjectSort", bSortable: false, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("Admin.SubjectSort", full.subjectSort);
+                    }
+                },
+                {
+                    data: "balanceWay", bSortable: false, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("Admin.BalanceWay", full.balanceWay);
+                    }
+                },
+                {
+                    data: "", bSortable: false, className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.lang("table.innerAccChanging.acc");
+                    }
+                }
+            ],
+            btInitComplete: function (setting, json) {
+                tableData = json.data;
+            },
+            btDrawCallback: function (setting) {
+                tableData = setting.json.data;
+            }
+        });
+	});
+
+
+    function check(e, dt, node, config){
+        var data = dt.rows('.selected').data();
+        var len = data.length;
+        var rowData = data.splice(0,len);
+        var ids = [];
+        for(var i = 0; i < rowData.length; i++){
+            ids.push(rowData[i].id);
+        }
+        if(ids.length>0){
+            parent.layer.confirm(bt.lang('table.fcBankBill.isSave'),function(){
+                $.post(basePath + "/finacial/paramconfig/FcSubjectPool/saveSelectSubject",{ids:ids}, function(result){
+                    if(result.success) {
+                        parent.layer.closeAll();
+                        bt.navtab.refreshCurrent();
+                    }
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                },'JSON');
+            });
+        }else{
+            parent.layer.alert(bt.lang('common.message.confirm.selectData'));
+        }
+    }
+</script>

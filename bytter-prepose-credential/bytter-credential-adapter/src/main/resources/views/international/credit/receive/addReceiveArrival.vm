@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<style>
+    .shift {
+        color:red
+    }
+</style>
+<body>
+<input type="hidden" id="creditMoney" value="$!{lcEnrol.creditMoney}">
+    <form id="searchForm" class="layui-form">
+        <input type="hidden" id="lcId" name="lcId" value="$!{lcId}">
+        <input type="hidden" name="corpId" value="$!{corpId}">
+        <input type="hidden" name="curId" value="$!{curId}">
+        <input type="hidden" id="lcType" value="$!{lcType}">
+        <table class="layui-table">
+            <tbody>
+               <tr>
+                    ##信用证号
+                   <td class="textRight">
+                       <span class="shift layui-inline" style="display: none;">(L/C NO)</span>
+                       #springMessage('international.credit.creditNo')
+                   </td>
+                   <td>
+                       <div class="layui-inline">
+                           <input class="layui-input-inline layui-input" type="text" name="creditNo" lay-verify="required" value="$!{creditNo}"></input>
+                       </div>
+                   </td>
+
+                   ##交单号
+                   <td class="textRight" width="14%">#springMessage('table.internation.arrival.no')</td>
+                   <td width="36%">
+                       <input class="layui-input-inline layui-input" type="text" name="arrivalNo" lay-verify="required" value="$!{newCreditNo}"></input>
+                    </td>
+               </tr>
+
+               <tr>
+                   ##登记日期
+                   <td class="textRight">#springMessage('international.credit.createDate')</td>
+                   <td>
+                       <div class="layui-inline">
+                           <input class="layui-input-inline layui-input" type="text" name="issuingDate" lay-verify="required" value="$!{newDate}" disabled="disabled"></input>
+                       </div>
+                   </td>
+
+                   ##交单银行
+                   <td class="textRight">
+                       <span class="shift layui-inline" style="display: none;">(Presenting Bank)</span>
+                       #springMessage('table.internation.arrival.bank')
+                   </td>
+                   <td>
+                        <div class="layui-inline">
+                            <input class="layui-input" id="showBankName" readonly="readonly" name="handDocBank" lay-verify="required" type="text"/>
+                            <div class="bt-div-search" >
+                                <button class="bt-biz-bankInfo" type="button"  data-callback="bankinfoCallback" title="#springMessage('common.button.select')" >
+                                    <i class="layui-icon">&#xe615;</i>
+                                </button>
+                            </div>
+                        </div>
+                   </td>
+               </tr>
+
+               <tr>
+
+                   ##到期日期
+                   <td class="textRight">#springMessage('table.cmsProvideLoanSend.repayDate')</td>
+                   <td>
+                        <div class="layui-inline">
+                            <input id="issuingDate" name="paymentDate"  data-biz-name="paymentDate" data-type="date"
+                                   class="layui-input bt-biz-dateType" lay-verify="required" value="$!{expiryDate}" ></input>
+                        </div>
+                    </td>
+
+                   ##交单行编号
+                       <td class="textRight">#springMessage('table.internation.arrival.bank.no')</td>
+                       <td>
+                           <div class="layui-inline">
+                               <input class="layui-input-inline layui-input" type="text" id="docBankNo" name="docBankNo" lay-verify="required" ></input>
+                           </div>
+                       </td>
+               </tr>
+
+               <tr>
+               ##期限
+                   <td class="textRight">#springMessage('table.tbCreditPeriod.period')</td>
+                   <td >
+                       <div class="layui-inline">
+                           <div class="bt-biz-dict" id="radio" data-type="radio" data-group="letter_of_credit_timeLimit" data-defaultvalue="1"
+                                data-name="period" data-biz-name="period">
+                           </div>
+                       </div>
+                   </td>
+                ##交单金额
+                   <td class="textRight">#springMessage('table.internation.arrival.money')</td>
+                   <td >
+                       <input class="layui-input bt-biz-moneyType" data-maxlength="20"  data-name="billMoney"
+                             lay-verify="required|strlength" data-biz-name="billMoney"
+                              data-decimal="2" data-minus="false" type="text" >
+                   </td>
+               </tr>
+
+               <tr>
+               ##币种
+                   <td class="textRight">
+                       <span class="shift layui-inline" style="display: none;">(Currency)</span>
+                       #springMessage('table.ratBkrationRelief.curCode')
+                   </td>
+                   <td>
+                       <div class="layui-inline">
+                           <div class="bt-biz-selectType" data-name="curId" data-url="${basePath}/basic/business/btcurrency/json"
+                                data-valuefield="id" data-textfield="curName" data-defaultvalue="$!{curId}"
+                                data-displayData="$!{curId}"
+                                data-required="true" data-biz-name="curId"></div>
+                       </div>
+                   </td>
+##                   汇率
+                   <div id="inter">
+                       <td class="textRight"> #springMessage('table.btCurrency.curExrate')</td>
+                       <td>
+                           <div class="layui-inline">
+                               <input class="layui-input bt-biz-moneyType" type="text"  value="$!{exchangeRate}" data-convert="true"
+                                  data-name="exchange" data-biz-name="exchange" readonly="readonly" autocomplete="off" data-minus="false" >
+                           </div>
+                       </td>
+                   </div>
+
+               </tr>
+
+               <tr>
+               ##收款金额：
+                   <td class="textRight">#springMessage('table.internation.proceeds.money')</td>
+                   <td >
+                       <input class="layui-input bt-biz-moneyType" data-maxlength="20"  data-name="payMoney"
+                              lay-verify="required|strlength" data-biz-name="payMoney"
+                              data-decimal="2" data-minus="false" type="text" >
+                   </td>
+                   ##手续费
+                   <td class="textRight">#springMessage('table.cmsPrecativeLoanInfo.poundage')</td>
+                       <td >
+                           <input class="layui-input bt-biz-moneyType" data-maxlength="20"  data-name="handlingCharge"
+                                  lay-verify="required|strlength" data-biz-name="handlingCharge"
+                                  data-decimal="2" data-minus="false" type="text" >
+                    </td>
+
+               </tr>
+
+               <tr>
+               ##受益人
+                   <td class="textRight">
+                       <span class="shift layui-inline" style="display: none;">(BEN)</span>
+                       #springMessage('international.credit.beneficiary')
+                   </td>
+                   <td >
+                       <div class="layui-inline">
+                           <input  name="beneficiary" data-biz-name="beneficiary" type="text" class="layui-input" value="$!{beneficiary}" disabled="disabled"></input>
+                       </div>
+                   </td>
+               ##开证银行
+                   <td class="textRight">
+                       #springMessage('international.credit.issuingBank')
+                   </td>
+                   <td>
+                       <div class="layui-inline">
+                           $!{lcEnrol.openingBankName}
+                       </div>
+                   </td>
+               </tr>
+               <tr>
+                   ##发票号
+                   <td class="textRight">#springMessage('table.cgsBill.invoiceCode')</td>
+                   <td >
+                       <div class="layui-inline">
+                           <input class="layui-input-inline layui-input" type="text" name="invoiceNo" lay-verify="strlength" data-maxlength="32"></input>
+                       </div>
+                   </td>
+                   ##备注
+                       <td class="textRight">#springMessage('table.fbsBudgetPeriod.rmk')</td>
+                       <td >
+                           <div class="layui-inline">
+                               <input class="layui-input-inline layui-input" type="text" name="rmk"></input>
+                           </div>
+                       </td>
+               </tr>
+               <tr>
+                   <td class="textRight">#springMessage('cms.loan.attachment')</td>
+                   <td colspan="3">
+                       <input type="hidden" id="gid" name="attachmentId" value="">
+                       <div id="uploader" class="layui-input-inline" style="width:100%;"></div>
+                   </td>
+               </tr>
+               <tr>
+                    <td colspan="4" style="text-align: center;">
+                        <button class="layui-btn" value="0" lay-submit="" lay-filter="submit">#springMessage('table.internation.arrival.add')</button>
+                        <button class="layui-btn" value="11" lay-submit="" lay-filter="submit">#springMessage('common.button.storage')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+    bt.use(['form', 'jquery', 'corp', 'dateType', 'moneyType', 'selectType',
+        'dicts', 'rateType', 'bankInfo', 'btUpload', 'bondAccInfo', "btUpload"], function () {
+        $ = bt.jquery;
+        form = bt.form(), fun = bt.moneyType.getFun();
+        dateTypes = bt.dateType.init();//时间
+        moneyTypes = bt.moneyType.init();//金额
+        bt.corp.init();//单位
+        selectTypes = bt.selectType.init();//下拉框
+        dicts = bt.dicts.init();//字典
+        rateTypes = bt.rateType.init();//利率
+        bt.bankInfo.init();//联行号
+        moneyfun = bt.moneyType.getFun();
+        // 附件功能
+        var gid = $("#gid").val();
+        var up = bt.btUpload.init({
+            elem: "#uploader",
+            isExpand: true,
+            auto: false,
+            gid: gid
+        });
+
+        //监听提交 99 0
+        form.on('submit(submit)', function (data) {
+            if (checkMoney(data.field.payMoney)) {
+                return false;
+            }
+            var status = $(this).attr("value");
+            var action = "/international/credit/arrivalletter/tempOrSubmit"
+            data.field.status = status;
+            data.field.attachmentId = up.getGroupId();
+            bt.loading.show();
+            $.post(basePath + action, data.field, function (result) {
+                parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success) {
+                    if (!bt.navtab) {
+                        bt.navtab.refreshParentTable();
+                        //parent.layer?parent.layer.closeAll():layer.closeAll();
+                    } else {
+                        bt.navtab.closeCurrent();
+                    }
+                } else {
+                    bt.loading.hide();
+                }
+            }, 'JSON');
+            return false;
+        });
+        setShift();
+
+    });
+
+    var setShift = function(){
+        var lcType = $("#lcType").val();
+        if("0" == lcType){//国内
+            $("#inter").hide();
+            $(".shift").hide();
+        }else {
+            $("#inter").show();
+            $(".shift").show();
+        }
+    }
+
+    var bankinfoCallback = function (data,dom){
+        $("#showBankName").val(data.bankName);
+        $("#docBankNo").val(data.bankCode);//联行号
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " ") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+
+    /**
+     * 查询获取累计交单金额
+     * @returns {number}
+     */
+    function checkMoney(money) {
+        var creditMoney = $("#creditMoney").val();
+        var flag = true;
+        $.ajax({
+            url: basePath + "/international/credit/arrivalletter/getTotalMoney",
+            data: {
+                id: $("#lcId").val()
+            },
+            type: "post",
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                if (data.success) {
+                    if (moneyfun.add(data.obj, money) <= creditMoney) {
+                        flag = false;
+                    } else {
+                        layer.alert(bt.lang("international.arrivalletter.moneyCheck"), {icon: 2});
+                    }
+                } else {
+                    parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                }
+            }
+        });
+        return flag;
+    }
+</script>
+</html>

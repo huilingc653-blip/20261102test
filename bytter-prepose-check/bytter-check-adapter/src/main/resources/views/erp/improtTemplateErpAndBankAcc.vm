@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form id="importsForm" class="layui-form" method="post" enctype="multipart/form-data">
+		<table class="layui-table">
+	    	<tbody>
+		    	<tr>
+                    <td class="textRight">
+                        #springMessage('common.button.imports'):
+                    </td>
+                    <td width="80%">
+                        <button type="button" class="layui-btn" id="test1" onclick="importExcel();">
+                            #springMessage('common.button.imports')
+                        </button>
+                    </td>
+                   
+		    	</tr>
+		    	
+		    		
+	    	</tbody>
+    	</table>
+    </form>
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	    <thead>
+	    <tr>
+	        <th>#springMessage('table.nisBillhead.bankAcc')</th><!-- 银行账号 -->
+	        <th>#springMessage('table.nisBillhead.curId')</th><!-- 银行账号 -->
+            <th>#springMessage('table.erp.basic.erpid')</th><!-- 企业科目 -->
+            <th>#springMessage('table.erp.basic.erpname')</th><!-- 科目名称 -->
+	    </tr>
+	    </thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+</html>
+
+<script>
+
+bt.use(['form','datatable','upload','btImport'], function(){
+    $ = bt.jquery,form = bt.form();
+    var upload = layui.upload;
+
+    var datatable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        ajax: {
+            'url': basePath+"/dataexchange2/basic/erpbasicdata/erpdatatable"
+        }
+        ,columns: [
+            {data:"bytterCode",bSortable:true,className:"center"},
+            {data:"curName",bSortable:true,className:"center"},
+            {data:"erpCode",bSortable:false,className:"center"},
+            {data:"erpName",bSortable:false,className:"center"},
+        ]
+    });
+    
+
+    $("#search").on('click',function(){
+    	var url = basePath + "/finacial/check/erpDataManager/impDataSave";
+    	$("#importsForm").attr("action",url);
+    	$("#importsForm").submit();
+    });
+
+    /**
+     * 导入Excel
+     */
+    importExcel = function () {
+        up = bt.btImport.init({
+            code: "60000003",
+            titleRows: 0,
+            width: "100%",
+            height: "100%",
+            headRows: 1,
+            success: function (head, data, select) { //点击确认后回调方法，这里导入组件写了success方法这里可以不用此方法
+                $.ajax({
+                    type: "POST",
+                    url: basePath + "/dataexchange2/basic/erpbasicdata/saveImport",
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: JSON.stringify(up.getSelectData()),
+                    success: function (result) {
+                        bt.datatable.refreshCurrentPage();
+                        parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                    }
+                });
+            }
+        });
+    }
+    
+});
+
+   
+   
+</script>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('fcBankAccGroup.code')</td>
+            <td>
+                <input type="text" name="likes_accGroupCode" autocomplete="off" class="layui-input" placeholder="#springMessage('fcBankAccGroup.code')" id="accGroupCode">
+            </td>
+            <td class="textRight">#springMessage('fcBankAccGroup.name')</td>
+            <td>
+                <input type="text" name="likes_accGroupName" autocomplete="off" class="layui-input" placeholder="#springMessage('fcBankAccGroup.name')" id="accGroupName">
+            </td>
+            <td class="textRight">#springMessage('fcBankAccGroup.operation.area')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="hidden" name="likes_areaCodes" id="areaCodes">
+                    <input type="text" name="areaNames" readonly="readonly" autocomplete="off" class="layui-input" placeholder="营运区" id="areaNames"/>
+                    <div class="bt-div-search">
+                        <button class="bt-biz-inputOperationarea" type="button"
+                                title="选择">
+                            <span class="iconfont byicon_box_search"></span>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr >
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" data-callback="reset">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('fcBankAccGroup.code')</th>
+        <th>#springMessage('fcBankAccGroup.name')</th>
+        <th>#springMessage('fcBankAccGroup.operation.area')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    var layerIndex = null;
+    bt.use(['form','datatable','dicts'], function(){
+        var $ = bt.jquery,form = bt.form();
+        $(".bt-biz-inputOperationarea").on('click',function(){
+            layerIndex = parent.layer.open({
+                type: 2,
+                title:'所属营运区',
+                area: ['1000px', '700px'],
+                maxmin: true,
+                content: basePath + "/sys/operationArea/selectPage1/1"
+            });
+        })
+
+        bt.dicts.init();
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            checkbox: true,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/netbank/bankAccGroup/datatable"
+            },
+            buttons: [
+                {
+                    text:bt.lang('common.button.select'),
+                    action: function ( e, dt, node, config ) {
+                        bt.navtab.getCurrentDom().fcAccGroupCallback(bt.datatable.getSelectData('#appTable'))
+                        parent.layer.closeAll()
+                    }
+                }
+            ]
+            ,columns: [
+                {data:"accGroupCode",bSortable:true,className:"center"},
+                {data:"accGroupName",bSortable:true},
+                {data:"areaNames",bSortable:true}
+            ]
+        });
+    });
+    function reset() {
+        $("#areaCodes").val("");
+        $("#areaNames").val("");
+        $("#accGroupName").val("");
+        $("#accGroupCode").val("");
+    }
+function inputOperationAreaCallback(selectedData) {
+        var codes = ''
+        var names = ''
+        bt.each(selectedData,function (i,item){
+            codes += item.operationAreaCode
+            names += item.operationAreaName
+            if(i < (selectedData.length -1)){
+                codes += ',';
+                names += ','
+            }
+        })
+        $("#areaCodes").val(codes)
+        $("#areaNames").val(names)
+        parent.layer.close(layerIndex)
+    }
+</script>

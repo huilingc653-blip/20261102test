@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 12px;
+	text-align: center;
+	border-left: 0px;
+	border-right: 0px;
+	background-color: #d2d2d2;
+}
+</style>
+<body style="height: 100%;">
+	<div>
+		<iframe src="${basePath}/cms/provide/loansend/viewSend/$!{repay.sendCode}" id="sendIframe" frameborder="0" scrolling="no" style="width: 100%;"></iframe>
+	</div>
+	<form class="layui-form" method="post" id="inputForm">
+		<input type="hidden" id="onlineSign" name="onlineSign" value="$!{repay.onlineSign}">
+		<input id="id" name="id" type="hidden" value="$!{repay.id}">
+		<input id="corpId" name="corpId" type="hidden" value="$!{repay.corpId}">
+		<input id="billCode" name="billCode" type="hidden" value="$!{repay.billCode}">
+		<input id="sendCode" name="sendCode" type="hidden" value="$!{repay.sendCode}">
+        <input id="curCode" type="hidden" value="$!{curCode}">
+        <table class="layui-table">
+			<tbody>
+       		<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">#springMessage('cms.loan.loanRepayInfo')</td>
+			</tr>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+					<label><b>#springMessage('table.fcAccbook.enrolTime')</b></label>
+					<div class="layui-input-inline">
+						<input id="createDate" name="createDate" value="$!date.format('yyyy-MM-dd',$!repay.createDate)" readonly="readonly" autocomplete="off" class="layui-input">
+					</div>
+				</td>
+			</tr>
+			<tr>
+				##还款日期
+				<td class="textRight" width="14%">#springMessage('table.cmsProvideLoanRepay.repayDate')</td>
+				<td width="36%">
+					<input class="layui-input bt-biz-dateType"
+						   id="repayDate"
+						   name="repayDate"
+						   value="$!date.format('yyyy-MM-dd',$!repay.repayDate)"
+						   data-biz-name="repayDate"
+						   data-type="date"
+						   #if("$!{overdueSign}" != 1) readonly="readonly" #end
+						   lay-verify="required"
+						   readonly="readonly">
+				</td>
+				##还款金额
+				<td class="textRight" width="14%">#springMessage('table.cmsProvideLoanRepay.repayMoney')</td>
+				<td width="36%">
+					<div class="layui-inline">
+						<input class="layui-input bt-biz-moneyType"
+							   data-name="repayMoney"
+							   value="$!{repay.repayMoney}"
+							   readonly="readonly"
+							   data-max="$!{sendBalance}"
+							   lay-verify="required"
+							   data-biz-name="repayMoney"
+							   data-decimal="2"
+							   readonly="readonly"
+							   type="text"
+							   placeholder="#springMessage('table.cmsProvideLoanRepay.repayMoney')">
+					</div>
+					<div class="layui-inline">
+						<!-- 还款计划 -->
+        				#if("$!{overdueSign}" != 1)
+        				<!-- 利息预计明细 -->
+        				<button class="layui-btn" type="button" onclick="repayInterest();">#springMessage('cms.button.detail')</button>
+        				<input type="hidden" id="provideInterestId" name="provideInterestId" value="$!{repay.provideInterestId}">
+        				#end
+					</div>
+				</td>
+			</tr>
+			<tr>
+				##备注
+				<td class="textRight">#springMessage('table.cmsProvideLoanRepay.rmk')</td>
+				<td>
+					<input id="rmk" name="rmk" value="$!{repay.rmk}" data-biz-name="rmk" class="layui-input" lay-verify="required" placeholder="#springMessage('table.cmsProvideLoanRepay.rmk')"/>
+				</td>
+				<td colspan="2"></td>
+			</tr>
+			<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">#springMessage('table.cmsPrecativeLoanInfo.repair.success')</td>
+			</tr>
+			<tr>
+				## 实付利息
+				<td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayAccrual')</td>
+				<td>
+					<div class="layui-inline">
+						<input class="layui-input bt-biz-moneyType"
+							   data-name="onlineRealityInterest"
+							   value="$!{repay.onlineRealityInterest}"
+							   data-biz-name="onlineRealityInterest"
+							   data-decimal="2"
+							   lay-verify="required"
+							   placeholder="#springMessage('table.cmsProvideLoanRepay.onlineInterest')"/>
+					</div>
+					<div class="layui-inline">
+						<span style="color: red;">#springMessage('table.cmsProvideLoanRepay.onlineInterestMsg')</span>
+					</div>
+				</td>
+				<td colspan="2"></td>
+			</tr>
+			<tr>
+				<td class="textRight">#springMessage('cms.loan.attachment')</td>
+				<td style="text-align: center;" colspan="3">
+					<!-- 附件上传 -->
+					<input id="uploadId" name="uploadId" type="hidden" value="$!{repay.uploadId}">
+			        <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+				</td>
+			</tr>
+			<td style="text-align: center;" colspan="4">
+				<button class="layui-btn" lay-submit="" id="submit">#springMessage('common.button.submit')</button>
+				<button class="layui-btn" lay-submit="" id="temp">#springMessage('common.button.temp')</button>
+				<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				<button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage('common.button.close')</button>
+			</td>
+        	</tbody>
+        </table>
+        <!--预算-->
+			<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+			<input id="repayItem" name="repayItem" type="hidden" value="$!{repayItem}">
+			<input id="defItemCode" name="defItemCode" type="hidden" value="$!{defItemCode}">
+			<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+			<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+			<div id="tagItemDetail"></div>
+	</form>
+	<form class="layui-form">
+		<table class="layui-table">
+			<tbody>
+				<tr class="dark-table-header">
+				<td colspan="4" class="voucher-title">#springMessage('table.cmsPrecativeLoanInfo.repair.fail')</td>
+			</tr>
+			<tr>
+	        	##打回原因
+	            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.refuseWhy')</td>
+	            <td colspan="2">
+	                <textarea id="refuseWhy"  style="min-height:70px;margin: 5px 0;" class="layui-textarea"></textarea>
+	            </td>
+	            <td></td>
+            </tr>
+			<tr>
+                <td colspan="4" style="text-align: center;" >
+                  <button class="layui-btn" type="button" onClick="back();">#springMessage('common.button.back')</button>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/iframeAutoHeight.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/cms/provide/repayRepair.edit.js?_btv=${resourceVersion}"></script>
+</html>

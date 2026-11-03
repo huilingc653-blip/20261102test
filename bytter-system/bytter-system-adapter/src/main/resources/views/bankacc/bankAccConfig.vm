@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body {
+            font-size: 14px;
+            padding-bottom: 60px;
+        }
+
+        .layui-form-label {
+            width: 180px;
+        }
+
+        .layui-input-block {
+            margin-left: 220px;
+        }
+
+    </style>
+</head>
+<body>
+<form class="layui-form" action="">
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.bankAcc.param.titile.usually')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        ## 银行账户开户说明
+                        <td class="textRight">#springMessage('config.bankAcc.bankAccOpenDesc')</td>
+                        <td>
+                            <textarea placeholder="#springMessage('config.bankAcc.bankAccOpenDesc')"
+                                      lay-verify="strlength"
+                                      data-maxlength="200"
+                                      style="height: 100px;width: 96%"
+                                      class="layui-textarea" id="bankacc.bankAccDesc"
+                                      name="bankacc.bankAccDesc">$!{config.bankacc.bankAccDesc}</textarea>
+                            <i style="float: right;margin-top: -50px" id="bankAccOpenDesc-desc" class="layui-icon">&#xe60b;</i>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.bankAcc.param.titile.warning')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        ## 银行账户到期提醒
+                        <td class="textRight">#springMessage('config.bankAcc.bankAccEndDateAlertDays')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" name="bankacc.bankAccEndDateAlertDays" autocomplete="off"
+                                       class="layui-input bt-biz-moneyType" data-decimal="0" data-separator=""
+                                       value="$!{config.bankacc.bankAccEndDateAlertDays}">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('config.nis.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="bankAccEndDateAlertDays-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 银行账户年检到期提醒
+                        <td class="textRight">#springMessage('config.bankAcc.checkExpireDateAlertDays')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" name="bankacc.checkExpireDateAlertDays" autocomplete="off"
+                                       class="layui-input bt-biz-moneyType" data-decimal="0" data-separator=""
+                                       value="$!{config.bankacc.checkExpireDateAlertDays}">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('config.nis.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="checkExpireDateAlertDays-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 网银U-key到期提醒
+                        <td class="textRight">#springMessage('config.fcs.netUKeyDateAlertDays')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" name="bankacc.netUKeyDateAlertDays" autocomplete="off"
+                                       class="layui-input bt-biz-moneyType" data-decimal="0" data-separator=""
+                                       value="$!{config.bankacc.netUKeyDateAlertDays}">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('config.nis.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="netUKeyDateAlertDays-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <table class="layui-table border0">
+        <tbody>
+        <tr>
+            <td width="20%"></td>
+            <td>
+                <button class="layui-btn" lay-submit="" lay-filter="configSubmit">#springMessage(
+                    'common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['form', 'jquery', 'dicts', 'moneyType', 'element'], function () {
+        var form = bt.form(), $ = bt.jquery;
+        bt.element();
+        bt.dicts.init();
+        bt.moneyType.init();
+        //监听提交
+        form.on('submit(configSubmit)', function (data) {
+            $.post(basePath + "/sys/config/save", data.field, function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, "JSON");
+            return false;
+        });
+
+        // 说明显示隐藏
+        showDesc();
+    });
+
+    function showDesc() {
+        var tip_index1 = 0;
+        $('#bankAccOpenDesc-desc').mouseenter(function () {
+            tip_index1 = layer.tips(bt.lang('bankAcc.config.bankAccOpenDesc.desc'), '#bankAccOpenDesc-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index1);
+        });
+
+        var tip_index2 = 0;
+        $('#bankAccEndDateAlertDays-desc').mouseenter(function () {
+            tip_index2 = layer.tips(bt.lang('bankAcc.config.bankAccEndDateAlertDays.desc'), '#bankAccEndDateAlertDays-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index2);
+        });
+
+        var tip_index3 = 0;
+        $('#checkExpireDateAlertDays-desc').mouseenter(function () {
+            tip_index3 = layer.tips(bt.lang('bankAcc.config.checkExpireDateAlertDays.desc'), '#checkExpireDateAlertDays-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index3);
+        });
+
+        var tip_index4 = 0;
+        $('#netUKeyDateAlertDays-desc').mouseenter(function () {
+            tip_index4 = layer.tips(bt.lang('bankAcc.config.netUKeyDateAlertDays.desc'), '#netUKeyDateAlertDays-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index4);
+        });
+    }
+</script>
+</body>
+</html>

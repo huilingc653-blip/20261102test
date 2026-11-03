@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	##<input type="hidden"  id="corpId" name="eqs_corpId">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				<!-- 单位网点 -->
+				<td class="textRight">#springMessage("table.fcCheckInit.netId")</td>
+				<td width="40%">   
+					<div class="layui-inline">
+						##<div class="bt-biz-corp"  data-id="netId" data-type="select" data-name="eqs_netId"  data-biz-type="net" ></div>
+						<div class="bt-biz-corp" data-type="selectTree" data-name="eqs_netId" data-scope="net" data-biz-type="net" data-resource="finacial:check:centrality:balance:init:query"></div>
+					</div>
+				</td>
+				<!--银行账号 -->
+				<td class="textRight">#springMessage("table.fcCheckInit.bankAcc")</td>
+				<td width="40%">   
+					<input type="text" name="likes_bankAcc" id="bankAcc" class="layui-input bank" placeholder="#springMessage('table.fcCheckInit.bankAcc')">
+				</td>
+			</tr>
+			<tr>
+				<!--银行账号名称 -->
+				<td class="textRight">#springMessage("table.fcCheckInit.bankName")</td>
+				<td width="40%">
+					<input type="text" name="likes_bankName" class="layui-input" placeholder="#springMessage('table.fcCheckInit.bankName')">
+				</td>
+				<!-- 中心账号 -->
+				<td class="textRight">#springMessage("finacial.check.centralityDataManager.centralityAcc")</td>
+				<td width="40%">    
+					<input type="text" name="likes_account" id="account" class="layui-input bank" placeholder="#springMessage('finacial.check.centralityDataManager.centralityAcc')">
+				</td>
+			</tr>
+			<tr>
+				<td colspan="8" style="text-align: center;">
+					<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset"  class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('finacial.check.centralityDataManager.centralityAcc')</th>
+        <th>#springMessage('table.fcCheckInit.accName')</th>
+        <th>#springMessage('table.fcCheckInit.bankAcc')</th>
+        <th>#springMessage('table.fcCheckInit.bankAccName')</th>
+        <th>#springMessage('table.fcCheckInit.bankName')</th>
+        <th>#springMessage('table.fcCheckInit.checkDate')</th>
+        <th>#springMessage('table.fcCheckInit.bankBalance')</th>
+        <th>#springMessage('table.fcCheckInit.blnBalance')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','corp','bank','money'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    //生成列表
+    bt.bank.init({
+        elem:'.bank',
+    });
+    bt.datatable.init({
+        elem: "#appTable",
+        colReorder: true,
+        checkbox:false,
+        ajax: {
+            'url': basePath+"/finacial/check/fccheckinit/datatable?checkType=1"
+        },
+        searchForm : {
+            formFilter:"search",
+            formElem:"#searchForm"
+        },
+        buttons: [ ],
+        columns: [
+				{data:"account",bSortable:true,className:"center"},
+				{data:"accName",bSortable:true,className:"center"},
+				{data:"bankAcc",bSortable:true,className:"center"},
+				{data:"bankAccName",bSortable:true,className:"center"},
+				{data:"bankName",bSortable:true,className:"center"},
+				{data:"checkDate",bSortable:true,className:"center"},
+				{data:"bankBalance",bSortable:true,className:"textRight",
+					render : function( data, type, full, meta ){
+						var bankBalance = null;
+						if(full.checkDate){
+							bankBalance = bt.money.format(full.bankBalance);
+						}
+	                    return bankBalance;
+					}
+				},
+				{data:"blnBalance",bSortable:true,className:"textRight",
+					render : function( data, type, full, meta ){
+						var blnBalance = null;
+						if(full.checkDate){
+							blnBalance = bt.money.format(full.blnBalance);
+						}
+	                    return blnBalance;
+					}
+				},
+				{data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+					/* if(full.getCompareSign == 1){//已对账则不能再调整初始化
+						return "";
+					}else if(full.getCompareSign == 3){//TODO 进行了余额调节表编制以及结转的账号不能修改初始化日期和余额
+						return "";
+					}else{
+				    	
+					} */
+					var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="init(this)">#springMessage("common.button.init")</a>';
+					return html;
+				}}
+        	]
+    });
+});
+function checkType(data){
+	   var type = data.type;
+	   if(type === 1){
+		   $("#corpId").val(data.id);
+		   $("input[name='eqs_netId']").val("");
+	   }else{
+		   $("#corpId").val("");
+		   $("input[name='eqs_netId']").val(data.id);
+	   }
+};
+function init(el){
+	 var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	    if(data){
+	        if(bt.navtab){
+	            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/finacial/check/fccheckinit/add?account=" + data.account + "&bankAcc=" + data.bankAcc);
+	            return;
+	        }
+	        parent.layer.open({
+	            type: 2,
+	            area: ['850px', '530px'],
+	            maxmin: true,
+	            content: basePath + "/finacial/check/fccheckinit/add?account=" + data.account + "&bankAcc=" + data.bankAcc ,
+	            end:function(){
+	                location.reload();
+	            }
+	        });
+	    }
+}
+</script>
+</html>

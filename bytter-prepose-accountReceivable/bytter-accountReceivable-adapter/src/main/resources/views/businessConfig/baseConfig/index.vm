@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            font-size:14px;
+            padding-bottom: 60px;
+        }
+
+    </style>
+</head>
+<body>
+<input id="initRemindNum" type="hidden" value="$!{remind.size()}">
+<form class="layui-form" action="">
+    <input type="hidden" name="budgetSelValue" id="budgetSelValue"
+           #if($!{config.basic.budgetSel}) value="$!{config.basic.budgetSel}"
+           #else value="0" #end
+    />
+
+    <div class="layui-collapse">
+
+      #*<div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.basic.receive.note.baseConfig')</h2> ##应收单基础参数
+        <div class="layui-colla-content layui-show">
+        <table class="layui-table breakRow">
+        <thead>
+            <tr>
+                <td width="25%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                <td width="75%">#springMessage('config.fbs.paramValue')</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                ##是否关联业务类别
+                <td class="textRight">#springMessage('config.basic.isRelatedBusinessCategories')</td>
+                <td width="75%">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="basic.isRelatedBusinessCategories" data-defaultvalue="0"
+                    data-biz-name="basic.isRelatedBusinessCategories" data-required="true"
+                    data-value="$!{config.basic.isRelatedBusinessCategories}"></div>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+        </div>
+        </div>*#
+
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.basic.receive.note.budget')</h2> ##应收单挂接资金计划参数
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+##                    <thead>
+##                    <tr>
+##                        <td width="25%" class="textRight">#springMessage('config.fbs.paramName')</td>
+##                        <td width="75%">#springMessage('config.fbs.paramValue')</td>
+##                    </tr>
+##                    </thead>
+                    <tbody>
+                    <tr>
+                        ## 是否挂接资金计划
+                        <td width="10%" class="textLeft">#springMessage('config.basic.budgetSel')</td>
+                        <td width="90%" class="textLeft">
+                            <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-name="basic.budgetSel" data-defaultvalue="0" data-biz-name="basic.budgetSel" data-required="true"
+                                 data-callback="budgetSelCallBack"
+                            data-value="$!{config.basic.budgetSel}"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 默认挂接资金计划科目
+                        <td width="10%" class="textLeft">#springMessage('config.basic.defaultBudgetSel')</td>
+                        <td width="90%" class="textLeft">
+                            <div class="layui-input-inline">
+                                <input type="text" id="basicDefaultBudgetSel" name="defaultBudgetSel" autocomplete="off" class="layui-input" data-decimal="0" data-separator="" readonly
+                                #if($!{config.basic.defaultBudgetSel}) value="$!{defaultBudgetSelStr}" #else value=200(资金增加) #end>
+                                <input type="hidden" id="basicDefaultBudgetSelCode"
+                                       #if($!{config.basic.defaultBudgetSel}) value="$!{config.basic.defaultBudgetSel}" #else value=200 #end
+                                       name="basic.defaultBudgetSel" >
+
+                                <div class="bt-div-search">
+                                    <button class="bt-biz-budgetFbsItem" id="selApplicant" type="button" data-beforeClick="bt.budgetFbsItemParams"
+                                            data-callback="budgetFbsItemCallback" title="#springMessage('common.button.select')" >
+                                        <i class="layui-icon">&#xe615;</i>
+                                    </button>
+                                </div>
+                            </div>
+                            ##  <div class="layui-input-inline" style="color:red">#springMessage('config.basic.recItem.desc')</div>
+                            <div class="layui-input-inline">
+                                <i id="recItem-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.basic.receive.note.verification')</h2> ##应收单核销参数
+            <div class="layui-colla-content layui-show">
+            <table class="layui-table breakRow">
+##            <thead>
+##                <tr>
+##                    <td width="25%" class="textRight">#springMessage('config.fbs.paramName')</td>
+##                    <td width="75%">#springMessage('config.fbs.paramValue')</td>
+##                </tr>
+##            </thead>
+            <tbody>
+                <tr>
+                    ## 应收单核销的结算方式
+                    <td width="10%" class="textLeft">#springMessage('应收单核销的结算方式')</td>
+                    <td width="90%" class="textLeft">
+                        #set($paymentMeans = "")
+                        #foreach($mean in $config.basic.paymentMeans )
+                            #if($paymentMeans != "")
+                                #set($paymentMeans =  $paymentMeans + "," + $mean)
+                            #else
+                                #set($paymentMeans =  $mean)
+                            #end
+                        #end
+                        <div class="bt-biz-dict" data-type="checkbox" data-group="basic.paymentMeans" data-name="basic.paymentMeans" data-required="true"
+                             data-biz-name="basic.paymentMeans" data-defaultvalue="$paymentMeans" data-filterData="curId,natualMoney"></div>
+                    </td>
+                </tr>
+            </tbody>
+            </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('config.basic.receive.note.remind')<i id="recItem-desc2" class="layui-icon">&#xe60b;</i></h2> ##应收单到期提醒参数
+            <div class="layui-colla-content layui-show">
+                ##新增行
+<!--                <button class="layui-btn" type="button" onclick="add()">#springMessage('common.addTr')</button>-->
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="25%" class="textLeft">#springMessage('提醒时间')</td>
+                        <td width="50%" class="textLeft">#springMessage('提醒设置')</td>
+                        <td width="25%" class="textLeft">#springMessage('common.table.thead.operation')</td>
+
+                    </tr>
+                    </thead>
+                    <tr id="currDayRemind">
+                        <td>到期当日提醒</td>
+                        <td>当日10点提醒</td>
+                        <td><a href="javascript:void(0);" onclick="add()">新增</a></td>
+                    </tr>
+                    <tbody id="remindBody">
+                        #foreach($dn in $remind)
+                        #set($vcount = $velocityCount - 1)
+                        <tr>
+                            <td>
+                                提醒时间点
+                            </td>
+                            <td>
+                                <span class="layui-inline">距离到期日提前</span>
+                                <input type="number"
+                                       class="layui-input bt-input-inline"
+                                       placeholder="请输入正整数"
+                                       min="1"
+                                       oninput="validity.valid||(value='');"
+                                       name="basic.remind"
+                                       value="$!{dn}"
+                                >
+                                <span class="layui-inline">天</span>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0);" onclick="add()">新增</a>
+                                <a href="javascript:void(0);" onclick="del($!{vcount})">删除</a>
+                            </td>
+                        </tr>
+                        #end
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('逾期账款预警设置')</h2> ##逾期账款预警设置
+            <div class="layui-colla-content layui-show">
+                ## <button type="button" onclick="goBtwarnstrategy()">#springMessage('逾期账款预警设置')</button>
+                还没设置逾期预警设置 <a class="" href="#" style="color:blue" onclick="goBtwarnstrategy()">#springMessage('逾期账款预警设置')</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+<table class="layui-table border0">
+    <tbody>
+    <tr>
+        <td width="25%"></td>
+        <td>
+            <button class="layui-btn" lay-submit="" lay-filter="configSubmit">#springMessage('common.button.submit')</button>
+       	 	<button type="reset" class="layui-btn layui-btn-primary" onclick="goReset()">#springMessage('恢复初始化')</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</form>
+#parse("views/common/footer.vm")
+<script>
+    var dicts;
+    bt.use(['form','jquery','rateType','moneyType','element','dicts','budgetFbsItem'], function(){
+        var form = bt.form(),$  = bt.jquery;
+		bt.element();
+        var rateTye = bt.rateType.init();
+        bt.moneyType.init();
+        dicts = bt.dicts.init();
+        //监听提交
+        form.on('submit(configSubmit)', function(data){
+            //拼接basic.remind
+            var remindValues = [];
+            $("input[name='basic.remind']").each(function(){
+                 remindValues.push($(this).val());
+            })
+            data.field["basic.remind"] = remindValues.join(',');
+
+            $.post(basePath + "/sys/config/save",data.field,function(result){
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+                // 页面刷新
+                window.location.reload();
+            },"JSON");
+            return false;
+        });
+
+        var basicDefaultBudgetSelCode  = $("#basicDefaultBudgetSelCode").val();
+        var budgetFbsItem = bt.budgetFbsItem.init({title: '挂接资金计划科目'});
+        bt.budgetFbsItemParams = function () {
+            //供应商默认不查
+            budgetFbsItem.set({
+                // "corpId": bt.corp.get("corpId").val() ? bt.corp.get("corpId").val() : "0",
+                itemCode: basicDefaultBudgetSelCode
+            });
+            return true;
+        }
+
+        // 说明显示隐藏
+        showDesc();
+
+        var budgetSel1 = $("#budgetSelValue").val();
+        if(1==budgetSel1) {
+            $("#basicDefaultBudgetSel").attr("lay-verify","required");
+        } else {
+            $("#basicDefaultBudgetSel").removeAttr("lay-verify","required");
+        }
+
+        initRemindNumFun();
+    });
+
+    function budgetSelCallBack(){
+        var budgetSel = dicts.get("basic.budgetSel").val();
+        if(1==budgetSel) {
+            $("#basicDefaultBudgetSel").attr("lay-verify","required");
+        } else {
+            $("#basicDefaultBudgetSel").val('');
+            $("#basicDefaultBudgetSel").removeAttr("lay-verify","required");
+        }
+    }
+
+    function showDesc() {
+        var tip_index1 = 0;
+        $('#recItem-desc').mouseenter(function () {
+            tip_index1 = layer.tips(bt.lang('config.basic.recItem.desc'), '#recItem-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index1);
+        });
+
+        $('#recItem-desc2').mouseenter(function () {
+            tip_index1 = layer.tips(bt.lang('到期前提醒总共可自定义4次提醒时间，到期当日默认必须提醒，不可修改。'), '#recItem-desc2', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index1);
+        });
+    }
+
+
+    let count = 0; //用于记录已添加的提醒次数
+    var remindBodyArr=new Array();
+    function initRemindNumFun(){
+        var initRemindNum = $("#initRemindNum").val();
+        if(initRemindNum){
+            count = initRemindNum-1;
+            for(let i=0;i<=count;i++){
+                remindBodyArr.push(i);
+            }
+        }
+    }
+    function add(){
+        //最多新增4次，如需新增提醒，需删除其他提醒后再新增！
+        if(remindBodyArr.length >= 4) {
+            layer.msg('最多新增4次，如需新增提醒，需删除其他提醒后再新增！');
+            return;
+        }
+
+        count++;
+        var remindBody = document.getElementById('remindBody');
+        var newtr = document.createElement('tr');
+        newtr.innerHTML = `
+                            <td>
+                                提醒时间点
+                            </td>
+                            <td>
+                                <span class="layui-inline">距离到期日提前</span>
+                                <input type="number"
+                                       class="layui-input bt-input-inline"
+                                       placeholder="请输入正整数"
+                                       min="1"
+                                       oninput="validity.valid||(value='');"
+                                       name="basic.remind"
+                                       value="$dn"
+                                >
+                                <span class="layui-inline">天</span>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0);" onclick="add()">新增</a>
+                                <a href="javascript:void(0);" onclick="del(${count})">删除</a>
+                            </td>
+                           `;
+        remindBody.appendChild(newtr);
+        remindBodyArr.push(count);
+        //form.render();
+        //form.renderIcon();
+    }
+
+    function del(index){
+        var remindBody = document.getElementById('remindBody');
+        var childNodes = remindBody.children;
+        for(var i=0;i<remindBodyArr.length;i++){
+            if(index==remindBodyArr[i]){
+                remindBody.removeChild(childNodes[i]);
+                remindBodyArr.splice(i,1);
+                break;
+            }
+        }
+    }
+
+    $('#basicDefaultBudgetSel').blur(function(){
+        // 有'('的情况下就不再赋值，回调的方法里已经赋值
+        var content = $(this).val().indexOf('(');
+        if(content > -1 ){
+            return
+        }
+         $("#basicDefaultBudgetSelCode").val(content );
+    })
+
+    // 挂接资金计划科目 回调
+    function budgetFbsItemCallback(data,dom) {
+        /*设置 挂接资金计划科目*/
+        $("#basicDefaultBudgetSel").val(data.itemNameStr);
+        $("#basicDefaultBudgetSelCode").val(data.itemCodeStr);
+    }
+
+    function goBtwarnstrategy(){
+        if(bt.isResource('fundwarn:warnstrategy:op')){
+            if(bt.navtab){
+                bt.navtab.addNavtab(bt.lang('预警策略'),basePath + "/fundwarn/btwarnstrategy/list?overdueWarn=1");
+                return;
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['850px', '530px'],
+                maxmin: true,
+                content: basePath + "/fundwarn/btwarnstrategy/list?overdueWarn=1"
+            });
+        }else {
+            layer.alert("无功能权限，请在柜面开通决策支持功能模块及联系管理员在决策支持的预警策略分配权限。", {icon: 2, title:bt.lang('暂无权限访问')});
+        }
+    }
+
+
+    function closeModal() {
+        document.getElementById('resetModal').style.display = 'none';
+    }
+
+    function goReset() {
+        parent.layer.customConfirmV2('确定要一键重置所有参数为默认参数状态！', {icon: 2}, ['确定','取消']
+        , function(index){
+            parent.layer.close(index);
+            bt.loading.show()
+            $.ajax({
+                type: "POST",
+                url: basePath + "/accountReceivable/businessConfig/baseConfig/goReset",
+                dataType: "json",
+                success: function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success?1:2});
+                    if(result.success){
+                        if (bt.navtab) {
+                            // window.location= basePath + '/accountReceivable/businessConfig/baseConfig/index'
+                            location.reload();
+                        } else {
+                            parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                        }
+                    }
+                    bt.loading.hide()
+                }
+            })
+     }, function () {},'listDocManageCustomStyle', '重置基础设置','', true, true);
+
+        return false;
+    }
+
+</script>
+</body>
+</html>

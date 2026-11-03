@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+            <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}" />
+            ##融资编号
+            <td class="textRight" >#springMessage('table.cmsEquity.equityCode')</td>
+            <td width="25%">
+                <div class="layui-inline">
+                    <input type="text"  name="likes_equityCode" autocomplete="off"
+                           class="layui-input"/>                </div>
+            </td>
+            ##融资单位
+            <td class="textRight" >#springMessage('table.cmsEquity.corpId')</td>
+            <td width="25%">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp" data-tree-type="check" data-type="selectTree" data-name="ins_corpId" data-resource="sys:flow:query:corpop" data-scope="all"></div>
+                </div>
+            </td>
+            ##   融资方式
+            <td  class="textRight" >#springMessage('table.cmsEquity.financingWay')</td>
+            <td width="25%">
+                <div class="bt-biz-dict" data-type="select" data-group="cms.equity.financingWay" data-name="eqs_financingWay"></div>
+            </td>
+        </tr>
+        <tr>
+            ##出资人
+            <td class="textRight">#springMessage('table.cmsEquity.investor')</td>
+            <td width="25%">
+                <div class="layui-inline">
+                    <input type="text"  name="likes_investor" autocomplete="off"
+                           class="layui-input"/>                </div>
+            </td>
+            ##出资方式
+            <td class="textRight" >#springMessage('table.cmsEquity.invWay')</td>
+            <td width="25%">
+                <div class="bt-biz-dict" data-type="select" data-group="cms.equity.invWay" data-name="eqs_invWay"></div>
+            </td>
+            ##出资金额
+            <td class="textRight" >#springMessage('table.cmsEquity.invMoney')</td>
+            <td width="25%">
+                <div class="layui-inline">
+                    <input type="text" name="geg_invMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" data-moneyendid="t20"
+                           placeholder="#springMessage('table.cmsEquity.invMoney')">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="leg_invMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline"
+                           style="text-align:right" id="t20" placeholder="#springMessage('table.cmsEquity.invMoney')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cmsEquity.corpId')</th>##融资单位
+        <th>#springMessage('table.cmsEquity.equityCode')</th>##融资编号
+        <th>#springMessage('table.cmsEquity.financingWay')</th>##融资方式
+        <th>#springMessage('table.cmsEquity.investor')</th>##出资人
+        <th>#springMessage('table.cmsEquity.invWay')</th>##出资方式
+        <th>#springMessage('table.cmsEquity.invMoney')</th>##出资金额
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+</body>
+<script>
+    bt.use(["jquery", "datatable", "form", "moneyType", "selectType", "dicts", "corp","dateType"], function () {
+        $ = bt.jquery;
+        form = bt.form()
+        dicts = bt.dicts.init();
+        selectType = bt.selectType.init();
+        bt.dateType.init();//日期时间
+        bt.moneyType.init();
+        corp = bt.corp.init();//单位
+
+        /**
+         * 生成列表
+         */
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                isInitData:"false"
+            },
+            ajax: {
+                'url': basePath + "/cms/equity/repoPlan/datatableApprove"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {data:"corpName",bSortable:true},
+                {data:"equityCode",bSortable:true},
+                {data:"financingWayName", className: 'center',bSortable:true},
+                {data:"investor",bSortable:true},
+                {data:"invWayName", bSortable:true, className: 'center'},
+                {data:"invMoney",bSortable:true,className:'textRight',
+                    render: function ( data, type, full, meta ) {
+                        return bt.money.format(full.invMoney);
+                    }
+                },
+                {data:null,bSortable:false,className:'center',
+                    render: function (data, type, full, meta) {
+                        var html='';
+                        if($("#flowStatus").val()=='todo'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                        }
+                        if($("#flowStatus").val() == 'pass'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }else {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }
+                        return html;
+                    }
+                },
+            ]
+        });
+    });
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/equity/repoPlan/view/" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/equity/repoPlan/view/" + data.id
+        });
+    }
+    /*审核*/
+    function approve(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.approve') ,basePath + "/cms/equity/repoPlan/infoApprove?id="+data.id + "&taskId=" + data.taskId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/equity/repoPlan/infoApprove?id="+data.id + "&taskId=" + data.taskId
+        });
+    }
+
+</script>
+
+</html>

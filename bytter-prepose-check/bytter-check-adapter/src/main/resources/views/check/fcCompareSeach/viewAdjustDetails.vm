@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<div id="print">
+	<form class="layui-form layui-form-pane">
+	<input type="hidden" id="adjId" value="$!{balAdj.id}">
+	<input type="hidden" id="bankInitBalance" value="$!{balAdj.bankInitBalance}">
+	<input type="hidden" id="blnInitBalance" value="$!{balAdj.blnInitBalance}">
+	<input type="hidden" id="param" value="$!{param}">
+	<input type="hidden" id="checkType" value="$!{checkType}">
+	<table width="100%" border="1" class="layui-table" cellpadding="0" cellspacing="0" style="margin-bottom: 0;">
+		<colgroup>
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+			<col width="10%">
+		</colgroup>
+                <thead>
+                <tr>
+                	##余额调节表
+                	<th colspan="10" style="text-align:center;background: #fff;"><h5><strong>#springMessage('table.balance.adjust')</strong></h5></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                	##截止日期
+                    <td class="textRight">#springMessage('table.fcBankBalanceAdjust.endDate')</td><td colspan="2">$!date.format('yyyy-MM-dd',$!balAdj.endDate)</td>
+                    <td colspan="4"></td>
+                	##币别
+                    <td class="textRight">#springMessage('table.fcAcc.curId')</td><td colspan="2">$!{balAdj.curName}</td>
+                </tr>
+                <tr>
+                	##账号
+                    <td class="textRight">#springMessage('table.fcPredrawDtlTemp.account')</td><td colspan="2">$!{balAdj.bankAcc}</td>
+                    ##开户银行
+                    <td class="textRight">#springMessage('table.nisPersonnelDetail.bankName')</td><td colspan="3">$!{balAdj.bankName}</td>
+                	##户名
+                    <td class="textRight">#springMessage('table.accountDTO.accName')</td><td colspan="2">$!{balAdj.accName}</td>
+                </tr>
+                <tr>
+                <!-- TODO 要做类型判断 -->
+                	##中心对账单余额
+                    <td>#springMessage('table.compareAcc.balance') </td><td align="right" colspan="4"><strong>$number.formatNumeric($!{balAdj.blnInitBalance})</strong></td>
+                   	##银行对账单余额
+                    <td>#springMessage('table.bank.balance') </td><td align="right" colspan="4"><strong>$number.formatNumeric($!{balAdj.bankInitBalance})</strong></td>
+                </tr>
+                </tbody>
+    </table>
+	<table width="100%"  class="layui-table" border="1" cellpadding="0" cellspacing="0" align="center" style="margin-top: 0;">
+                <tr class="title">
+                <!-- TODO 要做类型判断 -->
+                		##2、加：银行已收中心未收
+                    	<td colspan="2">#springMessage('table.adjust.bank.uncollected')</td>
+                    	##2、加：中心已收银行未收
+                    	<td colspan="2">#springMessage('table.adjust.acc.uncollected')</td>
+                </tr>
+                <tr>
+                    <td width="50%" colspan="2" style="vertical-align:top">
+						#if($!{param}==1)
+								<div style='width:100%; overflow:auto;'>
+									#else
+										<div style='width:100%; height:370px; overflow:auto;'>
+										#end
+                        <table id="bankRecTb" class="layui-table" style='width:100%'>
+                            <thead>
+                                <tr class="title">
+	                                <th width="13%">#springMessage('table.nisBillhead.tallyDate')</th>##记账日期
+		                            <th width="30%">#springMessage('table.fcBankBill.billNo')</th>##票据号
+	                            	<th width="25%">#springMessage('table.adjust.voucherNo')</th>##凭证号码
+	                            	<th width="22%">#springMessage('table.fcUnionAccbook.sendMoney')</th>##金额
+		                            <th width="10%">#springMessage('table.adjust.verify.record') </th>##查对记录
+                                </tr>
+                            </thead>
+                        </table>
+                         </div>
+                    </td>
+                    <td width="50%" colspan="2" style="vertical-align:top">
+                    #if($!{param}==1)
+								<div style='width:100%; overflow:auto;'>
+									#else
+										<div style='width:100%; height:370px; overflow:auto;'>
+										#end
+                        <table id="ctrRecTb" class="layui-table" style='width:100%'>
+                            <thead>
+                                <tr class="title">
+                                    <th width="13%">#springMessage('table.nisBillhead.tallyDate')</th>##记账日期
+		                            <th width="30%">#springMessage('table.fcBankBill.billNo')</th>##票据号
+	                            	<th width="25%">#springMessage('table.adjust.voucherNo')</th>##凭证号码
+	                            	<th width="22%">#springMessage('table.fcUnionAccbook.sendMoney')</th>##金额
+		                            <th width="10%">#springMessage('table.adjust.verify.record') </th>##查对记录
+                                </tr>
+                            </thead>
+                        </table>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                   	<td>#springMessage('table.adjustDetail.moneySum')</td>
+                   	<td name="bankRecTbSumShow" class="textRight">0.00</td>
+                   	<td>#springMessage('table.adjustDetail.moneySum')</td>
+                   	<td name="ctrRecTbSumShow" class="textRight">0.00</td>
+                </tr>
+   	</table>
+	<table width="100%"  border="1" class="layui-table" cellpadding="0" cellspacing="0" align="center">
+            	<tr class="title">
+            	<!-- TODO 要做类型判断 -->
+                    	##3、减：银行已付中心未付
+                    	<td colspan="2">#springMessage('table.adjust.bank.unpaid') </td>
+                    	##3、减：中心已付银行未付
+                    	<td colspan="2">#springMessage('table.adjust.acc.unpaid')</td>
+                </tr>
+                <tr>
+                    <td width="50%" colspan="2" style="vertical-align:top">
+                   #if($!{param}==1)
+								<div style='width:100%; overflow:auto;'>
+									#else
+										<div style='width:100%; height:370px; overflow:auto;'>
+										#end
+                        <table id="bankPayTb" class="layui-table" style='width:100%'>
+                            <thead>
+                                <tr>
+                                    <th width="13%">#springMessage('table.nisBillhead.tallyDate')</th>##记账日期
+		                            <th width="30%">#springMessage('table.fcBankBill.billNo')</th>##票据号
+	                            	<th width="25%">#springMessage('table.adjust.voucherNo')</th>##凭证号码
+	                            	<th width="22%">#springMessage('table.fcUnionAccbook.sendMoney')</th>##金额
+		                            <th width="10%">#springMessage('table.adjust.verify.record') </th>##查对记录
+                                </tr>
+                            </thead>
+                        </table>
+                        </div>
+                    </td>
+                    <td width="50%" colspan="2" style="vertical-align:top">
+                   #if($!{param}==1)
+								<div style='width:100%; overflow:auto;'>
+									#else
+										<div style='width:100%; height:370px; overflow:auto;'>
+										#end
+                        <table id="ctrPayTb" class="layui-table" style='width:100%'>
+                            <thead>
+                                <tr>
+                                    <th width="13%">#springMessage('table.nisBillhead.tallyDate')</th>##记账日期
+		                            <th width="30%">#springMessage('table.fcBankBill.billNo')</th>##票据号
+	                            	<th width="25%">#springMessage('table.adjust.voucherNo')</th>##凭证号码
+	                            	<th width="22%">#springMessage('table.fcUnionAccbook.sendMoney')</th>##金额
+		                            <th width="10%">#springMessage('table.adjust.verify.record') </th>##查对记录
+                                </tr>
+                            </thead>
+                        </table>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                   	<td>#springMessage('table.adjustDetail.moneySum')</td>
+                   	<td name="bankPayTbSumShow" class="textRight">0.00</td>
+                   	<td>#springMessage('table.adjustDetail.moneySum')</td>
+                   	<td name="ctrPayTbSumShow" class="textRight">0.00</td>
+                </tr>
+                    <tr>
+                    	##试算平衡表(1+2-3)
+                        <td width="25%">#springMessage('table.adjust. trial.balance_sheet')</td>
+                        <td width="25%" align="right"><span id="blnAdjustBalance"><strong>$number.formatNumeric($!{balAdj.blnAdjBalance})</strong></span></td>
+                        ##试算平衡表(1+2-3)
+                        <td width="25%">#springMessage('table.adjust. trial.balance_sheet')</td>
+                        <td width="25%" align="right"><span id="bankAdjustBalance"><strong>$number.formatNumeric($!{balAdj.bankAdjBal})</strong></span></td>
+                    </tr>
+            </table>
+	</form>
+</div>
+	<table class="layui-table no-print">
+		<tbody>
+			<tr>
+	            <td colspan="4" align="right">
+	                <div align="center">
+							#if($!{param}==1)
+	                	<button type="button" class="layui-btn layui-btn-mini" onclick="print()">#springMessage('common.button.print')</button>
+						#end
+							<button class="layui-btn layui-btn-mini" onClick = "doClose()">#springMessage('common.button.revert')</button>
+
+	                </div>
+	            </td>
+	        </tr>
+		</tbody>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/check/adjustDetails.js?_btv=${resourceVersion}"></script>
+</html>

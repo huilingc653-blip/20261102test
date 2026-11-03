@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            font-size:14px;
+            padding-bottom: 60px;
+        }
+        .layui-form-label{
+            width: 180px;
+        }
+        .layui-input-block{
+            margin-left: 220px;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" name="bondId" id="bondId" value="$!{bondId}">
+    <table class="layui-table">
+        <tr>
+            <td  style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="excel"  type="button">#springMessage('common.button.exports')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+##保证金交易明细
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+        <tr>
+             <td class="textLeft" colspan="10">#springMessage('fc.bond.trans.dtl')</td>
+        </tr>
+        <tr>
+            <th>#springMessage('table.fcBond.orderNo')</th>
+            <th>#springMessage('table.rasShop.log.opBy')</th>##操作人
+            <th>#springMessage('table.fcBond.opTime')</th>##操作时间
+            <th>#springMessage('table.fcBond.opType')</th>##操作类型
+            <th>#springMessage('table.btNetChalk.transTime')</th>##交易日期
+            <th>#springMessage('fc.bond.out.or.in.bank.acc')</th>##转出/转回账号
+            <th>#springMessage('table.btBankAccDtl.amt')</th>##交易金额
+            <th>#springMessage('table.fcFreeze.status')</th>##单据状态
+            <th>#springMessage('nis.allot.bill.code')</th>##调拨单号
+            <th>#springMessage('bill.accebill.inoptStatus')</th>##指令状态
+            </th>
+        </tr>
+    </thead>
+
+    #foreach($obj in $transDtl)
+        <tr>
+            <td style="text-align:center">$velocityCount</td>
+            <td style="text-align:center">$!{obj.createBy}</td>
+            <td style="text-align:center">$!date.format('yyyy-MM-dd',$!{obj.createDate})</td>
+            <td style="text-align:center">
+                #if( $!{obj.busSign} == 'b')
+                    #springMessage('fc.bond.save')##保证金存入
+                #elseif($!{obj.busSign} == 'a')
+                    #springMessage('fc.bond.add')##保证金追加
+                #elseif($!{obj.busSign} == 'c')
+                    #springMessage('fc.bond.back')##保证金转回
+                #end
+            </td>
+            <td style="text-align:center">$!date.format('yyyy-MM-dd',$!{obj.startDate})</td>
+            <td style="text-align:center">$!{obj.outBankAcc}</td>
+            <td style="text-align:right">$number.formatNumeric($!{obj.money})</td>
+            <td style="text-align:center">
+                #if($!{obj.nisStatus})
+                    调拨单$dictTag.get("netbank.statusAll",$!{obj.nisStatus})
+                #else
+                    $dictTag.get("common.status",$!{obj.status})
+                #end
+            </td>
+            <td style="text-align:center">
+                #if($!{obj.nisBillNo})
+                    $!{obj.nisBillNo}
+                #else
+                    -
+                #end
+            </td>
+
+            <td style="text-align:center">
+                #if($!{obj.voucherStat})
+                    $dictTag.get("bisExc.voucherStat",$!{obj.voucherStat})
+                #else
+                    -
+                #end
+            </td>
+        </tr>
+    #end
+</table>
+</body>
+
+#parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/fcbond/bondTransDtl.view.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+        <input type="hidden" id="accAccNoRule" value="$!{accAccNoRule}">
+        <table class="layui-table">
+        	<colgroup>
+        		<col width="25%">
+        		<col width="25%">
+        		<col width="25%">
+        		<col width="25%">
+        	</colgroup>
+            <tbody>
+            <tr>
+			##网点
+                <td width="10%" class="textRight">#springMessage('table.fcAcc.netId')</td>
+                <td width="40%">
+                    <span id="netNameShow"></span>
+                    <input id="netId" name="netId" type="hidden">
+                    <input id="netCode" type="hidden" value="${netInfo.code}">
+				</td>
+            ##账户类别
+                <td width="10%" class="textRight">#springMessage('table.fcAcc.accType')</td>
+                <td width="40%">
+                <div class="bt-biz-dict" data-type="select" data-group="InnerAccount.AccType" data-defaultvalue="03" data-name="accType" data-biz-name="accType" data-disabled="true"></div>
+                ##科目代码
+                    <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate/03" data-valuefield="id" data-textfield="subjectName"  data-name="subjectId"  data-search="true" data-biz-name="subjectId"  data-callback="bt.changeSubject" id="subjectId"></div>
+                    </div>
+                </td>
+			</tr>
+            <tr>
+			##币别
+                <td class="textRight">#springMessage('table.fcAcc.curId')</td>
+                <td>
+                	<span id="curNameShow"></span>
+                	<input id="curId" name="curId" type="hidden">
+                	<input id="curCode" type="hidden" value="${curInfo.curCode}">
+                </td>
+            ##结算中心账号
+                <td class="textRight">#springMessage('table.fcAcc.blnctrAcc')</td>
+                <td>
+                    <input type="text" id="blnctrAcc" name="blnctrAcc" lay-verify="required"
+                           autocomplete="off" class="layui-input" readonly="readonly" placeholder="#springMessage('table.fcAcc.blnctrAcc')" readonly="readonly">
+
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('table.fcAcc.seqNum')</td>
+				##顺序号
+                <td>
+					#*	<input type="text" id="seqNum" name="seqNum"
+							   autocomplete="off" class="layui-input" readonly="readonly" placeholder="#springMessage('table.fcAcc.seqNum')">*#
+                        #if($!{seqNumPage} == '0')
+                            <input type="text" id="seqNum" name="seqNum" maxlength="$!{relen}"
+                                   autocomplete="off" class="layui-input" onchange="getNum(this)"
+                                   onkeyup="value=zhzs(this.value)"
+                                   placeholder="#springMessage('table.fcAcc.seqNum')">
+                        #else
+                            <input type="text" id="seqNum" name="seqNum"
+                                   autocomplete="off" class="layui-input" readonly="readonly"
+                                   placeholder="#springMessage('table.fcAcc.seqNum')">
+                        #end
+				</td>
+                <td class="textRight">#springMessage('table.fcAcc.shortcut')</td>
+				##助记码
+                <td>
+                        <input type="text" id="shortcut" name="shortcut" lay-verify="strlength"
+                               autocomplete="off" class="layui-input" data-maxlength="10" placeholder="#springMessage('table.fcAcc.shortcut')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+					##开户单位ID
+				<td>
+						<span id="corpNameShow"></span>
+						<input id="corpId" name="corpId" type="hidden">
+				</td>
+                <td class="textRight">#springMessage('table.fcAcc.accName')</td>
+					##账户名称
+                <td>
+							<input type="text" id="accName" name="accName"
+								   lay-verify="required|strlength"
+							 autocomplete="off" class="layui-input" data-maxlength="80" placeholder="#springMessage('table.fcAcc.accName')">
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="textRight">#springMessage('table.fcAcc.unionNet')</td>
+				##联行网点
+                <td>
+                        <div class="layui-inline">
+                            <div class="bt-biz-corp"
+                                 data-biz-type="net"
+                                 data-type="selectTree"
+                                 data-callback="unionNetChange"
+                                 data-name="unionNet"
+                                 data-biz-name="unionNet"
+                                 data-scope="net"></div>
+                        </div>
+				</td>
+                <td class="textRight">#springMessage('table.fcAcc.unionAcc')</td>
+					##联行账号
+				<td>
+                    <div class="layui-input-inline">
+                        <input type="text" name="unionAcc"  lay-verify="tableData" id="unionAcc" class="layui-input acc" data-biz-name="unionAcc">
+                    </div>
+                </td>
+			</tr>
+            <tr>
+                <td class="textRight">#springMessage('table.fcAcc.balanceWay')</td>
+            ##余额方向
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-dict" data-type="select" data-disabled="disabled" data-group="Admin.BalanceWay" data-defaultvalue="" data-name="balanceWay" data-biz-name="balanceWay"></div>
+                    </div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+    <table class="layui-table">
+    	<colgroup>
+        		<col width="25%">
+        		<col width="25%">
+        		<col width="25%">
+        		<col width="25%">
+        	</colgroup>
+    <tbody>
+    <tr>
+        <td width="10%" class="textRight">#springMessage('table.fcAcc.interestSign')</td>
+        <td width="40%">##计息标志
+            <div class="layui-inline">
+            	<div class=bt-biz-dict data-type="radio" data-group="Admin.InterestSign" data-defaultvalue="1" data-biz-name="interestSign" data-name="interestSign" data-callback="changeInterestSign"></div>
+            </div>
+        </td>
+        <td width="10%" class="textRight">#springMessage('table.fcAcc.predrawSign')</td>
+        <td width="40%">##预提标志
+            <div class="layui-inline">
+            <div class="bt-biz-dict" data-type="select" data-required="true" data-group="Admin.PredrawSign" data-defaultvalue="" data-name="predrawSign" data-biz-name="predrawSign"></div>
+            </div>
+        </td>
+
+    </tr>
+
+    <tr>
+        <td class="textRight">#springMessage('table.fcAcc.accForDeduct')</td>
+        <td>##扣息活期账户
+            <div class="layui-inline">
+                <select  id="accForDeduct" name="accForDeduct" lay-verify="required" >
+                    <option></option>
+                </select>
+            </div>
+        </td>
+
+        <td class="textRight">#springMessage('table.fcAcc.contractNo')</td>
+        <td>##合同编号
+            <input type="text" id="contractNo" name="contractNo" readonly="readonly"
+                   autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAcc.contractNo')">
+        </td>
+    </tr>
+    <tr>
+        <td class="textRight">#springMessage('table.fcAcc.interestStartDate')</td>
+        <td>##起息日期
+            <div class="layui-input-inline">
+                <input type="text" name="interestStartDate" data-biz-name="interestStartDate" lay-verify="required"   class="layui-input bt-biz-dateType" >
+            </div>
+        </td>
+        <td class="textRight">#springMessage('table.fcAcc.deadlineDate')</td>
+        <td>##到期日期
+            <div class="layui-input-inline">
+                <input type="text" name="deadlineDate" data-biz-name="deadlineDate" lay-verify="required" class="layui-input bt-biz-dateType" >
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+
+        <td  class="textRight">#springMessage('table.fcAcc.delayDeadlineDate')</td>
+        <td >##展期到期日期
+            <div class="layui-input-inline">
+                <input type="text" name="delayDeadlineDate" data-biz-name="delayDeadlineDate" class="layui-input bt-biz-dateType" >
+            </div>
+        </td>
+        <td class="textRight">#springMessage('table.fcAcc.term')</td>
+        <td >##期限
+            <div class="layui-input-inline">
+                <input type="text" id="notifyType" name="notifyType"
+                   decimal="0" readonly="readonly" autocomplete="off" class="layui-input" data-decimal="0"  placeholder="#springMessage('table.fcAcc.term')">
+            </div>
+            <div class="layui-inline">
+                <div class="bt-biz-dict" data-type="select" data-group="PrecativeLoanInfo.ternUnit" data-defaultvalue="" data-name="endUnit" data-biz-name="endUnit"></div>
+            </div>
+        </td>
+
+    </tr>
+    <tr>
+        <td class="textRight">#springMessage('table.fcAcc.interestRate')</td>
+        <td>##利率
+            <input type="text" id="interestRate" name="interestRate" readonly="readonly"
+                   autocomplete="off"  lay-verify="required" class="layui-input bt-biz-rateType" data-biz-name="interestRate" placeholder="#springMessage('table.fcAcc.interestRate')">
+        </td>
+
+        <td class="textRight">#springMessage('table.fcAcc.delayRate')</td>
+        <td>##展期利率
+            <input type="text" id="delayRate" name="delayRate" readonly="readonly"
+                   autocomplete="off" class="layui-input bt-biz-rateType" data-biz-name="delayRate" placeholder="#springMessage('table.fcAcc.delayRate')">
+        </td>
+    </tr>
+
+    <tr>
+        <td class="textRight">#springMessage('table.fcAcc.overdueRate')</td>
+        <td>##逾期利率
+            <input type="text" id="overdueRate" name="overdueRate" readonly="readonly"
+                   autocomplete="off" lay-verify="required" class="layui-input bt-biz-rateType" data-biz-name="overdueRate" placeholder="#springMessage('table.fcAcc.overdueRate')">
+        </td>
+        <td class="textRight">#springMessage('table.fcAcc.accOpenTime')</td>
+        <td>##开户日期
+            <div class="layui-input-inline">
+                <input type="text" name="accOpenTime"  readonly="readonly" data-today="true" class="layui-input bt-biz-dateType" >
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+
+        <td class="textRight">#springMessage('table.fcAcc.accStartDate')</td>
+        <td>##启用日期
+            <div class="layui-input-inline">
+                <input type="text" name="accStartDate" lay-verify="required" data-min="$!{accStartDate}" value="$!{accStartDate}" class="layui-input bt-biz-dateType" data-biz-name="accStartDate">
+            </div>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+
+    </tbody>
+	</table>
+        <table class="layui-table">
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" type="button" lay-submit=""  lay-filter="submit">#springMessage('common.button.confirm')</button>
+            </td>
+        </tr>
+    </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+
+<script>
+bt.use(['form','select','corp','bankInfo','dateType','selectTableType','dicts','selectType','rateType','date'], function(){
+    var $ = bt.jquery,form = bt.form();
+    selectType = bt.selectType.init();
+    //rateTye = bt.rateType.init();
+
+    //联行网点变更
+    unionNetChange = function(data,ele) {
+        bt.unionAcc(data);
+    }
+
+    changeInterestSign = function(data,ele){
+    	// console.log(data)
+    	fn_interestSign(data.value);
+        form.render();
+    }
+
+    //科目变更
+    bt.changeSubject = function(data,ele){
+    	$("select[name='balanceWay']").val(data.balanceway);
+    	createSequence();//生成顺序号
+    	var netCode = $("#netCode").val();
+        var curCode = $("#curCode").val();
+        var subjectCode = data.subjectcode;
+        var seqNum = $("#seqNum").val();
+        if(!netCode || !seqNum || !curCode||!subjectCode){
+            $("#blnctrAcc").attr("value","");
+            return;
+        }
+        //科目代码截取生成
+        var rule = $("#accAccNoRule").val();
+        if(rule == 4) {
+            if (subjectCode && subjectCode.length > 0) {
+                if (subjectCode.trim().length < 6) {
+                    subjectCode = subNum(subjectCode);
+                }
+            }
+        }
+        $("#blnctrAcc").val(netCode + "" + curCode +""+subjectCode+""+seqNum);//生成账号
+        //$("#accName").val(ifremeEle.selectData.corpName);
+    }
+
+    var corp = bt.corp.init();
+    bt.bankInfo.init();
+    var dicts = bt.dicts.init();
+   // var selectType = bt.selectType.init();
+    var rate = bt.rateType.init();
+    var dateType = bt.dateType.init();
+
+    init();
+
+    //初始化表单数据
+    function init(){
+    	var ifremeEle = bt.navtab.getParentDom().frames["sendiframe"];
+	    	$("#netId").val(ifremeEle.selectData.netCode);
+			$("#curId").val(ifremeEle.selectData.curCode);
+			$("#corpId").val(ifremeEle.selectData.corpId);
+			$("#netNameShow").html(ifremeEle.selectData.netName);
+			$("#curNameShow").html(ifremeEle.selectData.curName);
+			$("#corpNameShow").html(ifremeEle.selectData.corpName);
+			$("#contractNo").val(ifremeEle.selectData.contractCode);
+			dicts.get("predrawSign").val(ifremeEle.selectData.interestWay);
+			//$("#interestRate").val(ifremeEle.selectData.loanRate);
+			rate.get("interestRate").val(ifremeEle.selectData.loanRate);
+    		//$("#overdueRate").val(ifremeEle.selectData.overdueRate);
+    		rate.get("overdueRate").val(ifremeEle.selectData.overdueRate);
+    		rate.get("delayRate").val(ifremeEle.selectData.deferredRate);
+    		$("#accName").val(ifremeEle.selectData.corpName);
+
+    	 //if(ifremeEle.fcAccData==null || ifremeEle.fcAccData=="" || typeof(ifremeEle.fcAccData)=="undefined"){
+        if( ifremeEle.fcAccData==null ){
+
+    		$("#notifyType").val(ifremeEle.selectData.loanTerm);
+    		dicts.get("endUnit").val(ifremeEle.selectData.ternUnit==2?'D':'M');
+    		dateType.get("interestStartDate").val(bt.date.format(ifremeEle.selectData.loanDate, 'yyyy-MM-dd'));
+    		dateType.get("deadlineDate").val(bt.date.format(ifremeEle.selectData.repayDate,'yyyy-MM-dd'));
+    		dateType.get("delayDeadlineDate").val(ifremeEle.selectData.deferredDate);
+    		/* dateType.get("accStartDate").val(ifremeEle.selectData.loanDate);
+    		dateType.get("accStartDate").attr("data-min",ifremeEle.selectData.loanDate); */
+    		dateType.get("interestStartDate").render();
+    		dateType.get("deadlineDate").render();
+    		dateType.get("delayDeadlineDate").render();
+    		dateType.get("accStartDate").render();
+    		dicts.get("endUnit").render();
+    		bt.selectType.init();
+    		fn_chargeAcc();
+    	}else{
+    		$("#subjectId").data('defaultvalue',ifremeEle.fcAccData.subjectId);
+    		//selectType.get("subjectId").val(ifremeEle.fcAccData.subjectId);
+    		$("select[name='balanceWay']").val(ifremeEle.fcAccData.balanceWay);
+    		$("#blnctrAcc").val(ifremeEle.fcAccData.blnctrAcc);
+    		$("#seqNum").val(ifremeEle.fcAccData.seqNum);
+    		$("#shortcut").val(ifremeEle.fcAccData.shortcut);
+    		$("#accName").val(ifremeEle.fcAccData.accName);
+    		$("input[name='interestSign'][value="+ifremeEle.fcAccData.interestSign+"]").attr("checked",true);
+    		dicts.get("predrawSign").val(ifremeEle.fcAccData.predrawSign);
+    		$("#notifyType").val(ifremeEle.fcAccData.notifyType);
+    		dicts.get("endUnit").val(ifremeEle.fcAccData.endUnit);
+    		dicts.get("interestSign").init();
+    		dicts.get("interestSign").val(ifremeEle.fcAccData.interestSign);
+    		dateType.get("interestStartDate").val(bt.date.format(ifremeEle.fcAccData.interestStartDate,'yyyy-MM-dd'));
+    		dateType.get("deadlineDate").val(bt.date.format(ifremeEle.fcAccData.deadlineDate,'yyyy-MM-dd'));
+    		dateType.get("delayDeadlineDate").val(ifremeEle.fcAccData.delayDeadlineDate);
+    		/* dateType.get("accStartDate").val(ifremeEle.fcAccData.interestStartDate);
+    		dateType.get("accStartDate").attr("data-min",ifremeEle.fcAccData.accStartDate); */
+    		fn_chargeAcc(ifremeEle.fcAccData.accForDeduct);
+    		dateType.get("interestStartDate").render();
+    		dateType.get("deadlineDate").render();
+    		dateType.get("delayDeadlineDate").render();
+    		dateType.get("accStartDate").render();
+    		dicts.get("endUnit").render();
+    		dicts.get("interestSign").render();
+    		//selectType.get("subjectId").render();
+    		bt.selectType.init();
+
+
+    	}
+    	 rate.render();
+
+
+    }
+
+    //生成顺序号
+    var createSequence=function(){
+        var netId= $("#netId").val();
+        var curId= $("#curId").val();
+        /**
+         	如果为空不自动生成
+         **/
+        if(netId.length==0||curId.length==0) {
+            return;
+        }
+        var param={
+            netId:netId,
+            curId:curId,
+            accType:'03',
+            date:(new Date()).getTime()
+        };
+        var url=basePath + "/inneraccount/fcacc/createSequence";
+        $.ajax({
+            url: url, method: 'GET', data: param, async:false, dataType: 'json',
+            success: function (data) {
+                if (data) {
+                    $("#seqNum").val(data.obj);
+                }
+                form.render();
+            }
+        });
+    };
+
+    /**
+     * 手动生成账号
+     */
+    bt.genBlnctrManualAcc = function() {
+        /**
+         *	从末级科目得到计息标志和利率和透支利率，余额方向
+         */
+        lastSubjectChange();
+
+        var netCode = $("#netCode").val();
+        //自定义属性值获取
+        var curCode = $("#curCode").val();
+        var subjectCode = $("#subjectId").find("option:selected").attr("data-subjectcode");
+        var seqNum = $("#seqNum").val();
+        if(!netCode || !seqNum || !curCode||!subjectCode){
+            $("#blnctrAcc").attr("value","");
+            return;
+        }
+        //科目代码截取生成
+        var rule = $("#accAccNoRule").val();
+        if(rule == 4) {
+            if (subjectCode && subjectCode.length > 0) {
+                if (subjectCode.trim().length < 6) {
+                    subjectCode = subNum(subjectCode);
+                }
+            }
+        }
+        $("#blnctrAcc").val(netCode + "" + curCode +""+subjectCode+""+seqNum);
+        form.render();
+    };
+
+    /**
+     * 手动生成顺序号
+     * @param data
+     * @returns {boolean}
+     */
+    getNum = function(data) {
+        var poolSign = $("#poolSign").val();
+        var netId= $('input[name="netId"]').val();
+        var curId=$("input[name='curId']").val();
+        var accType=$("select[name='accType']").val();
+        var seqNumTemp = data.value;
+        if(poolSign==1){
+            netId=bt.selectType.get("netId").val();
+        }
+        /**
+         如果为空不生成
+         **/
+        if(netId.length==0||curId.length==0||accType.length==0 || seqNumTemp.length == 0) {
+            return;
+        }
+        var param={
+            netId:netId,
+            curId:curId,
+            accType:accType,
+            poolSign:poolSign,
+            date:(new Date()).getTime(),
+            seqNum:seqNumTemp
+        };
+        var url=basePath + "/inneraccount/fcacc/createSequence";
+        $.ajax({
+            url: url, method: 'GET', data: param, async:false, dataType: 'json',
+            success: function (data) {
+                if (data) {
+                    $("#seqNum").val(data.obj);
+                    bt.genBlnctrManualAcc();
+                }
+                form.render();
+            }
+        });
+    }
+
+
+    /**
+     *根据末级科目得到是否计息和透支利率 余额方向
+     */
+    var lastSubjectChange=function(){
+
+        var balanceWay = $("#subjectId").find("option:selected").attr("data-balanceway");
+        if(!balanceWay){
+            return ;
+        }
+        $("select[name='balanceWay']").val(balanceWay);
+        form.render();
+
+    };
+
+
+    //初始化联行账号
+    bt.unionAccTable=bt.selectTableType.init({
+        elem:".acc",
+        url: basePath+"/inneraccount/fcacc/getAccountTableData",
+        paging:true,
+        urldata:{
+            type:'init'
+        },
+        columns:[
+            {"data":"blnctrAcc",title:bt.lang("table.fcAcc.blnctrAcc")},
+            {"data":"accName",title:bt.lang("table.fcAcc.accName")},
+            {"data":"subjectName",title:bt.lang("table.fcAcc.subjectId")}
+        ],
+        clickCallback:function(data,$tr,$elem,full){
+        	$("#unionAcc").val(data.blnctrAcc);//给当前输入框赋name值;
+        },
+        tableInitCallback:function(full,$elem){
+        }
+    });
+
+    //重新加载联行账号
+    bt.unionAcc = function (id) {
+        var unionNetId = id;
+        var curId = $("#curId").val();
+        var url = basePath+"/inneraccount/fcacc/getAccountTableData";
+        if(unionNetId && curId){
+            var urldata={
+                netId:unionNetId,
+                corpId:unionNetId,
+                curId:curId,
+                type:''
+            };
+            $("#unionAcc").val("");
+            bt.unionAccTable.get("unionAcc").setUrl(urldata);
+        }
+    };
+
+    //初始化扣息活期存款账户
+    function fn_chargeAcc(defaultValue) {
+        $("#accForDeduct").empty();
+        $("#accForDeduct").append("<option value=' '>"+bt.lang("common.placeholder.select")+"</option>");
+        var curId=$("#curId").val();
+        var corpId=$("#corpId").val();
+        if(corpId && corpId!=""){
+            var param={
+                curId:curId,
+                corpId:corpId,
+                accType:'03',
+                elem: 'accForDeduct',
+                date:(new Date()).getTime()
+            };
+            var url= basePath+"/inneraccount/fcacc?getChangeAcc";
+            $.ajax({url: url, method: 'POST', data: param,dataType: 'json',
+                success: function(data){
+                    if(data && data.obj!=null){
+                        $.each(data.obj,function(index,item){
+                        	if(defaultValue==item.blnctrAcc){
+                        		$("#accForDeduct").append("<option value="+item.blnctrAcc+" selected>"+item.blnctrAcc+"</option>");
+                        	}else{
+                        		$("#accForDeduct").append("<option value="+item.blnctrAcc+">"+item.blnctrAcc+"</option>");
+                        	}
+
+                        });
+                        form.render('select');
+                    }
+                }
+            });
+        }
+    }
+
+
+    //表单验证
+    function fn_interestSign(val) {
+        if(val == "1"){
+            if($("input[data-biz-name='interestRate']").length>0 ){
+                $("input[data-biz-name='interestRate']").removeAttr("readonly");
+                $("input[data-biz-name='interestRate']").attr("lay-verify","required");
+            }
+
+            if($("input[data-biz-name='overdueRate']").length>0) {
+                $("input[data-biz-name='overdueRate']").attr("lay-verify", "required");
+            }
+
+            dicts.get("predrawSign").attr({'data-required':true,"data-disabled":false});
+            dicts.get("predrawSign").render();
+
+            if($("#interestStartDate").length>0){
+                $("#interestStartDate").parent().attr("lay-verify","required");
+            }
+
+            if( $("select[name='accForDeduct']").length>0){
+                $("select[name='accForDeduct']").attr("lay-verify","required");
+            }
+
+            if($("input[data-biz-name='overdraftRate']").length>0 ){
+                if($("select[name='overdraftSign']").length>0){
+                    var overdraftSign = $("select[name='overdraftSign']").val();
+                    if(overdraftSign == "D" || overdraftSign == "R"){
+                        $("input[data-biz-name='overdraftRate']").attr("lay-verify","required");
+                        $("input[data-biz-name='overdraftRate']").removeAttr("readonly");
+                    }
+                }else{
+                    $("input[data-biz-name='overdraftRate']").attr("lay-verify","required");
+                    $("input[data-biz-name='overdraftRate']").removeAttr("readonly");
+                }
+            }
+
+        }else{
+            //利率
+            if($("input[data-biz-name='interestRate']").length>0 ) {
+                $("input[data-biz-name='interestRate']").attr("readonly", "readonly");
+                $("input[data-biz-name='interestRate']").removeAttr("lay-verify");
+                rate.get("interestRate").val("");
+            }
+            if($("input[data-biz-name='overdueRate']").length>0) {
+                $("input[data-biz-name='overdueRate']").removeAttr("lay-verify");
+                rate.get("overdueRate").val("");
+            }
+
+          	//预提类型
+            dicts.get("predrawSign").attr({'data-required':false,"data-disabled":true});
+            dicts.get("predrawSign").val("");
+            dicts.get("predrawSign").render();
+
+            if($("#interestStartDate").length>0){
+                $("#interestStartDate").parent().removeAttr("lay-verify");
+            }
+            if( $("select[name='accForDeduct']").length>0){
+                $("select[name='accForDeduct']").removeAttr("lay-verify");
+            }
+
+            if($("input[data-biz-name='overdraftRate']").length>0){
+                $("input[data-biz-name='overdraftRate']").removeAttr("lay-verify");
+                $("input[data-biz-name='overdraftRate']").attr("readonly","readonly");
+                rate.get("overdraftRate").val("");
+            }
+        }
+
+        form.renderIcon();
+        form.render();
+    }
+
+    form.on('submit(submit)', function(data){
+    	var listTab = bt.navtab.getParentDom().frames["sendiframe"];
+    	listTab.fcAccData = data.field;
+    	listTab.bt.jquery("#account1").val(data.field.blnctrAcc);
+    	listTab.bt.jquery("#accName1").val(data.field.accName);
+    	listTab.bt.jquery("#accNameShow1").html(data.field.accName);
+        // 加载现金流项目
+        var debitMoney = listTab.bt.jquery("#debitMoney1").val();
+        var creditMoney = listTab.bt.jquery("#creditMoney1").val();
+        var subjectId = selectType.get("subjectId").val();
+        listTab.loadCashFlowItem(1, data.field.blnctrAcc, debitMoney, creditMoney, subjectId);
+        bt.navtab.closeCurrent(false);
+    });
+
+});
+//只能输入数字
+function zhzs(value) {
+    value = value.replace(/[^\d]/g, '');
+    return value;
+}
+
+//截取科目代码
+function subNum(subjectCode) {
+    var codeNum = subjectCode + "000000";
+    if (subjectCode.trim()) {
+        codeNum = codeNum.substring(0,6);
+    }
+    return codeNum;
+}
+</script>

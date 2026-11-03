@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+	<input type="hidden" name="id" value="$!{fcLoanRepayPage.id}">
+	<table class="layui-table layui-table-border">
+	<colgroup>
+		<col width="15%">
+   		<col width="18%">
+   		<col width="15%">
+   		<col width="18%">
+   		<col width="15%">
+   		<col width="19%">
+	</colgroup>
+		<thead>
+		##详细信息
+			<tr><td colspan="6" align="center">#springMessage('table.fcloanrepay.Info')</td></tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="textRight">#springMessage('table.fcloanrepay.netId')</td>
+				<td><div class="layui-input-inline">
+                			<div class="bt-biz-corp"
+                            data-biz-type="corp"
+                            data-type="selectTree"
+                            data-name="corpId"
+                            data-scope="all"
+                            data-defaultvalue="$!{fcLoanRepayPage.corpId}"
+                            data-resource="finacial:interest:fcloanrepay:hand"
+                            data-callback="changeCorp"
+                            placeholder="#springMessage('table.cmsLoanInfo.corpId')"></div>
+							</div></td>
+				##贷款账号
+				<td class="textRight">#springMessage('table.fcloanrepay.loanAcc')</td>
+				<td>
+					<div class="bt-biz-selectType" data-biz-name="loanAcc"
+						 data-url="${basePath}/finacial/interest/fcloanrepay/getLoanAccByCorpCode?corpId=$!{fcLoanRepayPage.corpId}"
+						 data-valuefield="ACC" data-textfield="ACC" data-defaultvalue="$!{fcLoanRepayPage.loanAcc}" data-name="loanAcc"
+						 data-search="true" data-callback="loacAccChange"></div>
+				</td>
+				##应收利息账号
+				<td class="textRight">#springMessage('table.fclesspaybill.needinterestAcc')</td>
+				<td>
+					<span id="needinterestAccShow">$!{lessPayBill.needinterestAcc}</span>
+					<input type="hidden" id ="needinterestAcc" name="needinterestAcc" value="$!{fcLoanRepayPage.needInterestAcc}">
+				</td>
+			</tr>
+			<tr>
+			##选择归还明细
+				<td class="textRight">#springMessage("interet.button.selectDtl")</td>
+				<td>
+					<input type="button" class="layui-btn" onclick="selectDtl()" value="#springMessage('interet.button.selectDtl')">
+					<span id="accshow" style="display: none;">$!{lessPayBill.account}</span>
+					<input type="hidden" id="repayId" name="repayId" value="$!{lessPayBill.id}">
+				</td>
+				##贷款账户名称
+				<td class="textRight">#springMessage('table.fcloanrepay.loanAccName')</td>
+				<td>
+				<span id="accnameshow">$!{lessPayBill.accName}</span>
+				##应收利息账号户名
+				<td class="textRight">#springMessage('table.fclesspaybill.needinterestAccName')</td>
+				<td>
+					<span id="needinterestAccNameShow">$!{lessPayBill.needinterestAccName}</span>
+				</td>
+			</tr>
+			<tr>
+			##还款账号
+				<td class="textRight">#springMessage('table.fcloanrepay.repayAcc')</td>
+				<td>
+					<div class="bt-biz-selectType" data-biz-name="repayAcc"
+						 data-url="${basePath}/finacial/interest/fcloanrepay/getCorpCurAccInfo?loanAcc=$!{fcLoanRepayPage.loanAcc}"
+						 data-valuefield="account" data-textfield="account" data-name="repayAcc" data-defaultvalue="$!{fcLoanRepayPage.repayAcc}"
+						 data-required="true" data-search="true"  data-callback="repayAccChange"></div>
+				</td>
+				##还款账号余额
+				<td class="textRight">#springMessage('table.fcloanrepay.repayAccBal')</td>
+				<td>
+					<span id="checkBalance">$number.formatNumeric($!{checkBalance})</span>
+				</td>
+				##利息
+				<td class="textRight">#springMessage('table.fcLessPayBill.interest')</td>
+				<td>
+					<input type="text" id="interest" name="interest" lay-verify="required" readonly="readonly" data-biz-name="interest" value="$!{fcLoanRepayPage.interest}"
+							     class="layui-input bt-biz-moneyType" data-minus="false" >
+				</td>
+			</tr>
+			<tr>
+			##记账日期
+				<td class="textRight">#springMessage('table.fcloanrepay.tallyDate')</td>
+				<td><input type="text" name="tallyDate" class="layui-input bt-biz-dateType" data-type="date" data-biz-name="tallyDate" value="$!{fcLoanRepayPage.tallyDate}" data-min="$!{closeDate}" lay-verify="required"></td>
+				##凭证种类
+				<td class="textRight">#springMessage('table.fcloanrepay.voucherType')</td>
+				<td>
+					<div class="bt-biz-selectType" data-biz-name="voucherType" data-url="${basePath}/netbank/fcvouchertype/json" data-valuefield="id" data-textfield="voucherName" data-search="true" data-required="true" data-name="voucherType" data-defaultvalue="$!{vourcherType}" data-callback="voucherTypeChange"></div>
+				</td>
+				<td></td>
+				<td></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<table class="layui-table layui-table-border">
+		<thead>
+			<tr align="center">
+				<td>#springMessage('table.fcAccbookDtl.summaryContent')</td><!-- 摘要 -->
+				<td>#springMessage('table.fcAcc.account')</td><!-- 账号 -->
+				<!-- <td>#springMessage('table.fcloanrepay.oriVoucherNo')</td>原始凭证号 -->
+				<td>#springMessage('table.fcloanrepay.debitMoney')</td><!-- 借方金额 -->
+				<td>#springMessage('table.fcloanrepay.creditMoney')</td><!--贷方金额  -->
+			</tr>
+		</thead>
+		<tbody>
+			<tr id="voucher1">
+				<td align="center" >
+					<input type="text" name="accbookDtls[0].summaryContent" id="content1" class="layui-input" readonly="readonly" value="$!{summaryContent}">
+				</td>
+				<td align="center" >
+					<input type="text" name="accbookDtls[0].account" id="account1" class="layui-input" readonly="readonly" value="$!{fcLoanRepayPage.repayAcc}">
+					<input type="hidden" name="accbookDtls[0].accName" id="accName1" class="layui-input" readonly="readonly" value="$!{debitaccName}">
+					<input type="hidden" name="accbookDtls[0].voucherType" value="$!{vourcherType}" id="voucherType0" class="layui-input" readonly="readonly" >
+				</td>
+				<!-- <td align="center" >
+					<input type="text" name="accbookDtls[0].oriVoucherNo" id="oriVoucherNo1" class="layui-input"  readonly="readonly">
+				</td> -->
+				<td align="center" >
+					<input type="text" name="accbookDtls[0].debitMoney" id="debitMoney1" class="layui-input bt-biz-moneyType" readonly="readonly" data-biz-name="debitMoney1" value="$!{fcLoanRepayPage.interest}">
+				</td>
+				<td align="center" >
+					<input type="text" name="accbookDtls[0].creditMoney" id="creditMoney1" class="layui-input bt-biz-moneyType" value='0' readonly="readonly" data-biz-name="creditMoney1">
+				</td>
+			</tr>
+			<tr id="voucher2">
+				<td align="center" >
+					<input type="text" name="accbookDtls[1].summaryContent" id="content2" class="layui-input" readonly="readonly" value="$!{summaryContent}">
+				</td>
+				<td align="center" >
+					<input type="text" name="accbookDtls[1].account" id="account2" class="layui-input" readonly="readonly"  value="$!{lessPayBill.needinterestAcc}">
+					<input type="hidden" name="accbookDtls[1].accName" id="accName2" class="layui-input" readonly="readonly" value="$!{creditaccName}">
+					<input type="hidden" name="accbookDtls[1].voucherType" value="$!{vourcherType}" id="voucherType1" class="layui-input" readonly="readonly" >
+				</td>
+				<!-- <td align="center" >
+					<input type="text" name="accbookDtls[1].oriVoucherNo" id="oriVoucherNo2"  class="layui-input" readonly="readonly">
+				</td> -->
+				<td align="center" >
+					<input type="text" name="accbookDtls[1].debitMoney" id="debitMoney2" class="layui-input bt-biz-moneyType" value='0' readonly="readonly" data-biz-name="debitMoney2">
+				</td>
+				<td align="center" >
+					<input type="text" name="accbookDtls[1].creditMoney" id="creditMoney2" class="layui-input bt-biz-moneyType"  readonly="readonly" data-biz-name="creditMoney2" value="$!{fcLoanRepayPage.interest}">
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<!-- <td></td> -->
+				##合计
+				<td class="textRight">#springMessage("table.interet.sum")</td>
+				<td class="textRight"><span id="debitMoneySum"></span> </td>
+				<td class="textRight"><span id="creditMoneySum"></span></td>
+			</tr>
+			<tr>
+				<td colspan="4" align="center">
+						<button class="layui-btn" lay-submit="" value="0" lay-filter="submit">#springMessage('common.button.temp')</button>
+						<button class="layui-btn" lay-submit="" value="1" lay-filter="submit">#springMessage('common.button.submit')</button>
+						<button class="layui-btn"  onClick="doClose()">#springMessage('common.button.revert')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+#if($!fcLoanRepayPage.status == -1)
+	<table class="layui-table layui-table-border">
+		<thead>
+			##打回原因
+			<tr>
+				<td colspan="6" align="center">#springMessage("table.cmsLoanInfo.refuseWhy")</td>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					<textarea style="min-height:70px;color: red" class="layui-textarea" readonly="readonly">$!{fcLoanRepayPage.refuseWhy}</textarea>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	#end
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/interest/fcLoanRepay.edit.js?_btv=${resourceVersion}"></script>
+</html>

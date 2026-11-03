@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="font-src *  data:">
+    <meta name="viewport"
+          content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no">
+    <title>#springMessage('table.capitalStock.report')</title>
+    <!-- 引入 FrozenUI -->
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css" media="all"/>
+    <script type="text/javascript">var basePath = "${basePath}";
+    var basePathAll = window.location.protocol + "//" + window.location.host + basePath;</script>
+    <style>
+        html,body{
+            -webkit-overflow-scrolling : touch !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        .ui-form-item{
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+        .ui-dialog .ui-form-item{
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+        .ui-dialog .ui-form-item select{
+            direction: rtl;
+        }
+        .ui-select-group{
+            position: absolute;
+            right: 0;
+        }
+        .bg {
+            background-color: #6a91f8;
+            background-image: url("${basePath}/static/images/bg/bg_shade.png");
+            background-position: bottom;
+            background-repeat: no-repeat;
+            background-size:auto;
+            border: none;
+        }
+        .bg .ui-form-item{
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+            padding-bottom: 10px;
+        }
+        .stockChartEmpty{
+            width: 100%;
+            height: 20px;
+            background-color: #dfe3ec;
+        }
+        .stockChartSum{
+            width:100%;
+            height:350px;
+            padding-bottom: 30px;
+        }
+        .no_data{
+            width: 100%;
+            height:350px;
+            display: none;
+            text-align: center;
+            position:absolute;
+            top:20px;
+            left:0;
+            background:#fff;
+        }
+        .no_data img{
+            margin-top: 80px;
+        }
+        .no_data label{
+            display: block;
+        }
+        .demo-item{
+            width: 100%;
+            height:370px;
+            position: relative;
+        }
+    </style>
+</head>
+<div class="ui-form" style="font-size: 12px;">
+    <input type="hidden" id="reportType" value="net">
+    <input type="hidden" id="dateTypeHidden" value="$!{dateType}">
+    <input type="hidden" id="moneyUnit" value="$!{moneyUnit}">
+    <input type="hidden" id="stockTypeHideen" value="$!{stockType}">
+    <input type="hidden" id="curIdHidden" value="$!{curDto.id}">
+    <input type="hidden" id="netIdHidden" value="$!{netId}">
+    <input type="hidden" id="defaulNetName" value="$!{currentCorp.name}">
+    <form action="">
+        <div class="bg">
+            <div class="ui-form-item">
+                <div class="ui-flex ui-flex-pack-center">
+                    <div id="sumDate">
+                        #springMessage('table.statistical.date')
+                    </div>
+                </div>
+            </div>
+            <div class="ui-form-item">
+                <ul class="ui-row-flex">
+                    <li class="ui-col ui-flex ui-flex-pack-start">
+                        <div id="netNameShow">#springMessage('table.fbsBudget.net')：$!{currentCorp.name}</div>
+                    </li>
+                    <li class="ui-col ui-flex ui-flex-pack-start">
+                        <div>#springMessage('balance.query.Statistical.dimension')：<p id="_dateType" style="display: inline;"></p></div>
+                    </li>
+                </ul>
+            </div>
+            <div class="ui-form-item">
+                <ul class="ui-row-flex">
+                    <li class="ui-col ui-flex ui-flex-pack-start">
+                        <div>#springMessage('table.fbsBudget.corpId')：<p id="_moneyUnit" style="display: inline;"></p></div>
+                    </li>
+                    <li class="ui-col ui-flex ui-flex-pack-start">
+                        <div id="curNameShow">#springMessage('table.fbsBudgetDetail.curId')：$!{curDto.curName}</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <section class="ui-container ui-center">
+        ##弹框选择器
+            <div class="ui-dialog ui-dialog-function" id="dialog1">
+                <div class="ui-dialog-cnt">
+                    <div class="ui-dialog-bd">
+                        <form action="" id="data">
+                            <div class="ui-form-item ui-border-b">
+                                <label>#springMessage('table.fbsBudget.net')</label>
+                                <div class="ui-select-group">
+                                    <div class="ui-select">
+                                        <select name="netId" id="netId"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui-form-item ui-border-b">
+                                <label>#springMessage('table.fbsBudgetDetail.curId')</label>
+                                <div class="ui-select-group">
+                                    <div class="ui-select">
+                                        <select name="curId" id="curId"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui-form-item ui-border-b">
+                                <label>#springMessage('table.capitalStock.stockTypeName')</label>
+                                <div class="ui-select-group">
+                                    <div class="ui-select">
+                                        <select name="stockType" id="stockType">
+                                            <option value="">#springMessage('common.placeholder.all')</option>
+                                            <option value="1">#springMessage('table.capitalStock.moeny')</option>
+                                            <option value="2">#springMessage('table.capitalStock.billMoney')</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui-form-item ui-border-b">
+                                <label>#springMessage('table.fcOutSubjectDay.optDate')</label>
+                                <div class="ui-select-group">
+                                    <div class="ui-select">
+                                        <select id="dateType" name="dateType">
+                                            <option value="year">$dictTag.get("capitalStock.dateType",'year')</option>
+                                            <option value="season">$dictTag.get("capitalStock.dateType",'season')</option>
+                                            <option value="month">$dictTag.get("capitalStock.dateType",'month')</option>
+                                            <option value="week">$dictTag.get("capitalStock.dateType",'week')</option>
+                                            <option value="day"  selected="selected">$dictTag.get("capitalStock.dateType",'day')</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui-form-item ui-border-b">
+                                <label>#springMessage('table.fbsBudget.corpId')</label>
+                                <div class="ui-select-group">
+                                    <div class="ui-select">
+                                        <select name="unit" id="unit">
+                                            <option value="1">$dictTag.get("capitalStock.moneyUnit",'yuan')</option>
+                                            <option value="10000">$dictTag.get("capitalStock.moneyUnit",'million')</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="ui-dialog-ft">
+                        <button type="button" id="buttonCancel">#springMessage('common.button.cancel')</button>
+                        <button type="button" id="buttonOK">#springMessage('common.button.confirm')</button>
+                    </div>
+                </div>
+            </div>
+            <section class="ui-container">
+                <section class="table">
+                    <div class="demo-item" id="bankStockChartDiv">
+                        <div class="stockChartEmpty"></div>
+                        <div id="bankStockChartSum" class="stockChartSum">
+                        </div>
+                        <div id="bank_no_data" class="no_data">
+                            <img src="${basePath}/static/images/bg/no_data.png">
+                            <label>#springMessage('common.msg.temporarily_no_data')</label>
+                        </div>
+                    </div>
+                    <div class="demo-item" id="billStockChartDiv">
+                        <div class="stockChartEmpty"></div>
+                        <div id="billStockChartSum" class="stockChartSum">
+                        </div>
+                        <div id="bill_no_data" class="no_data">
+                            <img src="${basePath}/static/images/bg/no_data.png">
+                            <label>#springMessage('common.msg.temporarily_no_data')</label>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </section>
+        <input type="hidden" id="dateType_year" value="$dictTag.get("capitalStock.dateType",'year')">
+        <input type="hidden" id="dateType_season" value="$dictTag.get("capitalStock.dateType",'season')">
+        <input type="hidden" id="dateType_month" value="$dictTag.get("capitalStock.dateType",'month')">
+        <input type="hidden" id="dateType_week" value="$dictTag.get("capitalStock.dateType",'week')">
+        <input type="hidden" id="dateType_day" value="$dictTag.get("capitalStock.dateType",'day')">
+        <input type="hidden" id="unit_1" value="$dictTag.get("capitalStock.moneyUnit",'yuan')">
+        <input type="hidden" id="unit_10000" value="$dictTag.get("capitalStock.moneyUnit",'million')">
+    </form>
+</div>
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/plugins/frozen/js/zepto.min.js?_btv=${resourceVersion}"></script>
+    #parse("views/common/footer.vm")
+<script>
+    $(document).ready(function () {
+        //弹框事件
+        window.searchAction = function(){
+            $("#dialog1").addClass("show");
+        }
+        //弹框确认按钮的点击事件
+        $("#buttonOK").click(function(){
+            $('.ui-dialog').removeClass("show");
+            clicks();
+        });
+        $('#buttonCancel').click(function(){
+            $('.ui-dialog').removeClass("show");
+        });
+
+
+        setTimeout(function () {
+            BTAppBridge.get('/sys/corp/tree',{type:'net'},'postCorpData');
+            BTAppBridge.get('/basic/business/btcurrency/json',{type:1},'postCurData');
+        },100);
+        clicks();
+    });
+
+    postCorpData = function (result) {
+        var textSelect="";
+        $.each(result,function(index,item){
+            if(item.name == $("#defaulNetName").val()){
+                textSelect +="<option selected='selected' value="+item.id+">"+item.name+"</option>";
+            }else{
+                textSelect +="<option  value="+item.id+">"+item.name+"</option>";
+            }
+        });
+        $("#netId").html(textSelect)
+    };
+
+    postCurData = function (result) {
+        var textCur="";
+        $.each(result,function(index,item){
+            textCur +="<option value="+item.id+">"+item.curName+"</option>";
+        });
+        $("#curId").html(textCur);
+    }
+
+    var bankStockChartSum=echarts.init(document.getElementById("bankStockChartSum"));
+    var billStockChartSum=echarts.init(document.getElementById("billStockChartSum"));
+
+    function initDataMap(dateType,moneyUnit) {
+        var _dateType = {};
+        _dateType['year'] = $("#dateType_year").val();
+        _dateType['season'] = $("#dateType_season").val();
+        _dateType['month'] = $("#dateType_month").val();
+        _dateType['week'] = $("#dateType_week").val();
+        _dateType['day'] = $("#dateType_day").val();
+
+        var _moneyUnit = {};
+        _moneyUnit['unit_1'] = $("#unit_1").val();
+        _moneyUnit['unit_10000'] = $("#unit_10000").val();
+        $("#_dateType").text(_dateType[dateType]);
+        $("#_moneyUnit").text(_moneyUnit['unit_'+moneyUnit]);
+    }
+
+    function initCorpCur(corpName, curName) {
+        $("#netNameShow").text(bt.lang('table.fbsBudget.net')+':'+corpName);
+        $("#curNameShow").text(bt.lang('table.fbsBudgetDetail.curId')+':'+curName);
+    }
+
+    function clicks(){
+        $("#sumDate").text(bt.lang('table.statistical.date')+"："+dateText($("#dateType").val()));
+        var postData = {
+            'netId':$("#netId").val() || $("#netIdHidden").val(),
+            'curId':$("#curId").val() || $("#curIdHidden").val(),
+            'stockType':$("#stockType").val(),
+            'dateType':$("#dateType").val(),
+            'unit':$("#unit").val(),
+        }
+        getChart(postData,unit);
+    }
+    function getChart(postData,unit){
+        setTimeout(function () {
+            BTAppBridge.post('/mobile/bi/capitalStock/createCaptialStockSumBar',postData,'postChartData');
+        },100);
+        initDataMap(postData.dateType,postData.unit);
+    }
+
+    postChartData = function (result) {
+        if($("#stockType").val()==1){
+            $("#bankStockChartDiv").show();
+            $("#billStockChartDiv").hide();
+
+        }
+        if($("#stockType").val()==2){
+            $("#billStockChartDiv").show();
+            $("#bankStockChartDiv").hide();
+
+        }
+        if(!isNotEmpty($("#stockType").val())){
+            $("#billStockChartDiv").show();
+            $("#bankStockChartDiv").show();
+        }
+        initCorpCur(result.netName,result.curName);
+        if(isNotEmpty(result.xAxisBankStockData)){
+            $("#bank_no_data").hide();
+            var option = initChartSum(result.xAxisList, result.xAxisBankStockData,result.bankStock,unit);
+            bankStockChartSum.hideLoading();
+            bankStockChartSum.setOption(option, true);
+            window.onresize = bankStockChartSum.resize;
+        }else{
+            $("#bank_no_data").show();
+        }
+        if(isNotEmpty(result.xAxisBillStockData)){
+            $("#bill_no_data").hide();
+            var option = initChartSum(result.xAxisList, result.xAxisBillStockData,result.billStock,unit);
+            billStockChartSum.hideLoading();
+            billStockChartSum.setOption(option, true);
+            window.addEventListener("resize", function () {
+                billStockChartSum.resize();
+            });
+        }else{
+            $("#bill_no_data").show();
+        }
+    }
+
+    function initChartSum(xAxisList, series, title,unit) {
+        var option = {
+            color: ['#5b9bd5','#ed7d31','#a5a5a5','#ffc000',
+                '#4472c4','#70ad47'],
+            tooltip: {
+                trigger: 'axis',
+                confine: true,
+                axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+                    type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                }
+            },
+            legend: {
+                data: xAxisList,
+                bottom: true,
+                width: '95%',
+                itemWidth: 10,
+                itemHeight: 10,
+                textStyle: {
+                    fontSize: 10
+                },
+            },
+            grid:{
+                top:'10%',//距上边距
+                left:'15%',//距离左边距
+                bottom:'25%',//距离下边距
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    length: 0,
+                    data: [title],
+                    position: 'bottom',
+                    offset: 5,
+                    axisLabel : {
+                        show:true,
+                        interval: 0
+                    }
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    axisLabel:{
+                        rotate: 60
+                    }
+                }
+            ],
+            series:JSON.parse(series)
+        };
+        return option;
+    }
+
+    function isNotEmpty(data){
+        if(data == null || data == "" || data == undefined || data == "[]"){
+            return false;
+        }
+        return true;
+    }
+
+    var now = new Date();                    //当前日期
+    var nowDayOfWeek = now.getDay();         //今天本周的第几天
+    var nowDay = now.getDate();              //当前日
+    var nowMonth = now.getMonth();           //当前月
+    var nowYear = now.getYear();             //当前年
+    nowYear += (nowYear < 2000) ? 1900 : 0;  //
+    //格式化日期：yyyy-MM-dd
+    function formatDate(date) {
+        var myyear = date.getFullYear();
+        var mymonth = date.getMonth() + 1;
+        var myweekday = date.getDate();
+
+        if (mymonth < 10) {
+            mymonth = "0" + mymonth;
+        }
+        if (myweekday < 10) {
+            myweekday = "0" + myweekday;
+        }
+        return (myyear + "-" + mymonth + "-" + myweekday);
+    }
+
+    //获得某月的天数
+    function getMonthDays(myMonth) {
+        var monthStartDate = new Date(nowYear, myMonth, 1);
+        var monthEndDate = new Date(nowYear, myMonth + 1, 1);
+        var days = (monthEndDate - monthStartDate) / (1000 * 60 * 60 * 24);
+        return days;
+    }
+
+    //获得本季度的开始月份
+    function getQuarterStartMonth() {
+        var quarterStartMonth = 0;
+        if (nowMonth < 3) {
+            quarterStartMonth = 0;
+        }
+        if (2 < nowMonth && nowMonth < 6) {
+            quarterStartMonth = 3;
+        }
+        if (5 < nowMonth && nowMonth < 9) {
+            quarterStartMonth = 6;
+        }
+        if (nowMonth > 8) {
+            quarterStartMonth = 9;
+        }
+        return quarterStartMonth;
+    }
+
+    //获得本周的开始日期
+    function getWeekStartDate() {
+        var weekStartDate = new Date(nowYear, nowMonth, nowDay - nowDayOfWeek);
+        return formatDate(weekStartDate);
+    }
+
+    //获得本周的结束日期
+    function getWeekEndDate() {
+        var weekEndDate = new Date(nowYear, nowMonth, nowDay + (6 - nowDayOfWeek));
+        return formatDate(weekEndDate);
+    }
+
+    //获得本月的开始日期
+    function getMonthStartDate() {
+        var monthStartDate = new Date(nowYear, nowMonth, 1);
+        return formatDate(monthStartDate);
+    }
+
+    //获得本月的结束日期
+    function getMonthEndDate() {
+        var monthEndDate = new Date(nowYear, nowMonth, getMonthDays(nowMonth));
+        return formatDate(monthEndDate);
+    }
+
+    //获得本季度的开始日期
+    function getQuarterStartDate() {
+
+        var quarterStartDate = new Date(nowYear, getQuarterStartMonth(), 1);
+        return formatDate(quarterStartDate);
+    }
+
+    //或的本季度的结束日期
+    function getQuarterEndDate() {
+        var quarterEndMonth = getQuarterStartMonth() + 2;
+        var quarterStartDate = new Date(nowYear, quarterEndMonth, getMonthDays(quarterEndMonth));
+        return formatDate(quarterStartDate);
+    }
+
+
+    //获得本年开始日期
+    function getYearStartDate(){
+
+        var currentYear=now.getFullYear();
+        //本年第一天
+        var currentYearFirstDate=new Date(currentYear,0,1);
+        return formatDate(currentYearFirstDate);
+    }
+
+    //获得本年的结束日期
+    function getYearEndDate() {
+        //获得当前年份4位年
+        var currentYear=now.getFullYear();
+        //本年最后
+        var currentYearLastDate=new Date(currentYear,11,31);
+        return formatDate(currentYearLastDate);
+    }
+
+    // 根据选择框来输出日期
+    function dateText(data){
+        if(data == "year"){
+            return  getYearStartDate()+"~"+getYearEndDate();
+        }
+
+        if(data == "season"){
+            return getQuarterStartDate()+"~"+getQuarterEndDate();
+        }
+
+        if(data == "month"){
+            return getMonthStartDate()+"~"+getMonthEndDate();
+        }
+
+        if(data == "week"){
+            return getWeekStartDate()+"~"+getWeekEndDate();
+        }
+
+        if(data == "day"){
+            return formatDate(now);
+        }
+    }
+
+</script>
+</html>

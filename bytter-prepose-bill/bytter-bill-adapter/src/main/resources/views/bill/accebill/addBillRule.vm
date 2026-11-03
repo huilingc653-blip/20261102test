@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="id" name="id" type="hidden" value="$!{abBillNoPage.id}">
+		<input type="hidden" id="bankTypeName" name="bankTypeName"/>
+		<table class="layui-table">
+			<tbody>
+				<tr>
+					##银行类别
+					<td class="textRight">#springMessage('table.btBankAccApp.bankTypeId')</td>
+					<td>
+						<div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/listFilter"
+							 data-name ="bankTypeId" data-biz-name ="bankTypeId"  data-valueField="id" data-required="true" data-textField="typeName" defaultVal="$!{btBankAccAppPage.bankTypeId}"
+							 data-callback="bankinfoCallback"
+						></div>
+					</td>
+					##业务类型
+					<td class="textRight">#springMessage('table.abAccrecords.briefId')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="select"
+							 data-group="accebill_billNo_insbriefid" data-required="true" data-name="busType" ></div>
+					</td>
+				</tr>
+				<tr>
+					##是否汇总认领流水
+					<td width="8%" class="textRight">#springMessage('bill.accebill.isSummaryClaimBill')</td>
+					<td width="25%">
+						<div class="bt-biz-dict" data-group="sf_yn" data-defaultvalue="0" data-callback="isSummaryClaimBillSelect" data-required="true" data-biz-name="isSummaryClaimBill" data-name="isSummaryClaimBill" data-type="select" ></div>
+					</td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					##票号字段
+					<td width="8%" class="textRight">#springMessage('bill.accebill.billNumField')</td>
+					<td width="25%">
+						<div class="bt-biz-dict" data-group="accebill_billNo_billNumField" data-required="true" data-name="billNumField" data-biz-name="billNumField" data-type="select" ></div>
+					</td>
+					##匹配关系
+					<td width="8%" class="textRight">#springMessage('table.netbank.nisproject.matchRelation')</td>
+					<td width="25%">
+						<div class="bt-biz-dict" data-group="accebill_billNo_matchRelation" data-required="true" data-name="relation" data-biz-name="relation" data-type="select" ></div>
+					</td>
+				</tr>
+				<tr>
+					##票号分隔符
+					<td class="textRight">#springMessage('bill.accebill.billNoSep')</td>
+					<td>
+						<input type="text" id="separated" name="separated" autocomplete="off" class="layui-input">
+					</td>
+					##有效标志
+					<td width="20%" class="textRight">#springMessage('bill.accebill.validSign')</td>
+					<td width="80%">
+						<div class="layui-input-inline">
+							<div class="bt-biz-dict"
+								 data-type="radio"
+								 data-defaultvalue="1"
+								 data-name="mark"
+								 data-biz-name="mark"
+								 data-group="valid_sign"></div>
+						</div>
+					</td>
+				</tr>
+        	</tbody>
+        </table>
+		<table class="layui-table border0">
+			<tbody>
+			<tr>
+				<td width="30%"></td>
+				<td>
+					<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+	var dict;
+	bt.use(['form','dicts','selectType','bank'], function(){
+		var $ = bt.jquery,form = bt.form();
+		dict = bt.dicts.init();
+		bt.selectType.init();
+		form.renderIcon();
+		bt.bank.init({
+			elem: '.bank',
+		});
+		form.on('submit(submit)', function(data){
+			if (data.field.separated.length > 100) {
+				layer.alert('票号分隔符长度不能大于100', {icon: 2});
+				return false
+			}
+			var action = "/bill/accebillClaim/config/ruleBillNo/save";
+			$.post(basePath + action,data.field,function(result){
+				parent.layer.alert(result.msg, {icon: result.success?1:2});
+				if(bt.navtab) {
+					bt.navtab.refreshParent();
+					bt.navtab.refreshCurrent()
+				}else {
+					parent.layer ? parent.layer.closeAll() : layer.closeAll();
+				}
+			},'JSON');
+			return false;
+		});
+	});
+
+	//银行账号选择
+	function bankinfoCallback(data, dom) {
+		$("#bankTypeName").val(data.typename);
+	}
+
+	//是否汇总认领流水选择回调
+	function isSummaryClaimBillSelect() {
+		var isSummaryClaimBill = dict.get("isSummaryClaimBill").val();
+		if(isSummaryClaimBill == "1"){
+			dict.get("billNumField").setRequired(false);
+			dict.get("relation").setRequired(false);
+		}else{
+			dict.get("billNumField").setRequired(true);
+			dict.get("relation").setRequired(true);
+		}
+	}
+</script>

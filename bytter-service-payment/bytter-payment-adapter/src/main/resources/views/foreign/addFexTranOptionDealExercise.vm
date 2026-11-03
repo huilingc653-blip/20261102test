@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<input id="createBy" name="createBy" type="hidden" value="$!{fexTranOptionDealPage.createBy}">
+		<input id="createDate" name="createDate" type="hidden" value="$!{fexTranOptionDealPage.createDate}">
+		<input id="updateBy" name="updateBy" type="hidden" value="$!{fexTranOptionDealPage.updateBy}">
+		<input id="updateDate" name="updateDate" type="hidden" value="$!{fexTranOptionDealPage.updateDate}">
+		<input id="id" name="id" type="hidden" value="$!{fexTranOptionDealPage.id}">
+		<input id="tranReqId" name="tranReqId" type="hidden" value="$!{fexTranOptionDealPage.tranReqId}">
+		#if($!{fexTranOptionDealPage.tranSettleMethod} == "0")
+			<input id="corpId" name="corpId" type="hidden" value="$!{fexTranOptionDealPage.corpId}">
+		#end
+		<input id="opType" name="opType" type="hidden" value="$!{fexTranOptionDealPage.opType}">
+		<input id="tranSettleMethod" name="tranSettleMethod" type="hidden" value="$!{fexTranOptionDealPage.tranSettleMethod}">
+		<!-- 系统参数 -->
+		<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+		<input id="payItem" name="payItem" type="hidden" value="$!{payItem}">
+		<input id="businessName" name="businessName" type="hidden" value="$!{businessName}">
+		<input id="processSysname" name="processSysname" type="hidden" value="$!{processSysname}">
+		<!-- 资金计划参数 明细项控制模式-->
+		<input id="dtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+		<input id="settlType" name="settlType" type="hidden" value="0">
+		<table class="layui-table">
+			<tbody>
+				<tr>
+					##结算方式 0-现金、0-即期交易
+					<td class="textRight" width="20%">#springMessage('table.eExchangeBill.payType')</td>
+					<td colspan="3">$dictTag.get("fexProduct.tranSettleMethod",$!{fexTranReqPage.tranSettleMethod})</td>
+				</tr>
+				<tr>
+					##执行日期
+					<td class="textRight" width="20%">#springMessage('table.fbsBudgetProcess.processDate')</td>
+					<td width="30%">
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <input type="text" id="opDate" name="opDate" lay-verify="required" class="layui-input bt-biz-dateType" value="$!{fexTranOptionDealPage.opDate}"
+                                   data-today="true" data-type="date" data-name="opDate" data-biz-name="opDate" data-endid="settleDate">
+                        #else
+							<input type="hidden" id="opDate" name="opDate" class="layui-input bt-biz-dateType" value="$!{fexTranOptionDealPage.opDate}"
+								   data-today="true" data-type="date" data-name="opDate" data-biz-name="opDate" data-endid="settleDate">
+                            $!date.format('yyyy-MM-dd',$!{fexTranOptionDealPage.opDate})
+                        #end
+					</td>
+					##结算日期
+					<td class="textRight">#springMessage('table.fcSubjectDay.optDate')</td>
+					<td >
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <input type="text" id="settleDate" name="settleDate" lay-verify="required" class="layui-input bt-biz-dateType" value="$!{fexTranOptionDealPage.settleDate}"
+                                   data-today="true" data-type="date" data-name="settleDate" data-biz-name="settleDate">
+                        #else
+                            $!date.format('yyyy-MM-dd',$!{fexTranOptionDealPage.settleDate})
+                        #end
+					</td>
+				</tr>
+				#if($!{fexTranOptionDealPage.tranSettleMethod} == "0")
+				<tr>
+					##结算币种
+					<td class="textRight">#springMessage('table.fexTranDeal.settleCurId')</td>
+					<td >
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-name ="curId" data-biz-name ="curId"
+                                 data-valueField="id" data-textField="englishCode" data-required = "true" data-callback="bt.curCallback"></div>
+                        #else
+							<input id="curId" name="curId" type="hidden" value="$!{fexTranOptionDealPage.curId}">
+                            $!{fexTranOptionDealPage.englishCode}
+                        #end
+					</td>
+					##结算金额
+					<td class="textRight" width="20%">#springMessage('table.fexTranDeal.settleMoney')</td>
+					<td width="30%">
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <input type="text" id="settleMoney" name="settleMoney" style="text-align:right" lay-verify="required" data-name="settleMoney" data-biz-name="settleMoney" data-minus="true" data-callback="bt.settleMoneyCallback"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.fexTranDeal.settleMoney')" value="$!{fexTranOptionDealPage.settleMoney}">
+                        #else
+							<input type="hidden" id="settleMoney" name="settleMoney" style="text-align:right" data-name="settleMoney" data-biz-name="settleMoney" data-minus="true" data-callback="bt.settleMoneyCallback"
+								   autocomplete="off" class="layui-input bt-biz-moneyType" placeholder="#springMessage('table.fexTranDeal.settleMoney')" value="$!{fexTranOptionDealPage.settleMoney}">
+                            $!number.formatNumeric($!{fexTranOptionDealPage.settleMoney})
+                        #end
+					</td>
+				</tr>
+				#else
+				<tr>
+					##产品
+					<td class="textRight" width="20%">#springMessage('table.foreign.product')</td>
+					<td width="30%">
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexproduct/listProduct/1" data-name ="proId" data-biz-name ="proId"
+                                 data-valueField="id" data-textField="proName" data-required = "true"></div>
+                        #else
+                            $!{fexTranOptionDealPage.proName}
+                        #end
+					</td>
+					##单位
+					<td class="textRight" width="20%">#springMessage('table.nisBillhead.corpId')</td>
+					<td>
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-name="corpId"
+                                     data-biz-name="corpId"
+                                     data-scope="all"
+                                     data-resource="foreign:fextranreq:option:apply"
+                                     data-required="true"
+                                     data-defaultvalue="$!{fexTranReqPage.corpId}"></div>
+                            </div>
+                        #else
+                            $!{fexTranOptionDealPage.corpName}
+                        #end
+					</td>
+				</tr>
+				#end
+				<tr>
+					##市场汇率
+					<td class="textRight" width="20%">#springMessage('table.fexTranOptionDeal.marketRate')</td>
+					<td width="30%">
+                        #if($!{fexTranOptionDealPage.id}=="")
+							<input type="text" data-name="marketRate" data-biz-name="marketRate" data-decimal="6" lay-verify="required" value="$!{fexTranOptionDealPage.marketRate}"
+								   id="marketRate" autocomplete="off" class="layui-input bt-biz-moneyType"  placeholder="#springMessage('table.fexTranOptionDeal.marketRate')">
+                        #else
+							$!number.formatDoubles($!{fexTranOptionDealPage.marketRate},6)
+                        #end
+					</td>
+					#if($!{fexTranOptionDealPage.tranSettleMethod} == "0")
+						<td width="20%"></td>
+						<td width="30%"></td>
+					#else
+						##交易对手
+						<td class="textRight" width="20%">#springMessage('table.fexForeign.copt')</td>
+						<td width="30%">
+                            #if($!{fexTranOptionDealPage.id}=="")
+                                <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexCotp/listBankCotp?cotpType=02,13" data-name ="cotpId" data-biz-name ="cotpId"
+                                     data-valueField="id" data-textField="cotpName" data-required = "true" data-callback="bt.cotpCallback" data-defaultvalue="$!{fexTranReqPage.cotpId}"></div>
+                            #else
+                                $!{fexTranOptionDealPage.cotpName}
+                            #end
+						</td>
+					#end
+				</tr>
+				<tr>
+					##交易地点
+					<td class="textRight" width="20%">#springMessage('table.fexTranReq.tranAddr')</td>
+					<td width="30%">
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <div class="layui-input-inline">
+                                <input id="tranAddrId" name="tranAddrId" type="hidden" value="$!{fexTranOptionDealPage.tranAddrId}">
+                                <input type="text" id="tranAddr" name="tranAddr" lay-verify="required|tableData" data-biz-name="tranAddr" value="$!{fexTranOptionDealPage.tranAddr}"
+                                       autocomplete="off" class="layui-input text" placeholder="#springMessage('table.fexTranReq.tranAddr')">
+                                <table id="tranAddrTable" class="hide">
+                                    <thead>
+                                    <tr>
+                                        <th>#springMessage('table.tbCreditPeriod.code')</th>
+                                        <th>#springMessage('table.btswiftinfo.namezh')</th>
+                                        <th>#springMessage('table.btswiftinfo.nameen')</th>
+                                    </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        #else
+                            $!{fexTranOptionDealPage.tranAddr}
+                        #end
+					</td>
+					##交易员
+					<td class="textRight" width="20%">#springMessage('table.fexTranReq.dealer')</td>
+					<td width="30%">
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <input type="text" id="dealer" name="dealer" data-required = "true" value="$!{dealer}" readonly="readonly"
+                                   autocomplete="off" class="layui-input" placeholder="#springMessage('table.fexTranReq.dealer')">
+                        #else
+                            $!{dealer}
+                        #end
+					</td>
+				<tr>
+					##备注
+					<td class="textRight">#springMessage('fcVoucherType.rmk')</td>
+					<td colspan="3">
+                        #if($!{fexTranOptionDealPage.id}=="")
+                            <textarea placeholder="#springMessage('bisAccAttribute.rmk')" class="layui-textarea" style="width:100%" id="rmk" name="rmk" >$!{fexTranOptionDealPage.rmk}</textarea>
+                        #else
+                            $!{fexTranOptionDealPage.rmk}
+                        #end
+					</td>
+				</tr>
+        	</tbody>
+        </table>
+		<!-- 资金计划 -->
+		<div id="tagItemDetail"></div>
+        #if($!{fexTranOptionDealPage.id}=="")
+            <div style="text-align: center; padding-top: 10px;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </div>
+        #end
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script src="${basePath}/static/modules/foreign/fexTranOptionDeal.add.js?_btv=${resourceVersion}"></script>

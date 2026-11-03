@@ -1,0 +1,302 @@
+##新增审批意见
+#macro(workFlowAddCommentHtml)
+    #if($!{flowStatus} ne 'pass')
+        <div class="layui-form-item layui-form-text margin-top">
+        ##        审批意见
+            <label class="layui-form-label">#springMessage("bpm.model.approve")</label>
+            <div class="layui-input-block" style="width: 600px;">
+                <textarea name="workflowComment" placeholder="#springMessage("bpm.model.approve")"
+                          class="layui-textarea"></textarea>
+            </div>
+        </div>
+    #end
+#end
+
+##操作按钮
+#macro(workFlowActionHtml $processInstanceId $btnPrependHtml $btnAppendHtml)
+#if($!{flowStatus} ne 'pass')
+<div class="layui-form-item layui-form-submit">
+    <div class="layui-input-block list-btn" style="margin-left:0;">
+    ##      自定义按钮
+        #if($!{btnPrependHtml} != "")
+            $!{btnPrependHtml}
+        #end
+    ##        通过
+        <button class="layui-btn workFlowSubmit" data-type="1" type="button">#springMessage(
+            "bpm.model.status.agree")</button>
+    ##            <button class="layui-btn workFlowSubmit" data-type="2" type="button">不通过</button>
+    ##      打回上一级
+        <button class="layui-btn layui-btn-normal workFlowSubmit" data-type="3" type="button">#springMessage(
+            "bpm.model.status.brefore")</button>
+    ##      打回制单处
+        <button class="layui-btn layui-btn-danger workFlowSubmit" data-type="4" type="button">#springMessage(
+            "bpm.model.status.remake")</button>
+    ##      自定义按钮
+        #if($!{btnAppendHtml} != "")
+            $!{btnAppendHtml}
+        #end
+    </div>
+</div>
+#end
+#end
+
+##审批意见
+#macro(workFlowHtml $btnPrependHtml $btnAppendHtml)
+#if($!{flowStatus} ne 'pass')
+<input type="hidden" name="flowTaskId" value="$!{taskId}">
+    #if($!{flowStatus} ne 'track')
+        #workFlowAddCommentHtml()
+        #workFlowActionHtml($flowTag.getProcessInstanceIdByTaskId($taskId) $btnPrependHtml $btnAppendHtml)
+    #end
+#end
+#end
+
+
+##工作流必填javascript
+#macro(workFlowScript $tableSelect)
+<script>
+    bt.workFlow = {
+        config: {url: undefined},
+        postData: {},
+        taskList: [],
+        beforeSubmit: function (submitData) {
+            return true;
+        },
+        trackFlow: function (processInstanceId) {
+            var url = basePath + "/bpm/my/detailPage";
+            if (processInstanceId) {
+                url += "?processInstanceId=" + processInstanceId
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['1099px', '580px'],
+                content: url
+            });
+        },
+        trackFlowByBusinessId: function (businessId) {
+            var url = basePath + "/bpm/my/detailPage";
+            if (businessId) {
+                url += "?businessId=" + businessId
+            }
+            parent.layer.open({
+                type: 2,
+                area: ['1099px', '580px'],
+                content: url
+            });
+        },
+        /**
+         * 工作流审批提交
+         *
+         * @param submitData
+         * @param isNotBeforeSubmit
+         * @param isNeedVerify  是否要校验工作流审批：true表示要校验；false表示不用校验。用户在看到校验失败提示信息后，仍然确定提交审批，则isNeedVerify为false。
+         */
+        submit: function (submitData, isNotBeforeSubmit, isNeedVerify) {
+            if (!isNotBeforeSubmit) {
+                if (!bt.workFlow.beforeSubmit(submitData)) {
+                    return false;
+                }
+            }
+            bt.use(['jquery', 'datatable'], function () {
+                var $ = bt.jquery;
+                var task = [];
+                task['taskList'] = bt.workFlow.taskList;
+                var flowTaskId;
+                if (task['taskList'].length == 0) {
+                    flowTaskId = $('input[name="flowTaskId"]').val();
+                    //获取单个审批页面的taskId
+                    if (flowTaskId) {
+                        task['taskList'] = [];
+                        task['taskList'].push(flowTaskId);
+                    } else if ($.fn && $.fn.dataTable) {//获取表格ID
+                        var data = bt.datatable.getSelectData("$!{tableSelect}");
+                        if (data && data.length > 0) {
+                            var taskIds = [];
+                            // 遍历行数据
+                            $.each(data, function (i, tr) {
+                                taskIds.push(tr.taskId);
+                            });
+                            task['taskList'] = taskIds;
+                        } else {
+                            var type = submitData.workflowPass;
+                            if (type === 1) {
+                                // 审批通过
+                                msg = bt.lang("bpm.model.status.success");
+                            } else if (type === 3) {
+                                //"打回上一级"
+                                msg = bt.lang("bpm.model.status.brefore");
+                            } else {
+                                //"打回制单处"
+                                msg = bt.lang("bpm.model.status.remake");
+                            }
+                            // "请选择需要{}的流程！"
+                            parent.layer.alert(bt.lang("bpm.alert.chooseFlow", [msg]), {icon: 7});
+                            return;
+                        }
+                    } else {
+                        parent.layer.alert(bt.lang("bpm.flow.alert.approval.exception.incorrect.param"), {icon: 2});
+                        return;
+                    }
+                }
+                $.extend(submitData, task);
+                $.extend(submitData, bt.workFlow.postData);
+                if ((isNeedVerify == undefined) || (isNeedVerify == null) || (isNeedVerify == true)) {
+                    // 需要进行工作流审批校验，默认需要校验
+                    submitData.isNeedVerify = true;
+                } else {
+                    submitData.isNeedVerify = false;
+                }
+                var loading = parent.layer.load(1, {
+                    shade: [0.3, '#000'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    type: "post",
+                    url: bt.workFlow.config.url ? bt.workFlow.config.url : basePath + "/bpm/task/complete",
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: JSON.stringify(submitData),
+                    success: function (result) {
+                        if ((isNeedVerify == undefined) || (isNeedVerify == null) || (isNeedVerify == true)) {
+                            if (result.attributes
+                                    && result.attributes.verifyStatus != undefined
+                                    && result.attributes.verifyStatus != null
+                                    && result.attributes.verifyStatus == 0) {
+                                parent.layer.closeAll('loading');
+                                parent.layer.confirm(result.msg, function () {
+                                    bt.workFlow.submit(submitData, true, false);
+                                }, function () {
+                                });
+                                return;
+                            }
+                            //1为老T6的强控 2为微服务的强控
+                            if(result.attributes && (result.attributes.verifyStatus == 2 || result.attributes.verifyStatus == 1)){
+	                             var index = parent.layer.getFrameIndex(window.name);
+			                     parent.layer.close(index);
+			                     parent.layer.alert(result.msg, {icon: 2,btn: ['确认']});
+			                     parent.layer.closeAll('loading');
+	                             return;
+                            }
+                       
+                        }
+
+                        parent.layer.closeAll('loading');
+                        if (bt.workFlow) {
+                            bt.workFlow.afterSubmit()
+                        }
+
+                        var index = parent.layer.getFrameIndex(window.name);
+                        parent.layer.close(index);
+                        parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                        var todoPageNavtabId;
+                        if (bt.navtab) {
+                            todoPageNavtabId = bt.navtab.getNavtabIdByURL("/bpm/my/todoPage");
+                        }
+                        //刷新待办列表
+                        if (todoPageNavtabId) {
+                            bt.navtab.refresh(todoPageNavtabId);
+                        }
+
+                        if (result.success) {
+                            var navTabDom = bt.navtab.getCurrentDom();
+                            var ftId = navTabDom.$('input[name="flowTaskId"]').val();
+                            //置空审批意见
+                            $('textarea[name="workflowComment"]').val('');
+                            if (navTabDom.$.fn && navTabDom.$.fn.dataTable) {//多笔审批，刷新表格
+                                navTabDom.$.fn.dataTable.tables({visible: true, api: true}).ajax.reload();
+                            }
+                            if (ftId) {//单笔审批、如果是navtab，关闭navtab，并刷新父节点的表格数据
+                                var parentDom = bt.navtab.getParentDom();
+                                if (parentDom.$.fn && parentDom.$.fn.dataTable) {
+                                    parentDom.$.fn.dataTable.tables({visible: true, api: true}).ajax.reload();
+                                }
+                                bt.navtab.closeCurrent();
+                            }
+                        }
+                    }
+                });
+            });
+        },
+        afterSubmit: function () {
+        },
+        // onVerifyFailure: function (submitData, result) {
+        //     // 工作流校验失败回调方法
+        //     parent.layer.confirm(result.msg + "，确认继续提交吗？", function () {
+        //         // 第三个参数为false，表示关闭工作流校验。
+        //         bt.workFlow.submit(submitData, true, false);
+        //     }, function () {
+        //     });
+        // }
+    }
+
+    bt.use(['form', 'jquery'], function () {
+        var form = bt.form();
+        var $ = bt.jquery;
+        var workflowPass;
+        var layer = parent ? parent.layer : layer;
+
+        var workFlowSubmit = function (workflowComment, type) {
+            var submitData = {
+                workflowComment: workflowComment,
+                workflowPass: type
+            }
+            bt.workFlow.submit(submitData);
+        }
+        var detailPage = $('.detailPage');
+        if (detailPage) {
+            detailPage.click(function () {
+                var id = $(this).data('id');
+                bt.workFlow.trackFlow(id);
+            });
+        }
+
+        $(".workFlowSubmit").click(function () {
+            var type = $(this).data("type");
+            var workflowComment = $('textarea[name="workflowComment"]').val();
+            if (type != 1 && !workflowComment) {
+                //"请填写审批意见！"
+                parent.layer.alert(bt.lang("bpm.alert.pleaseInputApproveComment"), {icon: 2});
+                return;
+            }
+            if (type === 1 || type === 3 || type === 4) {
+                var msg = '';
+                if (type === 1) {
+                    // 审批通过
+                    msg = bt.lang("bpm.model.status.success");
+                    try {
+                        var caType = $("#caType");
+                        if (caType) {
+                            //证书签名
+                            var signDataMsg = signData("审批", $("#caType").val());
+                            if (signDataMsg != "") {
+                                bt.loading.hide();
+                                layer.alert(bt.lang(signDataMsg), {icon: 2});
+                                return false;
+                            }
+                        }
+                    } catch (e) {
+
+                    }
+                } else if (type === 3) {
+                    //"打回上一级"
+                    msg = bt.lang("bpm.model.status.brefore");
+                } else {
+                    //"打回制单处"
+                    msg = bt.lang("bpm.model.status.remake");
+                }
+                //"是否执行“"+msg+"”操作？"
+                layer.confirm(bt.lang("bpm.alert.ensureExecute", [msg]), {icon: 3}, function () {
+                    var isCFCACheck = $("#isCFCACheck").val() || '';
+                    if (isCFCACheck != "") {
+                        bt.loading.hide();
+                        layer.alert(bt.lang($("#isCFCACheck").val()), {icon: 2});
+                        return false;
+                    }
+                    workFlowSubmit(workflowComment, type);
+                });
+                return;
+            }
+            workFlowSubmit(workflowComment, type);
+        });
+    });
+</script>
+#end

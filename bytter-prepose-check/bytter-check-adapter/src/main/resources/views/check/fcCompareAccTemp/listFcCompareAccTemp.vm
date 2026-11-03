@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+
+<body>
+<div>
+<button class="layui-btn" id="import">#springMessage('common.button.imports')</button>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	    <thead>
+	    <tr>
+	        <th>#springMessage('table.fcBankBillTemp.bankAcc')</th><!-- 银行帐号 -->
+            <th>#springMessage('table.nisBillhead.curId')</th><!--币别  -->
+	        <th>#springMessage('table.fcBankBillTemp.tallyDate')</th><!-- 发生日期 -->
+	         <th>#springMessage('table.fcBankBillTemp.voucherNo')</th><!-- 凭证号 -->
+	        <th>#springMessage('table.fcBankBillTemp.debitMoney')</th><!-- 借方金额 -->
+	        <th>#springMessage('table.fcBankBillTemp.creditMoney')</th><!-- 贷方金额 -->
+	        <th>#springMessage('table.fcBankBillTemp.redblueSign')</th><!-- 红蓝标识 -->
+	        <th>#springMessage('table.fcBankBillTemp.summaryContent')</th><!-- 摘要 -->
+	        <th>#springMessage('table.fcBankBillTemp.dataSource')</th><!-- 企业账来源 -->
+	    </tr>
+	    </thead>
+	    <tbody>
+	    </tbody>
+	</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','upload','bttable','datatable','btImport','date','moneyType'], function(){
+    $ = bt.jquery,form = bt.form();
+    var moneyFun = bt.moneyType.getFun();
+    /* var upload = layui.upload;
+    layui.upload({
+    	  url: basePath+'/finacial/check/fcbankbilltemp/erpUpload/'
+    	  ,success: function(res, input){
+    		  var importData;
+    		  if(typeof res.success == 'boolean' && !res.success){
+	    			importData = {};
+	    			layer.alert(bt.lang(res.msg)); 
+    		  }else{
+	    			importData = res;
+	      		  	layer.alert(bt.lang("table.fcBankBillTemp.importSuccess")); 
+    		  }
+    		  bt.bttable.init({
+    		    	elem: "#appTable",
+    		    	data:importData,
+    		    	columns: [
+	    		        { "data": "bankAcc" },
+	    		        { "data": "tallyDate" },
+    		         	{ "data": "voucherNo" },
+    		         	{ "data": "debitMoney" },
+	    		        { "data": "creditMoney" },
+	    		        { "data": "redblueSign" },
+	    		        { "data": "summaryContent" },
+	    		        { "data": "dataSource" }
+	 		    	]
+    		    });
+    	  }
+    });   */
+	
+    
+    $("#import").click(function(){
+		up = bt.btImport.init({
+	        code: "30000002",
+	        titleRows: 0,
+	        width: "1000px",
+	        headRows: 1,
+	        success: function (head, data, select) { //点击确认后回调方法，这里导入组件写了success方法这里可以不用此方法
+	            $.ajax({
+	                type: "POST",
+	                url: basePath + "/finacial/check/fcCompareAccTemp/saveErpImport",
+	                dataType: "json",
+	                contentType: "application/json",
+	                data: JSON.stringify(up.getSelectData()),
+	                success: function (result) {
+	           			var importData;
+	      		  		if(typeof result.success == 'boolean' && !result.success){
+	  	    				importData = {};
+	      		 		}else{
+	  	    				importData = data;
+	      		  		}
+	          		  	bt.bttable.init({
+	          		    	elem: "#appTable",
+	          		    	data:importData,
+	          		    	columns: [
+	      	    		        { "data": "compAcc" },
+	      	    		        { "data": "curName" },
+	      	    		        { "data": "tallyDate",render: function ( data, type, full, meta ) {
+	      	    		        	return bt.date.format(data.tallyDate,'yyyy-mm-dd');
+	      	                    } },
+	      	    		        { "data": "voucherNo" },
+	      	    		        { "data": "debitMoney",className:'textRight',render: function ( data, type, full, meta ) {
+	      	                        return moneyFun.format(data.debitMoney);
+	      	                    }},
+	      	    		        { "data": "creditMoney",className:'textRight',render: function ( data, type, full, meta ) {
+	      	                        return moneyFun.format(data.creditMoney);
+	      	                    } },
+	      	    		        { "data": "redblueSign" },
+	      	    		        { "data": "summaryContent" },
+	      	    		        { "data": "dataSource" }
+	      	 		    		]
+	          		    });
+	                	parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+	            	}
+	        	});
+	    	}
+		});
+	});
+  
+});
+</script>
+</html>

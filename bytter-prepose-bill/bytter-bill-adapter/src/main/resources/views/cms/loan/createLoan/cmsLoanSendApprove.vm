@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+	<form class="layui-form layui-form-pane">
+		<input type="hidden" id="taskId" name= "taskId" value="$!{taskId}">
+	</form>
+
+	#parse("views/cms/loan/createLoan/viewCmsLoanInfoSub.vm")
+	#parse("views/cms/loan/createLoan/viewCmsUseRatInfo.vm")
+	<table class="layui-table">
+		<thead>
+			<tr>
+			##贷款发放信息
+				<td colspan="4" align="center"><strong>#springMessage("cms.loan.loansendInfo")</strong></td>
+			</tr>
+		</thead>
+		<colgroup>
+			    <col width="15%">
+			    <col width="35%">
+			    <col width="15%">
+			    <col width="35%">
+		  	</colgroup>
+			<tbody>
+				<tr>
+					<td class="textRight">#springMessage("table.cmsLoanSend.contractCode")</td>
+					<td>$!{cmsLoanSendPage.contractCode}</td>
+					<td class="textRight"></td>
+					<td></td>
+				</tr>
+				<tr>
+				##浮动方式
+					<td class="textRight">#springMessage('table.cmsLoanInfo.floatWay')</td>
+					<td>
+						$dictTag.get("Cms.FloatWay",${cmsLoanSendPage.floatWay})
+						&nbsp;&nbsp;&nbsp;&nbsp;
+						#set($postfix ="")
+						#if(${cmsLoanSendPage.floatWay} == "03")
+							#set($postfix = "Month")
+						#elseif(${cmsLoanSendPage.floatWay} == "04")
+							#set($postfix = "Season")
+						#elseif(${cmsLoanSendPage.floatWay} == "05")
+							#set($postfix = "HY")
+						#elseif(${cmsLoanSendPage.floatWay} == "06")
+							#set($postfix = "Year")
+						#end
+						$dictTag.get("Cms.FloatWay$postfix",${cmsLoanSendPage.floatWayNext})
+					</td>
+				##计息方式
+					<td class="textRight">#springMessage('table.cmsLoanInfo.interestWay')</td>
+					<td>
+						$dictTag.get("Admin.PredrawSign",${cmsLoanSendPage.interestWay})
+					</td>
+				</tr>
+				#if($cmsLoanSendPage.floatWay!='01')
+				<tr>
+				##浮动利率
+					<td class="textRight">#springMessage('cms.loan.floatRate')</td>
+					<td>
+					$!{cmsLoanSendPage.referenceRateTypeName}<br><br>
+					$!{cmsLoanSendPage.repayCycleName} <br><br>
+					$dictTag.get("Cms.PointsProportion",${cmsLoanSendPage.pointsProportionSelect})&nbsp;
+						#if(${cmsLoanSendPage.pointsProportionSelect} == '01')
+							#if($!{cmsLoanSendPage.pointsProportionText})
+								$number.formatNumeric($number.formatNumeric($!{cmsLoanSendPage.pointsProportionText}))BP
+							#else
+								0.00BP
+							#end
+						#else
+							#if($!{cmsLoanSendPage.pointsProportionText})
+								$number.formatNumeric($number.formatNumeric($!{cmsLoanSendPage.pointsProportionText}))%
+							#else
+								0.00%
+							#end
+						#end
+					</td>
+				##利率调整生效日期
+					<td class="textRight">#springMessage('table.cmsLoanInfo.rateEntriesEffectDate')</td>
+					<td>
+						$!date.format('yyyy-MM-dd',$!cmsLoanSendPage.rateEntriesEffectDate)
+					</td>
+				</tr>
+				#end
+				<tr>
+				##贷款利率
+					<td class="textRight">#springMessage('table.cmsLoanSend.loanRate')</td>
+					<td>$rateTag.show($!{cmsLoanSendPage.loanRate})</td>
+				##逾期利率
+					<td class="textRight">#springMessage('table.cmsLoanSend.overdueRate')</td>
+					<td>$rateTag.show($!{cmsLoanSendPage.overdueRate})</td>
+				</tr>
+				<tr>
+				##展期利率
+					<td class="textRight">#springMessage('table.cmsLoanSend.deferredRate')</td>
+					<td>$rateTag.show($!{cmsLoanSendPage.deferredRate})</td>
+				##本次放款金额
+					<td class="textRight">#springMessage('table.cmsLoanSend.loanMoney')</td>
+					<td>
+					$number.formatNumeric($!{cmsLoanSendPage.loanMoney})
+					</td>
+				</tr>
+				<tr>
+				##贷款发放日期
+					<td class="textRight">#springMessage('table.cmsLoanSend.loanDate')</td>
+					<td>$!date.format('yyyy-MM-dd',$!cmsLoanSendPage.loanDate)</td>
+				##贷款到期日期
+					<td class="textRight">#springMessage('cms.common.deadlineDate')</td>
+					<td>
+						$!date.format('yyyy-MM-dd',$!cmsLoanSendPage.repayDate)
+					</td>
+				</tr>
+				<tr>
+				##贷款发放方式
+					<td class="textRight">#springMessage('table.cmsLoanSend.loanSendOutType')</td>
+					<td>
+						$dictTag.get("cms.loan.loanSendOutType",${cmsLoanSendPage.loanSendOutType})
+					</td>
+				##还款方式
+					<td class="textRight">#springMessage('table.cmsLoanSend.repayType')</td>
+					<td>
+##						$dictTag.get("cms.LoanRepayType",${cmsLoanSendPage.repayType})
+						${cmsLoanSendPage.repayTypeName}
+					</td>
+				</tr>
+        	</tbody>
+        </table>
+        <div id="uploader2" style="width:100%" class="layui-input-inline"></div>
+		<input type="hidden" id="attachmentgid" value="$!{cmsLoanSendPage.attachmentId}">
+
+	#workFlowHtml()
+	#parse("views/common/footer.vm")
+	#workFlowScript()
+    <script src="${basePath}/static/modules/cms/guarantee/guaContractSelect.js?_btv=${resourceVersion}"></script>
+	<script>
+		bt.use(['form','jquery','moneyType','element','btUpload'], function(){
+			var $ = bt.jquery,form = bt.form(),element = layui.element();
+			bt.moneyType.init();
+			var gid = $("#annexName").val();
+			var up = bt.btUpload.init({
+				elem: "#uploader",
+				hasUpload: false,
+				hasDelete: false,
+				isExpand: true,
+				gid: gid
+			});
+			var attachments = bt.btUpload.init({
+		        elem: "#uploader2",
+		        hasDelete:false,
+		        isExpand:true,
+		        hasUpload:false,
+		        gid: $("#attachmentgid").val()
+		    });
+
+			bt.workFlow.beforeSubmit = function(submitData){
+				var taskIds = [];
+				taskIds.push($("#taskId").val());
+				bt.workFlow.taskList = taskIds;
+				return true;
+			}
+			bt.workFlow.afterSubmit = function(){
+				if(bt.navtab){
+					bt.navtab.refreshParent();
+                	bt.navtab.closeCurrent();
+			    }else{
+				parent.layer?parent.layer.closeAll():layer.closeAll();
+			    }
+			}
+		});
+
+
+//授信占用参数设置
+	function beforeCpRation(){
+	var corpId = $("#corpId").val();
+	var curCode = $("#curCode").val();//币别
+	var loanDate =  $("#loanDate").val();//贷款日期
+	var itemCode = $("#cpRatItemCode").val();//授信品种
+    var ratCode = $("#cpRatCode").val();//授信编号
+	var beginDate = loanDate;
+	//var isRmbRat = $("#isRmbRat").val();//是否折合本位币
+	var params = {
+			corpId : corpId,
+			curCode : curCode,
+			ratItemCode : itemCode,
+			beginDate : beginDate,
+            ratCode:ratCode
+			//isRmbRat : isRmbRat
+	}
+	return params;
+}
+
+        //担保合同参数设置
+        function setOtherParam(param) {
+            var corpId = $("#corpId").val();//网点id
+            var startDate = $("#loanDate").val();//开始日期
+            var endDate = $("#repayDate").val();//结束日期
+            var curId = $("#curCode").val();//币别
+            param["corpId"] = bt.empty(corpId) ? "" : corpId;
+            param["startDate"] = bt.empty(startDate) ? "" : startDate;
+            param["endDate"] = bt.empty(endDate) ? "" : endDate;
+            param["curId"] = bt.empty(curId) ? "" : curId;
+        }
+	</script>
+	<script src="${basePath}/static/modules/cms/rat/cpration/ratCpUrationSet.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

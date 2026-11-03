@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<input type="hidden" id="caType"  value="4"/>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}"/>
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}"/>
+    <input id="showIsPayed" name="showIsPayed" type="hidden" value="$!{showIsPayed}">
+    <input id="loginName" name="loginName" type="hidden" value="$shiro.getPrincipal().loginName">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.nisBillhead.corpId')</td>
+            <td>
+                <input type="hidden" id="corpIds" value="$!{corpIds}">
+                ##付款人单位
+                <div class="layui-input-inline">
+                    <div class="demo-selectTree-normal"></div>
+                </div>
+            </td>
+            ##结算方式
+            <td class="textRight">#springMessage('ttpay.payType')</td>
+            <td>
+                <div class="layui-inline">
+                    <div type="list" field="eqs_payType"
+                         fieldHref="${basePath}/ttpay/tpPayment/getPayTypeList" dictField="code"
+                         dictText="name" ></div>
+                </div>
+            </td>
+            ##金额
+            <td class="textRight">#springMessage('table.nisBillhead.payMoney')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" data-name="geg_payMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           data-moneyendid="t20" placeholder="#springMessage('table.nisBillhead.payMoney')">
+                </div>
+                <span class="date-mid">~</span>
+                <div class="layui-inline">
+                    <input type="text" data-name="leg_payMoney"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           id="t20" placeholder="#springMessage('table.nisBillhead.payMoney')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##付款商户号
+            <td class="textRight">#springMessage('ttpay.payerMerchantNo')</td>
+            <td>
+                <input type="text" name="likes_payerAcc"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.nisBillhead.payerAcc')">
+            </td>
+            ##收款商户号
+            <td class="textRight">#springMessage('ttpay.payeeMerchantNo')</td>
+            <td>
+                <input type="text" name="likes_payeeAcc"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.nisBillhead.payeeAcc')">
+            </td>
+            ##收款商户名称
+            <td class="textRight">#springMessage('ttpay.payeeMerchantName')</td>
+            <td>
+                <input type="text" name="likes_payeeAccName"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.nisBillhead.payeeAccName')">
+            </td>
+        </tr>
+        <tr>
+            ##付款单号
+            <td class="textRight">#springMessage('table.nisBillhead.billNo')</td>
+            <td>
+                <input type="text" name="likes_billNo"
+                       autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.nisBillhead.billNo')">
+            </td>
+            ##是否对私付款
+            <td class="textRight">#springMessage('table.nisBillhead.isForindividual')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="nisBillhead.isPayed"
+                     data-name="eqs_isForindividual"></div>
+            </td>
+            ##期望支付日期
+            <td class="textRight">#springMessage('table.nisBillhead.wishPayday')</td>
+            <td>
+                <input type="text" name="ged_wishPayday" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="led_wishPayday" value="">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_wishPayday" class="layui-input bt-input-inline bt-biz-dateType"
+                       id="led_wishPayday" value="$!date.format('yyyy-MM-dd',$!{endWishPayday})">
+            </td>
+        </tr>
+        <tr>
+            ##业务类别
+            <td class="textRight">#springMessage('table.nisBillhead.busType')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType"
+                         data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=1"
+                         data-name="eqs_busType" data-biz-name="eqs_busType"
+                         data-valuefield="busId" data-textfield="busTypeName" data-inputvalue="inputvalue"
+                         data-search="true" data-beforeinit="busBefore"></div>
+                </div>
+            </td>
+            <td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisBillhead.billNo')</th>
+        <th>#springMessage('ttpay.busTitle')</th>
+        <th>#springMessage('table.nisBillhead.corpId')</th>
+        <th>#springMessage('ttpay.payerMerchantNo')</th>
+        <th>#springMessage('ttpay.trandMoney')</th>
+        <th>#springMessage('ttpay.payeeMerchantName')</th>
+        <th>#springMessage('ttpay.payeeMerchantNo')</th>
+        <th>#springMessage('table.nisBillhead.wishPayday')</th>
+        <th>#springMessage('ttpay.payType')</th>
+        <th>#springMessage('table.nisBillhead.status')</th>
+        <th>#springMessage('table.nisBillhead.isForindividual')</th>
+        <th>#springMessage('table.nisBillhead.createDate')</th>
+        <th>#springMessage('table.nisBillhead.busType')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #paymentWorkFlowHtml()
+    #parse("views/common/footer.vm")
+    #paymentWorkFlowScript()
+<script src="${basePath}/static/modules/ttpay/approve/tpPaymentApprove.list.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

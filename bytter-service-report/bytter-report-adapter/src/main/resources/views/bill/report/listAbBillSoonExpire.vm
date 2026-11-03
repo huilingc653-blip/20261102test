@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+   <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight">#springMessage("table.sysCorp.corpName")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-name="ins_corpId" data-biz-type="corp" data-type="selectTree" data-biz-name="corpId"
+                         data-tree-type="check"
+                         data-resource="bill:accebill:soonexpire:query"
+                         data-checkkboxtype='{"Y":"s","N":"s"}'
+                    ></div>
+                </div>
+            </td>
+            ##流通介质
+            <td class="textRight">#springMessage('table.abVoucherinfo.billFlag')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="AB_BILL_FLAG" data-name="billFlagName" data-biz-name="billFlagName"></div>
+            </td>
+            ##金额单位
+            <td class="textRight">#springMessage("table.choProductReq.moneyUnit")</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="select" data-group="cms.MoneyType"  data-biz-name="moneyUnit" data-name="moneyUnit" data-defaultvalue="1" data-required="true"></div>
+            </td>
+        </tr>
+        <tr>
+            ##展示方式
+            <td class="textRight">#springMessage("common.display.mode")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="radio" data-biz-name="displayMode" data-name="displayMode" data-group="display.mode" data-defaultvalue="1" data-required="true"></div>
+                </div>
+            </td>
+            ##应付应收票据
+            <td class="textRight">#springMessage("bill.accebill.type")</td>
+            <td width="20%">
+                <div class="layui-form">
+                    <div class="bt-biz-dict" data-type="radio" data-defaultvalue="0" id="type"  data-biz-name="type"  data-name="type" data-group="BILL_PAYERPAYEE_TYPE" data-required="true"></div>
+                </div>
+            </td>
+            <td class="textRight"></td>
+            <td>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" data-callback="callbackReset">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+</form>
+
+<div id="chartSum" style="width:100%;height:500px;display: none;"></div>
+
+<div id="typeTable">
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr class="tables">
+            <th #if($terms.size() > 0) rowspan="2" #end>#springMessage("table.sysCorp.corpName")</th>##单位
+            #foreach($date in $terms)
+                <th #if($terms.size() > 0) colspan="3" #end class="m">$!{date.termName}</th>
+            #end
+        </tr>
+        #if($terms.size() > 0)
+        <tr class="tables">
+            #foreach($date in $terms)
+                <th class="m">#springMessage("bill.accebill.billType.bank")</th>##银票
+                <th class="m">#springMessage("bill.accebill.billType.business")</th>##商票
+                <th class="m">#springMessage("table.datatable.total")</th>##合计
+            #end
+        </tr>
+        #end
+
+        </thead>
+    </table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+##<script src="${basePath}/static/modules/chowmatistic/choFinanceReport.list.js?_btv=${resourceVersion}"></script>
+<script language="javascript" type="text/javascript">
+    var datatable = {}, dateType, corp, dict, myChartSum;
+    var appTable = {"isInit": true};
+    var moneyFun;
+    var selectType;
+    bt.use(['form', 'select', 'dicts', 'corp', 'element', 'datatable', 'jquery', 'selectType','moneyType'], function () {
+        var $ = bt.jquery, form = bt.form();
+        dict = bt.dicts.init();
+        corp = bt.corp.init();
+        selectType = bt.selectType.init();
+        var moneyType = bt.moneyType.init();
+        moneyFun = moneyType.getFun();
+
+        //初始化表格
+        initTable("#appTable", appTable.columns);
+        appTable.isInit = true;
+
+    });
+
+    /**
+     * datatable渲染
+     */
+    function initTable(id, columns) {
+        bt.datatable.init({
+            elem: id,
+            colReorder: true,
+            order: [0, 'desc'],
+            ajax: {
+                'url': basePath + "/bill/report/soonExpireBill/datatable"
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                callback: function (data) {
+                    var mode = data.field.displayMode;
+                    if (mode == "1") {
+                        $("#chartSum").hide();
+                        $("#typeTable").show();
+                       // tableAdjust();
+                    } else {
+                        $("#typeTable").hide();
+                        $("#chartSum").show();
+                    }
+                   // initTableSet("appTable");
+
+                    return true;
+                },
+                initQueryParams:function(params){
+                  if(params.displayMode === undefined){
+                        params.displayMode = '1'
+                  }
+
+                if(params.type === undefined){
+                    params.type = '0'
+                }
+
+                  return params
+                }
+            },
+            exportFile:{
+                customPrint:{
+                    breakword:[{title:bt.lang('table.sysCorp.corpName'),width:100,name:'corpName'}],
+                    header:function(){
+                        var html = '<tr>' +
+                                '<th rowspan="2">'+bt.lang('table.sysCorp.corpName')+'</th>';
+                        var htmlTh='';
+                        #foreach($term in $terms)
+                            html += '<th colspan="3" style="text-align: center;">'+'$term.termName'+'</th>';
+                            htmlTh += '<th>'+bt.lang("bill.accebill.billType.bank")+'</th>'+
+                                    '<th>'+bt.lang("bill.accebill.billType.business")+'</th>'+
+                                    '<th>'+bt.lang("table.datatable.total")+'</th>';
+                        #end
+                        html += '</tr><tr>';
+                        html += htmlTh+'</tr>';
+                        return html
+                    }
+                }
+            },
+            columns: columns,
+            btInitComplete: function (settings, data) {
+            },
+            btDrawCallback: function (setting) {
+                if (dict.get("displayMode").val() == "2") {//图表
+                    initBar();
+                    myChartSum.resize();
+                }
+            }
+        });
+    }
+
+    /**
+     * 初始化设置
+     * @param layId
+     */
+    function initTableSet(layId) {
+        var tableId = "#" + layId;
+        ;
+        $.fn.dataTable.Api(tableId).draw();
+    }
+
+    /**
+     * 列表数据
+     */
+    appTable.columns = [
+        {data:"corpName",bSortable:false,className:'textRight'},
+        #foreach($term in $terms)
+            {data:"bankMoneyTotal"+$velocityCount,bSortable:false,className:'textRight',
+                render: function ( data, type, full, meta ) {
+                    return bt.money.format(full['$term.id'+'_bank']);
+                }
+            },
+            {data:"businessMoneyTotal"+$velocityCount,bSortable:false,className:'textRight',
+                render: function ( data, type, full, meta ) {
+                    return bt.money.format(full['$term.id'+'_business']);
+                }
+            },
+            {data:"total"+$velocityCount,bSortable:false,className:'textRight',
+                render: function ( data, type, full, meta ) {
+                    if(full['$term.id'+'_total']!='0.00') {
+                        var corpId = full.corpId;
+                        var termId = '$term.id';
+                        //moneyFun.format(full['$term.id' + '_total'],{separator: ","})
+                        return '<a class="" href="#" data-row="'+meta.row+'" onclick="view(\''+corpId+'\',\''+termId+'\')">'+bt.money.format(full['$term.id' + '_total'])+'</a> ';
+                    }else{
+                        return '0.00';
+                    }
+                }
+            },
+        #end
+    ];
+
+    function view(corpId,termId) {
+        var billFlag = dict.get("billFlagName").val();
+        var type = dict.get("type").val();
+        var openUrl = basePath + "/bill/report/soonExpireBill/open?corpId=" + corpId+"&termId="+termId;
+        openUrl += "&billFlag=" + billFlag + "&type=" + type;
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '630px'],
+            maxmin: true,
+            content: openUrl
+        });
+    }
+    /**
+     * 重置
+     */
+    callbackReset = function () {
+        corp.get("corpId").val("");
+        dict.get("billFlagName").val("");
+        dict.get("displayMode").val("1");
+        dict.get("moneyUnit").val("1");
+        dict.get("type").val("0");
+    };
+
+
+    var flag = false;
+    //图表
+    myChartSum = echarts.init(document.getElementById('chartSum'));
+
+    function initBar() {
+        var data = {
+            corpId: corp.get("corpId").val(),
+            billFlagName: dict.get("billFlagName").val(),
+            moneyUnit: dict.get("moneyUnit").val(),
+            type: dict.get("type").val()
+        };
+        var url = basePath + "/bill/report/soonExpireBill/getData";
+        if (!flag) {
+            myChartSum = echarts.init(document.getElementById('chartSum'));
+            flag = true;
+        }
+        $.ajax({
+            type: "post",
+            async: false, //同步执行
+            url: url,
+            data: data,
+            dataType: "json", //返回数据形式为json
+            success: function (result) {
+                //result = $.parseJSON(result);
+                //字体多不显示特殊处理
+                result.xAxis[0].axisLabel.formatter =
+                function(value)
+                {
+                    var ret = "";//拼接加\n返回的类目项
+                    var maxLength = 3;//每项显示文字个数
+                    var valLength = value.length;//X轴类目项的文字个数
+                    var rowN = Math.ceil(valLength / maxLength); //类目项需要换行的行数
+                    if (rowN > 1)//如果类目项的文字大于3,
+                    {
+                        for (var i = 0; i < rowN; i++) {
+                            var temp = "";//每次截取的字符串
+                            var start = i * maxLength;//开始截取的位置
+                            var end = start + maxLength;//结束截取的位置
+                            //这里也可以加一个是否是最后一行的判断，但是不加也没有影响，那就不加吧
+                            temp = value.substring(start, end) + "\n";
+                            ret += temp; //凭借最终的字符串
+                        }
+                        return ret;
+                    }
+                    else {
+                        return value;
+                    }
+                }
+                var option = initChartSum(result);
+                myChartSum.hideLoading();
+                myChartSum.setOption(option, true);
+                window.onresize = myChartSum.resize;
+
+            }
+        });
+    }
+
+    /**
+     * 图表赋值
+     */
+    function initChartSum(result) {
+        var option = result;
+        return option;
+    }
+
+    /**
+     * 表格切换时错乱调整
+     */
+    function tableAdjust() {
+        $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
+    }
+
+
+</script>
+</html>

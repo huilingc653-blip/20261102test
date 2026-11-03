@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+                ##银行授信品种
+				<td class="textRight">#springMessage("cms.bank.rat.race")</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <input type="text" name="likes_name" autocomplete="off" class="layui-input" >
+                    </div>
+                </td> 
+                    
+                 ##业务品种
+				<td class="textRight">#springMessage("cms.business.race")</td>
+				<td width="25%">
+					<input type="text" name="likes_raceName" autocomplete="off" class="layui-input">
+				</td>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cms.ratCorp')</th>##授信主体
+        <th>#springMessage('table.ratItemCustom.ritCode')</th>##授信品种类型
+        <th>#springMessage('cms.bank.rat.race')</th>##银行授信品种
+        <th>#springMessage('cms.business.race')</th>##业务品种
+        <th>#springMessage('table.createRepayPlan.operation')</th>##操作
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','datatable','corp','selectType','dicts'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.corp.init();
+        bt.selectType.init();
+        bt.dicts.init();
+        
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:false,
+            order: [2,'desc'],
+            ajax: {
+                'url': basePath+"/cms/rat/ratBusinessRace/dataTable"
+            },searchForm:{
+                formFilter:"search",
+                formElem:"#searchForm"
+            },
+            buttons: [
+                {
+                    text: "#springMessage('common.button.add')",
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                },{
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns: [
+           		{data:"type",bSortable:true,className:'center',
+                    render: function ( data, type, full, meta ) {
+                        return bt.dict("RatModel.RatType",full.type);
+           		    }
+                },
+           		{data:"ritName",bSortable:true,className:'center'},
+           		{data:"name",bSortable:true,className:'center'},
+                {data:"busName",bSortable:true,className:'center'},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                    var html = ' <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>';
+	                    html += ' | <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+                    return html;
+                }}
+            ]
+        });
+    });
+    function add(){
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/rat/ratBusinessRace/add",
+            end:function(){
+            	bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+    
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/rat/ratBusinessRace/update?id=" + data.id,
+            end:function(){
+            	bt.navtab.refreshCurrentTable();
+            }
+        });
+    }
+    
+    function del(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(""+bt.lang('common.message.confirm.delete')+"",function(){
+            $.post(basePath + "/cms/rat/ratBusinessRace/delete/" + data.id, function(result){
+                bt.navtab.refreshCurrentTable();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+    
+</script>

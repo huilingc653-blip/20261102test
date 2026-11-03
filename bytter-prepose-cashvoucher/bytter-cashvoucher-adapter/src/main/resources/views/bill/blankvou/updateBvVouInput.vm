@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+	<style type="text/css">
+		.ruleNumber {
+			display: inline;
+			width: 60px;
+		}
+	</style>
+</head>
+<body>
+<form class="layui-form" method="post">
+	<input id="id" name="id" type="hidden" value="$!{bvVouInputVo.id}">
+	<input type="hidden" id="vouTid" value="$!{bvVouInputVo.vouTid}">
+	<input type="hidden" id="sboxId" value="$!{bvVouInputVo.sboxId}">
+	<input type="hidden" id="corpIdOld" value="$!{bvVouInputVo.corpId}">
+	<input id="createName" name="createName" type="hidden" value="$!{bvVouInputVo.createName}">
+	<input id="createBy" name="createBy" type="hidden" value="$!{bvVouInputVo.createBy}">
+	<input id="createDate" name="createDate" type="hidden" value="$!{bvVouInputVo.createDate}">
+	<input id="updateName" name="updateName" type="hidden" value="$!{bvVouInputVo.updateName}">
+	<input id="updateBy" name="updateBy" type="hidden" value="$!{bvVouInputVo.updateBy}">
+	<input id="updateDate" name="updateDate" type="hidden" value="$!{bvVouInputVo.updateDate}">
+	<table class="layui-table">
+		<tbody>
+		<tr>
+		##所属单位
+			<td class="textRight"><span class="pl"><span class="required-icon">*</span>#springMessage('table.bvVouInput.corpId')</td>
+			<td width="40%">
+				<div class="layui-input-inline">
+					<div class="bt-biz-corp"
+						 data-biz-type="corp"
+						 data-type="selectTree"
+						 data-name="corpId"
+						 data-scope="all"
+						 data-required="true"
+						 data-resource="bill:blankvou:bvVouInput:query"
+						 data-callback="corpCallback"
+						 data-defaultvalue="$!{bvVouInputVo.corpId}">
+					</div>
+				</div>
+			</td>
+		##所属账户
+			<td class="textRight">#springMessage('table.bvVouInput.bankAcc')</td>
+			<td width="40%">
+				<div class="layui-input-inline">
+					<input type="text" id="bankAcc" name="bankAcc" data-name="bankAcc" data-biz-name="bankAcc" lay-verify="strlength" data-maxlength="50"
+						   data-resource="bill:blankvou:bvVouInput:query" data-defaultcorp = "$!{bvVouInputVo.corpId}"
+						   class="bank layui-input bt-biz-accountTable" data-callback="bankAccCallBack"
+						   value="$!{bvVouInputVo.bankAcc}" onchange="changeBankAcc()">
+				</div>
+			</td>
+		</tr>
+
+		<tr >
+		##币别
+			<td class="textRight" width="15%">#springMessage('table.fbsBudgetDetail.curId')</td>
+			<td>
+				<input type="hidden" id="curId" name="curId" value="$!{bvVouInputVo.curId}">
+				<div class="layui-inline">
+					<div id="curName">$!{bvVouInputVo.curName}</div>
+				</div>
+			</td>
+		##
+			<td class="textRight" width="15%"></td>
+			<td>
+			</td>
+		</tr>
+
+		<tr>
+		##所属银行
+			<td class="textRight">#springMessage('table.bvVouInput.bankId')</td>
+			<td>
+				<input type="hidden" id="bankId" name="bankId" value="$!{bvVouInputVo.bankId}">
+			##银行
+				<input type="text" id="bankName"  readonly="true" class="layui-input" value="$!{bvVouInputVo.bankName}" placeholder="#springMessage('table.bvVouInput.bankId')">
+			</td>
+		##所属库箱
+			<td class="textRight">#springMessage('table.bvVouInput.sboxId')</td>
+			<td>
+				<div class="layui-inline">
+					<div class="bt-biz-selectType" data-url="${basePath}/bill/blankvou/bvstoragebox/jsonListByCorpIds/$!{bvVouInputVo.corpId}" data-required="true" data-defaultvalue="$!{bvVouInputVo.sboxId}"
+						 data-name="sboxId" data-biz-name="sboxId" data-valueField="id" data-textField="name" data-placeholder="#springMessage('common.placeholder.select')"></div>
+				</div>
+##				<div class="selectSboxId"></div>
+			</td>
+		</tr>
+
+		<tr>
+		##凭证种类
+			<td class="textRight">#springMessage('table.bvVouInput.vouTid')</td>
+			<td>
+				<div class="layui-inline">
+					<div class="bt-biz-selectType" data-url="${basePath}/bill/blankvou/bvvouchertype/queryVoucherTypeValidByInbox" data-required="true" data-defaultvalue="$!{bvVouInputVo.vouTid}"
+						 data-name="vouTid" data-biz-name="vouTid" data-valueField="id" data-textField="name" data-placeholder="#springMessage('common.placeholder.select')"></div>
+				</div>
+##				<div class="selectVouTid"></div>
+			</td>
+		##编码规则
+			<td class="textRight">#springMessage('table.bvVouInput.ruleNo')</td>
+			<td>
+				<input type="text" id="ruleNo" name="ruleNo" lay-verify="required|ruleNo|strlength" onchange="noRules(this.value)" class="layui-input bt-input-inline no_check" data-maxlength="50"
+					   autocomplete="off" class="layui-input"  placeholder="#springMessage('table.bvVouInput.ruleNo')#springMessage('table.bvVouInput.ruleNoSample')" value="$!{bvVouInputVo.ruleNo}">
+				<span>#springMessage('table.bvVouInput.ruleNoExplain')</span>
+			</td>
+		</tr>
+
+		<tr>
+		##起始号码
+			<td class="textRight">#springMessage('table.bvVouInput.beginNo')</td>
+			<td>
+				<span class="staSpan"></span>
+				<input type="text" id="beginNo" name="beginNo" lay-verify="required|number|beginNos|strlength" onchange="getNumSize()" data-type="int" data-name="int"
+					   data-maxlength="50"
+					   autocomplete="off" class="layui-input ruleNumber" placeholder="#springMessage('table.bvVouInput.beginNo')" value="$!{bvVouInputVo.beginNo}">
+				<span class="endSpan"></span>
+			</td>
+		##截止号码
+			<td class="textRight">#springMessage('table.bvVouInput.endNo')</td>
+			<td>
+				<span class="staSpan"></span>
+				<input type="text" id="endNo" name="endNo" lay-verify="required|number|endNos|strlength" onchange="getNumSize()" data-type="int" data-name="int"
+					   data-maxlength="50"
+					   autocomplete="off" class="layui-input ruleNumber" placeholder="#springMessage('table.bvVouInput.endNo')" value="$!{bvVouInputVo.endNo}">
+				<span class="endSpan"></span>
+			</td>
+		</tr>
+
+		<tr>
+		##份数
+			<td class="textRight">#springMessage('table.bvVouInput.numSize')</td>
+			<input type="hidden" id="numSize" name="numSize" readonly="true" class="layui-input bt-input-inline"
+				   decimal="0" autocomplete="off" class="layui-input" placeholder="#springMessage('table.bvVouInput.numSize')" value="$!{bvVouInputVo.numSize}">
+			<td id="numSizeView">
+				$!{bvVouInputVo.numSize}
+			</td>
+		##购入日期
+			<td class="textRight">#springMessage('table.bvVouInput.inputDate')</td>
+			<td>
+				<input type="text" name="inputDate" data-name="inputDate" class="layui-input bt-biz-dateType" data-type="date"
+					   data-biz-name="inputDate" lay-verify="required" value="$!{bvVouInputVo.inputDate}" >
+			##						<div type="date" field="inputDate" defaultVal="$!{bvVouInputVo.inputDate}"  placeholder="$!{bvVouInputVo.inputDate}" data-required="true"></div>
+			</td>
+		</tr>
+
+		<tr>
+		##备注
+			<td class="textRight">#springMessage('table.bvVouInput.rmk')</td>
+			<td>
+				<input type="text" id="rmk" name="rmk" class="layui-input bt-input-inline" lay-verify="strlength" data-maxlength="100"
+					   autocomplete="off" class="layui-input" placeholder="#springMessage('table.bvVouInput.rmk')" value="$!{bvVouInputVo.rmk}">
+			</td>
+			<td></td><td></td>
+		</tr>
+
+		</tbody>
+	</table><br/>
+	<div class="layui-form-submit-adaptive">
+		<div style="text-align: center;">
+			<button class="layui-btn" lay-submit="" type="button" lay-filter="save">#springMessage('common.button.temp')</button>
+			<button class="layui-btn" lay-submit="" type="button" lay-filter="storage">#springMessage('common.button.storage')</button>
+		</div>
+	</div>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/bill/blankvou/bvVouInput.edit.js?_btv=${resourceVersion}"></script>
+</html>

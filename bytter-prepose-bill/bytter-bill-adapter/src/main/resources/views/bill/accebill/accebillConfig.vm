@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body {
+            font-size: 14px;
+            padding-bottom: 60px;
+        }
+
+        .layui-form-label {
+            width: 180px;
+        }
+
+        .layui-input-block {
+            margin-left: 220px;
+        }
+    </style>
+</head>
+<body>
+    ##兑付申请线上兑付收款人
+<input type="hidden" id="isCashingOnlinePayeeInfo" value="$!{config.accebill.isCashingOnlinePayee}">
+
+<form class="layui-form" action="">
+    <div class="layui-collapse">
+        <div class="layui-colla-item">
+            <!-- 面板标题 -->
+            <h2 class="layui-colla-title">#springMessage('config.accebill.title.usually')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        ##开票是否补录
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEmitMake')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="radio"
+                                     data-defaultvalue="$!{config.accebill.isEmitMake}"
+                                     data-name="accebill.isEmitMake"
+                                     data-biz-name="isEmitMake"
+                                     data-group="sf_yn"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##承兑汇票纸票最大额度
+                        <td class="textRight">#springMessage('config.accebill.billFlag10.maxBillMoney')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <input type="text" id="maxBillMoney" name="accebill.maxBillMoney"
+                                       style="text-align:right" lay-verify="required|number2"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType" data-max="1000000000"
+                                       value="$!{config.accebill.maxBillMoney}">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="maxBillMoney-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##是否允许重复背书
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isRepeatEndorse')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="radio"
+                                     data-defaultvalue="$!{config.accebill.isRepeatEndorse}"
+                                     data-name="accebill.isRepeatEndorse"
+                                     data-biz-name="isRepeatEndorse"
+                                     data-group="BILL_REPEATENDORSE">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##是否支持同名跨行背书
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isCounterpartEndorse')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="radio"
+                                     data-defaultvalue="$!{config.accebill.isCounterpartEndorse}"
+                                     data-name="accebill.isCounterpartEndorse"
+                                     data-biz-name="isCounterpartEndorse"
+                                     data-callback="isCounterpartEndorseFun"
+                                     data-group="sf_yn"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##电票清算方式
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEOnlinePay')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                #*<input type="radio" name="accebill.isEOnlinePay" value="1"
+                                       #if($config.accebill.isEOnlinePay eq 1)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isEOnlinePay" value="0"
+                                       #if($config.accebill.isEOnlinePay ne 1)checked#end
+                                       title="#springMessage('common.sc_yn.no')">*#
+                                <div class="bt-biz-dict"
+                                     data-type="radio"
+                                     data-defaultvalue="$!{config.accebill.isEOnlinePay}"
+                                     data-name="accebill.isEOnlinePay"
+                                     data-biz-name="isEOnlinePay"
+                                     data-group="AB_BILL_SEND_SIGN"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 电票指令发送模式
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEAutoInstruct')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="radio"
+                                     data-defaultvalue="$!{config.accebill.isEAutoInstruct}"
+                                     data-name="accebill.isEAutoInstruct"
+                                     data-biz-name="isEAutoInstruct"
+                                     data-group="bisExc.cmdType"></div>
+                                #if($config.accebill.isEAutoInstruct ne 1)
+                                    #set($overDayNumclass ="layui-disabled")
+                                #end
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##票据背面信息显示顺序
+                        <td width="20%" class="textRight">#springMessage('config.accebill.billBackDesc')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.billBackDesc" value="0"
+                                       #if($config.accebill.billBackDesc ne 1)checked#end
+                                       title="#springMessage('config.accebill.billBackDesc.asc')">
+                                <input type="radio" name="accebill.billBackDesc" value="1"
+                                       #if($config.accebill.billBackDesc eq 1)checked#end
+                                       title="#springMessage('config.accebill.billBackDesc.desc')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##是否贴现到账确认
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isDiscountConfirm')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isDiscountConfirm" value="1"
+                                       #if($config.accebill.isDiscountConfirm ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isDiscountConfirm" value="0"
+                                       #if($config.accebill.isDiscountConfirm eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##是否托收到账确认
+                        <td width="20%" class="textRight">#springMessage(
+                            'config.accebill.isCollectionApplyConfirm')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isCollectionApplyConfirm" value="1"
+                                       #if($config.accebill.isCollectionApplyConfirm ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isCollectionApplyConfirm" value="0"
+                                       #if($config.accebill.isCollectionApplyConfirm eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##不启用贴现申请功能直接贴现办理
+                        <td width="20%" class="textRight">#springMessage(
+                            'config.accebill.isNotDiscountApplyConfirm')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isNotDiscountApply" value="1"
+                                       #if($config.accebill.isNotDiscountApply ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isNotDiscountApply" value="0"
+                                       #if($config.accebill.isNotDiscountApply eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##是否按票据账户控制
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isElectricBill')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isElectricBill" value="1"
+                                       #if($config.accebill.isElectricBill ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isElectricBill" value="0"
+                                       #if($config.accebill.isElectricBill eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="isElectricBill-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##兑付申请线上兑付收款人
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isCashingOnlinePayee')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="checkbox" name="isCashingOnlinePayee1" id="isCashingOnlinePayee1" value="1"
+                                       #if($config.accebill.isCashingOnlinePayee.indexOf("1") > -1)checked#end
+                                       lay-skin="primary"
+                                       title="#springMessage('config.accebill.cashingOnlinePayee.bankToAcc')">
+                                <input type="checkbox" name="isCashingOnlinePayee2" id="isCashingOnlinePayee2" value="2"
+                                       lay-skin="primary"
+                                       #if($config.accebill.isCashingOnlinePayee.indexOf("2") > -1)checked#end
+                                       title="#springMessage('config.accebill.cashingOnlinePayee.businessToAcc')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 电票自动提示承兑
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEAutoAccept')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isEAutoAccept" value="1"
+                                       #if($config.accebill.isEAutoAccept eq 1)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isEAutoAccept" value="0"
+                                       #if($config.accebill.isEAutoAccept ne 1)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="isEAutoAccept-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 电票自动提示收票
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEAutoInvoice')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isEAutoInvoice" value="1"
+                                       #if($config.accebill.isEAutoInvoice eq 1)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isEAutoInvoice" value="0"
+                                       #if($config.accebill.isEAutoInvoice ne 1)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="isEAutoInvoice-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 电票自动提示付款
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEAutoPay')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="radio"
+                                     data-defaultvalue="$!{config.accebill.isEAutoPay}"
+                                     data-callback="isEAutoPayFun"
+                                     data-name="accebill.isEAutoPay"
+                                     data-biz-name="isEAutoPay"
+                                     data-group="sf_yn"></div>
+                                #if($config.accebill.isEAutoPay ne 1)
+                                    #set($PayDayNumclass =" layui-disabled")
+                                #end
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="isEAutoPay-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="sttlmmkTr">
+                        ##自动提示付款清算方式(银票)
+                        <td width="20%" class="textRight">#springMessage('table.auto.abDiscount.bank.sttlmmk')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="AB_STTLMMK"
+                                     data-name="accebill.isEAutoPaySttlmmk"
+                                     data-defaultvalue="$!{config.accebill.isEAutoPaySttlmmk}"
+                                     data-placeholder=""></div>
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="bankSttlmmk-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="sttlmmkMerchTr">
+                        ##自动提示付款清算方式(商票)
+                        <td width="20%" class="textRight">#springMessage('table.auto.abDiscount.merch.sttlmmk')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="AB_STTLMMK"
+                                     data-name="accebill.isEAutoPaySttlmmkMerch"
+                                     data-defaultvalue="$!{config.accebill.isEAutoPaySttlmmkMerch}"
+                                     data-placeholder=""></div>
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="merchSttlmmk-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##电票提示付款结果查询跳过节假日
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isPaySkipHoliday')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isPaySkipHoliday" value="1"
+                                       #if($config.accebill.isPaySkipHoliday ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isPaySkipHoliday" value="0"
+                                       #if($config.accebill.isPaySkipHoliday eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                            <div class="layui-input-inline">
+                                <i id="isPaySkipHoliday-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 第三方票据自动托收申请
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isThirdBillAutoCollect')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isThirdBillAutoCollect" value="1"
+                                       #if($config.accebill.isThirdBillAutoCollect ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isThirdBillAutoCollect" value="0"
+                                       #if($config.accebill.isThirdBillAutoCollect eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 是否开启智能选票
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isAccebillIntellect')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="radio" name="accebill.isAccebillIntellect" value="1"
+                                       #if($config.accebill.isAccebillIntellect ne 0)checked#end
+                                       title="#springMessage('common.sc_yn.yes')">
+                                <input type="radio" name="accebill.isAccebillIntellect" value="0"
+                                       #if($config.accebill.isAccebillIntellect eq 0)checked#end
+                                       title="#springMessage('common.sc_yn.no')">
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <!-- 面板标题 -->
+            <h2 class="layui-colla-title">#springMessage('config.accebill.title.budget')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        #set($isBudget=$licenseTag.isModuleAuth("fbs"))
+##                        #if($!{isBudget})
+                        <tr>
+                            ##是否挂资金计划
+                            <td width="20%" class="textRight">#springMessage('config.accebill.isBudget')</td>
+                            <td width="80%">
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-dict"
+                                         data-type="radio"
+                                         data-defaultvalue="$!{config.accebill.isBudget}"
+                                         data-callback="isBudgetFun"
+                                         data-name="accebill.isBudget"
+                                         data-biz-name="isBudget"
+                                         data-group="sf_yn"></div>
+                                    #if($config.accebill.isBudget ne 1)
+                                        #set($BudgetItemclass =" layui-disabled")
+                                    #end
+                                </div>
+                                <div class="layui-input-inline">
+                                    <i id="isBudget-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##开票挂接资金计划科目
+                            <td class="textRight">#springMessage('config.accebill.emitItem')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="emitItem" name="accebill.emitItem" autocomplete="off"
+                                           class="layui-input$!{BudgetItemclass}" value="$!{config.accebill.emitItem}"
+                                           #if($config.accebill.isBudget ne 1)disabled#end>
+                                </div>
+                                ## <span style="font-size:12px; color:red">#springMessage('config.accebill.emitItem.desc')</span>
+                                <div class="layui-input-inline">
+                                    <i id="emitItem-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##收票挂接资金计划科目
+                            <td class="textRight">#springMessage('config.accebill.recItem')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="recItem" name="accebill.recItem" autocomplete="off"
+                                           class="layui-input$!{BudgetItemclass}" value="$!{config.accebill.recItem}"
+                                           #if($config.accebill.isBudget ne 1)disabled#end>
+                                </div>
+                                ## <span style="font-size:12px; color:red">#springMessage('config.accebill.recItem.desc')</span>
+                                <div class="layui-input-inline">
+                                    <i id="recItem-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##背书挂接资金计划科目
+                            <td class="textRight">#springMessage('config.accebill.endorseItem')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="endorseItem" name="accebill.endorseItem" autocomplete="off"
+                                           class="layui-input$!{BudgetItemclass}"
+                                           value="$!{config.accebill.endorseItem}"
+                                           #if($config.accebill.isBudget ne 1)disabled#end>
+                                </div>
+                                ## <span style="font-size:12px; color:red">#springMessage('config.accebill.endorseItem.desc')</span>
+                                <div class="layui-input-inline">
+                                    <i id="endorseItem-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##贴现挂接资金计划科目
+                            <td class="textRight">#springMessage('config.accebill.discountItem')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="discountItem" name="accebill.discountItem" autocomplete="off"
+                                           class="layui-input$!{BudgetItemclass}"
+                                           value="$!{config.accebill.discountItem}"
+                                           #if($config.accebill.isBudget ne 1)disabled#end>
+                                </div>
+                                ## <span style="font-size:12px; color:red">#springMessage('config.accebill.discountItem.desc')</span>
+                                <div class="layui-input-inline">
+                                    <i id="discountItem-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            ##托收挂接资金计划科目
+                            <td class="textRight">#springMessage('config.accebill.collectionItem')</td>
+                            <td>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="collectionItem" name="accebill.collectionItem"
+                                           autocomplete="off" class="layui-input$!{BudgetItemclass}"
+                                           value="$!{config.accebill.collectionItem}"
+                                           #if($config.accebill.isBudget ne 1)disabled#end>
+                                </div>
+                                ## <span style="font-size:12px; color:red">#springMessage('config.accebill.collectionItem.desc')</span>
+                                <div class="layui-input-inline">
+                                    <i id="collectionItem-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+##                        #end
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-colla-item">
+            <!-- 面板标题 -->
+            <h2 class="layui-colla-title">#springMessage('config.accebill.title.check')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        #set($isAccbook=$licenseTag.isModuleAuth("fcl"))
+##                        #if($!{isAccbook})
+                        <tr>
+                            ## 是否记账
+                            <td width="20%" class="textRight">#springMessage('config.accebill.isAccbook')</td>
+                            <td width="80%">
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-dict"
+                                         data-type="radio"
+                                         data-defaultvalue="$!{config.accebill.isAccbook}"
+                                         data-callback="isAccbookFun"
+                                         data-name="accebill.isAccbook"
+                                         data-biz-name="isAccbook"
+                                         data-group="sf_yn"></div>
+                                    #if($config.accebill.isAccbook ne 1)
+                                        #set($isAutoAccbookVal ="0,1")
+                                    #end
+                                </div>
+                                <div class="layui-input-inline">
+                                    <i id="isAccbook-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%" class="textRight">#springMessage('config.accebill.isAutoAccbook')</td>
+                            <td width="80%">
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-dict"
+                                         data-type="radio"
+                                         data-defaultvalue="$!{config.accebill.isAutoAccbook}"
+                                         data-name="accebill.isAutoAccbook"
+                                         data-biz-name="isAutoAccbook"
+                                         data-disabledValue="$!{isAutoAccbookVal}"
+                                         data-group="sf_yn"></div>
+                                </div>
+                                <div class="layui-input-inline">
+                                    <i id="isAutoAccbook-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+##                        #end
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+##        #set($isCms=$licenseTag.isModuleAuth("cms"))
+##        #if($!{isCms})
+        <div class="layui-colla-item">
+            <!-- 面板标题 -->
+            <h2 class="layui-colla-title">#springMessage('config.accebill.title.financing')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+##                            #set($isRat=$licenseTag.isModuleAuth("rat"))
+##                            #if($!{isRat})
+                            <tr>
+                                ## 是否启用银行授信
+                                <td width="20%" class="textRight">#springMessage('config.accebill.isCredit')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-dict"
+                                             data-type="radio"
+                                             data-defaultvalue="$!{config.accebill.isCredit}"
+                                             data-callback="isCreditControlFun"
+                                             data-name="accebill.isCredit"
+                                             data-biz-name="isCredit"
+                                             data-group="sf_yn"></div>
+                                        #if($config.accebill.isCredit ne 1)
+                                            #set($isDisCountCredit ="0,1")
+                                            #set($isOpenRat ="0,1")
+                                        #end
+                                    </div>
+                                    <div class="layui-input-inline">
+                                        <i id="isCredit-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                ##授信敞口是否开启
+                                <td width="20%" class="textRight">#springMessage('config.accebill.isOpenRat')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-dict"
+                                             data-type="radio"
+                                             data-defaultvalue="$!{config.accebill.isOpenRat}"
+                                             data-name="accebill.isOpenRat"
+                                             data-biz-name="isOpenRat"
+                                             data-disabledValue="$!{isOpenRat}"
+                                             data-group="sf_yn"></div>
+                                    </div>
+                                    <div class="layui-input-inline">
+                                        <i id="isOpenRat-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                ## 商票贴现是否挂银行授信模式
+                                <td width="20%" class="textRight">#springMessage(
+                                    'config.accebill.isDisCountCredit')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-dict"
+                                             data-type="radio"
+                                            #if($!{config.accebill.isDisCountCredit})
+                                             data-defaultvalue="$!{config.accebill.isDisCountCredit}"
+                                            #else
+                                             data-defaultvalue="0"
+                                            #end
+                                             data-name="accebill.isDisCountCredit"
+                                             data-biz-name="isDisCountCredit"
+                                             data-disabledValue="$!{isDisCountCredit}"
+                                             data-group="sf_yn"></div>
+                                    </div>
+                                    <div class="layui-input-inline">
+                                        <i id="isDisCountCredit-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                ##第三方票据贴现是否挂银行授信模式
+                                <td width="20%" class="textRight">#springMessage(
+                                    'config.accebill.isDisThirdBillCredit')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-dict"
+                                             data-type="radio"
+                                            #if($!{config.accebill.isDisThirdBillCredit})
+                                             data-defaultvalue="$!{config.accebill.isDisThirdBillCredit}"
+                                            #else
+                                             data-defaultvalue="0"
+                                            #end
+                                             data-name="accebill.isDisThirdBillCredit"
+                                             data-biz-name="isDisThirdBillCredit"
+                                             data-disabledValue="$!{isDisThirdBillCredit}"
+                                             data-group="sf_yn"></div>
+                                    </div>
+                                    <div class="layui-input-inline">
+                                        <i id="isDisThirdBillCredit-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+##                            #end
+                        <tr>
+                            ##是否启用内部授信
+                            <td width="20%" class="textRight">#springMessage('config.accebill.isOpenCpRat')</td>
+                            <td width="80%">
+                                <div class="layui-input-inline">
+                                    <div class="bt-biz-dict"
+                                         data-type="radio"
+                                        #if($!{config.accebill.isOpenCpRat})
+                                         data-defaultvalue="$!{config.accebill.isOpenCpRat}"
+                                        #else
+                                         data-defaultvalue="0"
+                                        #end
+                                         data-name="accebill.isOpenCpRat"
+                                         data-biz-name="isOpenCpRat"
+                                         data-disabledValue="$!{isOpenCpRat}"
+                                         data-group="sf_yn"></div>
+                                </div>
+                                <div class="layui-input-inline">
+                                    <i id="isOpenCpRat-desc" class="layui-icon">&#xe60b;</i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr style="display: none">
+                            <td width="20%" class="textRight">#springMessage('config.accebill.tradeBillCredit')</td>
+                            <td width="80%">
+                                <div class="layui-input-inline">
+                                    <input type="radio" id="tradeBillCredit0" name="accebill.tradeBillCredit" value="0"
+                                           #if($config.accebill.tradeBillCredit ne 1)checked#end
+                                           title="#springMessage('bill.accebill.config.comCredit')"
+                                           #if($config.accebill.isCredit ne 1)disabled#end>
+                                    <input type="radio" id="tradeBillCredit1" name="accebill.tradeBillCredit" value="1"
+                                           #if($config.accebill.tradeBillCredit eq 1)checked#end
+                                           title="#springMessage('bill.accebill.config.bankCredit')"
+                                           #if($config.accebill.isCredit ne 1)disabled#end>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+##        #end
+
+        #set($isCms=$licenseTag.isModuleAuth("cms"))
+##        #if($!{isCms})
+        <div class="layui-colla-item">
+            <!-- 面板标题 -->
+            <h2 class="layui-colla-title">#springMessage('config.accebill.title.ratBkration')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                            #set($isGua=$licenseTag.isModuleAuth("gua"))
+##                            #if($!{isGua})
+                            <tr>
+                                ## 是否挂保证金
+                                <td width="20%" class="textRight">#springMessage('config.accebill.isBail')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-dict"
+                                             data-type="radio"
+                                             data-defaultvalue="$!{config.accebill.isBail}"
+                                             data-name="accebill.isBail"
+                                             data-biz-name="isBail"
+                                             data-callback="isBailBankFun"
+                                             data-disabledValue="$!{isBail}"
+                                             data-group="sf_yn"></div>
+                                    </div>
+                                    ##<span style="font-size:12px; color:red">#springMessage('config.accebill.isBail.desc')</span>
+                                    <div class="layui-input-inline">
+                                        <i id="isBail-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                ##保证金银行控制类型
+                                <td width="20%" class="textRight">#springMessage(
+                                    'config.accebill.bailBankControlType')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <input type="radio" id="bailBankControlType0"
+                                               name="accebill.bailBankControlType" value="0"
+                                               #if($config.accebill.bailBankControlType == 0)checked#end
+                                               title="#springMessage('config.accebill.bailBankNo')"
+                                               #if($config.accebill.isBail ne 1)disabled#end>
+                                        <input type="radio" id="bailBankControlType1"
+                                               name="accebill.bailBankControlType" value="1"
+                                               #if($config.accebill.bailBankControlType == 1)checked#end
+                                               title="#springMessage('config.accebill.bailBankType')"
+                                               #if($config.accebill.isBail ne 1)disabled#end>
+                                    </div>
+                                    <div class="layui-input-inline">
+                                        <i id="bailBankControlType-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                ##是否挂担保
+                                <td width="20%" class="textRight">#springMessage('config.accebill.isbear')</td>
+                                <td width="80%">
+                                    <div class="layui-input-inline">
+                                        <div class="bt-biz-dict"
+                                             data-type="radio"
+                                             data-defaultvalue="$!{config.accebill.isBear}"
+                                             data-callback="isBearControlFun"
+                                             data-name="accebill.isBear"
+                                             data-biz-name="isBear"
+                                             data-group="sf_yn"></div>
+                                    </div>
+                                    <div class="layui-input-inline">
+                                        <i id="isbear-desc" class="layui-icon">&#xe60b;</i>
+                                    </div>
+                                </td>
+                            </tr>
+##                            #end
+                        <tr style="display: none">
+                            <td width="20%" class="textRight">#springMessage('config.accebill.tradeBillCredit')</td>
+                            <td width="80%">
+                                <div class="layui-input-inline">
+                                    <input type="radio" id="tradeBillCredit0" name="accebill.tradeBillCredit" value="0"
+                                           #if($config.accebill.tradeBillCredit ne 1)checked#end
+                                           title="#springMessage('bill.accebill.config.comCredit')"
+                                           #if($config.accebill.isCredit ne 1)disabled#end>
+                                    <input type="radio" id="tradeBillCredit1" name="accebill.tradeBillCredit" value="1"
+                                           #if($config.accebill.tradeBillCredit eq 1)checked#end
+                                           title="#springMessage('bill.accebill.config.bankCredit')"
+                                           #if($config.accebill.isCredit ne 1)disabled#end>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+##        #end
+
+        <div class="layui-colla-item">
+            <!-- 面板标题 -->
+            <h2 class="layui-colla-title">#springMessage('config.accebill.title.warnstrategy')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table breakRow">
+                    <thead>
+                    <tr>
+                        <td width="20%" class="textRight">#springMessage('config.fbs.paramName')</td>
+                        <td width="80%">#springMessage('config.fbs.paramValue')</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        ##电票银票逾期天数
+                        <td width="20%" class="textRight">#springMessage('config.accebill.eBankOverDayNum')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="accebill.eBankOverDayNum" autocomplete="off"
+                                       data-biz-name="eBankOverDayNum" data-decimal="0"
+                                       class="layui-input bt-biz-moneyType" value="$!{config.accebill.eBankOverDayNum}"
+                                       placeholder="#springMessage('bill.accebill.config.otherDay',10)">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('common.unit.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="eBankOverDayNum-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##电票商票逾期天数
+                        <td width="20%" class="textRight">#springMessage('config.accebill.eTradeOverDayNum')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="accebill.eTradeOverDayNum" autocomplete="off"
+                                       data-biz-name="eTradeOverDayNum" data-decimal="0"
+                                       class="layui-input bt-biz-moneyType" value="$!{config.accebill.eTradeOverDayNum}"
+                                       placeholder="#springMessage('bill.accebill.config.otherDay',12)">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('common.unit.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="eTradeOverDayNum-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##自开票据到期提醒天数
+                        <td width="20%" class="textRight">#springMessage('config.accebill.emitWarnDayNum')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="accebill.emitWarnDayNum" autocomplete="off"
+                                       data-biz-name="emitWarnDayNum"
+                                       class="layui-input bt-biz-moneyType" value="$!{config.accebill.emitWarnDayNum}"
+                                       data-decimal="0">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('common.unit.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="emitWarnDayNum-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##库存票据到期提醒天数
+                        <td width="20%" class="textRight">#springMessage('config.accebill.reserveWarnDayNum')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="accebill.reserveWarnDayNum" autocomplete="off"
+                                       data-biz-name="reserveWarnDayNum"
+                                       class="layui-input bt-biz-moneyType"
+                                       value="$!{config.accebill.reserveWarnDayNum}" data-decimal="0">
+                            </div>
+                            <div class="layui-input-inline">#springMessage('common.unit.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="reserveWarnDayNum-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ## 电票自动提示付款提前天数
+                        <td width="20%" class="textRight">#springMessage('config.accebill.isEAutoPayDayNum')</td>
+                        <td width="80%">
+                            <div class="layui-input-inline">
+                                <input type="text" name="accebill.isEAutoPayDayNum" autocomplete="off"
+                                       data-biz-name="isEAutoPayDayNum" data-decimal="0"
+                                       class="bt-biz-moneyType layui-input$!{PayDayNumclass}"
+                                       value="$!{config.accebill.isEAutoPayDayNum}"
+                                       placeholder="#springMessage('bill.accebill.config.otherDay',10)"
+                                       #if($config.accebill.isEAutoPay ne 1)disabled#end>
+                            </div>
+                            <div class="layui-input-inline">#springMessage('common.unit.day')</div>
+                            <div class="layui-input-inline">
+                                <i id="isEAutoPayDayNum-desc" class="layui-icon">&#xe60b;</i>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <table class="layui-table border0">
+        <tbody>
+        <tr>
+            <td width="20%"></td>
+            <td>
+                <button class="layui-btn" lay-submit="" lay-filter="configSubmit">#springMessage(
+                    'common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    var form = {};
+    var dicts = {};
+    var moneyType;
+    bt.use(['form', 'jquery', 'element', 'dicts', 'moneyType'], function () {
+        form = bt.form(), $ = bt.jquery;
+        moneyType = bt.moneyType.init();
+        // 对所有日期设置最长为五个数字
+        moneyType.get('isEAutoPayDayNum').attr('maxlength', 5);
+        moneyType.get('eBankOverDayNum').attr('maxlength', 5);
+        moneyType.get('eTradeOverDayNum').attr('maxlength', 5);
+        moneyType.get('emitWarnDayNum').attr('maxlength', 5);
+        moneyType.get('reserveWarnDayNum').attr('maxlength', 5);
+        //监听提交
+        form.on('submit(configSubmit)', function (data) {
+            console.log(data.field['isCashingOnlinePayee1'])
+            console.log(data.field['isCashingOnlinePayee2'])
+            console.log(data.field['accebill.isAccebillIntellect'])
+            var isCashingOnlinePayee;
+            if (data.field['isCashingOnlinePayee1'] == 1) {
+                isCashingOnlinePayee = data.field['isCashingOnlinePayee1'];
+            } else {
+                isCashingOnlinePayee = 0;
+            }
+            if (data.field['isCashingOnlinePayee2'] == 2) {
+                isCashingOnlinePayee = isCashingOnlinePayee + "," + data.field['isCashingOnlinePayee2']
+            } else {
+                isCashingOnlinePayee = isCashingOnlinePayee + "," + 0;
+            }
+            data.field['accebill.isCashingOnlinePayee'] = isCashingOnlinePayee
+            console.log(data)
+            $.post(basePath + "/sys/config/save", data.field, function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            }, "JSON");
+            return false;
+        });
+        dicts = bt.dicts.init();
+
+        // 说明显示隐藏
+        showDesc();
+    });
+
+    isBudgetFun = function () {
+        if ($('input:radio[name="accebill.isBudget"]:checked').val() == "0") {
+            $("#emitItem").attr("disabled", true).addClass("layui-disabled");
+            $("#recItem").attr("disabled", true).addClass("layui-disabled");
+            $("#endorseItem").attr("disabled", true).addClass("layui-disabled");
+            $("#discountItem").attr("disabled", true).addClass("layui-disabled");
+            $("#collectionItem").attr("disabled", true).addClass("layui-disabled");
+        } else {
+            $("#emitItem").removeAttr("disabled").removeClass("layui-disabled");
+            $("#recItem").removeAttr("disabled").removeClass("layui-disabled");
+            $("#endorseItem").removeAttr("disabled").removeClass("layui-disabled");
+            $("#discountItem").removeAttr("disabled").removeClass("layui-disabled");
+            $("#collectionItem").removeAttr("disabled").removeClass("layui-disabled");
+        }
+    }
+
+    isCreditFun = function () {
+        if ($('input:radio[name="accebill.o"]:checked').val() == "0") {
+            $("#tradeBillCredit0").attr("disabled", true);
+            $("#tradeBillCredit1").attr("disabled", true);
+        } else {
+            $("#tradeBillCredit0").removeAttr("disabled");
+            $("#tradeBillCredit1").removeAttr("disabled");
+        }
+        form.render('radio');
+    }
+    isCreditControlFun = function () {
+        if ($('input:radio[name="accebill.isCredit"]:checked').val() == "0") {
+            dicts.get('isDisCountCredit').attr({
+                'data-disabledValue': '0,1'
+            });
+            dicts.get('isOpenRat').attr({
+                'data-disabledValue': '0,1'
+            });
+            dicts.get('isDisThirdBillCredit').attr({
+                'data-disabledValue': '0,1'
+            });
+            ## dicts.get('isBail').attr({
+            ##     'data-disabledValue':''
+            ## });
+            ##$('input[type=radio][name="accebill.isBail"][value="0"]').prop("checked",'true');
+            $('input[type=radio][name="accebill.isDisCountCredit"][value="0"]').prop("checked", 'true');
+            $('input[type=radio][name="accebill.isOpenRat"][value="0"]').prop("checked", 'true');
+            $('input[type=radio][name="accebill.isDisThirdBillCredit"][value="0"]').prop("checked", 'true');
+            form.render();
+        } else {
+            dicts.get('isDisCountCredit').attr({
+                'data-disabledValue': ''
+            });
+            dicts.get('isOpenRat').attr({
+                'data-disabledValue': ''
+            });
+            dicts.get('isDisThirdBillCredit').attr({
+                'data-disabledValue': ''
+            });
+            ##dicts.get('isBail').attr({
+            ##    'data-disabledValue':'0,1'
+            ##});
+            //挂授信时，则不能挂保证金
+            ##$('input[type=radio][name="accebill.isBail"][value="0"]').prop("checked",'true');
+            form.render();
+        }
+    }
+
+    isCounterpartEndorseFun = function () {
+// 		if($('input:radio[name="accebill.isCounterpartEndorse"]:checked').val()=="0"){
+// 			dicts.get('isRepeatEndorse').attr({
+// 				'data-disabledValue':'01,02,03'
+// 			});
+// 			$('input[type=radio][name="accebill.isRepeatEndorse"][value="01"]').prop("checked",'true');
+// 			form.render();
+// 		}else{
+// 			dicts.get('isRepeatEndorse').attr({
+// 				'data-disabledValue':''
+// 			});
+// 			form.render();
+// 		}
+    }
+
+
+    isBearControlFun = function () {
+        if ($('input:radio[name="accebill.isCredit"]:checked').val() == "0") {
+            form.render();
+        } else {
+            form.render();
+        }
+    }
+
+
+    isAccbookFun = function () {
+        if ($('input:radio[name="accebill.isAccbook"]:checked').val() == "0") {
+            dicts.get('isAutoAccbook').attr({
+                'data-disabledValue': '0,1'
+            });
+        } else {
+            dicts.get('isAutoAccbook').attr({
+                'data-disabledValue': ''
+            });
+        }
+    }
+
+    isBailBankFun = function () {
+        if ($('input:radio[name="accebill.isBail"]:checked').val() == "0") {
+            $("#bailBankControlType0").attr("disabled", true);
+            $("#bailBankControlType1").attr("disabled", true);
+        } else {
+            $("#bailBankControlType0").removeAttr("disabled");
+            $("#bailBankControlType1").removeAttr("disabled");
+        }
+        form.render('radio');
+    }
+
+    //data-callback="isEAutoInstructFun"
+    isEAutoInstructFun = function () {
+        if ($('input:radio[name="accebill.isEAutoInstruct"]:checked').val() == "0") {
+            $('input[data-biz-name="eBankOverDayNum"]').attr("disabled", true).addClass("layui-disabled");
+            $('input[data-biz-name="eTradeOverDayNum"]').attr("disabled", true).addClass("layui-disabled");
+        } else {
+            $('input[data-biz-name="eBankOverDayNum"]').removeAttr("disabled").removeClass("layui-disabled");
+            $('input[data-biz-name="eTradeOverDayNum"]').removeAttr("disabled").removeClass("layui-disabled");
+        }
+    }
+    isEAutoPayFun = function () {
+        if ($('input:radio[name="accebill.isEAutoPay"]:checked').val() == "0") {
+            $('input[data-biz-name="isEAutoPayDayNum"]').attr("disabled", true).addClass("layui-disabled");
+            $('#sttlmmkTr').hide();
+            $('#sttlmmkMerchTr').hide();
+        } else {
+            $('input[data-biz-name="isEAutoPayDayNum"]').removeAttr("disabled").removeClass("layui-disabled");
+            $('#sttlmmkTr').show();
+            $('#sttlmmkMerchTr').show();
+        }
+    }
+
+    function showDesc() {
+        var tip_index1 = 0;
+        $('#maxBillMoney-desc').mouseenter(function () {
+            tip_index1 = layer.tips(bt.lang('config.accebill.billFlag10.maxBillMoney.desc'), '#maxBillMoney-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index1);
+        });
+
+        var tip_index2 = 0;
+        $('#isElectricBill-desc').mouseenter(function () {
+            tip_index2 = layer.tips(bt.lang('config.accebill.isElectricBill.desc'), '#isElectricBill-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index2);
+        });
+
+        var tip_index3 = 0;
+        $('#isEAutoAccept-desc').mouseenter(function () {
+            tip_index3 = layer.tips(bt.lang('config.accebill.isEAutoAccept.desc'), '#isEAutoAccept-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index3);
+        });
+
+        var tip_index4 = 0;
+        $('#isEAutoInvoice-desc').mouseenter(function () {
+            tip_index4 = layer.tips(bt.lang('config.accebill.isEAutoInvoice.desc'), '#isEAutoInvoice-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index4);
+        });
+
+        var tip_index5 = 0;
+        $('#isEAutoPay-desc').mouseenter(function () {
+            tip_index5 = layer.tips(bt.lang('config.accebill.isEAutoPay.desc'), '#isEAutoPay-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index5);
+        });
+
+        var tip_index6 = 0;
+        $('#bankSttlmmk-desc').mouseenter(function () {
+            tip_index6 = layer.tips(bt.lang('table.auto.abDiscount.bank.sttlmmk.desc'), '#bankSttlmmk-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index6);
+        });
+
+        var tip_index7 = 0;
+        $('#merchSttlmmk-desc').mouseenter(function () {
+            tip_index7 = layer.tips(bt.lang('table.auto.abDiscount.merch.sttlmmk.desc'), '#merchSttlmmk-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index7);
+        });
+
+        var tip_index8 = 0;
+        $('#isBudget-desc').mouseenter(function () {
+            tip_index8 = layer.tips(bt.lang('config.accebill.isBudget.desc'), '#isBudget-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index8);
+        });
+
+        var tip_index9 = 0;
+        $('#emitItem-desc').mouseenter(function () {
+            tip_index9 = layer.tips(bt.lang('config.accebill.emitItem.desc'), '#emitItem-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index9);
+        });
+
+        // 收票挂接资金计划科目
+        var tip_index10 = 0;
+        $('#recItem-desc').mouseenter(function () {
+            tip_index10 = layer.tips(bt.lang('config.accebill.accebillRecItem.desc'), '#recItem-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index10);
+        });
+
+        var tip_index11 = 0;
+        $('#endorseItem-desc').mouseenter(function () {
+            tip_index11 = layer.tips(bt.lang('config.accebill.endorseItem.desc'), '#endorseItem-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index11);
+        });
+
+        var tip_index12 = 0;
+        $('#discountItem-desc').mouseenter(function () {
+            tip_index12 = layer.tips(bt.lang('config.accebill.discountItem.desc'), '#discountItem-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index12);
+        });
+
+        var tip_index13 = 0;
+        $('#collectionItem-desc').mouseenter(function () {
+            tip_index13 = layer.tips(bt.lang('config.accebill.collectionItem.desc'), '#collectionItem-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index13);
+        });
+
+        // 是否记账
+        var tip_index14 = 0;
+        $('#isAccbook-desc').mouseenter(function () {
+            tip_index14 = layer.tips(bt.lang('config.accebill.isAccbook.desc'), '#isAccbook-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index14);
+        });
+
+        var tip_index15 = 0;
+        $('#isAutoAccbook-desc').mouseenter(function () {
+            tip_index15 = layer.tips(bt.lang('config.accebill.isAutoAccbook.desc'), '#isAutoAccbook-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index15);
+        });
+
+        var tip_index16 = 0;
+        $('#isCredit-desc').mouseenter(function () {
+            tip_index16 = layer.tips(bt.lang('config.accebill.isCredit.desc'), '#isCredit-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index16);
+        });
+
+        var tip_index16 = 0;
+        $('#isOpenRat-desc').mouseenter(function () {
+            tip_index16 = layer.tips(bt.lang('config.accebill.isOpenRat.desc'), '#isOpenRat-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index16);
+        });
+
+        var tip_index17 = 0;
+        $('#isDisCountCredit-desc').mouseenter(function () {
+            tip_index17 = layer.tips(bt.lang('config.accebill.isDisCountCredit.desc'), '#isDisCountCredit-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index17);
+        });
+
+        var tip_index18 = 0;
+        $('#isDisThirdBillCredit-desc').mouseenter(function () {
+            tip_index18 = layer.tips(bt.lang('config.accebill.isDisThirdBillCredit.desc'), '#isDisThirdBillCredit-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index18);
+        });
+
+        var tip_index19 = 0;
+        $('#isOpenCpRat-desc').mouseenter(function () {
+            tip_index19 = layer.tips(bt.lang('config.accebill.isOpenCpRat.desc'), '#isOpenCpRat-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index19);
+        });
+
+        //承兑汇票关联担保及保证金
+        var tip_index20 = 0;
+        $('#isBail-desc').mouseenter(function () {
+            tip_index20 = layer.tips(bt.lang('config.accebill.isBail.desc'), '#isBail-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index20);
+        });
+
+        var tip_index21 = 0;
+        $('#bailBankControlType-desc').mouseenter(function () {
+            tip_index21 = layer.tips(bt.lang('config.accebill.bailBankControlType.desc'), '#bailBankControlType-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index21);
+        });
+
+        var tip_index22 = 0;
+        $('#isbear-desc').mouseenter(function () {
+            tip_index22 = layer.tips(bt.lang('config.isbear.isBail.desc'), '#isbear-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index22);
+        });
+
+        // 电票银票逾期天数
+        var tip_index23 = 0;
+        $('#eBankOverDayNum-desc').mouseenter(function () {
+            tip_index23 = layer.tips(bt.lang('config.accebill.eBankOverDayNum.desc'), '#eBankOverDayNum-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index23);
+        });
+
+        var tip_index24 = 0;
+        $('#eTradeOverDayNum-desc').mouseenter(function () {
+            tip_index24 = layer.tips(bt.lang('config.accebill.eTradeOverDayNum.desc'), '#eTradeOverDayNum-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index24);
+        });
+
+        var tip_index25 = 0;
+        $('#emitWarnDayNum-desc').mouseenter(function () {
+            tip_index25 = layer.tips(bt.lang('config.accebill.emitWarnDayNum.desc'), '#emitWarnDayNum-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index25);
+        });
+
+        var tip_index26 = 0;
+        $('#reserveWarnDayNum-desc').mouseenter(function () {
+            tip_index26 = layer.tips(bt.lang('config.accebill.reserveWarnDayNum.desc'), '#reserveWarnDayNum-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index26);
+        });
+
+        var tip_index27 = 0;
+        $('#isEAutoPayDayNum-desc').mouseenter(function () {
+            tip_index27 = layer.tips(bt.lang('config.accebill.isEAutoPayDayNum.desc'), '#isEAutoPayDayNum-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index27);
+        });
+
+        var tip_index28 = 0;
+        $('#isPaySkipHoliday-desc').mouseenter(function () {
+            tip_index28 = layer.tips(bt.lang('config.accebill.isPaySkipHoliday.desc'), '#isPaySkipHoliday-desc', {time: 30000});
+        }).mouseleave(function () {
+            layer.close(tip_index28);
+        });
+    }
+</script>
+</body>
+</html>

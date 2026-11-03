@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+						<input id="id" name="id" type="hidden" value="$!{fcInstratePage.id}">
+				<input id="status" name="status" type="hidden" value="$!{fcInstratePage.status}">
+				<input id="createTime" name="createTime" type="hidden" value="$!{fcInstratePage.createTime}">
+				<input id="createBy" name="createBy" type="hidden" value="$!{fcInstratePage.createBy}">
+				<input id="updateTime" name="updateTime" type="hidden" value="$!{fcInstratePage.updateTime}">
+				<input id="updateBy" name="updateBy" type="hidden" value="$!{fcInstratePage.updateBy}">
+				<table class="layui-table">
+				<tr>
+					##科目代码
+					<td class="textRight">#springMessage('table.fc_instrate.subject_code')</td>
+					<td>
+						<div class="layui-input-inline">
+							<!-- <div class="selectDemo" field="subjectCode" placeholder="#springMessage('table.fbsItem.itemName')"></div> -->
+							<div class="bt-biz-selectType" data-biz-name="subjectCode" data-valuefield="id"  data-textfield="subjectName" data-required="true"
+								data-url="${basePath}/paramconfig/fcbusinessruledefine/jsonSubject" data-name="subjectCode" data-search="true"></div>
+						</div>
+					</td>
+					##币别代码
+					<td class="textRight">#springMessage('table.fc_instrate.cur_code')</td>
+					<td>
+						<div class="layui-inline">
+				            <div class="bt-biz-selectType" data-biz-name="curCode" data-url="${basePath}/basic/business/btcurrency/json" data-required="true"
+				            	data-valuefield="id" data-textfield="curName" data-name="curCode" data-search="true"></div>
+				        </div>
+					</td>
+				</tr>
+				<tr>
+					##利率类型
+        			<td class="textRight">#springMessage('table.fc_instrate.instrt_type')</td>
+        			<td>
+                		<div class="bt-biz-dict" data-type="select" data-biz-name="instrtType" data-required="true"
+							data-group="Common.InstrtType" data-name="instrtType"></div>
+        			</td>
+					##利率
+					<td class="textRight">#springMessage('table.fc_instrate.interest_rate')</td>
+					<td>
+						<div class="layui-input-inline">
+						<!--number-->
+							<input type="text" lay-verify="required" data-name="interestRate" data-minus="false" data-biz-name="interestRate"
+						 	class="layui-input bt-biz-rateType" placeholder="#springMessage('table.fc_instrate.interest_rate')">
+						</div>
+					</td>
+				</tr>
+				<tr>
+					##执行日期
+					<td class="textRight">#springMessage('table.fc_instrate.exe_date')</td>
+					<td>
+						<input type="text" name="exeDate" class="layui-input bt-biz-dateType" data-type="date" lay-verify="required"
+							data-biz-name="exeDate" >                		
+					</td>
+					##期限单位
+					<td class="textRight">#springMessage('table.fc_instrate.end_unit')</td>
+					<td>
+						<div class="bt-biz-dict" data-type="select" data-biz-name="endUnit"
+							data-group="finacial.EndUnit" data-name="endUnit" data-required="true"></div>
+					</td>
+				</tr>
+				<tr>
+				</tr>
+            	<tr>
+                	<td colspan="4" style="text-align: center;">
+                    	<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                    	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                	</td>
+            	</tr>
+            </table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','layedit','select','btdate','rateType','dicts','dateType','selectType'], function(){
+		var $ = bt.jquery,form = bt.form();
+		var moneynum = bt.moneynum;
+		var rate = bt.rateType.init();
+		bt.dicts.init();
+		bt.dateType.init();
+		bt.selectType.init();
+		//bt.moneynum.init({elem:$('[data-type="percent"]'),decimal:6,minus:true});
+		
+		$.each($(".selectDemo"),function(i,item){
+	        bt.select.init({
+	            elem: "[field='"+$(item).attr("field")+"']",
+	            name: $(item).attr("field"),
+	            defaultVal: $(item).attr("defaultVal"),
+	            valueField: "id",
+	            textField:"subjectName",
+	            search: true,
+	            disabled: false,
+	            required:true,
+	            placeholder:{value:'',text:bt.lang("finacial.fcChargeType.notConsider")},
+	            url:basePath+"/finacial/paramconfig/fcsubject/jsonSubjectDate",
+	            change:function(data){
+	            	//console.log(data);
+	            }
+	        });
+	    });
+		
+		//时间
+		$.each($("div[type='date']"),function(i,item){
+			bt.btdate.init({
+				elem: "[field='"+$(item).attr("field")+"']",
+				name: $(item).attr("field"),
+                start: $(item).attr("defaultVal"),
+                format: "YYYY-MM-DD",
+				istime: false
+			});
+		});
+		$.each($("div[type='datetime']"),function(i,item){
+			bt.btdate.init({
+				elem: "[field='"+$(item).attr("field")+"']",
+				name: $(item).attr("field"),
+                start: $(item).attr("defaultVal"),
+				format: "YYYY-MM-DD hh:mm:ss",
+				istime: true
+			});
+		});
+		//下拉框
+		$.each($("div[type='list']"),function(i,item){
+			bt.select.init({
+				elem: "[field='"+$(item).attr("field")+"']",
+				name: $(item).attr("field"),
+				defaultVal: $(item).attr("defaultVal"),
+				valueField: $(item).attr("dictField"),
+				textField: $(item).attr("dictText"),
+				search: true,
+				disabled: false,
+				url: $(item).attr("fieldhref")
+			});
+		});
+
+		//监听提交
+        form.on('submit(submit)', function(data){
+        	
+            var action = "/paramconfig/fcinstrate/save";
+            $.post(basePath + action,data.field,function(result){
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+                if(result.success){
+                	if(!bt.navtab){
+                        parent.layer?parent.layer.closeAll():layer.closeAll();
+                    } else {                   	
+                    	bt.navtab.closeCurrent();
+                    }
+                }
+            },'JSON');
+            return false;
+        });
+
+	});
+</script>

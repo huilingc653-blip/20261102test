@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input id="itemCode" name="itemCode" type="hidden">
+        <input id="defItemCode" name="defItemCode" type="hidden">
+        <input id="corpId" name="corpId" type="hidden">
+        <input id="cdSign" name="cdSign" type="hidden">
+        <!-- 折合人民币 -->
+        <input id="natualCurId" name="natualCurId" type="hidden"value="$!{currencyTag.getNatualCurrency().id}">
+        <input id="natualCurExrate" name="natualCurExrate" type="hidden"value="$!{currencyTag.getNatualCurrency().curExrate}">
+        <!-- 科目明细参数 -->
+        <input id="detailControl" name="detailControl" type="hidden" value="true">
+        <input id="dtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+        <input id="fbsItemBalance" name="fbsItemBalance" type="hidden" value="$!{configTag.getConfig('fbs','itemBalance')}">
+        <input id="curId" name="curId" type="hidden" >
+        <input id="payerAcc" name="payerAcc" type="hidden" >
+        <input id="payeeAccName" name="payeeAccName" type="hidden">
+        <input id="payeeAcc" name="payeeAcc" type="hidden" >
+        <input id="payeeBank" name="payeeBank" type="hidden">
+
+		<table class="layui-table">
+            <tbody>
+                <tr>
+                ##交易日期
+                    <td class="textRight">#springMessage('table.btBankAccDtl.transTime')</td>
+                    <td style="width: 20%">
+                        <input type="text" name="ged_tallyDate" data-type="date" data-biz-name="ged_tallyDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_tallyDate">
+                        <span class="date-mid">~</span>
+                        <input type="text" name="led_tallyDate" data-type="date" data-biz-name="led_tallyDate" class="layui-input bt-input-inline bt-biz-dateType" id="led_tallyDate">
+                    </td>
+                ##状态
+                    <td class="textRight">#springMessage('table.fbsBudget.status')</td>
+                    <td style="width: 20%">
+                        <div class="bt-biz-dict" data-type="select"
+                             data-group="bisAccDtlBudgetRule.fbsStatus" data-name="eqs_fbsStatus" data-defaultvalue="0"></div>
+                    </td>
+                    <td style="text-align: textLeft;">
+##                    #if($shiro.hasPermission("netbank:innerAccount:fcAccDetailBudgetMatch:query"))
+						<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+##                    #end
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </form>
+
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="print">
+        <thead>
+        <tr>
+            <th>#springMessage('fcAccDetail.tallyDate')</th>
+            <th>#springMessage('table.btBankAccDtl.bankAcc')</th>
+            <th>#springMessage('table.btBankAccDtl.accName')</th>
+            <th>#springMessage('table.btBankAccDtl.oppAccNo')</th>
+            <th>#springMessage('table.btBankAccDtl.oppAccName')</th>
+            <th>#springMessage('table.bisAccDtlBudgetRule.sign')</th>
+            <th>#springMessage('table.fcAccbookDtl.debitMoney')</th>
+            <th>#springMessage('table.fcAccbookDtl.creditMoney')</th>
+            <th>#springMessage('fcAccDetail.voucherNo')</th>
+            <th>#springMessage('table.fcAccbookHis.orderNo')</th>
+            <th>#springMessage('table.btBankAccDtl.status')</th>
+            <th>#springMessage('table.bisAccDtlBudgetRule.processTime')</th>
+            <th>#springMessage('table.bisAccDtlBudgetRule.matchBudget')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+    </table>
+    <!-- 资金计划 -->
+    <div id="box" style="display: none">
+        <table class="layui-table">
+            <tr>
+                <td class="textRight" width="20%">#springMessage("table.bisAccDtlBudgetRule.processTime")</td>
+                <td width="20%">
+                    <div class="layui-input-inline"width="20%">
+                        <input type="text" name="processDateBatch" data-biz-name="processDateBatch" class="layui-input bt-input-inline bt-biz-dateType" data-type="date" data-today="true" placeholder="#springMessage("table.bisAccDtlBudgetRule.processTime")">
+                    </div>
+                </td>
+                <td class="textRight" width="20%">#springMessage("table.fbsBudgetProcess.itemCode")</td>
+                <td width="15%">
+                    <div class="layui-inline" id="itemDiv">
+                        <div class="bt-biz-itemType"
+                             data-type="selectTree"
+                             id="itemInfo"
+                             data-name="itemInfo"
+                             data-biz-name="itemInfo"
+                             data-corpId=""
+                             data-itemCode=""
+                             data-tree-type="radio"
+                             data-callbackData="itemChange"
+                             data-scope=""></div>
+                    </div>
+                    <input type="hidden" id="itemName" name="itemName" autocomplete="off" class="layui-input"/>
+                </td>
+                <td class="leftRight" width="20%">
+##                    #if($shiro.hasPermission("netbank:innerAccount:fcAccDetailBudgetMatch:apply"))
+                        <div class="layui-input-inline">
+                            <button class="layui-btn" onclick="batchSure()" type="button">#springMessage('common.button.sure')</button>
+                        </div>
+                        <div class="layui-input-inline">
+                            <button class="layui-btn" onclick="batchDelete()" type="button">#springMessage('common.button.delete')</button>
+                        </div>
+##                    #end
+                </td>
+            </tr>
+        </table>
+        <table id="budgetProcessDataTable" class="layui-table" style="display: none">
+            <thead>
+            <tr>
+                <th>#springMessage('table.fbsBudgetProcess.itemCode')</th>
+                <th>#springMessage('table.fbsBudgetProcess.itemName')</th>
+                <th>#springMessage('table.fbsBudgetProcess.itemBalance')</th>
+                <th>#springMessage('table.fbsBudgetProcess.superItemBalance')</th>
+                <th>#springMessage('table.fbsBudgetProcess.topItemBalance')</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr row="0">
+                <td >
+                    <input id="isControl" name="isControl" type="hidden">
+                    <span id="itemCodeText"></span>
+                </td>
+                <td >
+                    <span id="itemNameText"></span>
+                </td>
+                <td class="textRight">
+                    <span id="itemBalanceText"></span>
+                </td>
+                <td class="textRight">
+                    <span id="superItemBalanceText"></span>
+                </td>
+                <td class="textRight">
+                    <span id="topItemBalanceText"></span>
+                </td>
+            </tr>
+            <tr>
+
+            </tr>
+            </tbody>
+        </table>
+    </div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/inneraccount/fcAccDetailBudgetMatch.list.js?_btv=${resourceVersion}"></script>
+</html>

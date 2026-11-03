@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post"  id="opForm">
+		<input id="ids" name="ids" type="hidden" value="$!{ids}">
+		<input id="opt" name="opt" type="hidden" value="$!{opt}">
+		<table class="layui-table">
+        <tbody>
+        <tr>
+        #if($!opt eq 'N' || $!opt eq 'T')
+	        ##余额调节原因类型
+	        <td class="textRight" width="16%">#springMessage('bis.check.reson.suretype')</td>
+	        <td width="34%">
+				<div class="layui-input-inline">
+                       <div class="bt-biz-mulselectType"  
+                       	  data-required="true" 
+                       	  data-url="${basePath}/bis/checkReason/json?bankTypeId=${bankTypeId}" 
+                       	  data-method="get"
+                          data-valuefield="id" data-textfield="reasonName" data-biz-name="rids" name="rids"
+                          data-name="rids" data-inputvalue="inputvalue" ></div>
+               	</div>
+	        </td>
+	    #end
+	        ##手机号
+	        <td class="textRight" width="16%">#springMessage('bis.check.mobileNo')</td>
+	        <td width="34%">
+	              <div class="layui-input-inline">
+	                   <input type="text" name="mobileNo" 
+	                    value="" autocomplete="off" class="layui-input" placeholder="#springMessage('bis.check.mobileNo')">
+	               </div>
+	        </td>
+        </tr>
+        <tr>
+	        ##备注
+	        <td class="textRight" width="16%">#springMessage('btBankType.rmk')</td>
+	        <td width="34%">
+                <div class="layui-input-inline">
+	                   <input type="text" name="rmk"  
+	                    value="" autocomplete="off" class="layui-input" placeholder="#springMessage('btBankType.rmk')">
+	             </div>
+	        </td>
+        </tr>
+        </tbody>
+    </table>
+
+        <div class="layui-form-submit-adaptive">
+            <div style="text-align: center;">
+				<button class="layui-btn" lay-submit=""  type="button" lay-filter="retreat">#springMessage('common.button.submit')</button>
+				<button class="layui-btn layui-btn-primary" type="button" name="revert">#springMessage('common.button.revert')</button>
+			</div>
+		</div>
+		
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+##<script src="${basePath}/static/modules/reconcile/optContrastRecord.edit.js?_btv=${resourceVersion}"></script>
+<script>
+bt.use(['form','mulselect','dicts'], function(){
+    var $ = bt.jquery,form = bt.form();
+    bt.mulselect.init();
+    bt.dicts.init();
+    //提交退票
+    form.on('submit(retreat)', function(data){
+        optSure(data);
+    });
+    //返回
+    $("[name='revert']").click(function(){
+    	parent.layer.closeAll();
+    });
+}); 
+
+function optSure(data){
+    var url = basePath +"/bis/bankEnterprise/optSure/";
+    if($('input[name="rids"]').val()!="" && $('input[name="rids"]').val()=="all"){
+        parent.layer.msg(bt.lang("bis.check.appscope.message.error"), {icon: 2});
+		return false;
+	}
+	$.post(url,$('#opForm').serialize(),function(result){
+        bt.loading.hide();
+        parent.layer.alert(bt.lang("common.message.operate.fail"), {icon: result.success?1:2});
+        if(result.success){
+            parent.layer.closeAll();
+            parent.layer.alert(result.msg, {icon: result.success?1:2});
+        }
+        return false;
+    },'JSON');
+}
+</script>
+</html>

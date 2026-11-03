@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位名称
+            <td class="textRight">#springMessage("table.choBankFinance.corpId")</td>
+            <td class="corpName">
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-biz-name="corpIds"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="corpIds"
+                         data-scope="all"
+                         data-resource="deposit:average:balance:analysis:query"
+                         data-required="true"></div>
+                </div>
+            </td>
+            ##内部/银行存款
+            <td class="textRight">#springMessage("table.eTransBill.depositType")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <select name="depositType" lay-filter="depositType">
+                        <option value="0">#springMessage("common.placeholder.all")</option>
+                        <option value="1" selected>#springMessage("table.capitalStock.balMoney")</option>
+                        <option value="2">#springMessage("fundsBalanceStatistics.InternalDeposit")</option>
+                    </select>
+                </div>
+            </td>
+            ##维度统计
+            <td class="textRight">#springMessage('table.report.statistical.dimensions')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <select name="statistical" lay-filter="statistical">
+                        <option value="0" selected>#springMessage('table.report.statistical.corp')</option>
+                        <option value="1">#springMessage('table.report.statistical.banktype')</option>
+                    </select>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##币别
+            <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-name="curId" data-biz-name="curId" data-valueField="id" data-textField="curName"  data-callback="clearCur"
+                         data-required="true"></div>
+                </div>
+            </td>
+            ##是否折合币种
+            <td class="textRight">#springMessage("common.isConvert.currency")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-callback="callToCurr" data-name="isConverted" data-biz-name="isConverted"
+                     data-defaultvalue="0"></div>
+            </td>
+            ##金额单位
+            <td class="textRight">#springMessage("table.choProductReq.moneyUnit")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-required="true" data-type="select" data-group="cms.MoneyType"
+                         data-biz-name="moneyUnit" data-name="moneyUnit" data-defaultvalue="1"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##查询频率
+            <td class="textRight">#springMessage("table.report.statistical.query.frequency")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <select name="frequency" lay-filter="frequency">
+                        <option value="1" selected>#springMessage("table.report.statistical.query.day")</option>
+                        <option value="2">#springMessage("table.report.statistical.query.month")</option>
+                    </select>
+                </div>
+            </td>
+            ##查询时间
+            <td class="textRight">#springMessage("netbanck.reporter.checktime")</td>
+            <td width="30%">
+                <input id="dayBefore" type="text" name="beforeDate" data-callback="bt.beforeDDate" data-type="date"
+                       data-biz-name="beforeDDate" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="dayAfter" lay-verify="required">
+                <input id="monthBefore" type="text" name="beforeDate" data-callback="bt.beforeMDate" data-type="month"
+                       data-biz-name="beforeMDate" class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="monthAfter" lay-verify="" style="display: none" disabled="true">
+                <span class="date-mid">~</span>
+                <input id="dayAfter" type="text" name="afterDate" data-callback="bt.afterDDate" data-type="date"
+                       data-biz-name="afterDDate" class="layui-input bt-input-inline bt-biz-dateType" id="dayAfter"
+                       lay-verify="required">
+                <input id="monthAfter" type="text" name="afterDate" data-callback="bt.afterMDate" data-type="month"
+                       data-biz-name="afterMDate" class="layui-input bt-input-inline bt-biz-dateType" id="monthAfter"
+                       lay-verify="" style="display: none" disabled="true">
+            </td>
+            ##折合币种
+            <td class="textRight">#springMessage("commom.converted.into.currency")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-biz-name="reducedCurId"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="reducedCurId"
+                     data-search="true"
+                     data-disabled = "true" data-callback="checkConvertCurCallBack"
+                ></div>
+            </td>
+        </tr>
+        <tr id="accTypeBankTd">
+            ##账户类别-银行
+            <td class="textRight">#springMessage("table.btBankAcc.accType")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="mulselect" data-group="btBankAcc.accType" data-filterData="03,09"
+                     data-defaultvalue="" data-name="accType" data-biz-name="accType"></div>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr id="accTypeInnerTd" style="display: none">
+            ##账户类别-内部
+            <td class="textRight">#springMessage("table.btBankAcc.accType")</td>
+            <td>
+                <div class="bt-biz-dict" data-type="mulselect" data-group="InnerAccount.AccType" data-displayData="01,02,05,08"
+                     data-defaultvalue="" data-name="accTypeInner" data-biz-name="accTypeInner" data-beforeInit="beforeInit"></div>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button" id="tips">#springMessage(
+                                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" onclick="flush()">#springMessage(
+                                    'common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form">
+    <thead>
+    <tr>
+        <th rowspan="2" id="projectName">#springMessage("table.nisPersonnelDetail.corpId")</th>
+        <th rowspan="2">#springMessage("table.ratBkrationRelief.curCode")</th>
+        <th colspan="2">#springMessage("fbs.fbsBudget.curPeriod")</th>
+        <th colspan="3">#springMessage("table.bankAccBalTrend.compareRate")</th>
+        <th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>
+    </tr>
+    <tr>
+        <th>#springMessage("table.accbook.endMoney")</th>
+        <th>#springMessage("table.report.statistical.average.daily")</th>
+        <th>#springMessage("table.report.statistical.average.daily")</th>
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>
+        <th>#springMessage("table.bisGatherPolicy.scale")</th>
+        <th>#springMessage("table.report.statistical.average.daily")</th>
+        <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>
+        <th>#springMessage("table.bisGatherPolicy.scale")</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    var dicts,selectType,form,date;
+    bt.use(['form', 'dateType', 'corp', 'datatable', 'jquery', 'selectType', 'dicts', 'rateType', 'date','mulselect'], function () {
+        $ = bt.jquery, form = bt.form();
+        dicts = bt.dicts.init();
+        var mulselect = bt.mulselect.init();
+        /**查询日期，组件：dateType begin*/
+        date = bt.dateType.init();
+        date.get("beforeDDate").attr("data-max", bt.date.format(new Date(), 'yyyy-mm-dd'));
+        date.get("afterDDate").attr("data-max", bt.date.format(new Date(), 'yyyy-mm-dd'));
+        date.get("beforeMDate").attr("data-max", bt.date.format(new Date(), 'yyyy-mm'));
+        date.get("afterMDate").attr("data-max", bt.date.format(new Date(), 'yyyy-mm'));
+        //按天查询前置时间控制
+        bt.beforeDDate = function (value) {
+            if(value){
+                let after = date.get("afterDDate").val();
+                let before = date.get("beforeDDate");
+                let beforeTime = before.val();
+                let timeRule = bt.date.addDay(beforeTime, 30);
+                date.get("afterDDate").attr("data-min", beforeTime);
+                if (timeRule < new Date()) {
+                    date.get("afterDDate").attr("data-max", bt.date.format(timeRule, 'yyyy-mm-dd'));
+                } else {
+                    date.get("afterDDate").attr("data-max", bt.date.format(new Date(), 'yyyy-mm-dd'));
+                }
+                date.get("afterDDate").val(after);
+                date.render();
+            }
+        };
+        //按天查询后置时间控制
+        bt.afterDDate = function (value) {
+            if(value){
+                let before = date.get("beforeDDate").val();
+                let after = date.get("afterDDate");
+                let afterTime = after.val();
+                let timeRule = bt.date.addDay(afterTime, -30);
+                date.get("beforeDDate").attr("data-min", bt.date.format(timeRule, 'yyyy-mm-dd'));
+                date.get("beforeDDate").val(before);
+                date.render();
+            }
+        };
+        //按月查询前置时间
+        bt.beforeMDate = function (value) {
+            if(value){
+                let after = date.get("afterMDate").val();
+                let before = date.get("beforeMDate");
+                let beforeTime = before.val();
+                let timeRule = bt.date.addMonth(beforeTime, 11);
+                date.get("afterMDate").attr("data-min", bt.date.format(bt.date.get(beforeTime)));
+                if (timeRule < new Date()) {
+                    date.get("afterMDate").attr("data-max", bt.date.format(bt.date.addDay(timeRule, 15), 'yyyy-mm-dd'));
+                } else {
+                    date.get("afterMDate").attr("data-max", bt.date.format(new Date(), 'yyyy-mm-dd'));
+                }
+                date.render();
+                // date.get("afterMDate").val(after);
+                // date.render();
+            }
+
+        };
+        //按月查询后置时间控制
+        bt.afterMDate = function (value) {
+            if(value){
+                let before = date.get("beforeMDate").val();
+                let after = date.get("afterMDate");
+                let afterTime = after.val();
+                let timeRule = bt.date.addMonth(afterTime, -11);
+                date.get("beforeMDate").attr("data-min", bt.date.format(timeRule, 'yyyy-mm-dd'));
+                let format = bt.date.format(date.get("afterMDate").val(), 'yyyy-mm-dd');
+                let formatDate = bt.date.addDay(bt.date.get(format), 25);
+                date.get("beforeMDate").attr("data-max", bt.date.format(formatDate, 'yyyy-mm-dd'));
+                date.get("beforeMDate").val(before);
+                date.render();
+            }
+        };
+
+        /**查询日期，组件：dateType begin*/
+
+        /** 币别下拉框 begin*/
+        selectType = bt.selectType.init();
+        /** 币别下拉框 end*/
+
+        /** 数据列表,组件：datatable begin*/
+        let rateType = bt.rateType.getFun();//比例，组件：rateType
+
+        //调拨类型选择 0-定时归集 1-实时归集 2-定时下拨
+        form.on('select(depositType)', function (data) {
+            if(data.value=="2"){
+                $("#accTypeInnerTd").show();
+                $("#accTypeBankTd").hide();
+            }else{
+                $("#accTypeBankTd").show();
+                $("#accTypeInnerTd").hide();
+            }
+        });
+
+        var html =
+                '<tr>'+
+                '<th rowspan="2" id="projectName">#springMessage("table.nisPersonnelDetail.corpId")</th>'+
+                '<th rowspan="2">#springMessage("table.ratBkrationRelief.curCode")</th>'+
+                '<th colspan="2">#springMessage("fbs.fbsBudget.curPeriod")</th>'+
+                '<th colspan="3">#springMessage("table.bankAccBalTrend.compareRate")</th>'+
+                '<th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>'+
+                '</tr>'+
+                '<tr>'+
+                '<th>#springMessage("table.accbook.endMoney")</th>'+
+                '<th>#springMessage("table.report.statistical.average.daily")</th>'+
+                '<th>#springMessage("table.report.statistical.average.daily")</th>'+
+                '<th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>'+
+                '<th>#springMessage("table.bisGatherPolicy.scale")</th>'+
+                '<th>#springMessage("table.report.statistical.average.daily")</th>'+
+                '<th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>'+
+                '<th>#springMessage("table.bisGatherPolicy.scale")</th>'+
+                '</tr>';
+
+        bt.datatable.init({
+            elem: '#appTable',
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: '#searchForm',
+                formFilter: 'search'
+            },
+            ajax: {
+                'url': basePath + '/report/deposit/average/balance/list'
+            },
+            exportFile: {
+                customPrint: {
+                    header: function () {
+                        var printHtml = html;
+                        return printHtml;
+                    },
+                },
+            },
+            columns: [
+                {
+                    data: "corpName", className: 'center',
+                    render: function (data, type, full, meta) {
+                        let html = '<a class="" href="#" data-row="' + meta.row + '" onclick="LinkCorpName(this)">' + full.corpName + '</a>';
+                        return html;
+                    }
+                },
+                {
+                    data: "curName", className: 'center',
+                },
+                {
+                    data: "balance", className: 'textRight',
+                    render: function (data, type, full, meta) {
+                        if (full.balance != null) {
+                            return bt.money.format(full.balance);
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "averageBalance", className: 'center',
+                    render: function (data, type, full, meta) {
+                        let html = '';
+                        if (full.averageBalance != null) {
+                            html = '<a class="" href="#" data-row="' + meta.row + '" onclick="linkAvg(this)">' + bt.money.format(full.averageBalance) + '</a>';
+                            return html;
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "previousAverageBalance", className: 'center',
+                    render: function (data, type, full, meta) {
+                        if (full.previousAverageBalance != null) {
+                            return bt.money.format(full.previousAverageBalance);
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "previousDifferenceBalance", className: 'center',
+                    render: function (data, type, full, meta) {
+                        if (full.previousDifferenceBalance != null) {
+                            return bt.money.format(full.previousDifferenceBalance);
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "previousProportion", className: 'center',
+                    render: function (data, type, full, meta) {
+                        if (full.previousProportion != null) {
+                            return rateType.format(full.previousProportion, 'percent', 2);
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "yearOverYearAverageBalance", className: 'center',
+                    render: function (data, type, full, meta) {
+                        if (full.yearOverYearAverageBalance != null) {
+                            return bt.money.format(full.yearOverYearAverageBalance);
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "yearOverYearDifferenceBalance", className: 'center',
+                    render: function (data, type, full, meta) {
+                        if (full.yearOverYearDifferenceBalance != null) {
+                            return bt.money.format(full.yearOverYearDifferenceBalance);
+                        } else {
+                            return "-";
+                        }
+                    }
+                },
+                {
+                    data: "yearOverYearProportion", className: 'center',
+                    render: function (data, type, full, meta) {
+                        if (full.yearOverYearProportion != null) {
+                            return rateType.format(full.yearOverYearProportion, 'percent', 2);
+                        } else {
+                            return "-";
+                        }
+                    }
+                }],
+            // btDrawCallback:function (setting) {
+            //     var tableData = setting.json.data;
+            //     if(tableData && tableData.length>0){
+            //         var msg=bt.lang('alert.please.maintain');
+            //         var flag=false;
+            //         for(var i=0;i<tableData.length;i++){
+            //             if(tableData[i].id === '1'){
+            //                 flag=true;
+            //                 msg += ' '+selectType.get("curId").getData().text+'-'+selectType.get("reducedCurId").getData().text+' ';
+            //                 break;
+            //             }
+            //         }
+            //         msg += bt.lang('table.btCurrency.curExrate');
+            //         if(flag){
+            //             layer.msg(msg)
+            //         }
+            //     }
+            // },
+            summary: {
+                pageSum: false,
+                allSum: true,
+                selectSum: true,
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '3',
+                        dataName: 'balance'
+                    }
+                ]
+            },
+        });
+        /** 数据列表，组件：datatable end*/
+
+        /** 维度统计下拉框事件 begin*/
+        form.on('select(statistical)', function (data) {
+            if (data.value === '1') {
+                $('#projectName').html(bt.lang("table.ratBkration.bankType"));
+            } else {
+                $('#projectName').html(bt.lang("table.nisPersonnelDetail.corpId"));
+            }
+            form.render('select');
+        });
+        /** 维度统计下拉框事件 end*/
+
+        /** 查询频率下拉框事件 begin*/
+        form.on('select(frequency)', function (data) {
+            if (data.value === '1') {
+                $("#dayBefore").attr({"style": "", "disabled": false, "lay-verify": "required"});
+                $("#dayAfter").attr({"style": "", "disabled": false, "lay-verify": "required"});
+                $("#monthBefore").attr({"style": "display: none", "disabled": true, "lay-verify": ""});
+                $("#monthAfter").attr({"style": "display: none", "disabled": true, "lay-verify": ""});
+            } else {
+                $("#monthBefore").attr({"style": "", "disabled": false, "lay-verify": "required"});
+                $("#monthAfter").attr({"style": "", "disabled": false, "lay-verify": "required"});
+                $("#dayBefore").attr({"style": "display: none", "disabled": true, "lay-verify": ""});
+                $("#dayAfter").attr({"style": "display: none", "disabled": true, "lay-verify": ""});
+            }
+            date.render();
+            form.render();
+        });
+        /** 查询频率下拉框事件 end*/
+
+        /** 单位 begin*/
+        bt.corp.init();
+        /** 单位 end*/
+
+        /** 本位币校验 begin*/
+        form.verify({
+            isNatual: function(value, item){ //value：表单的值、item：表单的DOM对象
+                var changeCur = dicts.get("changeCur").val();
+                if(!value && changeCur == "1"){
+                    return bt.lang("table.report.isNatualCur");
+                }
+            }
+        });
+        /** 本位币校验 end*/
+        bt.dicts.init();
+    });
+
+    function callToCurr(data){
+        if(data.value =="1"){
+            selectType.get("reducedCurId").attr({'data-disabled':false,'data-required':true});
+            selectType.get("curId").attr({'data-disabled':true,'data-required':false});
+        }else {
+            selectType.get("reducedCurId").val("");
+            selectType.get("reducedCurId").attr({'data-disabled':true,'data-required':false});
+            selectType.get("curId").val("");
+            selectType.get("curId").attr({'data-disabled':false,'data-required':true});
+        }
+        form.renderIcon();
+    }
+
+    function clearCur(){
+        selectType.get("reducedCurId").val("");
+    }
+
+    /**
+     * 币种转换校验
+     */
+    function checkConvertCurCallBack() {
+        var dateVal;
+        if($('select[name=frequency]').val() === '1'){
+            dateVal = date.get("afterDDate").val();
+        }else{
+            dateVal = date.get("afterMDate").val();
+        }
+        var reducedCurId = selectType.get("reducedCurId").val();
+        if (isNotEmpty(reducedCurId)) {
+            $.ajax({
+                url: basePath + "/report/deposit/balance/checkConvertCurId",
+                type:"post",
+                data:{
+                    "isAllCur":"1",
+                    "convertCurId": reducedCurId,
+                    "date": dateVal,
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("reducedCurId").val("");
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " " || stringData == "null") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+
+    function LinkCorpName(el) {
+        let corpName = layui.jquery('#appTable').DataTable().row(layui.jquery(el).data('row')).data().corpId;
+        let corpCurId= layui.jquery('#appTable').DataTable().row(layui.jquery(el).data('row')).data().curId;
+        let ids = $("input[name=corpIds]").val();
+        let depositType = $("select[name=depositType]").val();
+        let statistical = $("select[name=statistical]").val();
+        let curId = selectType.get("curId").val();
+        let isConverted = dicts.get("isConverted").val();
+        let moneyUnit = $("select[name=moneyUnit]").val();
+        let beforeDate, afterDate;
+        let frequency = $("select[name=frequency]").val();
+        let reducedCurId = selectType.get("reducedCurId").val();
+        if (frequency === '1') {
+            beforeDate = $("#dayBefore").val();
+            afterDate = $("#dayAfter").val();
+        } else {
+            beforeDate = $("#monthBefore").val();
+            afterDate = $("#monthAfter").val();
+        }
+        let url = basePath + '/report/deposit/average/balance/viewChartType?';
+        url += 'corpIds=' + ids + '&';
+        url += 'depositType=' + depositType + '&';
+        url += 'statistical=' + statistical + '&';
+        url += 'curId=' + curId + '&';
+        url += 'isConverted=' + isConverted + '&';
+        url += 'moneyUnit=' + moneyUnit + '&';
+        url += 'beforeDate=' + beforeDate + '&';
+        url += 'afterDate=' + afterDate + '&';
+        url += 'frequency=' + frequency + '&';
+        url += 'reducedCurId=' + reducedCurId + '&';
+        url += 'corpCurId=' + corpCurId + '&';
+        url += 'corpName=' + corpName;
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang("table.report.statistical.deposit.distribution"), url);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: url,
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function linkAvg(el) {
+        let corpName = layui.jquery('#appTable').DataTable().row(layui.jquery(el).data('row')).data().corpId;
+        let corpCurId= layui.jquery('#appTable').DataTable().row(layui.jquery(el).data('row')).data().curId;
+        let average = layui.jquery('#appTable').DataTable().row(layui.jquery(el).data('row')).data().averageBalance;
+        let ids = $("input[name=corpIds]").val();
+        let depositType = $("select[name=depositType]").val();
+        let statistical = $("select[name=statistical]").val();
+        let curId = selectType.get("curId").val();
+        let isConverted = dicts.get("isConverted").val();
+        let moneyUnit = $("select[name=moneyUnit]").val();
+        let beforeDate, afterDate;
+        let frequency = $("select[name=frequency]").val();
+        let reducedCurId = selectType.get("reducedCurId").val();
+        if (frequency === '1') {
+            beforeDate = $("#dayBefore").val();
+            afterDate = $("#dayAfter").val();
+        } else {
+            beforeDate = $("#monthBefore").val();
+            afterDate = $("#monthAfter").val();
+        }
+        let url = basePath + '/report/deposit/average/balance/viewChartAvg?';
+        url += 'corpIds=' + ids + '&';
+        url += 'depositType=' + depositType + '&';
+        url += 'statistical=' + statistical + '&';
+        url += 'curId=' + curId + '&';
+        url += 'isConverted=' + isConverted + '&';
+        url += 'moneyUnit=' + moneyUnit + '&';
+        url += 'beforeDate=' + beforeDate + '&';
+        url += 'afterDate=' + afterDate + '&';
+        url += 'frequency=' + frequency + '&';
+        url += 'average=' + average + '&';
+        url += 'corpCurId=' + corpCurId + '&';
+        url += 'reducedCurId=' + reducedCurId + '&';
+        url += 'corpName=' + corpName;
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang("table.report.statistical.deposit.distribution"), url);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: url,
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function flush()
+    {
+        window.location.reload();
+    }
+    function beforeInit(data){
+        var list = [];
+        var displayValues = ["01","02","05","08"];
+        if(data){
+            for (var i = 0; i <data.length ; i++) {
+                if(displayValues.indexOf(data[i].value) >-1){
+                    list.push(data[i]);
+                }
+            }
+        }
+        return list;
+    }
+</script>
+</html>

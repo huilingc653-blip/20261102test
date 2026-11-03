@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts2/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/modules/bi/statics/listBankAccDtlDistribute.css?_btv=${resourceVersion}"
+          media="all">
+</head>
+<body class="$!{shiro.getPrincipal().sysSkin}">
+<input id="uiStyle" name="uiStyle" type="hidden" value="$!{configTag.getConfig('sys','uiStyle')}">
+<div class="panel-wrapper">
+    <div class="card-wrapper1">
+        <div class="header-panel header-height layui-form">
+            <input id="barColor" name="barColor" type="hidden"
+                #if($shiro.getPrincipal().sysSkin == 'dark-skin')
+                   value="#797979"
+                #else
+                   value="#9497AC"
+                #end
+            >
+            <input id="curId" name="curId" type="hidden" value="$!{currencyTag.getNatualCurrency().id}">
+            <input id="dateType" name="dateType" type="hidden" value="7">
+            <div class="panel-left header-height">
+                ##结算收支分析
+                #springMessage('repot.bankAccBal.dtlDistributeTitle')
+            </div>
+            <div class="panel-right header-height">
+                #*<span class="panel-time">2022-07-22 12:05</span>*#
+                <label>#springMessage('table.fcBond.corpName')</label>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-biz-name="corpId"
+                         data-resource="netbank:bankAcc:btBankAccDtl:query"
+                         data-scope="all"
+                         data-tree-type="check"
+                         data-callback="bt.corpCallback"></div>
+                </div>
+                <label>#springMessage('table.bankAccBalTrend.corpId')</label>
+                <div class="layui-inline" style="width: 160px">
+                    <div class="bt-biz-dict" data-type="select" data-defaultvalue="10000" data-filterData="1" data-callback="bt.moneyTypeCallback"
+                         data-group="common.MoneyType" data-name="moneyType" data-biz-name="moneyType" style="position: absolute;top: 0px;"></div>
+                </div>
+                <span class="refresh-btn">
+                    <span class="iconfont byhome_refresh" id="refreshMap"></span>
+                </span>
+            </div>
+        </div>
+        <div class="money-types">
+            <div class="layui-row layui-col-space18" >
+                <div class="layui-col-lg2 layui-col-sm2 layui-col-xs2">
+                    <div class="money-type">
+                        <div class="money-type-name">
+                            <div class="type-icon type-icon-1">
+                                <span class="iconfont byhome_warn_a"></span>
+                            </div>
+                            <span class="text">#springMessage('table.accountSummary.beginning_balance')</span>
+                        </div>
+                        <div class="money-type-total"><a href="#" onclick="viewSettlement()"><span id="startMoneyContainer">$!number.formatNumeric($!{curData.startMoney})</span></a></div>
+                    </div>
+                </div>
+                <div class="layui-col-lg2 layui-col-sm2 layui-col-xs2">
+                    <div class="money-type">
+                        <div class="money-type-name">
+                            <div class="type-icon type-icon-2">
+                                <span class="iconfont byhome_warn_b"></span>
+                            </div>
+                            <span class="text">#springMessage('repot.bankAccBal.getMoney')</span>
+                        </div>
+                        <div class="money-type-total"><a href="#" onclick="viewSettlement()"><span id="getMoneyContainer">$!number.formatNumeric($!{curData.getMoney})</span></a></div>
+                    </div>
+                </div>
+                <div class="layui-col-lg2 layui-col-sm2 layui-col-xs2">
+                    <div class="money-type">
+                        <div class="money-type-name">
+                            <div class="type-icon type-icon-3">
+                                <span class="iconfont byhome_warn_c"></span>
+                            </div>
+                            <span class="text">#springMessage('repot.bankAccBal.borrowMoney')</span>
+                        </div>
+                        <div class="money-type-total"><a href="#" onclick="viewSettlement()"><span id="borrowMoneyContainer">$!number.formatNumeric($!{curData.borrowMoney})</span></a></div>
+                    </div>
+                </div>
+                <div class="layui-col-lg2 layui-col-sm2 layui-col-xs2">
+                    <div class="money-type">
+                        <div class="money-type-name">
+                            <div class="type-icon type-icon-4">
+                                <span class="iconfont byhome_warn_d"></span>
+                            </div>
+                            <span  class="text">#springMessage('repot.bankAccBal.getNumbers')</span>
+                        </div>
+                        <div class="money-type-total"><a href="#" onclick="viewSettlement()"><span id="getNumbersContainer">$!{curData.getNumbers}</span></a></div>
+                    </div>
+                </div>
+                <div class="layui-col-lg2 layui-col-sm2 layui-col-xs2">
+                    <div class="money-type">
+                        <div class="money-type-name">
+                            <div class="type-icon type-icon-5">
+                                <span class="iconfont byhome_warn_e"></span>
+                            </div>
+                            <span class="text">#springMessage('repot.bankAccBal.borrowNumbers')</span>
+                        </div>
+                        <div class="money-type-total"><a href="#" onclick="viewSettlement()"><span id="borrowNumbersContainer">$!{curData.borrowNumbers}</span></a></div>
+                    </div>
+                </div>
+                <div class="layui-col-lg2 layui-col-sm2 layui-col-xs2">
+                    <div class="money-type">
+                        <div class="money-type-name">
+                            <div class="type-icon type-icon-1">
+                                <span class="iconfont byhome_warn_a"></span>
+                            </div>
+                            <span class="text">#springMessage('table.report.endingBalance')</span>
+                        </div>
+                        <div class="money-type-total"><a href="#" onclick="viewSettlement()"><span id="endMoneyContainer">$!number.formatNumeric($!{curData.endMoney})</span></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="charts-wrapper">
+            <div class="charts-btn" id="myChartDistributeBtn">
+                <button type="button" class="active" style="margin-left: 20px;" data-id="oneWeekBut">#springMessage('repot.bankAccBal.oneWeek')</button>
+                <button type="button" style="margin: 0 12px" data-id="oneMonthBut">#springMessage('repot.bankAccBal.oneMonth')</button>
+                <button type="button" data-id="threeMonthBut">#springMessage('repot.bankAccBal.threeMonth')</button>
+            </div>
+            ##结算收支分析 500 284
+            <div id="myChartDistribute" style="width:100%;height:500px;"></div>
+        </div>
+    </div>
+    <div style="margin-top: 20px;">
+        <div class="layui-row layui-col-space20 report-wrapper">
+            ##银行账户最近交易
+            <div class="layui-col-lg6 layui-col-sm6 layui-col-xs6">
+                <div class="card-wrapper">
+                    <div class="card-header">
+                        ##银行账户最近交易
+                        <a href="#" onclick="viewBisAccDtl()">#springMessage('repot.bankAccBal.transTitle')</a>
+                    </div>
+                    <div class="select-wrapper layui-form">
+                    </div>
+                    <div class="card-content">
+                        <div class="deal-lists" id="bankAccDtlTable">
+                            #foreach($dtl in $listDtl)
+                                #if($!{velocityCount} < 4)
+                                    <div class="deal-list">
+                                        <div class="list-header">
+                                            <div class="type">$dictTag.get("btBankAccDtl.cdSign", $!{dtl.cdSign})</div>
+                                            <div class="money">$!number.formatNumeric($!{dtl.amt})</div>
+                                        </div>
+                                        <div class="list-detail">
+                                            <div>
+                                                <div> #springMessage("table.btBankAccDtl.oppAccNo")：$!{dtl.oppAccNo}</div>
+                                                <div class="text-color1">#springMessage("table.btBankAccDtl.oppAccName")：$!{dtl.oppAccName}</div>
+                                            </div>
+                                            <div>
+                                                <div>#springMessage("table.btBankAccDtl.bankAcc")：$!{dtl.bankAcc}</div>
+                                                <div class="text-color1">#springMessage("table.btBankAccDtl.accName")：$!{dtl.accName}</div>
+                                            </div>
+                                            <div>
+                                                <div class="deal-time">
+                                                    $!date.format('yyyy-MM-dd HH:mm:ss',$!{dtl.transTime})
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                #end
+                            #end
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-lg6 layui-col-sm6 layui-col-xs6">
+                ##本日交易情况
+                <div class="card-wrapper">
+                    <div class="card-header">
+                        ##本日交易情况
+                        #springMessage('repot.bankAccBal.curDayTransInfo')
+                    </div>
+                    <div class="card-content">
+                        <div class="layui-row layui-col-space16">
+                            ##待发送
+                            <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+                                <div class="deal-result-type">
+                                    <div class="header">
+                                        <span class="iconfont bystatue_wait"></span>
+                                        <span class="type">$dictTag.get("bisExc.voucherStat","6")</span>
+                                    </div>
+                                    <div class="content">
+                                        <div class="name">#springMessage("table.nisAllocationReport.payMoney")</div>
+                                        <div class="number"><a href="#" onclick="viewBisExc()"><span id="waitTotalMoney">$!number.formatNumeric($!{waitFillExc.totalMoney})</span></a></div>
+                                        <div class="name">#springMessage("table.fcAccBalance.cnt")</div>
+                                        <div class="number"><a href="#" onclick="viewBisExc()"><span id="waitTotalNum">$!{waitFillExc.totalNum}</span></a></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+                                <div class="deal-result-type">
+                                    <div class="header header2">
+                                        <span class="iconfont bystatue_error"></span>
+                                        <span class="type">$dictTag.get("AB_POOL_DTL_OPT_STATUS","-1")</span>
+                                    </div>
+                                    <div class="content">
+                                        <div class="name">#springMessage("table.nisAllocationReport.payMoney")</div>
+                                        <div class="number"><a href="#" onclick="viewBisExc()"><span id="failTotalMoney">$!number.formatNumeric($!{failedExc.totalMoney})</span></a></div>
+                                        <div class="name">#springMessage("table.fcAccBalance.cnt")</div>
+                                        <div class="number"><a href="#" onclick="viewBisExc()"><span id="failTotalNum">$!{failedExc.totalNum}</span></a></div>
+                                    </div>
+                                </div>
+                            </div>
+                            ##交易成功
+                            <div class="layui-col-lg4 layui-col-sm4 layui-col-xs4">
+                                <div class="deal-result-type">
+                                    <div class="header header3">
+                                        <span class="iconfont bystatue_success"></span>
+                                        <span class="type">$dictTag.get("bisExc.voucherStat","0")</span>
+                                    </div>
+                                    <div class="content">
+                                        <div class="name">#springMessage("table.nisAllocationReport.payMoney")</div>
+                                        <div class="number"><a href="#" onclick="viewBisExc()"><span id="successTotalMoney">$!number.formatNumeric($!{successExc.totalMoney})</span></a></div>
+                                        <div class="name">#springMessage("table.fcAccBalance.cnt")</div>
+                                        <div class="number"><a href="#" onclick="viewBisExc()"><span id="successTotalNum">$!{successExc.totalNum}</span></a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/bi/homeBankAccDtlDistribute.list.js?_btv=${resourceVersion}"></script>
+</html>

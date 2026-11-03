@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="totalVal" value="$!{total}">
+    <input type="hidden" id="curInfo" value="$!{curInfo}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##资金池
+            <td class="textRight" width="10%">#springMessage('nis.pool.fcCorpPool.pool')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexcorppool/getFexCorpPoolsUniq"
+                         data-name="poolId" data-biz-name="poolId"
+                         data-valuefield="poolId" data-textfield="showName" data-search="true"
+                         data-defaultValue="$!{fexCorpPoolBankAccVOPage.poolId}" data-extraData="false"></div>
+                </div>
+            </td>
+        ##日期
+            <td class="textRight" width="10%">#springMessage('table.bisAccBal.balDate')</td>
+            <td width="30%">
+                <div class="layui-inline">
+                    <input type="text" id="balDate" name="balDate" class="layui-input bt-input-inline bt-biz-dateType"
+                           data-today="true" value="$!date.format('yyyy-MM-dd',$!{fexCorpPoolBankAccVOPage.balDate})">
+                </div>##lay-verify="required"
+            </td>
+        </tr>
+        <tr>
+            ##合并计算币种
+            <td class="textRight" width="10%">#springMessage('table.fexBankaccBal.currency')</td>
+            <td width="30%">
+                <input type="hidden" id="curShow" value="$!{fexCorpPoolBankAccVOPage.curId}"/>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                     data-name="curId" data-biz-name="curId" data-valueField="id" data-textField="englishCode"
+                     data-defaultValue="$!{fexCorpPoolBankAccVOPage.curId}"  data-callback="bt.curCallback"></div>
+            </td>
+        ##汇率类型
+            <td class="textRight" width="30%">#springMessage('table.btRateType.typeName')</td>
+            <td width="30%">
+                <div type="list" data-name="rateType" data-biz-name="rateType" class="bt-biz-selectType"
+                     data-url="${basePath}/basic/business/btratetype/json" data-valueField="id"
+                     data-textField="typeName" data-defaultValue="$!{fexCorpPoolBankAccVOPage.rateType}"></div>
+            </td>##data-required="true"
+        </tr>
+        <tr>
+            <td align="center" colspan="4">
+                <button type="button" class="layui-btn" lay-submit lay-filter="search" id="search">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary"
+                        data-callback="bt.searchResetCallback">#springMessage('common.button.reset')</button>
+                <button class="layui-btn" lay-submit lay-filter="excel">#springMessage('common.button.exports')</button>
+                <button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage(
+            'common.button.print')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<div id="print">
+    <table id="appTable" class="layui-table layui-form dark-layui-table" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('nis.pool.fcCorpPool.pool')</th>##资金池
+            <th>#springMessage('table.btBankAccApp.corpId')</th>##单位
+            <th>#springMessage('table.accountDTO.bankAcc')</th>##账户
+            <th>#springMessage('contract.currency')</th>##币种
+            <th>#springMessage('table.fexCorpPool.poolNature')</th>##资金池性质
+            <th>#springMessage('table.fexCorpPool.accNature')</th>##账户资金性质
+            <th>#springMessage('table.fcAccuBalance.date')</th>##日期
+            <th>#springMessage('table.accountDTO.balance')</th>##余额
+        </tr>
+        </thead>
+        <tbody>
+        #if($treeListSize > 0)
+            #foreach($tree in $treeList)
+            <tr data-tt-id="$!{tree.id}" data-tt-parent-id="$!{data.parentId}" data-id="$!{tree.id}">
+                <td width="20%" align="center">($!{tree.poolCode})$!{tree.poolName}</td>
+                <td width="10%" align="center">$!{tree.corpName}</td>
+                <td width="10%" align="center">$!{tree.bankAcc}</td>
+                <td width="5%" align="center">$!{tree.englishCode}</td>
+                <td width="20%" align="center">$dictTag.get("fexCorpPool.poolNature",$!{tree.poolNature})</td>
+                <td width="10%" align="center">$dictTag.get("fexCorpPoolBank.accNature",$!{tree.accNature})</td>
+                <td width="5%" align="center">$!date.format('yyyy-MM-dd',$!{tree.balDate})</td>
+                <td width="20%" align="center">$!number.formatNumeric($!{tree.bal})</td>
+            </tr>
+                #foreach($acc in $tree.accList)
+                <tr data-tt-id="$!{tree.id}_$!{acc.id}" class="ttt" data-tt-parent-id="$!{tree.id}">
+                    <td width="20%" align="center"></td>
+                    <td width="10%" align="center">$!{acc.corpName}</td>
+                    <td width="10%" align="center">$!{acc.bankAcc}</td>
+                    <td width="5%" align="center">$!{acc.englishCode}</td>
+                    <td width="20%" align="center">$dictTag.get("fexCorpPool.poolNature",$!{tree.poolNature})</td>
+                    <td width="10%" align="center">$dictTag.get("fexCorpPoolBank.accNature",$!{acc.accNature})</td>
+                    <td width="5%" align="center">$!date.format('yyyy-MM-dd',$!{acc.balDate})</td>
+                    <td width="20%" align="center">$!number.formatNumeric($!{acc.bal})</td>
+                </tr>
+                ##处理有子集(主体账号)的小计，subCurList存放的是资金池id与币别id组成的钱
+                    #if($foreach.last)
+                        #foreach($subMap in $tree.subCurList)
+                            #foreach($item in $!subMap.entrySet())
+                                #set($cc = ${item.key.split("[,]")})##cc第一个是资金池主体的id
+                                    #if($cc[0] == $!{tree.id}&&$cc[1] == $!{tree.curId})##资金池的小计
+                                        <tr data-tt-id="$!{tree.id}_$!{tree.id}" class="ttt" data-tt-parent-id="$!{tree.id}">
+                                            <td width="20%" align="center">#springMessage('table.datatable.subtotal')
+                                                ($!{tree.englishCode})
+                                            </td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td width="20%" align="center">$!number.formatNumeric($!{item.value})</td>
+                                        </tr>
+                                    #else
+                                        #foreach($accSub in $tree.accList)
+                                            #if($!{item.key} == "$!{accSub.parentId},$!{accSub.curId}")##资金池子账号小计
+                                                <tr data-tt-id="$!{tree.id}_$!{accSub.id}" class="ttt" data-tt-parent-id="$!{tree.id}">
+                                                    <td width="20%" align="center">#springMessage('table.datatable.subtotal')
+                                                        ($!{accSub.englishCode})
+                                                    </td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td width="20%" align="center">$!number.formatNumeric($!{item.value})</td>
+                                                </tr>
+                                            #end
+                                        #end
+                                    #end
+                                #end
+                            #end
+                        #end
+                    #end
+##                #end
+            ##处理没有子集(主体账号)subCurList存放的是资金池id与币别id组成的钱
+                #if(!$tree.accList)
+                    #foreach($subMap in $tree.subCurList)
+                        #foreach($item in $!subMap.entrySet())
+                            #set($nocc = ${item.key.split("[,]")})##nocc第一个是资金池主体的id
+                            #if(($nocc[0] == $!{tree.id}))
+                            <tr data-tt-id="$!{tree.id}" data-tt-parent-id="$!{data.parentId}" data-id="$!{tree.id}">
+                                <td width="20%" align="center">#springMessage('table.datatable.subtotal')
+                                    ($!{tree.englishCode})
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td width="20%" align="center">$!number.formatNumeric($!{item.value})</td>
+                            </tr>
+                            #end
+                        #end
+                    #end
+                #end
+                #if($foreach.last)
+                    #if($!{total})
+                        #foreach($totalTemp in $total.entrySet())
+                        <tr data-tt-id="$!{tree.id}" data-tt-parent-id="$!{data.parentId}" data-id="$!{tree.id}">
+                            <td width="20%" align="center">#springMessage('table.datatable.total')($!{totalTemp.key})</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td width="20%" align="center">$!number.formatNumeric($!{totalTemp.value})</td>
+                        </tr>
+                        #end
+                    #else
+                    <tr data-tt-id="$!{tree.id}" data-tt-parent-id="$!{data.parentId}" data-id="$!{tree.id}">
+                        <td width="20%" align="center">#springMessage('table.datatable.total')</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td width="20%" align="center">-</td>
+                    </tr>
+                    #end
+                #end
+            #end
+        #else
+        <tr>
+            <td colspan="8" class="" align="center" style="height: 300px;">
+                <img src="${basePath}/static/v3.2/images/pic_blank.png" class="empty-pic" style="margin-top: 30px;"><div class="empty-text">#springMessage("common.msg.temporarily_no_data")</div>
+            </td>
+        </tr>
+        #end
+        </tbody>
+    </table>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/foreign/fexCorpPoolBal.query.js?_btv=${resourceVersion}"></script>
+<script >
+    bt.use(['form','layedit'], function () {
+        $ = bt.jquery;
+        var curTemp = $("#curShow").val();
+        var totalVal = $("#totalVal").val();
+        if(!isEmpty(curTemp)){
+            if(isEmpty(totalVal)){
+                var msg1=bt.lang('alert.please.maintain')+ ' ';
+                if(!isEmpty("$!{curInfo}")){
+                    #foreach($info in $curInfo.entrySet())
+                        msg1 += "${info.key}"+"-"+"${info.value}"+" ";
+                    #end
+                    msg1 += bt.lang('table.btCurrency.curExrate');
+                    layer.msg(msg1);
+                }
+            }
+        }
+
+        function isEmpty(value) {
+            if (value == null || value == "" || value == undefined || value == " ") {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    });
+</script>
+</html>

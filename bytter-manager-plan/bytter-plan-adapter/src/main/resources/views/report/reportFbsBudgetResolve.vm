@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form layui-form-pane">
+    <div id="print">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+            ##单位
+                <td class="textRight">#springMessage('table.fbsBudget.corpId')</td>
+                <td>$!{corpName}</td>
+            ##周期类型
+                <td class="textRight">#springMessage('table.fbsBudget.timeType')</td>
+                <td>$dictTag.get("fbs.timeType",$!{timeType})</td>
+            </tr>
+            <tr>
+            ##开始日期
+                <td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{seachBeginDate})</td>
+            ##结束日期
+                <td class="textRight">#springMessage('table.fbsBudget.endDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{seachEndDate})</td>
+            </tr>
+            <tr>
+            ##币种
+                <td class="textRight">#springMessage('table.fbsBudgetDetail.curId')</td>
+                <td>$!{btCurrencyDTO.curName}</td>
+                <td class="textRight"></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+        <table id="appTable" class="layui-table layui-form" style="width:100%;">
+            <thead>
+            <tr>
+                <th rowspan="4">#springMessage('table.fbsBudgetYear.number')</th>
+                <th rowspan="4">#springMessage('table.fbsBudgetYear.itemCode')</th>
+                <th rowspan="4">#springMessage('table.fbsBudgetYear.itemName')</th>
+            </tr>
+            <tr>
+                #foreach($time in $!{timeMap.entrySet()})
+                    #set($col=$!{time.value[1].size()} * 3)
+                    #if($!{timeType} == 1)
+                        <th colspan="${col}">
+                            $!{time.key}#springMessage('table.fbsBudgetReport.year')
+                        </th>
+                    #elseif($!{timeType} == 3)
+                        <th colspan="${col}">
+                            $!{time.key}#springMessage('table.fbsBudgetReport.month')
+                        </th>
+                    #end
+                #end
+            </tr>
+            <tr>
+                #foreach($time in $!{timeMap.entrySet()})
+                    #foreach($month in $!{time.value[1]})
+                        <th colspan="3">
+                            $!{month}#if($timeType == 1)#springMessage(
+                            'table.fbsBudgetReport.month')#elseif($timeType == 3)#springMessage(
+                            'table.fbsBudgetReport.week')#end
+                        </th>
+                    #end
+                #end
+            </tr>
+            <tr>
+                #foreach($time in $!{timeMap.entrySet()})
+                    #foreach($month in $!{time.value[1]})
+                        <th>
+                            #springMessage('table.fbsBudgetYear.bMoney')
+                        </th>
+                        <th>
+                            #springMessage('table.fbsBudgetYear.bsuperMoney')(#springMessage('table.fbsBudgetYear.pass'))
+                        </th>
+                        <th>
+                            #springMessage('table.fbsBudgetYear.btempMoney')(#springMessage(
+                            'table.fbsBudgetYear.notPass'))
+                        </th>
+                    #end
+                #end
+            </tr>
+
+            </thead>
+            <tbody>
+                #foreach($item in $itemList)
+                <tr data-tt-id="$!{item.itemCode}" data-tt-parent-id="$!{item.item.superItemCode}"
+                    data-tt-subject-sort="$!{item.itemCode}">
+                    <td>$!{velocityCount}</td>
+                    <td>$!{item.itemCode}</td>
+                    <td>$!{item.itemName}</td>
+                    #foreach($time in $!{timeMap.entrySet()})
+                        #foreach($month in $!{time.value[1]})
+                            #foreach($date in $!{dtlMap.entrySet()})
+                                #if($time.key + "!~!" + ${item.itemCode} + "!~!" + $month == $!{date.key})
+                                    #foreach($money in $date.value.entrySet())
+                                        <td class="textRight">$!number.formatNumeric($!{money.value})</td>
+                                    #end
+                                #end
+                            #end
+                        #end
+                    #end
+                </tr>
+                #end
+                #if(!${itemList} || ${itemList.size()} == 0)
+                <tr>
+                    <td colspan="4" class="center">
+                        <span style="color: red">#springMessage('fbs.budgetReport.message.query.null')</span>
+                    </td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage(
+                'common.button.print')</button>
+            <button class="layui-btn" type="button" lay-submit onclick="exports()">#springMessage('common.button.exports')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form', 'treeTable', 'printType'], function () {
+        var $ = bt.jquery, form = bt.form();
+        bt.printType.init();
+        bt.treeTable.init({elem: "#appTable", column: 1});
+
+        /**
+         * 导出功能
+         */
+        exports = function () {
+            var url = basePath + "/budget/fbsbudgetreport/exportsBudge";
+            window.location.href = url;
+        };
+    });
+</script>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="forceSearchForm" class="layui-form">
+    <input type="hidden" name="docId" id="docId" value="$!{docId}"/>
+    <input type="hidden" name="relationId" id="relationId" value="#"/>
+    <input type="hidden" name="exchangeRate" id="exchangeRate" value="1"/>
+    <input type="hidden" name="beforeWriteOffStatus" id="beforeWriteOffStatus" value="$!{docManageVo.writeOffStatus}"/>
+    <input type="hidden" name="beforeWriteOffBal" id="beforeWriteOffBal" value="$!{docManageVo.writeOffBal}"/>
+
+
+
+    <table class="layui-table">
+        <tr>
+            ##强制核销类型
+            <td class="textRight" width="10%">#springMessage('强制核销类型')</td>
+            <td width="20%">
+                <div class="bt-biz-dict" data-type="select" data-group="writeOff.force.reason" data-name="forceReasonType"
+                     data-biz-name="forceReasonType" data-defaultvalue="" data-required="true"
+                     data-callBack="forceReasonTypeCallBack"></div>
+            </td>
+            <td class="textRight" width="10%">核销金额</td>
+            <td width="20%">
+                <input type="text" name="relationConvertMoney" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline" data-biz-name="relationConvertMoney"
+                       style="text-align:right" id="relationConvertMoney" placeholder="#springMessage('核销金额')"
+                       data-minus="false" lay-verify="required|number2"
+                       data-callback="relationConvertMoneyCallback" >
+            </td>
+        </tr>
+        <tr class="forcePaymentMeansTr hide">
+            ##收入结算方式
+            <td class="textRight" width="10%">#springMessage('收入结算方式')</td>
+            <td width="20%" colspan="3">
+                <div class="bt-biz-dict" data-type="select" data-group="writeOff.force.paymentMeans" data-name="forcePaymentMeans"
+                     data-biz-name="forcePaymentMeans" data-defaultvalue=""
+                     data-callBack="forcePaymentMeansCallBack"></div>
+            </td>
+        </tr>
+        <tr class="forceReasonTr hide">
+            ##强制核销原因
+            <td class="textRight" width="10%">#springMessage('强制核销原因')</td>
+            <td width="20%" colspan="3">
+                <textarea type="text" id="forceReason" name="forceReason" class="layui-textarea"
+                          maxlength="300"
+                          placeholder="#springMessage('强制核销原因')"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">客商名称</td>
+            <td width="20%">$!{docManageVo.externalName}</td>
+            <td class="textRight" width="10%">应收单据编号</td>
+            <td width="20%">$!{docManageVo.code}</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">单位</td>
+            <td width="20%">$!{docManageVo.corpName}</td>
+            <td class="textRight" width="10%">业务类型</td>
+            <td width="20%">$!{docManageVo.batchBusTypeName}</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">单据来源</td>
+            <td width="20%">$!{docManageVo.sourceName}</td>
+            <td class="textRight" width="10%">单据日期</td>
+            <td width="20%">$!date.format('yyyy-MM-dd',$!{docManageVo.receiptDate})</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">本次核销类型</td>
+            <td width="20%">
+                $dictTag.get("writeOff.type",'3')
+                <input type="hidden" name="writeOffType" id="writeOffType" value="3"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">核销前状态</td>
+            <td width="20%">$!{docManageVo.writeOffStatusName}</td>
+            <td class="textRight" width="10%">核销后状态</td>
+            <td width="20%">
+                <span id="afterDocWriteOffStatusName"></span>
+                <input type="hidden" name="afterDocWriteOffStatus" id="afterDocWriteOffStatus" value=""/>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">到期日期</td>
+            <td width="20%">$!date.format('yyyy-MM-dd',$!{docManageVo.endDate})</td>
+            <td class="textRight" width="10%">账龄起算日</td>
+            <td width="20%">$!date.format('yyyy-MM-dd',$!{docManageVo.agingDate})</td>
+        </tr>
+        <tr>
+            <td class="textRight" width="10%">本次核销前应收余额</td>
+            <td width="20%">
+                $!number.formatNumeric($!{docManageVo.writeOffBal})
+                <input type="hidden" id="writeOffBal" value="$!{docManageVo.writeOffBal}"/>
+            </td>
+            <td class="textRight" width="10%">本次核销后应收余额</td>
+            <td>
+                <input type="text" name="afterDocWriteOffBal" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline" data-biz-name="afterDocWriteOffBal"
+                       style="text-align:right" id="afterDocWriteOffBal" placeholder="#springMessage('本次核销后应收余额')"
+                       data-minus="false" lay-verify="required" readonly>
+            </td>
+        </tr>
+    </table>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit" >#springMessage('确定核销')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="closeOpen()">#springMessage('取消')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+var moneyType,moneyFun,dicts,form;
+bt.use(['form', 'datatable', 'dateType', 'corp', 'dicts', 'money', 'selectType', 'accountTable', 'bank', 'moneyType', 'mulselect', 'externalCorpBankAcc'], function () {
+     var $ = bt.jquery; form = bt.form();
+     moneyType = bt.moneyType.init();
+     moneyFun = moneyType.getFun();
+     dicts = bt.dicts.init();
+
+     form.on('submit(submit)', function (data) {
+        parent.layer.confirm(bt.lang('确认强制核销？'), function () {
+            bt.loading.show();
+            var action = "/accountReceivable/writeOff/forceWriteOff";
+            $.post(basePath + action,data.field,function(result){
+                bt.loading.hide();
+                 if(result.success){
+                    result.msg = bt.lang("submitted.successfully.pending.approval");
+                }
+                parent.layer.open({content:result.msg, yes: function(){
+                    parent.layer?parent.layer.closeAll():layer.closeAll();
+                }
+                });
+            },'JSON');
+        });
+        return false;
+     });
+
+});
+
+function forceReasonTypeCallBack(data){
+    var forceReasonTypeSel = data.value;
+    $(".forcePaymentMeansTr").hide();
+    dicts.get("forcePaymentMeans").attr({"data-required": false});
+    $(".forceReasonTr").hide();
+    $("#forceReason").attr('lay-verify','');
+
+    if(forceReasonTypeSel=='1'){
+        $(".forcePaymentMeansTr").show();
+        dicts.get("forcePaymentMeans").attr({"data-value": "", "data-required": true});
+    }else if(forceReasonTypeSel=='3'){
+        $(".forceReasonTr").show();
+        $("#forceReason").attr('lay-verify','required');
+    }
+    form.renderIcon();
+}
+
+function forcePaymentMeansCallBack(data){
+
+}
+
+function relationConvertMoneyCallback(data){
+    var afterDocWriteOffBalTemp = "";
+    var afterDocWriteOffStatusTemp = "";
+    if(data){
+        var writeOffBalTemp = $("#writeOffBal").val();
+        if(moneyFun.sub(writeOffBalTemp, data) >= 0){
+            afterDocWriteOffBalTemp = moneyFun.sub(writeOffBalTemp, data);
+            if(afterDocWriteOffBalTemp>0){
+                afterDocWriteOffStatusTemp = "1";
+            }else {
+                afterDocWriteOffStatusTemp = "2";
+            }
+        }else {
+            parent.layer.alert(bt.lang('核销金额不能大于本次核销前应收余额！'), {icon: 2});
+        }
+    }
+    moneyType.get("afterDocWriteOffBal").val(afterDocWriteOffBalTemp);
+    $("#afterDocWriteOffStatus").val(afterDocWriteOffStatusTemp);
+    $("#afterDocWriteOffStatusName").text(bt.dict("writeOff.status",afterDocWriteOffStatusTemp));
+}
+
+function closeOpen(){
+    parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+
+</script>

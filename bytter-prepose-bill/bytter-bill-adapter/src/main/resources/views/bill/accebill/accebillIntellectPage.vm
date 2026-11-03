@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+
+        <input type="hidden" id="ids" name="ids" value="$!{params.ids}">
+        <input type="hidden" id="oldIds" name="oldIds" value="$!{params.oldIds}">
+		<input type="hidden" id="isEmitBill" name="isEmitBill" value="$!{params.isEmitBill}">
+		<input type="hidden" id="isPayed" name="isPayed" value="$!{params.isPayed}">
+        <input type="hidden" id="resource" name="resource" value="$!{params.resource}">
+        <input type="hidden" id="bifCodes" name="bifCodes" value="$!{bifCodes}">
+        <input type="hidden" id="oldCorpId" name="oldCorpId" value="$!{params.corpId}">
+        <input id="pledgeeName" name="pledgeeName" type="hidden" value="$!{params.pledgeeName}">
+        <input id="pledgeeAcc" name="pledgeeAcc" type="hidden" value="$!{params.pledgeeAcc}">
+        <input id="pledgeeBankAcc" name="pledgeeBankAcc" type="hidden" value="$!{params.pledgeeBankAcc}">
+        <input id="pledgeeBankName" name="pledgeeBankName" type="hidden" value="$!{params.pledgeeBankName}">
+        <input id="billMoney" name="billMoney" type="hidden" value="$!{params.billMoney}">
+        <input id="billMoney" name="billMoney" type="hidden" value="$!{params.billMoney}">
+
+		<div class="layui-collapse" lay-filter="collapse">
+		<div class="layui-colla-item">
+		<h2 class="layui-colla-title"></h2>
+			<div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##规则组名称
+                        <td class="textRight" >#springMessage('bill.intellect.ruleGroup.name')</td>
+                        <td >
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType"
+                                     data-url="${basePath}/bill/intellect/ruleGroup?listAbIntellectRuleGroup"
+                                     data-name="ruleGroupId" data-biz-name="ruleGroupId"
+                                     data-valuefield="id" data-textfield="ruleGroupName" data-inputvalue="inputvalue"
+                                     data-search="true" ></div>
+                            </div>
+                        </td>
+                        ##规则名称
+                        <td class="textRight" >#springMessage('bill.intellect.rule.name')</td>
+                        <td >
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-selectType"
+                                     data-url="${basePath}/bill/intellect/rule?listAbIntellectRule"
+                                     data-name="ruleId" data-biz-name="ruleId"
+                                     data-valuefield="id" data-textfield="ruleName" data-inputvalue="inputvalue"
+                                     data-search="true" ></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##跨单位选票
+                     #*   <td class="textRight" >#springMessage('bill.intellect.crossCropSelect')</td>
+                        <td >
+                            <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="0"
+                                 data-name="crossCropSelect" data-biz-name="crossCropSelect" data-callback="crossCropSelectCallBack" id="crossCropSelect"></div>
+                        </td>*#
+                        ##单位名称
+                        <td class="textRight" >#springMessage('table.abVoucherinfoVice.corpId')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-tree-type="check"
+                                     data-biz-type="corp"
+                                     data-type="selectTree"
+                                     data-name="ins_corpId"
+                                     data-biz-name="corpId"
+                                     data-scope="accCorp"
+                                     data-defaultvalue="$!{params.corpId}"
+                                     data-resource="$!{params.resource}"
+                                     data-disabled="false"
+                                >
+                                </div>
+                            </div>
+                        </td>
+
+                    </tr>
+					<tr>
+                        <td colspan="4" style="text-align: center;">
+                            <div class="layui-inline">
+                                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+								<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+		</div>
+    </form>
+    <div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis" >
+        <thead>
+        <tr>
+            #*<th>#springMessage('bill.accebill.applyCorp')</th>*#
+            <th>#springMessage('table.abVoucherinfoVo.corpId')</th>
+           #* <th>#springMessage('bill.accebill.busCorp')</th>
+            <th>#springMessage('bill.accebill.busPersonnel')</th>*#
+            <th>#springMessage('bill.accebill.theBankAcc')</th>
+            <th>#springMessage('bill.accebill.origNo')</th>
+            <th>#springMessage('bill.accebill.billType')</th>
+            <th>#springMessage('table.abVoucherinfo.billFlag')</th>
+            <th>#springMessage('bill.accebill.billMoney')</th>
+            <th>#springMessage('table.abVoucherinfo.startDate')</th>
+            <th>#springMessage('table.abVoucherinfo.endDate')</th>
+            <th>#springMessage('table.abVoucherinfo.balance')</th>
+            <th>#springMessage('table.abVoucherinfo.payer')</th>
+            <th>#springMessage('table.abVoucherinfo.acceptor')</th>
+            <th>#springMessage('table.abVoucherinfo.payee')</th>
+            #if($!{params.isPayed} eq '1')
+            <th>#springMessage('bill.accebill.rearAccrecords')</th>
+            #end
+            <th>#springMessage('bill.accebill.bustype')</th>
+            #if($!{params.isEmitBill} eq '0')
+                <th>#springMessage('billPool.Limit.bpName')</th>
+                <th>#springMessage('billPool.inoutType')</th>
+                <th>#springMessage('billPool.poolstatus')</th>
+            #end
+           ## <th>#springMessage('table.abVoucherinfo.Business.Brief.Id')</th>
+			<th>#springMessage('table.abVoucherinfoVice.billSource')</th>
+        </tr>
+        </thead>
+    </table>
+    </div>
+	<br />
+    <br />
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+    	<div class="layui-input-block">
+    	<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+#parse("views/common/footer.vm")
+<script type="text/javascript">
+var billTable={};
+var moneyType={};
+var dicts={};
+var users={};
+var corp={};
+
+bt.use(['form','jquery','select','element','datatable','dicts','selectType','corp','dateType','moneyType','users','moneyType','btImport'], function(){
+    $ = bt.jquery,form = bt.form();
+    var flag = true;
+    var cropDefaultvalue = $('[data-name="ins_corpId"]').data('defaultvalue')
+    moneyType = bt.moneyType.init();
+	var element = bt.element();
+	bt.dateType.init();
+    corp=bt.corp.init();
+    dicts=bt.dicts.init();
+    users=bt.users.init();
+    bt.selectType.init();
+	/**
+	*bt.btdate.init({
+    *	elem:"#startDate",
+    *	labelname:bt.lang('table.abVoucherinfo.startDate'),
+    *	startname:"ged_startDate",
+    *	endname:"led_startDate"
+    *});
+    *bt.btdate.init({
+    *	elem:"#endDate",
+    *	labelname:bt.lang('table.abVoucherinfo.endDate'),
+    *	startname:"ged_endDate",
+    *	endname:"led_endDate"
+    *});
+	**/
+	//生成列表
+    billTable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:true,
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search",
+            initQueryParams:function(params) {
+                if(flag){
+                    params.ins_corpId = cropDefaultvalue;
+                    flag = false;
+                }
+                return params
+            }
+        },
+        ajax: {
+            'url': basePath+"/bill/accebill/intellect/accebillIntellectDatatable"
+        },
+        buttons: [
+            {
+                text:bt.lang('common.button.select'),
+                action: function ( e, dt, node, config ) {
+                    // var datas = dt.rows('.selected').data();
+                    // bt.selectOp(datas);
+                    bt.selectOp();
+                }
+            },{
+                text: bt.lang('bill.intellect.endorseRequest'),
+                action: function (e, dt, node, config) {
+                    var data = dt.rows('.selected').data();
+                    endorseRequest(data);
+                }
+            },{
+                text: bt.lang('common.button.importsSelect'),
+                sort:'51',
+                action: function ( e, dt, node, config ) {
+                    importExcel();
+                }
+            }
+        ]
+        ,columns: [
+           /* {data:"applyCorpName",bSortable:true},*/
+            {data:"corpName",bSortable:true},
+            /*{data: "busCorpName", bSortable: true},
+            {data: "busPersonnel", bSortable: true},*/
+            {data:"bankAcc",bSortable:true},
+            {data:"origNo",bSortable:true},
+            {data:"billTypeName",bSortable:true},
+            {data:"billFlagName",bSortable:true},
+            {data:"billMoney",bSortable:true,className:'textRight',
+                render: function ( data, type, full, meta ) {
+                	return bt.money.format(full.billMoney);
+                }
+            },
+            {data:"startDate",bSortable:true},
+            {data:"endDate",bSortable:true},
+            {data:"balance",bSortable:true,className:'textRight',
+                render: function ( data, type, full, meta ) {
+                    return bt.money.format(full.balance);
+                }
+            },
+            {data:"payer",bSortable:true},
+            {data:"acceptor",bSortable:true},
+            {data:"payee",bSortable:true},
+            #if($!{params.isPayed} eq '1')
+                {data:"recNm",bSortable:true},
+            #end
+            {data:"briefIdName",bSortable:true},
+            #if($!{params.isEmitBill} eq '0')
+                {data:"bpName",bSortable:true},
+                {data:"inoutTypeName",bSortable:true},
+                {data:"poolStatusName",bSortable:true},
+            #end
+            {data:"sourceName",bSortable:true}
+        ],
+        btClickRowCallback:function(data){
+            opIdsValArray(data);
+        },
+        btInitComplete:function(setting, json){
+            setSumMoney(sumMoney);
+        },
+        btDrawCallback:function(setting){
+            if(idsValArray.length>0) {
+                bt.datatable.onCheckRow("appTable", {
+                    "key": "id",
+                    "value": idsValArray,
+                    "checked": true
+                });
+            }
+            var showHTML=bt.lang("sys.common.isSelectSize",[idsValArray.length])+","+bt.lang("sys.common.isSelectMoney",[bt.money.format(sumMoney)]);
+            $('#appTable_info').append('<span id="sumMoneyBillSpan" style="color: red">'+showHTML+'</span>');
+        },
+		summary:{
+			pageSum:true,
+            selectSum:true,
+            sumList:[
+                {
+                    colNum:'6',
+                    dataName:'billMoney'
+                },
+                {
+                    colNum:'9',
+                    dataName:'balance'
+                }
+            ]
+		}
+    });
+	// bt.selectOp = function(datas){
+	bt.selectOp = function(){
+        var datas=objValArray;
+		var len = datas.length;
+        if(!len){
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+        	return;
+        }
+		// var rowDatas = datas.splice(0,len);
+		var sumMoney=0;
+        var isSelectNewBill = "0";
+        var ids=idsValArray.join(",");
+		for(var i=0;i<len;i++){
+			sumMoney=bt.moneyType.getFun().add(sumMoney,datas[i].balance);
+			// if(ids){
+            //     ids+=","+datas[i].id;
+            // }else{
+            //     ids=datas[i].id;
+            // }
+            // 是否选择了新系统票据并且分包的
+            if (datas[i].newStmIssuofpprInd === '1' && datas[i].blgrdbagcrclPrmtInd === '1') {
+                isSelectNewBill = "1";
+            }
+		}
+//		var func = top.btSelectCallBack['bt-biz-accebillInfo']['callback'];
+        var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+        var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-accebillIntellect']['callback'];
+        if(func){
+			var data={"sumMoney":sumMoney,"ids":ids,"isSelectNewBill":isSelectNewBill,"data":datas};
+            func(data);
+        }
+	}
+    //导入已选数据
+    var importExcel = function () {
+        bt.btImport.init({
+            code: "512880455c5dcd90015c5d0abillpage",
+            // hideDownTempBtn: true,
+            isShowData: false,
+            height: '200px',//弹出框高度
+            titleRows: 1,
+            headRows: 1,
+            success: function (head,data,select) {
+                if(data && data.length >0){
+                    var origNos="";
+                    for(var i=0;i<data.length;i++){
+                        if(data[i].origNo){
+                            if(origNos){
+                                origNos+=","+data[i].origNo;
+                            }else{
+                                origNos=data[i].origNo;
+                            }
+                        }
+                    }
+                    $("#origNo").val(origNos);
+                    idsValArray=new Array();
+                    objValArray=new Array();
+                    initCacheObjInfo(null,origNos);
+                    $("#ids").val(idsValArray.join(","));
+                }
+                billTable.draw();
+            }
+        });
+    };
+});
+var closeForms=function(){
+	parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+
+var idsValArray=new Array();
+var objValArray=new Array();
+var bifCodes = $("#bifCodes").val().split(',');
+
+var initIdVal=function (){
+    var idsVal=$("#ids").val();
+    if(idsVal){
+        initCacheObjInfo(idsVal,null);
+    }
+}
+var sumMoney=0;
+var initCacheObjInfo=function(idsVal,origNos){
+    var formdata={};
+    formdata.resource=$("#resource").val();
+    if(!formdata.resource&&$("#corpId").val()){
+        formdata.ins_corpId=$("#corpId").val();
+    }
+    formdata.oldIds=$("#oldIds").val();
+    formdata.isEmitBill=$("#isEmitBill").val();
+    formdata.isPayed=$("#isPayed").val();
+    if(idsVal){
+        formdata.selectIds=idsVal;
+    }else if(origNos){
+        formdata.origNo=origNos;
+    }else{
+        return;
+    }
+    // 异步获取已选默认值数据缓存
+    $.ajax({
+        url:basePath+"/bill/accebill/intellect/accebillIntellectDatatable",
+        type: 'post',
+        data: JSON.stringify({"formdata" : formdata,"length":1000,"start": 0}),
+        contentType: 'application/json',
+        async: false,
+        dataType:'json',
+        success:function (result) {
+            if(result && result.data){
+                sumMoney=0;
+                for (var i = 0; i < result.data.length; i++) {
+                    idsValArray.push(result.data[i].id);
+                    objValArray.push(result.data[i]);
+                    sumMoney=bt.money.add(sumMoney,result.data[i].billMoney);
+                }
+                setSumMoney(sumMoney);
+            }
+        }
+    });
+}
+
+var setSumMoney = function (sumMoney){
+    var showHTML=bt.lang("sys.common.isSelectSize",[idsValArray.length])+","+bt.lang("sys.common.isSelectMoney",[bt.money.format(sumMoney)]);
+    if($("#sumMoneyBillSpan").text()!=''){
+        $("#sumMoneyBillSpan").text(showHTML);
+    }else{
+        $('#appTable_info').append('<span id="sumMoneyBillSpan" style="color: red">'+showHTML+'</span>');
+    }
+}
+
+// 查找指定的元素在数组中的位置
+Array.prototype.indexOf = function(val) {
+    for (var i = 0; i < this.length; i++) {
+        if (this[i] == val) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+var objArrayRemove = function(obj,index){
+    if (index > -1) {
+        obj.splice(index, 1);
+    }
+};
+
+var opIdsValArray = function(datas){
+    if(datas&&datas.length>0){
+        for(i=0;i<datas.length;i++){
+            if(datas[i].isSelect){
+                if(datas[i].poolStatus==1){
+                    if(bifCodes.indexOf(datas[i].bifCode)<0){
+                        bt.datatable.onCheckRow("appTable", {
+                            "key": "id",
+                            "value": [datas[i].id],
+                            "checked": false
+                        });
+                        layer.alert(bt.lang("请先将票据出池后再处理！"), {icon: 3});
+                        return;
+                    }else{
+                        if(idsValArray.indexOf(datas[i].id)<0){
+                            idsValArray.push(datas[i].id);
+                            objValArray.push(datas[i]);
+                            sumMoney=bt.money.add(sumMoney,datas[i].billMoney);
+                        }
+                    }
+                }else{
+                    if(idsValArray.indexOf(datas[i].id)<0){
+                        idsValArray.push(datas[i].id);
+                        objValArray.push(datas[i]);
+                        sumMoney=bt.money.add(sumMoney,datas[i].billMoney);
+                    }
+                }
+
+            }else{
+                var index=idsValArray.indexOf(datas[i].id);
+                if(index > -1){
+                    objArrayRemove(objValArray,index);
+                    objArrayRemove(idsValArray,index);
+                    sumMoney=bt.money.sub(sumMoney,datas[i].billMoney);
+                }
+            }
+        }
+        $("#ids").val(idsValArray.join(","));
+        setSumMoney(sumMoney);
+    }
+};
+
+//弹框处理中文乱码赋值
+var getQueryParams=function(data){
+    if(data){
+        if(data.payee&&data.isEmitBill==1){
+            $("#payeeId").val(data.payee);
+        }
+        if(data.endorse&&data.isPayed==1){
+            $("#endorseId").val(data.endorse);
+        }
+        if(data.resource){
+            $("#resource").val(data.resource);
+        }
+        if(data.ids){
+            $("#ids").val(data.ids);
+        }
+        if(data.oldIds){
+            $("#oldIds").val(data.oldIds);
+        }
+        initIdVal();
+    }
+};
+//是否跨单位
+crossCropSelectCallBack = function (data){
+    var $ = bt.jquery, form = bt.form();
+    var crossCropSelect = bt.dicts.get("crossCropSelect").val();
+   // debugger
+    if (crossCropSelect == "1") {
+        bt.corp.init().get("corpId").attr("data-disabled",false);
+        $("input[name='corpId']").attr("data-disabled",false);
+    }else{
+        bt.corp.init().get("corpId").attr("disabled",false);
+        $("input[name='corpId']").val($('#oldCorpId').val());
+        $("input[name='corpId']").attr("disabled",true);
+    }
+    form.renderIcon();
+}
+
+//背书请求
+function endorseRequest(data){
+    var len = data.length;
+    if (!len) {
+        layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+        return;
+    }
+    var rowData = data.splice(0, len);
+    var ids, vids, vvids, origNo;
+    var pledgeeName, pledgeeAcc, pledgeeBankAcc, pledgeeBankName, corpId;
+    corpId= $("#oldCorpId").val();
+    //被背书人名称
+    pledgeeName=$("#pledgeeName").val();
+    //被背书人账号
+    pledgeeAcc=$("#pledgeeAcc").val();
+    //被背书人开户行
+    pledgeeBankAcc=$("#pledgeeBankAcc").val();
+    //被背书人开户行名称
+    pledgeeBankName=$("#pledgeeBankName").val();
+
+    if(corpId=="" || pledgeeAcc==""){
+        layer.alert(bt.lang('nis.netbank.message.payeracc.null'), {icon: 7})
+        return;
+    }
+    for (i = 0; i < len; i++) {
+        if (vids) {
+            vids = vids + "," + rowData[i].vid;
+        } else {
+            vids = rowData[i].vid;
+        }
+
+        if (vvids) {
+            vvids = vvids + "," + rowData[i].vvid;
+        } else {
+            vvids = rowData[i].vvid;
+        }
+
+        if (ids) {
+            ids = ids + "," + rowData[i].id;
+        } else {
+            ids = rowData[i].id;
+        }
+        if (origNo) {
+            origNo += "," + rowData[i].origNo;
+        } else {
+            origNo = rowData[i].origNo;
+        }
+    }
+    parent.layer.confirm(bt.lang('common.message.confirm.billEndorseRequest'), function () {
+        $.post(basePath + "/bill/accebill/endorseRequest/endorseRequestWithPay", {"vids":vids,"vvids":vvids,"ids":ids, "origNo": origNo,
+            "pledgeeName": pledgeeName, "pledgeeAcc": pledgeeAcc, "pledgeeBankAcc": pledgeeBankAcc, "pledgeeBankName": pledgeeBankName,"corpId":corpId}, function (result) {
+            parent.layer ? parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}) : layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            if (result.success) {
+                bt.datatable.refreshCurrentPage();
+//				location.reload();
+            }else{
+                bt.datatable.refreshCurrentPage();
+            }
+        }, 'JSON');
+    });
+}
+</script>
+</body>
+</html>

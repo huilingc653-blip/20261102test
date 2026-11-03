@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="get">
+    <div class="layui-input-inline" style="display: none">#springMessage('foreign.corpExposure.orgType')</div>
+    <div class="layui-input-inline" style="display: none">
+        <div class="bt-biz-dict" data-type="select" data-group="corpExposure.orgType" data-defaultvalue="$!{orgType}" data-name="orgType" data-biz-name="orgType"></div>
+    </div>
+    <table class="layui-table" id="table" lay-skin="line" lay-even="">
+        <thead>
+        <tr>
+            <td id="rCode">#springMessage('budget.corpBudget.seach')
+                <div class="layui-input-inline" style="padding-left: 10px">
+                    <input type="text" id="searchShow" name="searchShow" value="$!{search}"  autocomplete="off" class="layui-input" >
+                    <input type="hidden" id="search" name="search" value="$!{search}"  autocomplete="off" class="layui-input" >
+                </div>
+                <div class="layui-input-inline" style="padding-left: 20px">
+                    <button class="layui-btn" onClick="searchSubmit()" type="button">#springMessage('common.button.search')</button>
+                    <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                </div>
+            </td>
+        <tr>
+        </thead>
+    </table>
+</form>
+<form class="layui-form" method="post">
+    <table class="layui-table" id="corp-table" lay-even="">
+       	<thead>
+        <tr>
+            <th class="center">#springMessage('common.ratCorp.corp')</th>
+            <th class="center" colspan="2">
+                <input type="checkbox" name="" lay-skin="primary" lay-filter="checkAllCollect">&nbsp;&nbsp; #springMessage('foreign.corpExposure.isCollect')
+            </th>
+            <th class="center" colspan="2">
+                <input type="checkbox" name="" lay-skin="primary" lay-filter="checkAllNaturalHedge">&nbsp;&nbsp; #springMessage('foreign.corpExposure.isNaturalHedge')
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        #foreach($corp in $corpList)
+            #set($corpExposure=$corpExposureMap.get($corp.id))
+            <tr data-tt-id="$!{corpExposure.corpId}" data-tt-parent-id="$!{corpExposure.corpParentId}">
+                <td width="40%">
+                    (${corpExposure.corpCode})&nbsp;&nbsp;${corpExposure.corpName}
+                    #if($!{corpExposure.corpType} == 0)<font color="red">(#springMessage('table.fbsBudget.net'))</font>#end
+                </td>
+                ## 选择要资金上报的单位
+                #if($corpExposure.corpType == 0 && $corpExposure.childCount > 0)
+                    <td width="10%" class="center" >
+                        <input type="checkbox" class="checkAll" name="checkCollectAll" data-name="checkCollectAll" data-collect-child-id="$!{corpExposure.corpId}" data-collect-parent-id="$!{corpExposure.corpParentId}"
+                               data-childCount="$!{corpExposure.childCount}" lay-skin="primary" lay-filter="checkIsCollect">&nbsp;&nbsp;#springMessage('common.check.all')
+                    </td>
+                #else
+                    <td width="10%" class="center" >
+                        #if($corpExposure.childCount > 0)
+                            <input type="checkbox" class="checkAll" name="checkCollectAll" data-name="checkCollectAll" data-collect-child-id="$!{corpExposure.corpId}" data-collect-parent-id="$!{corpExposure.corpParentId}"
+                                   data-childCount = "$!{corpExposure.childCount}" lay-skin="primary" lay-filter="checkIsCollect">&nbsp;&nbsp;#springMessage('common.check.all')
+                        #end
+                    </td>
+                #end
+                <td width="25%" class="center" >
+                    <input type="checkbox" class="check" name="checkCollect" data-name="checkCollect" value="${corpExposure.corpId}" lay-skin="primary" lay-filter="checkIsCollect"
+                        #if(${corpExposure.isCollect} == "1")checked="checked"#end data-collect-id="${corpExposure.corpId}" data-collect-parent-id="$!{corpExposure.corpParentId}">
+                </td>
+
+                ##  选择要受计划控制的单位
+                #if($corpExposure.corpType == 0 && $corpExposure.childCount > 0)
+                    <td width="10%" class="center" >
+                        <input type="checkbox" class="checkAll" name="checkNaturalHedgeAll" data-name="checkNaturalHedgeAll" data-naturalhedge-child-id="$!{corpExposure.corpId}" data-naturalhedge-parent-id="$!{corpExposure.corpParentId}"
+                               data-childcount="$!{corpExposure.childCount}" lay-skin="primary" lay-filter="checkIsNaturalHedge">&nbsp;&nbsp;#springMessage('common.check.all')
+                    </td>
+                #else
+                    <td width="10%" class="center" >
+                        #if($corpExposure.childCount > 0)
+                            <input type="checkbox" class="checkAll" name="checkNaturalHedgeAll" data-name="checkNaturalHedgeAll" data-naturalhedge-child-id="$!{corpExposure.corpId}" data-naturalhedge-parent-id="$!{corpExposure.corpParentId}"
+                                   data-childCount="$!{corpExposure.childCount}" lay-skin="primary" lay-filter="checkIsNaturalHedge">&nbsp;&nbsp;#springMessage('common.check.all')
+                        #end
+                    </td>
+                #end
+                <td width="25%"class="center" >
+                    <input type="checkbox" class="check" name="checkNaturalHedge" data-name="checkNaturalHedge" value="${corpExposure.corpId}" lay-skin="primary" lay-filter="checkIsNaturalHedge"
+                           #if(${corpExposure.isNaturalHedge} == "1")checked="checked"#end data-naturalhedge-id="${corpExposure.corpId}" data-naturalhedge-parent-id="$!{corpExposure.corpParentId}">
+                </td>
+            </tr>
+        #end
+        </tbody>
+    </table>
+
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/foreign/fexCorpExposure.list.js?_btv=${resourceVersion}"></script>
+</html>

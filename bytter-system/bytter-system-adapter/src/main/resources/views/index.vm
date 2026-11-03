@@ -1,0 +1,1346 @@
+#set($basePath=$springMacroRequestContext.contextPath)
+#set($resourceVersion=$resourceVersion.get())
+#set( $skin =  'light-skin')
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>$!{companyName}</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    ##<link rel="shortcut icon" href="${basePath}/static/images/favicon.ico" type="image/x-icon"/>
+    <link rel="stylesheet" href="${basePath}/static/fonts/font-awesome/css/font-awesome.min.css" media="all">
+    <link rel="stylesheet" href="${basePath}/static/plugins/layui/css/layui.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet" href="${basePath}/static/css/newIndex.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet" href="${basePath}/static/css/main.css?_btv=${resourceVersion}" media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/plugins/scrollbar/jquery.mCustomScrollbar.min.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts3/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts2/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/fonts/fonts1/iconfont.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/plugins/jtree.css?_btv=${resourceVersion}"
+          media="all">
+
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/css/scrollbar.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/plugins/dad/dad.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/css/globel.css?_btv=${resourceVersion}"
+          media="all">
+    <link rel="stylesheet"
+          href="${basePath}/static/v3.2/css/main.css?_btv=${resourceVersion}"
+          media="all">
+    <style>
+        .layui-layout-admin .layui-side{
+            background: white;
+        }
+        .blue-skin .layui-layout-admin .layui-side{
+            background: linear-gradient(132deg, #304469 0%, #2C3B5E 100%)
+        }
+        .gray-skin .layui-layout-admin .layui-side{
+            background: #3B3E4C
+        }
+        .dark-skin .layui-layout-admin .layui-side{
+            background: #25262B
+        }
+        .t2-header-right {
+            z-index: 99;
+        }
+        /*微前端子应用层级提升，必须先提升子应用的容器*/
+        .layui-layout-admin .layui-body{
+            z-index: 99;
+            width: calc(100vw - 80px)!important;
+            padding-left: 0!important;
+            margin-left: 80px!important;
+            min-width: 944px!important;
+        }
+        .layui-layout-admin .my-body-expand {
+            width: calc(100vw - 240px)!important;
+            padding-left: 0px!important;
+            margin-left: 240px!important;
+            min-width: 784px!important;
+        }
+        .bt-subapp-container{
+            overflow: auto;
+        }
+
+        /*.micro-app-active .layui-layout-admin .layui-body{*/
+        /*    z-index:99999*/
+        /*}*/
+    </style>
+    <script type="text/javascript">var basePath = "${basePath}", basePathAll = window.document.location.href.split(basePath)[0] + basePath;top.webLocale="${locale}"</script>
+
+    <!-- 拦截微前端修改-->
+    <script type="text/javascript">
+        const originalTitle = document.title;
+
+        Object.defineProperty(document, 'title', {
+            configurable: true,
+            enumerable: true,
+            get() {
+                return originalTitle; // 永远返回主应用的标题
+            },
+            set(val) {
+            }
+        });
+##        // 保存原始的地址栏修改方法
+##        var originalPushState = history.pushState;
+##        var originalReplaceState = history.replaceState;
+##        // 保存主应用原始title（关键：锁定这个值，不允许被改）
+##        var MAIN_APP_TITLE = document.title;
+##
+##        // 标记当前是否是微前端路由（控制地址栏显示）
+##        window.isMicroAppRoute = false;
+##
+##        // 重写pushState：非微前端时强制显示/index + 强制保留主应用title
+##        history.pushState = function(state, title, url) {
+##            var fixedTitle = MAIN_APP_TITLE;
+##            if (!window.isMicroAppRoute) {
+##                originalPushState.call(history, state, fixedTitle, basePath + window.BT_MICRO_APP_CONFIG.defaultRoutePath);
+##            } else {
+##                originalPushState.call(history, state, fixedTitle, url);
+##            }
+##        };
+##
+##        history.replaceState = function(state, title, url) {
+##            var fixedTitle = MAIN_APP_TITLE;
+##            if (!window.isMicroAppRoute) {
+##                originalReplaceState.call(history, state, fixedTitle, basePath + window.BT_MICRO_APP_CONFIG.defaultRoutePath);
+##            } else {
+##                originalReplaceState.call(history, state, fixedTitle, url);
+##            }
+##        };
+##
+##        // 额外拦截子应用直接修改document.title的行为（兜底）
+##        Object.defineProperty(document, 'title', {
+##            get: function() {
+##                return MAIN_APP_TITLE; // 读取时始终返回主应用原始title
+##            },
+##            set: function(newTitle) {
+##                // 拒绝任何修改title的尝试，也可以加判断：只有微前端时允许改
+##                // 如果想让微前端改title，就注释下面这行，保留上面的get即可
+##                return;
+##            },
+##            configurable: false // 禁止子应用重新定义这个属性
+##        });
+##
+##        // 拦截子应用Vue Router修改地址栏（兜底）
+##        setTimeout(() => {
+##            if (window.Vue && window.Vue.prototype && window.Vue.prototype.$router) {
+##                var originalVueRouterPush = window.Vue.prototype.$router.push;
+##                var originalVueRouterReplace = window.Vue.prototype.$router.replace;
+##                if (originalVueRouterPush) {
+##                    window.Vue.prototype.$router.push = function(location) {
+##                        if (!window.isMicroAppRoute) return; // 非微前端时阻断
+##                        return originalVueRouterPush.call(this, location);
+##                    };
+##                }
+##                if (originalVueRouterReplace) {
+##                    window.Vue.prototype.$router.replace = function(location) {
+##                        if (!window.isMicroAppRoute) return; // 非微前端时阻断
+##                        return originalVueRouterReplace.call(this, location);
+##                    };
+##                }
+##            }
+##        }, 500);
+    </script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/qiankun/index.umd.min.js"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/v3.2/modules/index/world.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/v3.2/modules/index/china.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    ##<script type="text/javascript"
+    ##        src="${basePath}/static/plugins/jquery/jquery.min.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/js/jquery3.4.1.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="${basePath}/static/plugins/store/store.legacy.min.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery-ui/jquery-ui1.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/plugins/layui/layui.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript" src="${basePath}/static/js/common.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.ajax.extend.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript" src="${basePath}/static/plugins/jquery/jquery.cookie.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script src="/static/js/crypto-js.js"></script>
+    <script src="/static/js/sm2.js"></script>
+
+    <script type="text/javascript">
+        // $.get(basePath + "/sys/corp/initCorpRouter", function (json) {
+        // }, 'JSON');
+        var bytter_dict = store.get('bytter_dict')
+        if(!bytter_dict){
+
+            $.get(basePath + "/dict", function (json) {
+                if (!json) {
+                    return;
+                }
+                var dict = {};
+                for (var i = 0; i < json.length; i++) {
+                    var temp = json[i];
+                    var tempGroupCode = temp.groupCode;
+                    if (!dict[tempGroupCode]) {
+                        dict[tempGroupCode] = {};
+                    }
+                    if (!dict[tempGroupCode][temp.code]) {
+                        dict[tempGroupCode][temp.code] = {name: temp.name, index: i, code: temp.code};
+                    }
+                }
+                store.remove('bytter_dict');//清除 liuyj 2018-06-05
+                //  store.set('bytter_dict', dict);
+                try{
+                    store.set('bytter_dict', dict);
+                }catch (e) {
+                    bt.dictContext = dict;
+                }
+                //store.set('bytter_dict', JSON.stringify(dict));
+            }, 'JSON');
+        }else{
+            bt.dictContext = store.get('bytter_dict')
+        }
+
+        $.post(basePath + "/sys/dict/allDictGroup", function (json) {
+            if (!json) {
+                return;
+            }
+            var dictGroup = new Array();
+            for (var i = 0; i < json.length; i++) {
+                var temp = json[i];
+                if(temp && temp.groupCode){
+                    dictGroup.push({"groupCode":temp.groupCode,"groupName":temp.groupName});
+                }
+            }
+            try{
+                store.set('bytter_dictGroup', dictGroup);
+            }catch (e) {
+                bt.dictContextGroup = dictGroup;
+            }
+        }, 'JSON');
+        // 开启同步加载资源，确保子应用可以拿到权限
+        $.ajaxSettings.async = false;
+        //设置cadn
+        var loginName = '$shiro.getPrincipal().loginName';
+        $.ajax({
+                url: basePath + "/sys/user/getCadnByLoginName",
+                method: 'GET',
+                data: {loginName:loginName},
+                dataType: 'json',
+                success: function (data) {
+                 	store.set('cadn',data);
+                }
+            });
+
+
+
+        /**
+         * 获取用户资源权限
+         * 避免使用用户角色资源判断权限，加载太慢导致页面报错
+         * zuoy 2019-06-25
+         * */
+        $.get(basePath + "/userResource", function (json) {
+            if (json) {
+                store.remove('bytter_userresource');
+                //store.set('bytter_userresource', json);
+                try{
+                    bt.userResource = json;
+                    store.set('bytter_userresource', json);
+                }catch (e) {
+                    bt.userResource = json;
+                }
+            }
+        }, 'JSON');
+
+        /**
+         * 获取用户单位资源权限
+         *
+         */
+        $.get(basePath + "/resource", function (json) {
+            if (json) {
+                console.log(json);
+                try {
+                    store.remove('bytter_resource');//清除 liuyj 2018-06-05
+                    bt.userCorpResource = json;
+                    store.set('bytter_resource', json);
+                } catch (error) {
+                    //报错则表示store存储的数据大小超出了限制
+                    //console.log('catch:', error);
+                    bt.userCorpResource = json;
+                    // var dataLength = 0;
+                    // for (var key in json) {
+                    //     dataLength++;
+                    // }
+                    // dfsIndexSaveResourcesToStore(json, dataLength);
+                }
+            }
+        }, 'JSON');
+        /**
+         * 递归存储特殊资源权限
+         * Created by chenlw on 2019/04/29.
+         *
+         * @param bytter_resource
+         * @param dataLength
+         */
+        function dfsIndexSaveResourcesToStore(bytter_resource, dataLength) {
+            try {
+                var limitLength = dataLength / 2, length = 0;
+                if (limitLength <= 0) {
+                    return;
+                }
+                var bytter_resourceTemp = {};
+                for (var key in bytter_resource) {
+                    if (length < limitLength) {
+                        length++;
+                        bytter_resourceTemp[key] = bytter_resource[key];
+                    }
+                }
+                store.remove('bytter_resource');
+                store.set('bytter_resource', bytter_resourceTemp);
+
+            } catch (error) {
+                //报错则表示store存储的数据大小超出了限制，取数据的一半再次存储，若再次报错，递归下一轮再取一半数据存储。直到不报错或取一半数据的长度变为0。
+                if (dataLength / 2 >= 1) {
+                    dfsIndexSaveResourcesToStore(bytter_resource, dataLength / 2);
+                } else {
+                    store.remove('bytter_resource');
+                    store.set('bytter_resource', {});
+                }
+            }
+        }
+        var bytter_lang = store.get('bytter_lang')
+        if(!bytter_lang){
+            $.ajax({
+                url: basePath + "/lang", type: 'get', async: false, dataType: 'json',
+                success: function (json) {
+                    if (!json) {
+                        return;
+                    }
+                    var lang =  {};
+                    for (var i = 0; i < json.length; i++) {
+                        lang[json[i].langKey] = json[i].langContext;
+                    }
+                    window.mutiLang = lang;
+                    store.remove('bytter_lang');//清除 liuyj 2018-06-05
+                    bt.bytterMutiLang = lang;
+                    // store.set('bytter_lang', lang);
+                    try {
+                        store.set('bytter_lang', lang)
+                    }catch (e) {
+
+                    }
+                }
+            });
+        }else{
+            window.mutiLang = bytter_lang;
+            bt.bytterMutiLang = bytter_lang;
+        }
+
+
+        //获取拥有批量撤消功能的url集合,并存贮在bt.tablUrl中
+        var url = basePath + '/bpm/flowCategory/revokableUrl';
+        $.get(url, function (res) {
+            if (res) {
+                bt.tableUrl = res;
+            }
+        }, "json");
+        //获取汇率小数位数
+        // $.ajaxSettings.async = false;
+        var paramsConvert = {
+            typeId: "40439bffb86146d8a12ebfc05e23a785"
+        };
+        $.post(basePath +"/basic/business/btratetype/getRateDecimalPlaces", paramsConvert, function (result) {
+            if(result){
+                store.remove('bytter_excRateConvert');
+                //store.set('bytter_excRateConvert', result);
+                try {
+                    store.set('bytter_excRateConvert', result);
+                    bt.excRateConvert = result;
+                }catch (e) {
+                    bt.excRateConvert = result;
+                }
+            }
+        }, 'JSON');
+        var paramsBudget = {
+            typeId: "927d1b39382c4078987ddd1561428c71"
+        };
+        $.post(basePath +"/basic/business/btratetype/getRateDecimalPlaces", paramsBudget, function (result) {
+            if(result){
+                store.remove('bytter_excRateBudget');
+               // store.set('bytter_excRateBudget', result);
+                try {
+                    store.set('bytter_excRateBudget', result);
+                    bt.excRateBudget = result;
+                }catch (e) {
+                    bt.excRateBudget = result;
+                }
+            }
+        }, 'JSON');
+        $.ajaxSettings.async = true;
+
+    </script>
+    <script type="text/javascript" src="${basePath}/static/plugins/bytter/oprate.js?_btv=${resourceVersion}"
+            charset="utf-8"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.resize.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/jquery/jquery.lazyload.min.js?_btv=${resourceVersion}"></script>
+##    <script type="text/javascript" src="${basePath}/static/modules/sys/main.js?_btv=${resourceVersion}"></script>
+    <script type="text/javascript"
+            src="${basePath}/static/plugins/scrollbar/jquery.mCustomScrollbar.concat.min.js?_btv=${resourceVersion}"></script>
+
+    <!--[if lt IE 9]>
+    <script src="${basePath}/static/plugins/mq/html5.min.js?_btv=${resourceVersion}"></script>
+    <script src="${basePath}/static/plugins/mq/respond.min.js?_btv=${resourceVersion}"></script>
+    <![endif]-->
+</head>
+##<body class="${shiro.getPrincipal().sysSkin}">
+<body class="#if($shiro.getPrincipal().sysSkin) $shiro.getPrincipal().sysSkin #else light-skin #end" id="indexBody" data-key="newUI" data-skin="#if($shiro.getPrincipal().sysSkin) $shiro.getPrincipal().sysSkin #else light-skin #end">
+##<div style="position: fixed;width: 100%;height: 100%;z-index: 11111;top: 0;left:0;right: 0;bottom: 0;background: #f2f2f2;padding-top: 20%;padding-left: 50%; " id="homeLoading">
+##    <i class="layui-icon layui-anim layui-anim-rotate layui-anim-loop" style="font-size: 40px;"></i>
+##</div>
+<div class="layui-layout-body" style="margin: 0 auto">
+    #if($tempLicense)
+    ##测试许可
+        <div style="position: fixed;top: 17px;left: 0;right: 0;text-align: center;color: #fff;font-size: 18px;">#springMessage(
+            'sys.index.title')</div>
+    #end
+    #if($isLicenseReadyExpire)
+    ##将近到期
+        <div style="position: fixed;top: 17px;left: 0;right: 0;text-align: center;color: #fff;font-size: 18px;">$licenseLimitDate #springMessage(
+            '	sys.license.closetoexpire')</div>
+    #end
+    <input autocomplete="off" type="text" style="display: none;">
+##消息提醒
+    <div id="notification" class="notification">
+        <div class="layui-anim layui-anim-upbit">
+            <div class="notification-header">
+                <div id="notice-type" class="header-left">
+                    ##通知
+                    <div class="active" data-type="1">#springMessage("sys.notification.notify")</div>
+                    ##待处理
+                    <div data-type="2">#springMessage("sys.notification.todo")</div>
+                </div>
+                <div class="notification-clear">
+                    <span class="iconfont byicon_clear"></span>
+                    <span class="clear-text">清空消息</span>
+                </div>
+            </div>
+            <div class="notification-body">
+                ##                暂无内容
+                <img src="${basePath}/static/v3.2/images/pic_blank.png" class="empty" id="text-empty">
+               ## <div class="empty"  >#springMessage("sys.notification.empty")</div>
+                <ul class="content" id="notification-content">
+                </ul>
+                <div class="more" id="loading-more" style="text-align: center">
+##                    加载更多
+                    <a href="javascript:void(0)">#springMessage("sys.notification.loadMore")</a>
+                </div>
+##                载入中...
+                <div class="loading layui-layer-loading"  id="loading">
+##                    <p class="loading-text">
+##                    #springMessage("sys.notification.loading")</p>
+                    <div id="" class="layui-layer-content layui-layer-loading1"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="layui-layout layui-layout-admin" id="layoutBox" style="display: none;">
+        <div class="layui-body my-body" id="bodyContainer">
+            <div class="layout-header">
+                <ul class="layui-nav t2-header-right" id="user-container">
+                    <li class="layui-nav-item message-btn" >
+                        <span class="iconfont byhome_top_notice" style="font-size: 20px;"></span>
+                        <span class="layui-badge layui-bg-orange1" id="shakeCount">66</span>
+                    </li>
+                    ## 产品肤色信息
+                    <li class="layui-nav-item skin-btn" style="padding-left: 16px;">
+                        <span class="iconfont byhome_top_theme" style="font-size: 20px;cursor: pointer;"></span>
+                        <dl class="layui-nav-child setting" style="left: 0" id="sysSkinSelect">
+                            ## 商务蓝
+                            <dd class="#if($shiro.getPrincipal().sysSkin == 'blue-skin') layui-this#end">
+                                <a href="javascript:;" class="view-sys-skin" data-key="blue-skin">商务蓝</a>
+                            </dd>
+                            <dd class="#if($shiro.getPrincipal().sysSkin == 'gray-skin') layui-this#end">
+                                <a href="javascript:;" class="view-sys-skin" data-key="gray-skin">经典灰</a>
+                            </dd>
+                            <dd class="#if($shiro.getPrincipal().sysSkin == 'light-skin') layui-this#end">
+                                <a href="javascript:;" class="view-sys-skin" data-key="light-skin">极简白</a>
+                            </dd>
+##                            <dd class="#if($shiro.getPrincipal().sysSkin == 'dark-skin') layui-this#end">
+##                                <a href="javascript:;" class="view-sys-skin" data-key="dark-skin">星空黑</a>
+##                            </dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item info-btn">
+                        <span class="iconfont byhome_top_mine1 info-title" style="font-size: 24px;"></span>
+                        <span class="t2-header-text info-title" style="display: inline-block; min-width: 50px;">${shiro.getPrincipal().username}</span>
+                        <span class="layui-nav-more"></span>
+                        <dl class="layui-nav-child setting">
+                            <dd>
+                                ##                    个人信息
+                                <a href="javascript:;" class="view-userinfo-btn">
+                                    <span class="iconfont byhome_top_mine2"></span>
+                                    #springMessage('sys.index.selfInfo')
+                                </a>
+                            </dd>
+                            ##                    修改密码
+                            <dd>
+                                <a href="javascript:;" class="modify-pwd-btn">
+                                    <span class="iconfont byhome_top_edit"></span>
+                                    #springMessage('sys.index.editPassword')
+                                </a>
+                            </dd>
+                            <dd>
+                                <a href="javascript:;" class="lock-btn">
+                                    <span class="iconfont byhome_top_lockscreen"></span>
+                                    ## 锁屏
+                                    #springMessage('common.button.lockScreen')
+                                </a>
+                            </dd>
+                            <dd>
+                                <a href="javascript:;" class="logout-btn">
+                                    <span class="iconfont byhome_top_exit1"></span>
+                                    ##  注销
+                                    #springMessage('sys.index.exit')
+                                </a>
+                            </dd>
+                        </dl>
+                    </li>
+                </ul>
+            </div>
+            <div class="layui-tab layui-tab-card t2-web-tab" lay-filter="card" lay-allowClose="true" id="menusTabCard">
+                <ul class="layui-tab-title layui-tab-title-menu t2-tab-title" id="navtabContainer">
+                ##                首页
+                <li lay-id="0" class="layui-this nav-tab0">
+                   <span>#springMessage('common.table.firstPage')</span>
+                </li>
+                </ul>
+                <div class="tabs-more-button">
+
+                </div>
+                <div class="layui-tab-content" id="tab-content">
+                    <div class="layui-tab-item layui-show" style="border-left: none">
+                        <div class="main-body">
+                         #parse("views/main.vm")
+##                            <div class="main-footer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-side layui-side-collapse" id="menuLeft">
+            <div class="main-logo">
+                <div class="logo">
+                    <img src="${basePath}/static/v3.2/images/login/login_logo.png"  class="#if($shiro.getPrincipal().sysSkin != 'light-skin') layui-hide #end" alt srcset id="darkImg">
+                    <img src="${basePath}/static/v3.2/images/login/dark-logo@2x.png" class="#if($shiro.getPrincipal().sysSkin == 'light-skin') layui-hide #end" alt srcset id="lightImg">
+                </div>
+                <div class="logo-small">
+                    <img src="${basePath}/static/v3.2/images/index/logo_small@2x.png"  alt srcset >
+                </div>
+            </div>
+            <div class="home-search">
+                <div class="collapse-search" id="openSearchInput">
+                    <span class="font_family icon-sousuo1"></span>
+                    <div></div>
+                </div>
+                <div class="t2-menu-search" id="searchMenusWrapper">
+                    <span class="font_family icon-sousuo1"></span>
+                    <input placeholder=" #springMessage('sys.home.widget.search')" id="searchTree" autocomplete="off" type="text" readonly onfocus="this.removeAttribute('readonly');">
+                </div>
+            </div>
+            <a href="javascript:;" id="menuExpand" class="menu-toggle-btn t2-menu-toggle" title="#springMessage('sys.index.menuOpen')">
+##                <span class="font_family icon-zuodaohangzhankaianniu"></span>
+                <img src="${basePath}/static/v3.2/images/index/side_close@2x.png"  alt srcset  class="close-img">
+                <img src="${basePath}/static/v3.2/images/index/side_open@2x.png"  alt srcset class="open-img">
+            </a>
+            <div class="layui-side-content">
+                <div class="layui-side-mini">
+                    <ul class="bt-nav">
+                        #foreach($menu in $menuList)
+                            <li>
+                                #if($menu.url)
+                                    <a href="javascript:;" name="${menu.name}" data-name="${menu.name}"
+                                       href-url="${basePath}$!{menu.url}" data-id="${menu.id}" data-type="tabAdd">
+                                        <span class="iconfont #if($menu.icon) ${menu.icon}#else bysidebar_a#end"></span>
+                                        <span class="menu-arrow-tips menu-nav-tips">&nbsp;</span>
+                                    </a>
+                                #else
+                                    <a href="javascript:;" data-name="${menu.name}" data-id="${menu.id}">
+                                        <span class="iconfont #if($menu.icon) ${menu.icon}#else bysidebar_a#end"></span>
+                                        <span class="menu-arrow-tips menu-nav-tips">&nbsp;</span>
+                                    </a>
+                                #end
+                            </li>
+                        #end
+                    </ul>
+                </div>
+                <div class="layui-side-scroll">
+                    <ul id="sideMenuNav" class="tree treeFolder collapse bt-nav">
+                        #foreach($menu in $menuList)
+                            <li level="${menu.level}">
+                                <a autobypy="bz" dataType="topmenu" childMneu="menus${menu.id}" data-id="${menu.id}" keyboard="A" class="menu-level${menu.level}" href="javascript:;"
+                                   #if($menu.url)href-url="${basePath}$!{menu.url}" data-type="tabAdd"#end>
+                                   <span class="iconfont-left iconfont #if($menu.icon) ${menu.icon}#else bysidebar_a#end"></span>
+                                    <span class="menu-name">$!{menu.name}</span>
+##                                    <span class="menu-border-left"></span>
+##                                    <span class="iconfont byicon_arrow_right"></span>
+                                    #if(!$menu.url)
+                                        <span class="bt-nav-more">
+                                            <span class="font_family icon-zhankai_zuodaohang bt-nav-next"></span>
+                                        </span>
+                                    #end
+                                </a>
+                                #if(!$menu.url)
+                                    #menuTemplate1($menu.children,0,$menu)
+                                #end
+                            </li>
+                        #end
+                    </ul>
+                    #macro(menuTemplate1 $menus $index $parent)
+                        <ul id="menus${parent.id}"  class="bzmenus_sub">
+                            #foreach($menu in $menus)
+                                #set($hasChildren=$menu.children && $menu.children.size()>0)
+                                <li level="${menu.level}" class="#if(!$hasChildren)menu-last-li #end">
+                                    <a autobypy="$menu.id" class="menu-level${menu.level}" title="$!{menu.name}" href="javascript:;"
+                                       #if($!menu.url)href-url="${basePath}$!{menu.url}" data-id="${menu.id}" data-type="tabAdd"
+                                       name="$!{menu.name}" menu-collect #end>
+                                    ##                                        <span class="font_pos"><i class="external_small"></i></span>
+                                        #if(!$hasChildren)
+##                                            <span class="menu-last-text">&bull;</span>
+                                        #end
+                                        <span class="menu-name">$!{menu.name}</span>
+                                        <span class="bt-nav-more">
+                                            #if($hasChildren)
+                                             <span class="font_family icon-zhankai_zuodaohang bt-nav-next"></span>
+                                            #else
+
+                                                #if(!$lists.contains($menuCollectIds,$menu.id))
+                                                    ##                    添加收藏菜单
+                                                    <span class="iconfont byicon_collection bt-menu-collect" id="collectIcon${menu.id}"></span>
+                                                #else
+                                                    ##                    取消收藏菜单
+                                                    <span class="iconfont byicon_collection_full bt-menu-collect" id="collectIcon${menu.id}"></span>
+                                                #end
+                                            #end
+                                        </span>
+                                    </a>
+                                    #if($hasChildren)
+##                                        <div class="menu-3">
+                                            #menuTemplate1($menu.children,1,$menu)
+##                                        </div>
+                                    #end
+                                </li>
+                            #end
+                        </ul>
+                    #end
+                </div>
+            </div>
+        </div>
+    </div>
+##锁屏
+    <div class="lock-screen-container hide">
+        <div>
+            <div class="lock-screen-div">
+                <form onsubmit="return lockScreen.checkSubmit();">
+                    <div class="lock-screen">
+                        <div class="lock"></div>
+                        <div class="lock-box">
+                            <div class="login-name">
+                                $shiro.getPrincipal().loginName
+                            </div>
+                            <div class="user-name">
+                              $shiro.getPrincipal().username
+                            </div>
+                        </div>
+                        <div class="input-content">
+                            <div>
+##                                <input type="password" autocomplete="new-password" placeholder="#springMessage('sys.login.enterPassword')"  class="lock-srk" id="lockInput" readonly onfocus="this.removeAttribute('readonly');">
+                                <input type="text" autocomplete="off" placeholder="#springMessage('sys.login.enterPassword')" class="lock-srk" id="lockInput" oninput="passwordInput(this)">
+                                <button type="button" class="unlock-btn" id="unlock">#springMessage('sys.user.button.unlock')</button>
+                            </div>
+
+                            <div class="ssoBox">
+                                <span><span>SSO授权登陆</span><img src="${basePath}/static/v3.2/images/index/qianwangicon.png"/></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="tab-more-container" id="tabMoreContainer"></div>
+<script>
+    bt.use(['layer', 'navtab', 'form', 'util', 'money','element'], function () {
+        var layer = bt.layer, $ = bt.jquery;
+
+        var element = layui.element();
+        $("img.lazyload").lazyload();
+        //关闭chrome 浏览器缩放页面功能功能
+        $('body').css('zoom', 'reset');
+        // 存肤色缓存
+        store.set('web-skin', $('body').hasClass('dark-skin')?'dark-skin' : 'light-skin')
+
+        $(document).keydown(function (event) {
+            //event.metaKey mac的command键
+            if ((event.ctrlKey === true || event.metaKey === true) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
+                event.preventDefault();
+            }
+        });
+
+       // debugger;
+       // console.log($("#searchTree").attr('readonly'))
+        // $("#searchTree").removeAttr('readonly');
+
+        //
+        // $(window).bind('mousewheel DOMMouseScroll', function (event) {
+        //     if (event.ctrlKey === true || event.metaKey) {
+        //         event.preventDefault();
+        //     }
+        // });
+        //初始化tab
+        bt.navtab.init();
+        //美化滚动条
+        $(".layui-side-content").mCustomScrollbar({theme: "minimal-dark"});
+
+        //mini菜单弹出tips开始
+        var leftNavEnterTimer = 0;
+        var leftNavLeaveTimer = 0;
+        $('.layui-side-mini li').mouseenter(function (e) {
+            var that = $(this).find('a');
+            clearTimeout(leftNavEnterTimer);
+            leftNavEnterTimer = setTimeout(function () {
+                var title = that.data("name");
+                layer.closeAll('tips');
+                layer.tips(title, that.find('.menu-arrow-tips'), {time: 30000});
+            }, 50);
+        }).mouseleave(function () {
+            clearTimeout(leftNavLeaveTimer);
+            leftNavLeaveTimer = setTimeout(function () {
+                layer.closeAll('tips');
+            }, 50)
+        });
+        //mini菜单弹出tips结束
+//        菜单收缩开始
+        var menuToggleFunc = function (that,open) {
+            if ($('.my-body').hasClass('my-body-expand') && !open) {
+                $('.my-body').removeClass('my-body-expand');
+                $('#indexBody').addClass('min-menus');
+                $('.layui-side-scroll').hide();
+                $('.layui-side-mini').show();
+                $('.layui-side').addClass('layui-side-collapse').removeClass('layui-side-expand');
+                // 展开菜单
+                that.attr('title', bt.lang('sys.index.menuOpen')).removeClass("t2-menu-toggle-expand");
+                // that.find('i').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+                that.find('.font_family ').addClass('icon-zuodaohangzhankaianniu').removeClass('icon-zuocedaohangshouqianniu');
+            } else {
+                $('.my-body').addClass('my-body-expand');
+                $('#indexBody').removeClass('min-menus');
+                $('.layui-side-mini').hide();
+                $('.layui-side-scroll').show();
+                $('.layui-side').addClass('layui-side-expand').removeClass('layui-side-collapse');
+                // 收起菜单
+                that.attr('title', bt.lang('sys.index.menuClose')).addClass("t2-menu-toggle-expand");
+                that.find('.font_family ').removeClass('icon-zuodaohangzhankaianniu').addClass('icon-zuocedaohangshouqianniu');
+            }
+            adjustPendingInformationTitle();
+            $.fn.dataTable && $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
+            /**
+             *  调整选项卡内容的宽度
+            *   1.检查页签文字是否显示
+             *  2.获取首页第一个卡片（#tabsHeader)高度,由于是自适高度
+             *  3.重新设置首页工作台常用菜单父容器的高度
+            **/
+            // 首页头部四个卡片为自适的，所以要调整宽度
+            // 需要判断页签标题#navtabContainer是否存在，否则高度不对
+            var cardTitleHeight = $("#navtabContainer").is(":hidden")? 0:$(document).find(".layui-tab[lay-filter='card'] ul.layui-tab-title").innerHeight();
+            // 需要减去的高度
+            var height = $(window).height() - $('.layout-header').height() - cardTitleHeight;
+
+            //设置首页工作台常用菜单父容器的高度
+           // var cardHeight = height - $('#tabsHeader').height() - 20
+
+           // $('#tabsContent').height(cardHeight)
+        };
+        //迷你菜单点击
+        $('.layui-side-mini a').click(function () {
+            var that = $(this);
+            //如果mini菜单点开为直接打开链接则不执行
+            if (that.data("type")) {
+                return;
+            }
+            menuToggleFunc($('.menu-toggle-btn'));
+            //根据id展开指定的一级菜单
+            var id = $(this).data("id");
+            var targetMenuElem = $("#sideMenuNav").children('li').find('[data-id="'+id+'"]');
+            if (!targetMenuElem.hasClass("parent-active")){
+                targetMenuElem.trigger('click');
+            }
+            var index = that.parents('li').index();
+            var navItem = $('.layui-side-scroll .bt-nav li:eq(' + index + ') a.menu-level0');
+            navClickFunc(navItem);
+        });
+        //展开、收起按钮点击
+        $('.menu-toggle-btn').click(function () {
+            menuToggleFunc($(this));
+
+        });
+
+        //聚焦时，展开
+        $("#searchTree").on("focus",function(e){
+            menuToggleFunc($('.menu-toggle-btn'),true);
+        });
+
+        $('.layui-side-content').bind("mousedown", function( event ) {
+            event.preventDefault();
+        }).hover(function(){
+            $("#menuExpand").show();
+            $("#menuExpand").animate({opacity:1})
+        },function(){
+            $("#menuExpand").animate({opacity:0})
+        });
+        //导航栏事件
+        $('.t2-tab-title').on("mouseover ","li" ,function( event ) {
+            $(this).next('li').find('.t2-tab-divider').hide();
+        })
+        $('.t2-tab-title').on("mouseout ","li" ,function( event ) {
+            $(this).next('li').find('.t2-tab-divider').show();
+        });
+        //菜单收缩结束
+        // 切换系统肤色
+        var systemSkin = {
+            'blue-skin':{className:'light-skin blue-skin',imgId:'#lightImg'},
+            'gray-skin':{className:'light-skin gray-skin',imgId:'#lightImg'},
+            'light-skin':{className:'light-skin',imgId:'#darkImg'},
+            // 'dark-skin':{className:'dark-skin',imgId:'#lightImg'},
+        }
+        $('.view-sys-skin').click(function () {
+            var key = $(this).data('key')
+            if(!key){
+                key = 'light-skin'
+            }
+            // 如果相同肤色不做刷新
+            if($('#indexBody').data('skin') === key){
+                setTimeout(function () {
+                    $('#sysSkinSelect').removeClass('layui-show')
+                },100)
+              return
+            }
+            var sysSkin = {
+                sysSkin:key
+            }
+            layer.confirm(bt.lang('系统皮肤修改需要刷新浏览器，请确认是否修改？'), function(index){
+                changeSysSkin(sysSkin)
+            })
+        })
+
+        function changeSysSkin(sysSkin) {
+           // $('#navtabContainer').hide();
+            $.post(basePath +"/sys/user/modifySysSkin", sysSkin, function (result) {
+                if (result.success) {
+                    location.reload()
+                }
+            }, 'JSON');
+        }
+
+        // 点击菜单最小化搜索框，展开菜单
+        $('#openSearchInput').click(function () {
+            menuToggleFunc($('.menu-toggle-btn'));
+        })
+        //菜单点击事件
+        var activeClassName = 'active';
+        var navClickFunc = function (that) {
+            var parent = that.parent();
+            var level = parent.attr('level');
+
+            //菜单为第一级，且为点开直接打开链接则不执行展开操作
+            if (level == "0" && that.data("type")) {
+                return;
+            }
+            if (that.data('id')) {
+                return;
+            }
+            parent.siblings().removeClass(activeClassName);
+            if (parent.hasClass('bt-nav-item')) {
+                parent.siblings().find('.bt-nav-more i.fa-minus').removeClass('fa-minus').addClass('fa-plus');
+            } else {
+                parent.siblings().find('.bt-nav-more i.fa-angle-down').removeClass('fa-angle-down').addClass('fa-angle-right');
+            }
+            if (!parent.hasClass(activeClassName)) {
+                parent.addClass(activeClassName);
+                if (parent.hasClass('bt-nav-item')) {
+                    that.siblings('.bt-nav-more').find('i').addClass('fa-minus');
+                } else {
+                    that.siblings('.bt-nav-more').find('i').addClass('fa-angle-down');
+                }
+            } else {
+                parent.removeClass(activeClassName);
+                if (parent.hasClass('bt-nav-item')) {
+                    that.siblings('.bt-nav-more').find('i').removeClass('fa-minus');
+                } else {
+                    that.siblings('.bt-nav-more').find('i').removeClass('fa-angle-down');
+                }
+            }
+        }
+
+        // 解决消息弹框被tab ....挡住的问题
+        $(".info-btn").hover(function(){
+            $("#navtabContainer").css("zIndex",0)
+        },function(){
+            $("#navtabContainer").css("zIndex",1)
+        })
+
+        //查看登录信息
+        $(".show-loginInfo-btn").click(function () {
+            bt.navtab.addNavtab(bt.lang('sys.index.loginInfo'), basePath + "/sys/loginLog/userLoginInfo");
+        });
+        //查看个人信息
+        $('.view-userinfo-btn').click(function () {
+            layer.open({
+                type: 2,
+                title: bt.lang('sys.index.selfInfo'),
+                area: ['450px', '380px'],
+                content: basePath + "/sys/user/view/$shiro.getPrincipal().id"
+            });
+        });
+        //修改密码点击
+        $('.modify-pwd-btn').click(function () {
+            layer.open({
+                type: 2,
+                // 修改密码
+                title: bt.lang('sys.index.editPassword'),
+                area: ['410px', '250px'],
+                content: basePath + "/sys/user/modifyPassword"
+            });
+        });
+        $('.message-btn').click(function () {
+        });
+        $('.bg-btn').click(function () {
+            bgImg = $(this).attr("value");
+            $("body").css("background", "url('" + basePath + "/static/images/bg/" + bgImg + "') no-repeat top center fixed");
+            var url = basePath + "/sys/config/saveSkin";
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: url,
+                data: {content: bgImg},
+                dataType: "json", //返回数据形式为json
+                success: function (result) {
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }
+            });
+        });
+        $('.bg-btn').mouseover(function () {
+            $("body").css("background", "url('" + basePath + "/static/images/bg/" + $(this).attr("value") + "') no-repeat top center fixed");
+        });
+        $('.bg-btn').mouseout(function () {
+            $("body").css("background", "url('" + basePath + "/static/images/bg/" + bgImg + "') no-repeat top center fixed");
+        });
+
+        $(".ssoBox").click(function () {
+            window.location.href = "$ssoLoginUrl";
+        })
+
+//        退出系统按钮
+        $('.logout-btn').click(function () {
+            // 是否退出系统
+            layer.confirm(bt.lang('sys.index.isExit'), {icon: 3}, function (index) {
+                var pathUrl = basePath + '/oauth/logout';
+                $.get(pathUrl, function (json) {
+				        if (json.success) {
+                            var cookie = $.cookie("sso-tenant");
+                            if (cookie === "dsl"){
+                                // 清除Cookie
+                                console.log("dsl logout")
+                                document.cookie = "sso-tenant=; expires=" + new Date(0).toUTCString();
+                                location.href="$!{ssoUrl}";
+                            } else {
+                                location.href=basePath+"/login";
+                            }
+							layer.close(index);
+				        }else{
+				            location.href=basePath+"/login";
+                            //抛异常?
+                        }
+                        //清除缓存的内容
+                        clearCookies()
+                        store.clearAll();
+				    }, 'JSON');
+            });
+        });
+
+        $.get(basePath + "/sys/user/checkUserPassword", function (json) {
+            if (json.success) {
+                if (json.params && parseInt(json.params[0]) !== 3) {
+                    layer.alert(json.msg, {icon: 0}, function () {
+                        layer.closeAll();
+                        layer.open({
+                            type: 2,
+                            // 修改密码
+                            title: bt.lang('sys.index.editPassword')/*'修改密码'*/,
+                            area: ['350px', '250px'],
+                            closeBtn: parseInt(json.params[0]),
+                            content: basePath + "/sys/user/modifyPassword"
+                        });
+                    });
+                }
+            }
+        }, 'JSON');
+        // 首次加载时，没有页签行
+        window.adjustTabContent = function () {
+            var documentElem = $(document);
+            var win = $(window);
+            // 需要判断页签标题#navtabContainer是否存在，否则高度不对
+            var cardTitleHeight = $("#navtabContainer").is(":hidden")? 0:documentElem.find(".layui-tab[lay-filter='card'] ul.layui-tab-title").innerHeight();
+            // 需要减去的高度
+            var height = win.height() - $('.layout-header').height() - cardTitleHeight;
+            // 设置高度
+            // documentElem.find(".layui-tab[lay-filter='card'] div.layui-tab-content").height(height);
+            $('#tab-content').height(height);
+
+            //设置首页工作台常用菜单父容器的高度
+            var cardHeight = height - $('#tabsHeader').height() - 20
+
+           // $('#tabsContent').height(cardHeight)
+
+        }
+
+        function adjustPendingInformationTitle(){
+            bt.each($(".content-boby-name"),function () {
+                var $c = $(this)
+                        .clone()
+                        .css({display: 'inline', width: 'auto', visibility: 'hidden'})
+                        .appendTo('body');
+
+                var c_width = $c.width();
+                    $c.remove();
+                if ( c_width > $(this).width() ){
+                    $(this).attr('title',$(this).text())
+                }else {
+                    $(this).removeAttr('title')
+                }
+            })
+        }
+        adjustTabContent();
+        // 自适应
+        $(window).on('resize', function () {
+            adjustTabContent();
+            // 左侧菜单容器高度设置
+            var menuWrapperHeight = $("#menuLeft").height();
+            $(".layui-side-content").height( menuWrapperHeight- 60 );
+            adjustPendingInformationTitle();
+            $(".t2-tab-open").removeClass("t2-tab-open")
+            // 隐藏tab更多的弹框
+            $('#tabMoreContainer').hide()
+        });
+        //执行ESC键关闭弹框
+        $(document).on('keydown', function (event) {
+            var event = window.event || event;
+            if (event.keyCode == 27) {
+                layer.closeAll();
+            }
+            if (event.keyCode == 27) {
+                layer.closeAll();
+            }
+        })
+
+
+        // 子应用菜单
+        $.get(basePath + "/getMenuList", function (res) {
+            if (res) {
+                var microMenuList = res.obj||[];
+                window.microMenuList=microMenuList;
+                initQianKun();
+            }
+        }, 'JSON');
+    });
+
+    // ========== 微前端配置==========
+    var basePath = "${basePath}";
+    var isdev=false;
+    var sendInfo={
+        login:{
+          token: $.cookie("Access-Token") || "",
+          username:$(".login-name").text(),
+          extraInfo:{usernameStr:$(".user-name").text()},
+          usersource :store.get('bytter_userresource') || [],
+          resource :store.get('bytter_resource') || [],
+          bytter_dict :store.get('bytter_dict') || []
+        }
+    }
+    window.BT_MICRO_APP_CONFIG = {
+        microAppPrefixes: ['/sub-netbank/','/sub-custbasic/','/sub-finance/','/sub-other/'],
+        microAppContainerId: 'bt-subapp-container',
+        microAppPathDataKey: 'micro-path',
+        defaultRoutePath: '/index'
+    };
+
+    window.microAppInstance = null;
+    window.microAppPool = {};
+    window.microAppConfigs = {
+        '/sub-netbank/': {
+            name: 'bt_subsystem_netbank',
+            entry: isdev?'http://192.168.8.223:3301':'/bt_subsystem_netbank/',
+            container: '#' + window.BT_MICRO_APP_CONFIG.microAppContainerId,
+            props: { basePath: basePath,sendInfo }
+        },
+        // 基础模板测试
+        '/sub-custbasic/': {
+            name: 'bt_subsystem_custbasic', // 新子应用唯一名称，不能重复
+            entry: isdev?'http://192.168.8.223:3302':'/bt_subsystem_custbasic/', // 新子应用的访问地址
+            container: '#' + window.BT_MICRO_APP_CONFIG.microAppContainerId,
+            props: { basePath: basePath,sendInfo }
+        }
+        ,
+        '/sub-finance/': {
+            name: 'bt_subsystem_finance', // 新子应用唯一名称，不能重复
+            entry: isdev?'http://192.168.8.223:3302':'/bt_subsystem_finance/', // 新子应用的访问地址
+            container: '#' + window.BT_MICRO_APP_CONFIG.microAppContainerId,
+            props: { basePath: basePath,sendInfo }
+        },
+        '/sub-other/': {
+            name: 'bt_subsystem_other', // 新子应用唯一名称，不能重复
+            entry: isdev?'http://192.168.8.223:3302':'/bt_subsystem_other/', // 新子应用的访问地址
+            container: '#' + window.BT_MICRO_APP_CONFIG.microAppContainerId,
+            props: { basePath: basePath,sendInfo }
+        }
+    };
+    console.log('微前端子应用配置',window.microAppConfigs)
+
+    // 主应用全局
+    window.__TabEventBus = {
+        list: [],
+        // 订阅：pageTabId 订阅刷新
+        onRefresh(pageTabId, cb) {
+            // 存：哪个tab、回调是什么
+            this.list.push({ pageTabId, cb });
+        },
+        // 触发：指定某个tab刷新
+        emitRefresh(pageTabId) {
+            this.list.forEach(item => {
+                if(item.pageTabId === pageTabId){
+                    item.cb();
+                }
+            })
+        },
+        // 页面销毁取消订阅
+        offRefresh(pageTabId, cb) {
+            this.list = this.list.filter(x =>!x.pageTabId===pageTabId);
+        }
+    };
+
+    // 初始化qiankun
+    function initQianKun() {
+        if (!window.qiankun) {
+            console.warn('qiankun未加载');
+            return;
+        }
+
+        window.qiankun.start({
+            singular: false,
+            sandbox: { experimentalStyleIsolation: false },
+            loadScriptMode: 'fetch',
+            autoRegister: false,
+            disableGlobalState: true,
+            excludeAssetFilter: function() {
+                return true;
+            }
+        });
+    }
+
+    function getSubLang(){
+        if (!window.MASTER_I18N) {
+            // === 获取当前语言 ===
+            var lang = 'zh-CN';
+            // === 合并目标对象 ===
+            var allLangData = {};
+
+            function mergeLangResponse(json) {
+                if (Array.isArray(json)) {
+                    for (var i = 0; i < json.length; i++) {
+                        var item = json[i];
+                        if (item && typeof item.keyId === 'string' && item.context != null) {
+                            allLangData[item.keyId] = item.context;
+                        }
+                    }
+                }
+            }
+
+            $.ajax({
+                url: basePath + "/lang/internationBase?lang=" + encodeURIComponent(lang),
+                type: "GET",
+                async: false,
+                dataType: "json"
+            }).done(mergeLangResponse).fail(function() {
+                // 可选错误处理
+            });
+
+            $.ajax({
+                url: basePath + "/lang/internation?lang=" + encodeURIComponent(lang),
+                type: "GET",
+                async: false,
+                dataType: "json"
+            }).done(mergeLangResponse).fail(function() {
+                // 可选错误处理
+            });
+            // === 挂载最终结果 ===
+            window.MASTER_I18N = allLangData;
+        }
+    }
+    getSubLang();
+
+    // ========== 微前端配置结束 ==========
+
+
+    $(function () {
+        initScreenTimer($!configTag.getConfig('sys','screenTime'));
+        // 解决锁屏刷新可以看到页面的内容的问题
+        setTimeout(function () {
+            $("#layoutBox").css('display','block');
+        },100)
+
+        // 锁屏 按钮显示
+        $('#lockInput').focus(function () {
+            if($(this).val()){
+                $('#unlock').show()
+            }
+        })
+        $('#lockInput').on('input propertychange',function () {
+            if($(this).val()){
+                $('#unlock').show()
+            }
+        })
+        $('#lockInput').blur(function () {
+            if(!$(this).val()){
+                $('#unlock').hide()
+            }
+        })
+    });
+    // 注册常用菜单的hover事件
+    function hoverCommonMenus() {
+        $("#commonMenus").find('.common-menu-item').unbind('mouseenter').unbind('mouseleave')
+        $("#commonMenus").find('.common-menu-item').hover(function () {
+            var title = $(this).find('.common-menu-name').data('title')
+            layer.tips(title, $(this), {time: 300000,
+                tips: [1, "#666666"]});
+        },function () {
+            layer.closeAll('tips')
+        })
+    }
+
+</script>
+<script>
+    var baseUrl = window.location.host
+    var prot = window.location.protocol
+    var wsPrefix = "ws";
+    if("https:" == prot){
+        wsPrefix="wss"
+    }
+    var ws = new WebSocket(wsPrefix + "://" + baseUrl + "/ws/$shiro.getPrincipal().id");
+    ws.onopen = function() {
+        console.log("open websocket...");
+    };
+
+    //close event
+    ws.onclose = function() {
+        console.log("close websocket...");
+    };
+
+    // 响应onmessage事件:
+    ws.onmessage = function(msg) {
+        //这里可以处理接收到服务器的数据
+        console.log(msg);
+        if(msg&&msg.data){
+            var result = JSON.parse(msg.data);
+            switch (result.type) {
+                case "HOME_NOTICE":
+                    loadPendingInformation();
+                    Notice.fn.checkNotificationNumber();
+                    break
+                case "UI_UPDATE":
+                    layer.open({
+                        title: '系统风格变更' ,
+                        btn: ['确认'],
+                        content: '系统风格已经修改，请刷新！！',
+                    })
+                    break
+                case "KICK_OUT":case "TOKEN_EX":
+                    layer.open({
+                        title: "登陆失效" ,
+                        btn: ['确认'],
+                        content: result.msg,
+                        yes:function(index){
+                            var pathUrl = basePath + '/oauth/logout';
+                            $.get(pathUrl, function (json) {
+                                //清除缓存的内容
+                                clearCookies()
+                                store.clearAll();
+                                if (json.success) {
+                                    // 清除cookie token
+                                    document.cookie = "Access-Token="+store.set('Access-Token')+"; expires=" + new Date(0).toUTCString();
+                                    location.href=basePath+"/login";
+                                    layer.close(index);
+                                }else{
+                                    location.href=basePath+"/login";
+                                    //抛异常?
+                                }
+                            }, 'JSON');
+                        }
+                    })
+                    break
+                default:
+                    break
+            }
+        }
+    };
+</script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/dad/dad.min.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/index.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+##<script type="text/javascript"
+##        src="${basePath}/static/v3.2/modules/index/menuLayer.js?_btv=${resourceVersion}"
+##        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/map.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+##<script type="text/javascript" charset="utf-8" src="${basePath}/static/plugins/crypto/crypto-js.min.js"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/lockscreen.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/uiTool.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/jtree.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/plugins/jTreeInit.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+</body>
+</html>

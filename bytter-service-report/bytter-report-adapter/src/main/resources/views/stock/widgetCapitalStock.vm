@@ -1,0 +1,196 @@
+<style>
+    .line_02 {
+        height: 1px;
+        border-top: 1px dashed #ddd;
+        text-align: center;
+    }
+    .grad {
+        background: -webkit-linear-gradient(#4890F0, #48A8F0); /* Safari 5.1 - 6.0 */
+        background: -o-linear-gradient(#4890F0, #48A8F0); /* Opera 11.1 - 12.0 */
+        background: -moz-linear-gradient(#4890F0, #48A8F0); /* Firefox 3.6 - 15 */
+        background: linear-gradient(#4890F0, #48A8F0); /* 标准的语法 */
+    }
+    @media screen and (max-width: 1399px) {
+        .balText {
+            font-size: 15px;
+            text-align: right;
+        }
+        .curSignText {
+            font-size: 10px;
+        }
+    }
+    @media screen and (min-width: 1399px) and (max-width: 1680px) {
+        .balText {
+            font-size: 20px;
+            text-align: right;
+            padding-right: 5px;
+        }
+        .curSignText {
+            font-size: 15px;
+        }
+    }
+    @media screen  and (min-width: 1680px) {
+        .balText {
+            font-size: 25px;
+            text-align: right;
+            padding-right: 10px;
+        }
+        .curSignText {
+            font-size: 20px;
+        }
+    }
+    .textRight {
+        text-align: right;
+    }
+    .pd5 {
+        padding-left: 5px;
+    }
+    .layui-table thead td {
+        padding:6px 15px;
+    }
+   .layui-table tbody td {
+        padding:4px 15px;
+    }
+</style>
+<div class="layui-row">
+    <div class="layui-col-md5" style="font-family: 微软雅黑;color: white;overflow: auto;height: 100%">
+        <div class="grad" style="border-radius: 5px;height:100%;margin:10px 10px 10px 10px; padding: 0px;">
+            <div style="height: 36px;line-height: 36px;" class="pd5">
+                <div style="font-size: 20px;float: left;">
+                    #springMessage('table.capitalStock.availBal')
+                </div>
+                <div style="text-align: right;float: right;">
+                    <select name="curId" id="curId"
+                            style="padding-right: 45px;font-size: 8px;width: 8px;background: transparent;border: none;">
+                        #foreach($cur in $!{curList})
+                            <option value="$cur.id" #if($cur.id == $!{curId}) selected="true" #end>$cur.curName</option>
+                        #end
+                    </select>
+                </div>
+            </div>
+            <div class="line_02"></div>
+            <div style="height: 72px;line-height: 72px;" class="pd5">
+                <div style="width: 65px;float: left">
+                    #springMessage('table.capitalStock.moeny')
+                </div>
+                <div class="balText">
+                    <span class="curSignText" id="accCurSignText"></span>&nbsp;<span id="sumAccAvailBalText"></span>
+                </div>
+            </div>
+            <div class="line_02"></div>
+            <div style="height: 72px;line-height: 72px;" class="pd5">
+                <div style="width: 65px;float: left ">
+                    #springMessage('table.capitalStock.billMoney')
+                </div>
+                <div class="balText" style="text-align: right">
+                    <span class="curSignText" id="billCurSignText"></span>&nbsp;<span id="sumBillAvailBalText"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-md7" style="height: 185px;overflow: auto;margin:10px 0px 5px 0px;border-bottom: none;border-top: none;padding-right:10px;">
+        <table id="capitalStock" class="layui-table layui-form" style="margin: 0px; padding: 0px;">
+            <thead>
+            <tr align="center">
+                <td rowspan="2"><a href="#" onclick="netClick()"> #springMessage('table.capitalStock.netName')</a></td>
+                <td rowspan="2">#springMessage('table.capitalStock.curName')</td>
+                <td colspan="2">#springMessage('table.capitalStock.availBal')</td>
+            </tr>
+            <tr align="center">
+                <td>#springMessage('table.capitalStock.balMoney')</td>
+                <td>#springMessage('table.capitalStock.billMoney')</td>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+#set($basePath=$springMacroRequestContext.contextPath)
+<script>
+    bt.use(['form', 'money', 'selectType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.selectType.init();
+
+        /**
+         *
+         */
+        widgetBal = function (netId) {
+            var sumAccAvailBalNatualCurrency = 0;
+            //通过Ajax获取数据
+            var url = basePath + "/bi/capitalStock/getWidgetBal";
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: url,
+                data: {netId: netId, curId: $("#curId").val()},
+                dataType: "json", //返回数据形式为json
+                success: function (result) {
+                    if (result) {
+                        $("#accCurSignText").text(result.curSign);
+                        $("#billCurSignText").text(result.curSign);
+                        $("#sumAccAvailBalText").text(bt.money.format(result.sumAccAvailBal));
+                        $("#sumBillAvailBalText").text(bt.money.format(result.sumBillAvailBal));
+                        sumAccAvailBalNatualCurrency = result.sumAccAvailBalNatualCurrency;
+                    }
+                }
+            });
+            //通过Ajax获取数据
+            var url = basePath + "/bi/capitalStock/listByWidget";
+            $.ajax({
+                type: "post",
+                async: false, //同步执行
+                url: url,
+                data: {curId: $("#curId").val()},
+                dataType: "json", //返回数据形式为json
+                success: function (result) {
+                    if (result) {
+                        var html = ""
+                        $.each(result, function (i, capitalStockWidget) {
+                            html += ' ';
+                            html += '<tr role="' + i + '" class="odd">';
+                            html += '   <td><a href="#" onclick="netClick(\'' + capitalStockWidget.netId + '\')">' + capitalStockWidget.netName + '</a></td>';
+                            html += '   <td>' + capitalStockWidget.curName + '</td>';
+                            html += '   <td class=" textRight">' + bt.money.format(capitalStockWidget.accAvailBal) + '</td>';
+                            html += '   <td class=" textRight">' + bt.money.format(capitalStockWidget.billAvailBal) + '</td>';
+                            html += '</tr>'
+                        });
+                        if ($("#curId").find("option:selected").text() !== bt.lang('table.curName.rmb')) {
+                            html += '<tr role="' + (result.length + 1) + '" class="odd">';
+                            html += '   <td class="textRight">' + bt.lang("table.datatable.total") + '</td>';
+                            html += '   <td></td>';
+                            html += '   <td class="textRight">' + $("#sumAccAvailBalText").text() + '</td>';
+                            html += '   <td class="textRight">' + $("#sumBillAvailBalText").text() + '</td>';
+                            html += '</tr>'
+                            html += '<tr role="' + (result.length + 1) + '" class="odd">';
+                            html += '   <td class="textRight">' + bt.lang('table.curName.natualCurrency') + '</td>';
+                            html += '   <td></td>';
+                            html += '   <td class="textRight">' + bt.money.format(sumAccAvailBalNatualCurrency) + '</td>';
+                            html += '   <td class="textRight">' + $("#sumBillAvailBalText").text() + '</td>';
+                            html += '</tr>'
+                        } else {
+                            html += '<tr role="' + (result.length + 1) + '" class="odd">';
+                            html += '   <td class=" textRight">' + bt.lang("table.datatable.total") + '</td>';
+                            html += '   <td></td>';
+                            html += '   <td class=" textRight">' + $("#sumAccAvailBalText").text() + '</td>';
+                            html += '   <td class=" textRight">' + $("#sumBillAvailBalText").text() + '</td>';
+                            html += '</tr>'
+                        }
+                        $("#capitalStock").find("tbody").html(html);
+                    }
+                }
+            });
+
+        }
+        widgetBal();
+
+        $("#curId").on("change", function () {
+            widgetBal();
+        });
+
+        netClick = function (netId) {
+            widgetBal(netId);
+        };
+    });
+</script>

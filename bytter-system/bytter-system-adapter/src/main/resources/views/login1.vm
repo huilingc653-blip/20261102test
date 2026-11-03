@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>登录</title>
+    <script>
+        var basePath = "${basePath}";
+        if(top.location != this.location){top.location.replace(basePath+'/');}
+    </script>
+    <link rel="stylesheet" href="${basePath}/static/plugins/layui/css/layui.css">
+    <style>
+        .login-body {
+            background: url("${basePath}/static/images/bg.png") repeat fixed;
+        }
+        .login-box {
+            position: fixed;
+            top: 0;
+            bottom: 30%;
+            left: 0;
+            right: 0;
+            margin: auto;
+            width: 320px;
+            height: 241px;
+            max-height: 300px;
+        }
+        .login-body .login-box h3{
+            color: #444;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        .login-box .layui-input[name='captcha'] {
+            display: inline-block;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .login-box img {
+            display: inline-block;
+            width: 46%;
+            height: 38px;
+            border: none;
+            vertical-align: top;
+            cursor: pointer;
+            margin-left: 4%;
+        }
+        .login-box button.btn-reset{
+            width: 95px;
+        }
+        .login-box button.btn-submit{
+            width: 190px;
+        }
+
+    </style>
+</head>
+<body class="login-body body">
+
+<div class="login-box">
+    <form class="layui-form layui-form-pane" method="post" action="">
+        <div class="layui-form-item">
+            <h3>拜特登录系统</h3>
+        </div>
+        <div class="layui-form-item">
+            <p>默认测试号：admin;密码：123456</p>
+        </div>
+        #if($!{config.value} != 2)
+        <div class="layui-form-item">
+            <label class="layui-form-label">#springMessage("sys.login.label.account")</label>
+
+            <div class="layui-input-inline">
+                <input type="text" id="account" name="account" class="layui-input" lay-verify="account" placeholder="#springMessage("sys.login.label.account")" value="admin" autocomplete="on" maxlength="20"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">#springMessage("sys.login.label.password")</label>
+
+            <div class="layui-input-inline">
+                <input type="password" id="password" name="password" class="layui-input" lay-verify="password" value="123456" placeholder="#springMessage("sys.login.label.password")" maxlength="20"/>
+            </div>
+        </div>
+        #end
+        #if($showCaptcha)
+        <div class="layui-form-item">
+            <label class="layui-form-label">#springMessage("sys.login.label.captcha")</label>
+            <div class="layui-input-inline">
+                <input type="text" name="captcha" class="layui-input" autocomplete="off" lay-verify="code" placeholder="#springMessage("sys.login.label.captcha")" maxlength="4"/><img id="captchaImg" src="/captcha.jpg" alt="点击刷新">
+            </div>
+        </div>
+        #end
+##记住我功能暂时不需要，先注释
+##        <div class="layui-form-item">
+##            <label class="layui-form-label" style="border: 0px;background: none;"></label>
+##            <div class="layui-input-inline">
+##                <input type="checkbox" name="rememberMe" lay-skin="primary" title="#springMessage("sys.login.label.remember")">
+##            </div>
+##        </div>
+        <div class="layui-form-item">
+            <input type="hidden" id="loginType" value="$!{config.value}"/>
+            <input type="hidden" id="encrypt" value="$!{encrypt.value}"/>
+            <input type="hidden" id="userCadn" name="userCadn"/>
+            <input type="hidden" id="signature" name="signature"/>
+            #if( $!{config.value} == 0 || $!{config.value} == "")
+                <button type="reset" class="layui-btn layui-btn-danger btn-reset">#springMessage("common.button.reset")</button>
+                <button type="submit" class="layui-btn btn-submit" lay-submit="" lay-filter="sub">#springMessage("sys.login.button.login")</button>
+            #end
+            #if( $!{config.value} == 1)
+                <button type="reset" class="layui-btn layui-btn-danger btn-reset">#springMessage("common.button.reset")</button>
+                <button type="submit" class="layui-btn btn-submit" lay-submit="" lay-filter="sub">#springMessage("sys.login.button.calogin")</button>
+            #end
+            #if( $!{config.value} == 2)
+                <button type="submit" class="layui-btn btn-submit" lay-submit="" lay-filter="sub">#springMessage("sys.login.button.calogin")</button>
+            #end
+        </div>
+    </form>
+</div>
+
+<script src="${basePath}/static/plugins/layui/layui.js" charset="utf-8"></script>
+<script src="${basePath}/lang.js" charset="utf-8"></script>
+<script type="text/javascript">
+    function reloadRandCodeImage(obj) {
+        var date = new Date();
+        obj.src=basePath + '/captcha.jpg?_=' + date.getTime();
+    }
+    bt.use(['form', 'layer'], function () {
+        var $ = bt.jquery,form = bt.form(),layer = bt.layer;
+        // 验证
+        form.verify({
+            account: function (value) {
+                if (value == "") {
+                    return bt.lang("sys.login.message.account.null");
+                }
+            },
+            password: function (value) {
+                if (value == "") {
+                    return bt.lang("sys.login.message.password.null");
+                }
+            },
+            #if($showCaptcha)
+            code: function (value) {
+                if (value == "") {
+                    return bt.lang("sys.login.message.captcha.null");
+                }
+            }
+            #end
+        });
+
+##        $reloadCaptchaImg=function(){
+##            var date = new Date();
+##            $("#captchaImg").attr('src',basePath + '/captcha.jpg?_=' + date.getTime())
+##            var captcha = $('input[name="captcha"]');
+##            captcha.val("");
+##            captcha.focus();
+##        }
+##        //绑定验证码
+##        $("#captchaImg").click($reloadCaptchaImg);
+
+        // 提交监听
+        form.on('submit(sub)', function (data) {
+            var loginType = $("#loginType").val();
+            var encrypt = $("#encrypt").val();
+            if(loginType != 0 && encrypt != 0 ){
+                try {
+                    if(encrypt == 1){
+                        var certList = selectiTrusCa();
+                        layer.open({
+                            title: '天威证书列表',
+                            content: certList,
+                            yes: function(index, layero){
+                                console.log(layero.find("select option:selected").val());
+                                CurCert=selectSingleCert("",layero.find("select option:selected").val());
+                                var userCadn = "";
+                                var signature = "";
+                                userCadn = layero.find("select option:selected").val();
+                                $("#userCadn").val(userCadn);
+                                data.field.userCadn = userCadn;
+                                signature = sign(encrypt, userCadn);
+                                $("#signature").val(signature);
+                                data.field.signature = signature;
+                                layer.close(index);
+                                data.field.rememberMe = data.field.rememberMe ? 1 : 0;
+                                $.post(basePath + '/login', data.field, function (reslut) {
+                                    if (reslut.success) {
+                                        layer.msg(reslut.msg, {
+                                            time: 1500
+                                        }, function (index) {
+                                            location.href = basePath + "/index";
+                                        });
+                                    } else {
+                                        layer.alert(reslut.msg, {icon: 2}, function (index) {
+                                            if ("SYS_LOGIN_CA_NO_BINDING" == reslut.messageEnum) {
+                                                if(loginType == 1) {
+                                                    location.href = basePath + "/caBinding?loginName=" + $("#account").val() + "&password=" + $("#password").val();//如果没有绑定证书跳转到证书绑定页面
+                                                }else{
+                                                    location.href = basePath + "/caBinding";
+                                                }
+                                            } else if (reslut.attributes && reslut.attributes.showCaptcha) {
+                                                location.href = basePath + "/index";
+                                            }
+                                            #if($showCaptcha)
+                                                    $reloadCaptchaImg();
+                                            #end
+                                            layer.close(index);
+                                        });
+
+                                    }
+                                }, 'JSON');
+                            }
+                        });
+                    }else {
+                        selectCa(encrypt);
+                        var userCadn = "";
+                        var signature = "";
+                        userCadn = getCertInfo(encrypt);
+                        $("#userCadn").val(userCadn);
+                        data.field.userCadn = userCadn;
+                        signature = sign(encrypt, userCadn);
+                        $("#signature").val(signature);
+                        data.field.signature = signature;
+                    }
+                }catch (e){
+                    layer.alert("ca登录失败",{icon: 2});
+                    return false;
+                }
+            }
+            if(loginType == 0 || encrypt != 1) {
+                data.field.rememberMe = data.field.rememberMe ? 1 : 0;
+                $.post(basePath + '/login', data.field, function (reslut) {
+                    if (reslut.success) {
+                        layer.msg(reslut.msg, {
+                            time: 1500
+                        }, function (index) {
+                            location.href = basePath + "/index";
+                        });
+                    } else {
+                        layer.alert(reslut.msg, {icon: 2}, function (index) {
+                            if ("SYS_LOGIN_CA_NO_BINDING" == reslut.messageEnum) {
+                                if(loginType == 1) {
+                                    location.href = basePath + "/caBinding?loginName=" + $("#account").val() + "&password=" + $("#password").val();//如果没有绑定证书跳转到证书绑定页面
+                                }else{
+                                    location.href = basePath + "/caBinding";
+                                }
+                            } else if (reslut.attributes && reslut.attributes.showCaptcha) {
+                                location.href = basePath + "/index";
+                            }
+                            #if($showCaptcha)
+                                    $reloadCaptchaImg();
+                            #end
+                            layer.close(index);
+                        });
+
+                    }
+                }, 'JSON');
+            }
+            return false;
+        })
+    })
+
+</script>
+    #parse("views/common/caData.vm")
+    #caDataScript()
+    #caDataHidden()
+</body>
+</html>

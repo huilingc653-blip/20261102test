@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    #set($cycles=$timeMap.keySet().toArray())
+    #if($current)
+        #set($currentCycle=$current)
+    #else
+        #set($currentCycle=$cycles[0])
+    #end
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no, email=no">
+    <meta name="HandheldFriendly" content="true">
+    <script type="text/javascript">
+        var basePath = "${basePath}";
+    </script>
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css"/>
+    <link rel="stylesheet" href="${basePath}/static/css/base.css"/>
+    <script src="${basePath}/static/plugins/frozen/js/zepto.min.js" charset="utf-8"></script>
+    <title>#springMessage('table.fbsbudgetprocess.report')</title>
+    <style>
+        html,body{
+            -webkit-overflow-scrolling : touch !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        .custom-ui-form-item{
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 60px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .bg .ui-form-item{
+            color: #FEFEFE;
+            border: none;
+            font-size: 14px;
+            line-height: 40px;
+            height: 40px;
+            padding-bottom: 10px;
+        }
+        .custom-ui-form-item .ui-select:after{
+            display: none;
+        }
+        #selectCycle{
+            border:1px solid #FFFFFF;
+            border-radius:22px;
+            background:#6991FB;
+            color: #ffffff;
+            font-size: 12px;
+            height: 40px;
+            margin-top: 5px;
+            text-align: center;
+            text-align-last: center;
+            direction: rtl;
+            padding: 0 20px;
+            appearance: none;
+            -moz-appearance: none;
+            -webkit-appearance: none;
+        }
+        .bg label{
+            line-height: 20px;
+        }
+        .li-border-right{
+            border-right: 1px solid #ECECEC;
+        }
+        .ui-dialog .ui-form-item{
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 12px;
+            line-height: 40px;
+            height: 40px;
+        }
+        .ui-dialog .ui-form-item select{
+            direction: rtl;
+        }
+        .ui-select-group{
+            position: absolute;
+            right: 0;
+        }
+        .bg {
+            background-color: #6a91f8;
+            background-image: url("${basePath}/static/images/bg/bg_shade.png");
+            background-position: bottom;
+            background-repeat: no-repeat;
+            background-size:auto;
+            border: none;
+        }
+        .custom-ui-table{
+            width: 100%;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+        }
+        .custom-ui-table thead tr{
+            background: #ffffff;
+            color: #333333;
+            height: 60px;
+            line-height: 20px;
+            font-size: 12px;
+        }
+        .custom-ui-table tbody td {
+            padding-top:15px;
+            padding-bottom:15px;
+            color: #808080;
+        }
+        #budgetTable > tbody > tr:nth-child(odd) {
+            background-color: #f7f7f7;
+        }
+        #budgetTable > tbody > tr:nth-child(even) {
+            background-color: #FFF;
+        }
+        #budget_no_data{
+            text-align: center;
+        }
+        #budget_no_data img{
+            margin-top: 80px;
+        }
+        #budget_no_data label{
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="ui-form" style="font-size: 12px;">
+    <input type="hidden" id="timeTypeHidden" value="$!{timeType}">
+    <input type="hidden" id="corpIdHidden" value="$!{corpId}">
+    <input type="hidden" id="seachBeginDateHidden" value="$!{seachBeginDate}">
+    <input type="hidden" id="seachEndDateHidden" value="$!{seachEndDate}">
+    <form action="">
+        <div class="bg">
+        ##第一层 下拉框
+            <div class="custom-ui-form-item">
+            ##                <div class="ui-select">
+                <select id="selectCycle">
+                    #if($!{timeMap.keySet()})
+                        #foreach($timeCycle in $!{timeMap.keySet()})
+                            #if($currentCycle==$timeCycle)
+                                #if($timeType == 1)
+                                    <option selected="" value="$timeCycle">${timeCycle}年</option>
+                                #elseif($timeType == 2)
+                                    <option selected="" value="$timeCycle">$!{year}年第${timeCycle}季度</option>
+                                #elseif($timeType == 3)
+                                    <option selected="" value="$timeCycle">$!{year}年${timeCycle}月</option>
+                                #elseif($timeType == 4)
+                                    <option selected="" value="$timeCycle">$weekInMonth.get($timeMap.get($timeCycle))</option>
+                                #else
+                                    <option selected="" value="$timeCycle">$timeCycle</option>
+                                #end
+                            #else
+                                #if($timeType == 1)
+                                    <option value="$timeCycle">${timeCycle}年</option>
+                                #elseif($timeType == 2)
+                                    <option value="$timeCycle">$!{year}年第${timeCycle}季度</option>
+                                #elseif($timeType == 3)
+                                    <option value="$timeCycle">$!{year}年${timeCycle}月</option>
+                                #elseif($timeType == 4)
+                                    <option value="$timeCycle">$weekInMonth.get($timeMap.get($timeCycle))</option>
+                                #else
+                                    <option value="$timeCycle">$timeCycle</option>
+                                #end
+                            #end
+                        #end
+                    #else
+                        <option value="">#springMessage('common.msg.temporarily_no_data')</option>
+                    #end
+                </select>
+            ##                </div>
+            </div>
+        ##第二层 单位,计划周期类型
+            <div class="ui-form-item" style="line-height: 80px; height: 80px;">
+                <ul class="ui-row-flex">
+                    <li class="ui-col ui-flex ui-flex-pack-center li-border-right">
+                        <div>
+                            <label>#springMessage('table.fbsBudget.corpId'):</label>
+                            <label>$!{corpName}</label>
+                        </div>
+                    </li>
+                    <li class="ui-col ui-flex ui-flex-pack-center li-border-right">
+                        <div>
+                            <label>#springMessage('table.fbsBudget.timeType'):</label>
+                            <label>$dictTag.get("fbs.timeType",$!{timeType})</label>
+                        </div>
+                    </li>
+                    <li class="ui-col ui-flex ui-flex-pack-center">
+                        <div>
+                            <label>#springMessage('table.fbsBudgetReport.period'):</label>
+                            <div id="dataSection">
+                                #foreach($time in $!{timeMap.entrySet()})
+                                    #if($currentCycle==${time.key})
+                                    ##                                        $!{time.value}
+                                        <script>
+                                            var time = '$!{time.value}'.replace(/-/g,"/");
+                                            var data = time.split("~");
+                                            var html = '';
+                                            for (var i=0;i<data.length;i++){
+                                                html += '<label>'+data[i]+'</label>';
+                                            }
+                                            $("#dataSection").html(html);
+                                        </script>
+                                    #end
+                                #end
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    ##列表头
+        <section class="table">
+            <div class="demo-item">
+
+            ##弹框区域
+                <div class="ui-dialog ui-dialog-function" id="dialog1">
+                    <div class="ui-dialog-cnt">
+                        <div class="ui-dialog-bd">
+                            <form action="">
+                                <div class="ui-form-item ui-border-b">
+                                    <label>#springMessage('table.fbsBudget.timeType'):</label>
+                                    <div class="ui-select-group">
+                                        <div class="ui-select">
+                                            <select id="timetype">
+                                                <option selected="" value="1"><td>$dictTag.get("fbs.timeType",'1')</td></option>
+                                                <option value="2"><td>$dictTag.get("fbs.timeType",'2')</td></option>
+                                                <option value="3"><td>$dictTag.get("fbs.timeType",'3')</td></option>
+                                                <option value="4"><td>$dictTag.get("fbs.timeType",'4')</td></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            ##统计日期
+                                <div class="ui-form-item ui-border-b">
+                                    <label>#springMessage('table.fbsBudgetPeriod.beginDate')</label>
+                                    <div class="ui-select-group">
+                                        <input type="date" class="form-control" id="seachBeginDate" name="seachBeginDate" value="" max=""/>
+                                    </div>
+                                </div>
+                                <div class="ui-form-item ui-border-b">
+                                    <label>#springMessage('table.fbsBudgetPeriod.endDate')</label>
+                                    <div class="ui-select-group">
+                                        <input type="date" class="form-control" id="seachEndDate" name="seachEndDate" value="" max=""/>
+                                    </div>
+                                </div>
+                            ##单位选择
+                                <div class="ui-form-item">
+                                    <label>#springMessage('table.btwarnstrategy.corpselect.title')</label>
+                                    <div class="ui-select-group">
+                                        <div class="ui-select">
+                                            <select id="corpId">
+
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="ui-dialog-ft">
+                            <button type="button" id="buttonCancel">#springMessage('common.button.cancel')</button>
+                            <button type="button" id="buttonOK">#springMessage('common.button.confirm')</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="width: 100%; height: 10px; background: #ECECEC;"></div>
+                <div class="demo-block">
+                    #if($itemList)
+                        <table class="custom-ui-table ui-border-b" id="budgetTable">
+                            <thead>
+                            <tr>
+                                <td>#springMessage('table.fbsBudgetDetail.itemName')</td>
+                                <td>#springMessage('table.fbsBudgetYear.itemCode')</td>
+                                <td>#springMessage('table.fbsBudgetDetail.bMoney')</td>
+                                <td>#springMessage('table.fbsBudgetYear.bsuperMoney')</td>
+                                <td>#springMessage('table.fbsBudgetYear.btempMoney')</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                                #foreach($item in $itemList)
+                                <tr>
+                                    #if($!{item.item.superItemCode})
+                                        <td style="font-size: 10px; text-align: left; padding-left: 15px; width: 24%;">$!{item.itemName}</td>
+                                    #else
+                                        <td style="font-size: 12px; text-align: left; padding-left: 3px; width: 24%;">$!{item.itemName}</td>
+                                    #end
+                                    <td style="width: 19%;">$!{item.itemCode}</td>
+                                    #foreach($date in $!{dtlMap.entrySet()})
+                                        #if($currentCycle + "!~!" + ${item.itemCode} == $!{date.key})
+                                            <td style="width: 19%;">$!number.formatNumeric($!{date.value.bMoney})</td>
+                                            <td style="width: 19%;">$!number.formatNumeric($!{date.value.bsuperMoney})</td>
+                                            <td style="width: 19%;">$!number.formatNumeric($!{date.value.btempMoney})</td>
+                                        #end
+                                    #end
+                                </tr>
+                                #end
+                            </tbody>
+                        </table>
+                    #else
+                    ##itemList为空的情况
+                        <div id="budget_no_data" class="no_data">
+                            <img src="${basePath}/static/images/bg/no_data.png">
+                            <label>#springMessage('common.msg.temporarily_no_data')</label>
+                        </div>
+                    #end
+                </div>
+            </div>
+        </section>
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        //下拉列表事件
+        $("#selectCycle").change(function () {
+            var url = window.location.href;
+            BTAppBridge.refresh({url:url,currentCycle:this.value});
+        });
+
+        //弹框中日期选择事件
+
+        //弹框事件
+        window.searchAction = function(){
+            $("#dialog1").addClass("show");
+        }
+        //弹框确认按钮的点击事件
+        $("#buttonOK").click(function(){
+            $('#ui-dialog').removeClass("show");
+            var _corpId = $("#corpId").val();
+            var _startDate = $("#seachBeginDate").val();
+            var _endDate = $("#seachEndDate").val();
+            var _timeType = $("#timetype").val();
+            var url = window.location.href;
+            BTAppBridge.refresh({url:url,timeType:_timeType,corpId:_corpId,seachBeginDate:_startDate,seachEndDate:_endDate,currentCycle:this.value});
+        });
+        $('#buttonCancel').click(function(){
+            $('.ui-dialog').removeClass("show");
+        });
+
+        initDialog();
+        initCrop();
+
+        /**
+         * 初始化单位
+         */
+        function initCrop() {
+            var url =  "/sys/corp/appTree";
+            setTimeout(function () {
+                BTAppBridge.post(url,{type:1},'postCallback');
+                BTAppBridge.get("/budget/budgetreportutil/getTimeType",{},"getBudgetReport")
+            },100);
+        };
+        postCallback = function(data) {
+            if (data){
+                var html = '';
+                var _corpId = $("#corpIdHidden").val();
+                $.each(data,function (index, item) {
+                    if (item.id == _corpId) {
+                        html += '<option value=' + item.id + ' selected>' + item.name + '</option>';
+                    }else{
+                        html += '<option value=' + item.id + '>' + item.name + '</option>';
+                    }
+                })
+                $("#corpId").html(html);
+            }
+        }
+
+        //获取配置的周期类型
+        getBudgetReport = function (data) {
+            if (data){
+                var html = "";
+                $.each(data,function (index, item) {
+                    if (item.value == $("#timeTypeHidden").val()) {
+                        html += '<option value=' + item.value + ' selected>' + item.name + '</option>';
+                    }else{
+                        html += '<option value=' + item.value + '>' + item.name + '</option>';
+                    }
+                })
+                $("#timetype").html(html);
+            }
+        }
+
+        function initDialog() {
+            $("#timetype").val($("#timeTypeHidden").val());
+            var _startDate = new Date($("#seachBeginDateHidden").val());
+            var _endDate = new Date($("#seachEndDateHidden").val());
+
+            var _startMonth = _startDate.getMonth()+1 < 10 ? "0"+(_startDate.getMonth()+1) : (_startDate.getMonth()+1);
+            var _tempDate = _startDate.getDate() < 10 ? "0"+_startDate.getDate() : _startDate.getDate();
+            var seachBeginDateVal = _startDate.getFullYear()+'-'+_startMonth+'-'+_tempDate;
+
+            var _endMonth = _endDate.getMonth()+1 < 10 ? "0"+(_endDate.getMonth()+1) : (_endDate.getMonth()+1);
+            var _tempDate = _endDate.getDate() < 10 ? "0"+_endDate.getDate() : _endDate.getDate();
+            var seachEndDate = _endDate.getFullYear()+'-'+_endMonth+'-'+_tempDate;
+
+            $("#seachBeginDate").val(seachBeginDateVal);
+            $("#seachEndDate").val(seachEndDate);
+            $("#seachBeginDate").attr("max",seachEndDate);
+        }
+    });
+</script>
+</body>
+</html>

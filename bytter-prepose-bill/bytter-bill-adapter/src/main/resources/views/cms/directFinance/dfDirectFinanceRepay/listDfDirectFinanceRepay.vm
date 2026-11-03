@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+    #parse("views/common/footer.vm")
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tr>
+##            证券代码
+            <td width="10%" class="textRight">#springMessage('df.securities.code')</td>
+            <td width="23%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_stockCode" class="layui-input" >
+                </div>
+            </td>
+##            证券名称
+            <td width="10%" class="textRight">#springMessage('df.securities.name')</td>
+            <td width="23%">
+                <div class="layui-inline">
+                    <input type="text" name="likes_stockName" class="layui-input" >
+                </div>
+            </td>
+##            证券名称
+            <td width="10%" class="textRight">#springMessage('df.business.type')</td>
+            <td width="23%">
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-biz-name="dfBusinessTypeId" data-url="${basePath}/cms/dfBusinessType/getValidBusinessTypes" data-valuefield="id" data-textfield="businessName" data-name="eqs_dfBusinessTypeId"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+##            状态
+            <td class="textRight">#springMessage('common.table.status')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="df.directfinance.biz.status" data-name="eqg_repayBizStatus" ></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center">
+                <button class="layui-btn layui-btn-small" lay-submit lay-filter="search">#springMessage("common.button.search")</button>
+                <button type="reset" class="layui-btn layui-btn-primary layui-btn-small">#springMessage("common.button.reset")</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form">
+    <thead>
+    <tr>
+        <th>#springMessage('table.choBankFinance.billNo')</th>#*登记单号*#
+        <th>#springMessage('df.securities.name')</th>#*证券名称*#
+        <th>#springMessage('df.securities.code')</th>#*证券代码*#
+        <th>#springMessage('df.business.type')</th>#*直融类别*#
+        <th>#springMessage('df.issue.date')</th>#*发行日期*#
+        <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>#*到期日期*#
+        <th>#springMessage('df.issuing.period')</th>#*发行期限*#
+        <th>#springMessage('table.accountDTO.balance')(#springMessage('config.choBank.moneyUnit'))</th>#*余额*#
+        <th>#springMessage('df.bond.rating')</th>#*债券评级*#
+        <th>#springMessage('df.main.rating')</th>#*主体评级*#
+        <th>#springMessage('df.repaid.money')</th>#*已还本金*#
+        <th>#springMessage('common.table.status')</th>#*状态*#
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+
+<script>
+    var form, moneyFun, dicts;
+    bt.use(["jquery", "datatable", "form", "moneyType", "selectType", "dicts"], function () {
+        $ = bt.jquery;
+        form = bt.form()
+        dicts = bt.dicts.init();
+        bt.selectType.init();
+        moneyFun = bt.moneyType.getFun();
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            dom: "Brtlip",
+            colReorder: true,
+            ordering: false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            ajax: {
+                "url": basePath + "/cms/dfDirectFinanceRepay/dataTable"
+            }, columns: [
+                {
+                    data: "billCode",
+                    className: "center"
+                }, {
+                    data: "stockName",
+                    className: "center"
+                }, {
+                    data: "stockCode",
+                    className: "center"
+                }, {
+                    data: "businessName",
+                    className: "center"
+                }, {
+                    data: "startDate",
+                    className: "center"
+                }, {
+                    data: "endDate",
+                    className: "center"
+                }, {
+                    data: "peroid",
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return data + bt.dict("choBankFinance.dateUnit", full.unit);
+                    }
+                }, {
+                    data: "surplusMoney",
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(data);
+                    }
+                }, {
+                    data: "bondRating",
+                    className: "center"
+                }, {
+                    data: "bondMainRating",
+                    className: "center"
+                }, {
+                    data: "allRepayMoney",
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        var html = "";
+                        html += "<a href=\"#\" onclick=\"viewRepayMoney('" + full.id + "')\">" + moneyFun.format(data) + "</a>";
+                        return html;
+                    }
+                }, {
+                    data: "repayBizStatus",
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("df.directfinance.biz.status", data);
+                    }
+                }, {
+                    data: null,
+                    className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = "";
+                        var split = "<span class=\"text-explode\">|</span>"
+                        if (full.allRepayMoney < full.surplusMoney) {
+                            html += "<a href=\"#\" onclick=\"add('" + full.id + "')\">" + bt.lang("cms.loanRepay.addButton") + "</a>";
+                            html += split;
+                        }
+                        html += "<a href=\"#\" onclick=\"view('" + full.id + "')\">" + bt.lang("common.button.view") + "</a>";
+                        return html;
+                    }
+                }
+            ]
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+
+
+    /**
+     *新增
+     * @param id
+     */
+    function add(id) {
+        // 新增校验
+        if (addCheck(id)) {
+            return false;
+        }
+
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.add.data'), basePath + "/cms/dfDirectFinanceRepay/add?id=" + id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/dfDirectFinanceRepay/add?id=" + id,
+            end: function () {
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    /**
+     *查看还款金额
+     * @param id
+     */
+    function viewRepayMoney(id) {
+        parent.layer.open({
+            type: 2,
+            btnAlign: 'c',
+            btn: [bt.lang("common.button.close")],
+            area: ['850px', '500px'],
+            content: basePath + "/cms/dfDirectFinanceRepay/viewReapyMoney?id=" + id,
+            yes: function(index, layero){
+                parent.layer.close(index);
+            }
+        });
+    }
+
+
+    /**
+     * 查看
+     * @param id
+     */
+    function view(id) {
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/cms/dfDirectFinanceInfo/view?id=" + id + "&flag=" + 1);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/dfDirectFinanceInfo/view?id=" + "&flag=" + 1,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    /**
+     * 新增时业务校验
+     */
+    function addCheck(id) {
+        var flag = false;
+        var url = "/cms/dfDirectFinanceRepay/addCheck?id=" + id;
+        $.ajax({
+            url: basePath + url,
+            type:"post",
+            dataType:"json",
+            async: false,
+            success:function (data) {
+                if (!data.success) {
+                    flag = true;
+                    parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                }
+            }
+        });
+        return flag;
+    }
+</script>
+</body>
+</html>

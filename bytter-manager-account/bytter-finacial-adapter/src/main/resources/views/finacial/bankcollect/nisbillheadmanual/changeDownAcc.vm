@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+<input type="hidden" id="accCorpId" value="$!{corpId}">
+<input type="hidden" id="curId" value="$!{curId}">
+<input type="hidden" id="debitAcc" value="$!{account}">
+<input type="hidden" id="creditAcc" value="$!{creditAcc}">
+<input type="hidden" id="orderNo" name="orderNo" value="$!{orderNo}">
+<input type="hidden" id="billNo" name="billNo" value="$!{billNo}">
+<input type="hidden" id="opType" value="$!{opType}"> 
+<input type="hidden" id="menuType" name="menuType" value="$!{menuType}"> 
+	<table class="layui-table">
+		<tr>
+			##下拨账号
+			<!-- <td class="textRight">#springMessage('table.nisBillhead.bankAcc')</td>
+			<td width="70%">
+				<div class="layui-input-inline">
+					<input type="hidden" id="downAccId" name="downAccId">
+					<input type="text" id="downAcc" name="downAcc" lay-verify="required|tableData" data-biz-name="downAcc"
+						 autocomplete="off" class="layui-input" placeholder="#springMessage('table.nisBillhead.bankAcc')" readonly="readonly">
+					<table id="downAccTable" class="hide">
+						<thead>
+							<tr>
+								<th>#springMessage('table.btBankAcc.bankAcc')</th>
+								<th>#springMessage('table.btBankAcc.accName')</th>
+								<th>#springMessage('table.btBankAcc.bankName')</th>
+								<th>#springMessage('table.nisBillhead.curId')</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</td> -->
+			
+			 <td class="textRight">#springMessage('table.nisBillhead.bankAcc')</td>
+       		 <td width="80%">
+        		  <div class="layui-input-inline">
+            			<input type="hidden" id="downAccId" name="downAccId" value="$!{downAccId}">
+                   		<input type="text" id="downAcc" name="downAcc" data-biz-name="downAcc" value="$!{downAcc}" 
+            					autocomplete="off" class="layui-input" placeholder="#springMessage('table.nisBillhead.bankAcc')" lay-verify="required">
+             			<table id="downAccTable" class="hide">
+                     		<thead>
+                        	  <tr>
+                           	 	  <th>#springMessage('table.btBankAcc.bankAcc')</th>
+                            	  <th>#springMessage('table.btBankAcc.accName')</th>
+                            	  <th>#springMessage('table.btBankAcc.bankName')</th>
+                 			 	 <th>#springMessage('table.nisBillhead.curId')</th>
+                          	</tr>
+                    	  </thead>
+                	  </table>
+                 </div>
+        </td>
+		</tr>
+		<tr>
+			<td colspan="6" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit" type="button">#springMessage('common.button.submit')</button>
+			</td>
+		</tr>
+	</table>
+</form>
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','layedit','selectTable'], function(){
+	$ = bt.jquery, form = bt.form();
+	//资金下拨账号
+    var downAccInit = bt.selectTable.init({
+        elem: "#downAccTable",
+        url: basePath + "/finacial/bankCollect/manualFinacial/getDownAcc",
+        urldata: {creditAcc: $("#creditAcc").val(), curId: $('#curId').val(), debitAcc: $("#debitAcc").val()},
+        scrollX: "600px",
+        scrollY: "200px",
+        searchInput: "#downAcc",
+        paging: true,
+        columns: [
+            {data: "bankAcc",},
+            {data: "accName",},
+            {data: "bankName",},
+            {data: "curName"}
+        ],
+        clickCallback: function (data) {
+            if (data) {
+                $('#downAccId').val(data.id);
+                $('#downAcc').val(data.bankAcc);
+            } else {
+                $('input.text').val('');
+            }
+        }
+    });
+	
+  //监听通过
+    form.on('submit(submit)', function(data){
+    	var opType = $("#opType").val();
+    	if(opType == 'Check'){
+    		var action = "/finacial/bankCollect/manualFinacial/payPass";
+    		$.post(basePath + action,data.field,function(result){
+                bt.loading.hide(); //关闭加载中
+                if(result.success){
+                	bt.navtab.refresh($(top.document).find('.layui-tab-title li.layui-this').attr('lay-id'));//刷新父页面
+                    $("#submitDiv").find('button').addClass("layui-btn-disabled").attr('disabled','disabled');
+                    parent.layer?parent.layer.closeAll():layer.closeAll();
+                   
+                }
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+    		
+    		
+    	}else{
+	    	bt.navtab.getCurrentDom().bt.jquery("#downAccId").val($("#downAccId").val());
+	    	parent.layer?parent.layer.closeAll():layer.closeAll();
+	    	//parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+    	}
+    	//parent.layer ? parent.layer.closeAll() : layer.closeAll();
+    });
+});
+
+</script>
+</html>

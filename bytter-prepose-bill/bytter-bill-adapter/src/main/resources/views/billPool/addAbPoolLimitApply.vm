@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+  	<input type="hidden" id="bifCode" value=""/>
+    <table class="layui-table"  class="layui-form input150-container">
+        <tbody>
+        <tr>
+            ##票据池单位ID
+            <td class="textRight" width="15%">#springMessage('billPool.corp.name')</td>
+            <td width="35%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-billPoolCorp"
+                         data-tree-type="radio"
+                         data-biz-type="billPoolCorp"
+                         data-biz-name="corpId"
+                         data-type="selectTree"
+                         data-required="true"
+                         data-name="corpId"
+                         data-defaultvalue=""
+                         data-resource="abpool:limitapply:resource:op"
+                         data-placeholder="#springMessage('billPool.corp.name')">
+                    </div>
+                </div>
+            </td>
+            ##票据池
+            <td class="textRight" width="15%">#springMessage('billPool.Limit.bpName')</td>
+            <td width="35%">
+                  <div class="layui-input-inline">
+		                    <div class="bt-biz-billPool"
+		                         data-tree-type="check"
+		                         data-tree-type="radio"
+		                         data-biz-type="billPool"
+		                         data-biz-name="bpId"
+		                         data-required="true"
+		                         data-type="selectTree"
+		                         data-name="bpId"
+		                         data-callback="abPoolCallBack"
+		                         data-placeholder="#springMessage('billPool.Limit.bpName')">
+		                    </div>
+		          </div>
+            </td>
+        </tr>
+        <tr>
+            ##业务类型
+            <td class="textRight"  width="15%">#springMessage('billPool.busType')</td>
+            <td width="35%">
+                 <div class="layui-input-inline">
+                    <div class="bt-biz-busType"
+                            data-biz-type="check"
+                            data-tree-type="radio"
+							data-type="selectTree"
+							data-name="busTypeId"
+							name="busTypeId"
+							data-biz-name="busTypeId"
+							data-defaultvalue=""
+                         data-placeholder="#springMessage('billPool.busType')">
+                    </div>
+                </div>
+		    </td>
+		    ##额度种类
+            <td class="textRight"  width="15%">#springMessage('billPool.Limit.limtType')</td>
+            <td width="35%">
+               	<div class="bt-biz-dict" data-filterData=" " data-defaultvalue="1" data-type="select" data-group="AB_POOL_LIMT_TYPE" name="limtType" data-name="limtType" ></div>
+		    </td>
+        </tr>
+        <tr>
+            ##申领额度
+            <td class="textRight"  width="15%">#springMessage('billPool.limit.apply.money')</td>
+            <td width="35%">
+				<div class="layui-inline">
+                            <input type="text" lay-verify="required" name="applyMoney" class="layui-input bt-biz-moneyType" id="applyMoney" placeholder="#springMessage('billPool.limit.apply.money')">
+                </div>
+		    </td>
+		    ##到期日期
+            <td class="textRight"  width="15%">#springMessage('billPool.limit.apply.enddata')</td>
+            <td width="35%">
+				<div class="layui-inline">
+	                  <input type="text" placeholder="#springMessage('billPool.limit.apply.enddata')" name="endDate" class="layui-input bt-biz-dateType" id="endDate" data-today="false">
+	             </div>
+		    </td>
+        </tr>
+        <tr>
+            ##备注
+            <td class="textRight"  width="15%">#springMessage('billPool.abPoolif.rmk')</td>
+            <td width="35%" colspan="3">
+               	<div class="layui-inline">
+						<input type="text" id="rmk"  name="rmk" autocomplete="off" lay-verify="strlength"  class="layui-input" placeholder="#springMessage('billPool.abPoolif.rmk')"   data-maxlength="200">
+				</div>
+		    </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="sur">#springMessage('common.button.submit')</button>
+            <button type="button" name="revert" class="layui-btn" >#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+var billTable={},corp,busTypeJson={};
+bt.use(['form','selectTree','treeTable','busType','billPoolCorp','dateType','dicts','billPool','moneyType'],function(){
+	  $ = bt.jquery,form = bt.form();
+	  bt.billPoolCorp.init();
+	  bt.dateType.init();
+	  bt.dicts.init();
+	  bt.billPool.init();
+	  bt.moneyType.init();
+	  busTypeJson = bt.busType.init();
+	  form.on('submit(sur)', function(data){
+	  		checkFrom();
+	        $.post(basePath+ "/abpool/limitApply/updateLimitApply",data.field,function(result){
+		        if(result.success){
+		            parent.layer.alert(result.msg, {icon: result.success?1:2});
+		            bt.navtab.refreshParentTable();//刷新父页面表格
+		            location.reload();//重刷页面
+		        }else{ 
+		     	   parent.layer.alert(bt.lang(result.msg), {icon: result.success?1:2});  
+		        }
+		        bt.loading.hide();
+		    },'JSON');
+	        return false;
+	  });
+    $("[name='revert']").click(function(){
+    	bt.navtab.closeCurrent();
+    	return false;
+    }); 
+    
+});
+
+function checkFrom(){
+	
+}
+function abPoolCallBack(obj,text,data){
+	if(data==null || data.bifCode==null){
+		   $("#endDate").removeAttr("lay-verify");
+	}else if(data.bifCode==9015){
+		  $("#endDate").attr("lay-verify", "required");
+	}else{
+		  $("#endDate").removeAttr("lay-verify");
+	}
+	 bt.form().renderIcon(); 
+}
+</script>
+</html>

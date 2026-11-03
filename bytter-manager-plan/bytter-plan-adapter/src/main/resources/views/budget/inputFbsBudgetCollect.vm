@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post" class="ignore-required-icon" id="inputForm">
+		<input id="layId" name="layId" type="hidden" value="$!{layId}">
+		<input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+		<input id="createBy" name="createBy" type="hidden" value="$!{fbsBudgetPage.createBy}">
+##		<input id="createDate" name="createDate" type="hidden" value="$!{fbsBudgetPage.createDate}">
+		<input id="updateBy" name="updateBy" type="hidden" value="$!{fbsBudgetPage.updateBy}">
+##		<input id="updateDate" name="updateDate" type="hidden" value="$!{fbsBudgetPage.updateDate}">
+		<input id="status" name="status" type="hidden" value="$!{fbsBudgetPage.status}">
+		<input id="corpId" name="corpId" type="hidden" value="$!{fbsBudgetPage.corpId}">
+		<input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetPage.timeType}">
+##		<input id="beginDate" name="beginDate" type="hidden" value="$!{fbsBudgetPage.beginDate}">
+##		<input id="endDate" name="endDate" type="hidden" value="$!{fbsBudgetPage.endDate}">
+        <input type="hidden" id="curId" name="curId" lay-verify="required" value="$!{fbsBudgetPage.curId}">
+        <input type="hidden" id="exchangeRate" name="exchangeRate" value="$!{fbsBudgetPage.exchangeRate}">
+		<!-- 追加 -->
+		<input id="superaddId" name="superaddId" type="hidden" value="$!{fbsBudgetPage.superaddId}">
+		<input id="target" name="target" type="hidden" value="$!{target}">
+		<input id="busName" name="busName" type="hidden" value="$!{busName}">
+        <input id="allowEditUderCorp" name="allowEditUderCorp" type="hidden" value="$!{allowEditUderCorp}">
+        <input id="allowEditDirectUderCorp" name="allowEditDirectUderCorp" type="hidden" value="$!{allowEditDirectUderCorp}">
+		<input id="allowEditCollectMoney" name="allowEditCollectMoney" type="hidden" value="$!{allowEditCollectMoney}">
+        <table id="curTable" class="layui-table layui-form" style="width:100%;">
+            <thead>
+            <tr>
+                <th width="20%">#springMessage('table.fbsBudget.corpId')</th>
+                <th width="10%">#springMessage('table.fbsBudgetDetail.curId')</th>
+                <th width="10%">#springMessage('table.btCurrency.curExrate')</th>
+				<th width="10%">#springMessage('table.fbsBudget.status')</th>
+				#if($!{showNetAmount} == "1")
+					#if($!{fbsBudgetPage.timeType} == "3")
+						<td width="15%">#springMessage('table.fbsBudget.yearNetAmount')</td>
+						<td width="15%">#springMessage('table.fbsBudget.monthProcessNetAmount')</td>
+					#else
+                        <td width="15%">#springMessage('table.fbsBudget.monthNetAmount')</td>
+                        <td width="15%">#springMessage('table.fbsBudget.weekProcessNetAmount')</td>
+					#end
+				#end
+				<th width="20%"><input type="checkbox" name="checkAll" lay-skin="primary" lay-filter="checkAll" name="checkAll"> #springMessage('table.fbsBudget.collect')</th>
+                <th width="20%">#springMessage('common.table.thead.operation')</th>
+            </tr>
+            </thead>
+        	<tbody>
+            	#foreach($date in $childCorpData)
+            		<tr 
+					#if($!{target}=="super" && $!{date.status} != 99 && $!{date.status} != 100 && $!{date.status} != 101 && $!{date.fictitiousCorp} != "1" )
+						style="display: none"
+					#end>
+            			<td>
+							(${date.corpCode})&nbsp;&nbsp;${date.corpName}
+							<input id="childId_${date.id}" name="childId" type="hidden" value="$!{date.id}">
+							<input id="childCorpId_${date.id}" name="childCorpId" type="hidden" value="$!{date.corpId}">
+							<input  name="statusHid" type="hidden" value="$!{date.status}">
+						</td>
+                        <td align="center">$!{currencyTag.getCurName($!{date.curId})}</td>
+                        <td align="right">
+							#if($!{date.exchangeRate})
+							    $!excRateTag.getBuget($!{date.exchangeRate})
+							#end</td>
+        				<td align="center">
+        					#if($!{date.status} == "-2" || $!{date.status} == "95")
+                                <font color="red">$dictTag.get("fbsBudget.status",$!{date.status})</font>
+        					#else
+        						$dictTag.get("fbsBudget.status",$!{date.status})
+        					#end
+        				</td>
+						#if($!{showNetAmount} == "1")
+                            <td class="textRight" align="right">$!number.formatNumeric($!{date.netAmount})</td>
+                            <td class="textRight" align="right">$!number.formatNumeric($!{date.processNetAmount})</td>
+						#end
+						<td align="center">
+							#if($!{date.status} == "80" || $!{date.status} == "99")
+								<input type="checkbox" class="check" name="checkChildId" value="${date.id}" lay-skin="primary" lay-filter="checkChildId">
+							#end
+						</td>
+            			<td align="center">
+							#if($!{date.fictitiousCorp} == "1")
+								<a class="" href="#" onclick="create('$!{date.corpId}','$!{date.corpName}','$!{fbsBudgetPage.timeType}','$!{date.id}','$!{fbsBudgetPage.beginDateStr}','$!{fbsBudgetPage.endDateStr}','$!{date.fictitiousCorp}')">
+									#if($!{date.status} == "-2")
+										#springMessage('common.button.create')
+									#end
+									#if($!{date.status} != "-2" && $!{date.status} != "95" && $!{date.status} != "100")
+										#springMessage('common.button.edit')
+									#end
+									#if($!{date.status} == "95")
+										#springMessage('common.button.superCreate')
+									#end
+								</a>
+							#end
+							#if($!{allowEditDirectUderCorp} == "1" && $!{allowEditUderCorp} == "1" && $!{date.status} != "-2" && $!{date.status} != "11" && $!{date.status} != "82" && $!{date.status} != "98" && $!{date.fictitiousCorp} != "1")
+                                <a class="" href="#" onclick="input('$!{date.corpId}','$!{date.corpName}','$!{fbsBudgetPage.timeType}','$!{date.id}','$!{fbsBudgetPage.beginDateStr}','$!{fbsBudgetPage.endDateStr}')">#springMessage('common.button.edit')</a>
+								#if($!{date.fictitiousCorp} != "1")
+									#if($!{date.status} == "80" || $!{date.status} == "99")
+										<a class="" href="#" onclick="back('$!{date.id}')">#springMessage('common.button.back')</a>
+									#end
+								#end
+							#else
+								#if($!{date.status} == "80" || $!{date.status} == "99")
+	##        					#if($!{date.status} == "80" || $!{date.status} == "81" || $!{date.status} == "83" || $!{date.status} == "99" || $!{date.status} == "100" || $!{date.status} == "101")
+									##汇总单位不允许编辑
+									#if($!{date.collectFlag} == "0" && $!{allowEditDirectUderCorp} == "1" && $!{date.fictitiousCorp} != "1")
+									<a class="" href="#" onclick="input('$!{date.corpId}','$!{date.corpName}','$!{fbsBudgetPage.timeType}','$!{date.id}','$!{fbsBudgetPage.beginDateStr}','$!{fbsBudgetPage.endDateStr}')">#springMessage('common.button.edit')</a>
+									#end
+									#if($!{date.fictitiousCorp} != "1")
+										<a class="" href="#" onclick="back('$!{date.id}')">#springMessage('common.button.back')</a>
+									#end
+								#end
+							#end
+							#if($!{date.status} != "-2")
+							<a class="" href="#" onclick="view('$!{date.id}')">#springMessage('common.button.view')</a>
+							#end
+            			</td>
+            		</tr>
+				#end
+				<tr>
+                    <td class="textRight">#springMessage('table.fbsBudget.backMsg')</td>
+				#if($!{showNetAmount} == "1")
+                	<td colspan="7">
+				#else
+                	<td colspan="5">
+				#end
+						<textarea name="backMsg" id="backMsg" autocomplete="off" class="layui-textarea" lay-verify="strlength" data-maxlength="150" placeholder="#springMessage('table.fbsBudget.showMsg')"></textarea>
+                    </td>
+                </tr>
+                <tr>
+					#if($!{showNetAmount} == "1")
+                    <td colspan="9" style="text-align: center;">
+					#else
+                    <td colspan="7" style="text-align: center;">
+					#end
+						<button class="layui-btn" lay-submit="" lay-filter="collect" type="button">#springMessage('common.button.collect')</button>
+        	            <button class="layui-btn" type="button" onclick="del('$!{fbsBudgetPage.id}','$!{fbsBudgetPage.timeType}')">#springMessage('common.button.delete')</button>
+                    	<button type="button" class="layui-btn" onclick="exports()">#springMessage('common.button.exports')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- 新增币种 -->
+        <div class="layui-input-inline" style="padding: 10px; float: right">
+            <div class="layui-input-inline">#springMessage('table.fbsBudgetDetail.curId')：$!{currencyTag.getCurName($!{fbsBudgetPage.curId})}</div>
+        </div>
+		<div id="targtCollectDetail"></div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/budget/fbsBudget.inputCollect.js?_btv=${resourceVersion}"></script>
+</html>

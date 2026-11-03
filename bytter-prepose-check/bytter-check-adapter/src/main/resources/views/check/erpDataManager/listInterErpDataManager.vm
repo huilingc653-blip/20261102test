@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<!-- 中心对账数据生成	 -->
+<body>
+	<form id="searchForm" class="layui-form" method="post">
+		<table class="layui-table">
+	    	<tbody>
+		    	<tr>
+		    		<!-- 发生日期 -->
+		    		<td class="textRight">#springMessage('finacial.check.erpDataManager.occurDate')</td>
+		    		<td width="35%"><div class="date-interval" ></div></td>
+					<td style="text-align:right;">#springMessage('table.fbsBudget.corpId')</td>
+					<td width="30%">
+						<div class="layui-inline">
+							<div class="bt-biz-corp" data-biz-name="corpId"
+								 data-resource="finacial:check:erp:data:interface:query"
+								 data-callback="corpCallBack"
+								 data-name="corpId" data-biz-type="corp" data-type="selectTree"></div>
+
+						</div>
+					</td>
+		    		<!-- 银行账号-->
+		    		<td class="textRight">#springMessage('finacial.check.erpDataManager.bankAcc')</td>
+		    		<td width="35%">
+##						<input id="bankAcc" type="text" name="likes_account" class="layui-input" placeholder="#springMessage('finacial.check.erpDataManager.bankAcc')">
+                        <div class="layui-input-inline">
+                            <input name="eqs_compAcc" id="compAcc" data-biz-name="compAcc" class="layui-input" type="text" placeholder="#springMessage('finacial.check.erpDataManager.bankAcc')">
+                            <input type="hidden" id="curId" name="eqs_curId"/>
+                            <table id="compAccTable" class="hide">
+                                <thead>
+                                <tr>
+                                    <th>#springMessage('table.nisBillhead.bankAcc')</th>
+                                    <th>#springMessage('table.accountDTO.bankName')</th>
+                                    <th>#springMessage('table.accountDTO.curName')</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+					</td>
+		    	</tr>
+		    	<tr>
+		    		<td colspan="6" style="text-align: center;">
+		    			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+	            		<button type="reset" class="layui-btn layui-btn-primary" data-callback="resetParam">#springMessage('common.button.reset')</button>
+		    		</td>
+		    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	    <thead>
+	    <tr>
+	        <th>#springMessage('finacial.check.erpDataManager.bankAcc')</th><!-- 银行帐号 -->
+	        <th>#springMessage('table.nisBillhead.curId')</th><!-- 币别 -->
+	        <th>#springMessage('table.nisAllocationReq.bankName')</th><!-- 开户行 -->
+	        <th>#springMessage('table.fbsBudget.corpId')</th><!-- 单位 -->
+	        <th>#springMessage('finacial.check.erpDataManager.occurDate')</th><!-- 发生日期 -->
+	        <th>#springMessage('finacial.check.erpDataManager.debitMoney')</th><!-- 借方金额 -->
+	        <th>#springMessage('finacial.check.erpDataManager.creditMoney')</th><!-- 贷方金额 -->
+	        <th>#springMessage('finacial.check.erpDataManager.voucherNo')</th><!-- 凭证号 -->
+	        <th>#springMessage('finacial.check.erpDataManager.redblueSign')</th><!-- 红蓝标识 -->
+##	        <th>#springMessage('finacial.check.erpDataManager.compareSign')</th><!-- 对账标识 -->
+	        <th>#springMessage('finacial.check.erpDataManager.summaryContent')</th><!-- 摘要 -->
+	        <th>#springMessage('finacial.check.erpDataManager.dataSource')</th><!-- 企业账来源  -->
+	    </tr>
+	    </thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<!-- <script src="${basePath}/static/modules/finacial/check/centralityDataManager.list.js?_btv=${resourceVersion}"></script> -->
+<script type="text/javascript">
+	var table,corp,selectTable;
+	bt.use(['jquery','datatable','btdate','moneyType','selectTable','corp'],function(){
+		$ = bt.jquery;
+        moneyFun = bt.moneyType.getFun();
+		corp = bt.corp.init();
+        //初始化日期控件
+	    bt.btdate.init({
+	        elem: ".date-interval",
+	        startname: "ged_tallyDate",
+	        endname: "led_tallyDate"
+	    });
+		//表格控件初始化设置
+		table = bt.datatable.init({
+			elem: "#appTable",
+			dom: 'Brtlip',
+	        colReorder: true,
+			checkbox: true ,
+			searchForm:{
+                formElem:"#searchForm",
+                formFilter:"search"
+            },
+			ajax: {
+				url: basePath+"/finacial/check/erpDataManager/interDataTable"
+			},
+			buttons: [
+				{
+					text: '#springMessage("common.button.distill")',
+					action: function( e, dt, node, config ){
+                        var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        var ids="";
+						var obj = new Object();
+                        var rowData = data.splice(0,len);
+                        for(var i=0;i<rowData.length;i++){
+                            if (ids == "") {
+                                ids += rowData[i].id;
+                            } else {
+                                ids += "," + rowData[i].id;
+                            }
+                        };
+                        if(ids.length>0){
+							obj.ids = ids;
+                        }else{
+							var gedTallyDate =$("input[name='ged_tallyDate']").val();
+							if($.trim(gedTallyDate)  == ""){
+								layer.msg("#springMessage('table.fcBankBill.ged.transTime.isNull')");
+								bt.loading.hide(); //关闭加载中
+								return false;
+							}
+							obj.beginDate = gedTallyDate;
+							var ledTallyDate =$("input[name='led_tallyDate']").val();
+							if($.trim(ledTallyDate) == ""){
+								layer.msg("#springMessage('table.fcBankBill.led.transTime.isNull')");
+								bt.loading.hide(); //关闭加载中
+								return false;
+							}
+							obj.endDate = ledTallyDate;
+							var bankAcc = $("#bankAcc").val();
+							obj.bankAcc = bankAcc;
+							var corpId = corp.get("corpId").val();
+							if($.trim(corpId) == ""){
+								layer.msg("#springMessage('cms.provide.loaninfo.corpempty')");
+								bt.loading.hide(); //关闭加载中
+								return false;
+							}
+							obj.corpId = corpId;
+                        }
+						parent.layer.confirm("#springMessage('table.fcBankBill.distill')",function(){
+							$.post(basePath + "/finacial/check/erpDataManager/distillInter", obj, function(result){
+								if(result.success){
+									table.draw();
+									bt.navtab.refreshCurrentTable();
+								}
+								parent.layer.alert(result.msg, {icon: result.success?1:2});
+							},'JSON');
+						});
+					}
+				},
+			    {
+			    	text: '#springMessage("common.button.withdraw")',
+			    	action: function( e, dt, node, config ){
+			    		var data = dt.rows('.selected').data();
+			            var len = data.length;
+			            var rowData = data.splice(0,len);
+                        var ids="";
+                        var bankAcc = $("#compAcc").val();
+                        var curId = $("#curId").val();
+                        for(var i=0;i<rowData.length;i++){
+                            if (ids == "") {
+                                ids += rowData[i].id;
+                            } else {
+                                ids += "," + rowData[i].id;
+                            }
+                        };
+                        if(bankAcc == 'undefined' || bankAcc == ''){
+                            parent.layer.alert("#springMessage('finacial.check.selectBankAcc')");
+						}else if(ids.length>0){
+			            	parent.layer.confirm("#springMessage('finacial.check.cdm.msg.save')",function(){
+				                $.post(basePath + "/finacial/check/erpDataManager/doAccInter", {ids:ids,bankAcc:bankAcc,curId:curId}, function(result){
+				                	if(result.success){
+				    	        		table.draw();
+                                        bt.navtab.refreshCurrentTable();
+				    	        	}
+				                    parent.layer.alert(result.msg, {icon: result.success?1:2});
+				                },'JSON');
+				            });
+			            }else{
+			            	parent.layer.alert("#springMessage('common.message.confirm.selectData')");
+			            }
+			    	}
+			    }
+			],
+			columns: [
+				{
+					data: "compAcc",
+					className:'center',
+					bSortable:false
+				},{
+                    data: "curName",
+                    className:'center',
+                    bSortable:false
+                },{
+					data: "bankName",
+					className:'center',
+					bSortable:false
+				},{
+					data: "corpName",
+					className:'center',
+					bSortable:false
+				},
+				{
+					data: "tallyDate",
+					className:'center',
+					bSortable:true
+				},
+				{
+					data: "debitMoney",
+					className:'textRight',
+					bSortable:false,
+                    render: function( data, type, full, meta ){
+                        return moneyFun.format(full.debitMoney, {decimal:2});
+                    }
+				},
+				{
+					data: "creditMoney",
+					className:'textRight',
+					bSortable:false,
+                    render: function( data, type, full, meta ){
+                        return moneyFun.format(full.creditMoney, {decimal:2});
+                    }
+				},
+				{
+					data: "voucherNo",
+					className:'center',
+					bSortable:false
+				},
+				{
+					data: "redblueSign",
+					className:'center',
+					bSortable:false,
+					render: function( data, type, full, meta ){
+						return bt.dict("Finacial.RedBlueSign",full.redblueSign);
+					}
+				},
+				{
+					data: "summaryContent",
+					className:'center',
+					bSortable:false
+				},
+				{
+					data: "dataSource",
+					className:'center',
+					bSortable:false
+				}
+			]
+		});
+
+		selectTable = bt.selectTable.init({
+			elem: "#compAccTable",
+			searchInput: '#compAcc',
+			scrollX: "500px",
+			paging: true,
+			scrollY: "200px",
+			url: basePath + "/finacial/check/erpDataManager/jsonBankAccErpData",
+			columns: [
+				{data: "bankAcc"},
+				{data: "bankName"},
+				{data: "curName"}
+			],
+			clickCallback: function (severData, data) {
+				$("#compAcc").val(severData.bankAcc);
+				$("#curId").val(severData.curId);
+			}
+		});
+
+	});
+
+    function resetParam(){
+        $(".date-interval").val("");
+        $("#compAcc").val("");
+        $("#curId").val("");
+    }
+
+	/**
+	 * 单位回调
+	 */
+	function corpCallBack() {
+		var corpId = corp.get("corpId").val();
+		selectTable.get("compAcc").setUrl({corpId:corpId});
+	}
+
+</script>
+</html>

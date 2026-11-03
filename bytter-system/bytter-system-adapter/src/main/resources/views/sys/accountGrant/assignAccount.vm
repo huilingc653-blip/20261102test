@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+## 银行账号授权网点：list。数据项使用,分隔。
+<input type="hidden" id="accountCorp" value="#if($accountCorp)$accountCorp#end"  />
+## 内部账号授权网点：list。数据项使用,分隔。
+<input type="hidden" id="innerAccountCorp" value="#if($innerAccountCorp)$innerAccountCorp#end"  />
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="eqs_poolSign" name="eqs_poolSign">
+    <input type="hidden" id="poolType" name="poolType">
+    <input type="hidden" name="userId" value="$!{userId}"/>
+    <table class="layui-table">
+        <tr>
+        ## 账户类型
+            <td class="textRight">#springMessage('accountGrant.sysAccountType')</td>
+            <td>
+                <div class="bt-biz-dict"
+                     data-type="select"
+                     data-group="sys.account.type"
+                     data-name="testSelct"
+                     data-biz-name="sysAccountType"
+                     data-callback="bt.accountType"
+                     data-required="true"></div>
+            </td>
+        ## 开户单位
+        ## data-name="eqs_corpId"
+            <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="check"
+                         data-name="belongingCorpIds"
+                         data-biz-name="corpId_element"
+                         data-scope="all"
+                         data-callBackData="bt.callBackData"
+                         data-placeholder="#springMessage('common.placeholder.select')"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.nisBillhead.accId')</td>
+            <td>
+
+            ##                <input type="hidden" name="eqs_accState" value="N" />
+                <input type="hidden" name="eqs_validSign" value="1" />
+                <input type="text" class="layui-input placeholder-account" disabled placeholder="#springMessage('accountGrant.sysAccountType.select')">
+            ##                内部账号
+                <input type="hidden" name="likes_blnctrAcc" class="layui-input" placeholder="#springMessage('table.fcAcc.blnctrAcc')">
+            ##                银行账号
+                <input type="hidden" name="likes_bankAcc" class="layui-input" placeholder="#springMessage("table.nisBillhead.bankAcc")">
+            </td>
+        ##币别
+            <td class="textRight">#springMessage('table.fcAcc.curId')</td>
+            <td >
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                     data-name ="eqs_curId" data-biz-name ="eqs_curId"  data-valueField="id" data-textField="curName"></div>
+            </td>
+        </tr>
+        <tr id="innerAccount" class="hidden">
+            <td class="textRight">#springMessage('table.fcAcc.accType')</td>
+            <td colspan="3">
+                <div class="bt-biz-dict" data-type="select" data-group="InnerAccount.AccType"
+                     data-name="eqs_accType" data-biz-name="innerAccountType"></div>
+            </td>
+        </tr>
+        <tr id="account" class="hidden">
+        ##银行类别
+            <td class="textRight">#springMessage('table.bisBifInit.bankType')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/json"
+                     data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id" data-textField="typeName" defaultVal="$!{btBankAccPage.bankTypeId}"></div>
+            </td>
+            <td class="textRight">#springMessage('table.fcAcc.attributeId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/bankacc/bisaccattribute/json"
+                     data-valuefield="id" data-textfield="attributeName"  data-name="eqs_attributeId"
+                     data-inputvalue="inputvalue" data-search="true"></div>
+            </td>
+        </tr>
+        ##授权查询
+        <tr>
+            <td class="textRight">#springMessage('table.account.grant.search')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="accountGrantSearch"
+                     data-name="eqs_accountGrantSearch" data-biz-name="accountGrantSearch" data-callback="accountGrantSearchCallBack"></div>
+            </td>
+            <td id="accountGrantFunctionlable" class="textRight hidden" >#springMessage('table.account.grant.function')</td>
+            <td id="accountGrantFunction" class="hidden">
+                <div class="bt-biz-dict" data-type="checkbox" data-group="accountGrantFunction" data-name="eqs_accountGrantFunction" data-biz-name="accountGrantFunction"
+                     data-defaultvalue="all" onclick="checkAccountGrantFunction()"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-center">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" onclick="resetAssignAccount()">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+    <input type="hidden" name="eqs_isOnline" value="1"/>
+##  ins_corpId 用于记录成员单位ID。成员单位之间使用,号分隔。
+    <input type="hidden" name="ins_corpId" value=""/>
+</form>
+
+<table id="innerAccountTable" class="layui-table layui-form hidden">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAcc.blnctrAcc')</th>
+        <th>#springMessage('table.fcAcc.accName')</th>
+        <th>#springMessage('table.fcAcc.netId')</th>
+        <th>#springMessage('table.fcAcc.corpId')</th>
+        <th>#springMessage('table.fcAcc.curId')</th>
+        <th>#springMessage('table.fcAcc.accType')</th>
+        <th style="width: 120px" class="queryDetail"><input class="queryDetailAll" type="checkbox" name="like" lay-skin="primary" lay-filter="queryDetailAll" title="#springMessage('accountGrant.detailSearch')"/></th>
+        <th style="width: 120px" class="queryBalance"><input class="queryBalanceAll" type="checkbox" name="like" lay-skin="primary" lay-filter="queryBalanceAll" title="#springMessage('accountGrant.balanceSearch')"/></th>
+        <th style="width: 120px" class="transferAccounts"><input class="transferAccountsAll" type="checkbox" name="like" lay-skin="primary" lay-filter="transferAccountsAll" title="#springMessage('table.fcSubjectDay.transfer_accounts')"/></th>
+    </tr>
+    </thead>
+</table>
+<table id="poolInnerAccountTable" class="layui-table layui-form hidden">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcCorpPool.poolBlnctrAcc')</th>
+        <th>#springMessage('table.fcAcc.accName')</th>
+        <th>#springMessage('nis.pool.fcCorpPool.pertainPool')</th>
+        <th>#springMessage('table.fcAcc.corpId')</th>
+        <th>#springMessage('table.fcAcc.curId')</th>
+        <th>#springMessage('table.fcAcc.accType')</th>
+        <th style="width: 120px" class="queryDetail"><input class="queryDetailAll" type="checkbox" name="like" lay-skin="primary" lay-filter="queryDetailAll" title="#springMessage('accountGrant.detailSearch')"/></th>
+        <th style="width: 120px" class="queryBalance"><input class="queryBalanceAll" type="checkbox" name="like" lay-skin="primary" lay-filter="queryBalanceAll" title="#springMessage('accountGrant.balanceSearch')"/></th>
+        <th style="width: 120px" class="transferAccounts"><input class="transferAccountsAll" type="checkbox" name="like" lay-skin="primary" lay-filter="transferAccountsAll" title="#springMessage('table.fcSubjectDay.transfer_accounts')"/></th>
+    </tr>
+    </thead>
+</table>
+<table id="bankAccountTable" class="layui-table layui-form hidden">
+    <thead>
+    <tr>
+        <th>#springMessage('table.nisBillhead.accId')</th>
+        <th>#springMessage('table.fcAcc.accName')</th>
+        <th>#springMessage('table.fcAcc.corpId')</th>
+        <th>#springMessage('table.bisBifInit.bankType')</th>
+        <th>#springMessage('table.accountDTO.bankName')</th>
+        <th>#springMessage('table.nisBillhead.curId')</th>
+        <th style="width: 100px" class="queryDetail"><input class="queryDetailAll" type="checkbox" name="like" lay-skin="primary" lay-filter="queryDetailAll" title="#springMessage('accountGrant.detailSearch')"/></th>
+        <th style="width: 100px" class="queryBalance"><input class="queryBalanceAll" type="checkbox" name="like" lay-skin="primary" lay-filter="queryBalanceAll" title="#springMessage('accountGrant.balanceSearch')"/></th>
+        <th style="width: 100px" class="transferAccounts"><input class="transferAccountsAll" type="checkbox" name="like" lay-skin="primary" lay-filter="transferAccountsAll" title="#springMessage('table.fcSubjectDay.transfer_accounts')"/></th>
+    </tr>
+    </thead>
+</table>
+<div class="layui-form-item layui-form-submit">
+    <div class="layui-input-block">
+        <button class="layui-btn" type="button" id="submitAssign">#springMessage('common.button.submit')</button>
+    </div>
+</div>
+<input type="hidden" id="loginName" value="$!{loginName}"/>
+<input type="hidden" id="userId" value="$!{userId}"/>
+<input type="hidden" id="accountCorpId" value="$!{accountCorpId}"/>
+    #parse("views/common/footer.vm")
+<script src="${basePath}/static/modules/sys/accountGrant/accountGrant.assignAccount.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

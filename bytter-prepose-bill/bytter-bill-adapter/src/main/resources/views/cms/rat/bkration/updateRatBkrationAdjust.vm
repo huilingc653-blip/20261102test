@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" id="id" name="id" value="$!{ratBkrationAdjust.id}">
+    <input type="hidden" id="businessId" name="businessId" value="$!{ratBkrationAdjust.businessId}">
+    <input type="hidden" id="ratType" name="ratType" value="0">
+    <input type="hidden" id="businessType" name="businessType" value="$!{ratBkrationAdjust.businessType}">
+    <input type="hidden" id="ratMode" value="$!{ratBkrationPage.ratMode}">
+    <h2 class="layui-colla-title">#springMessage('table.ratBkration.ratMsg')</h2>
+    <table class="layui-table layui-table-border">
+        <tbody>
+        <tr>
+            ##授信模式
+            <td width="15%" class="textRight">#springMessage('table.ratBkration.ratMode')</td>
+            <td width="20%">
+                $dictTag.get("RatBkration.RatMode", "$!{ratBkrationPage.ratMode}")
+            </td>
+            ##授信编号
+            <td width="15%" class="textRight">#springMessage('table.ratBkration.ratCode')</td>
+            <td width="20%">
+                $!{ratBkrationPage.ratCode}
+            </td>
+        </tr>
+        <tr>
+            ##银行编号
+            <td class="textRight">#springMessage('table.ratBkration.bankCode')</td>
+            <td colspan="3">
+                $!{ratBkrationPage.bankName}
+            </td>
+        </tr>
+        <tr>
+            ##授信单位
+            <td width="12%" class="textRight">#springMessage('table.ratBkration.corpId')</td>
+            <td width="20%">
+                $!{ratBkrationPage.corpName}
+            </td>
+            ##授信币种
+            <td class="textRight">#springMessage('table.ratBkration.curCode')</td>
+            <td>
+                $!{ratBkrationPage.curName}
+            </td>
+        </tr>
+        <tr>
+            ##授信开始时间
+            <td class="textRight">#springMessage('table.ratBkration.begindate')</td>
+            <td>
+                $!date.format('yyyy-MM-dd',$!ratBkrationPage.beginDate)
+            </td>
+            ##授信结束时间
+            <td class="textRight">#springMessage('table.ratBkration.enddate')</td>
+            <td>
+                $!date.format('yyyy-MM-dd',$!ratBkrationPage.endDate)
+            </td>
+        </tr>
+        <tr>
+            ##备注
+            <td class="textRight" width="15%">#springMessage('table.ratBkration.remark')</td>
+            <td colspan="6">
+                $!{ratBkrationPage.remark}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <h2 class="layui-colla-title">#springMessage('table.ratBkration.ratAdjustMsg')</h2>
+    <table id="singleTable" class="layui-table layui-form layui-table-border" style="width:100%;">
+        <thead>
+        <tr>
+            <th width='150px'>#springMessage('table.ratBkrationDetail.itemCodeFlag')</th>
+            <th width='200px'>#springMessage('table.ratBkrationDetail.itemCode')</th>
+            <th width='200px'>#springMessage('table.ratBkrationDetail.creditType')</th>##授信方式
+            <th width='180px'>#springMessage('table.ratBkrationDetail.money')</th>
+            <th width='180px'>#springMessage('table.ratBkrationDetail.maxMoney')</th>
+            #if($!{ratBkrationAdjust.businessType}=="0"&&$!{ratBkrationPage.ratMode}=="0")##授信录入且为集团授信
+                <th width='180px'>#springMessage('table.ratBkrationDetail.disMoney')</th>##分配额度
+            #else
+                <th width='180px'>#springMessage('table.ratBkrationDisDetail.superProcessMoney')</th>##占用额度
+            #end
+            <th width='180px'>#springMessage('table.ratBkration.adjustMaxMoney')</th>
+            <th width='180px'>#springMessage('table.ratBkration.CanUseMaxMoney')</th>
+        </tr>
+        </thead>
+        <tbody>
+            ##综合授信
+            #foreach($rationDtl in $!{ratBkrationPage.compRationDtls})
+                #set($vcount = $velocityCount - 1)
+            <tr>
+                #if($!{vcount} == "0")
+                    <td rowspan="$!{ratBkrationPage.compItemSize}" align="center">##授信类型
+                            $dictTag.get("RatModel.ItemFlag", "1")
+                    </td>
+                #end
+                <td align="center">##授信品种
+                    <input type="hidden" name="adjustDtls[$!{rationDtl.itemOrder}].itemFlag"
+                           value="$!{rationDtl.itemFlag}">
+                    <input type="hidden" name="adjustDtls[$!{rationDtl.itemOrder}].itemCode"
+                           value="$!{rationDtl.itemCode}">
+                    <input type="hidden" name="adjustDtls[$!{rationDtl.itemOrder}].creditType"
+                           value="$!{rationDtl.creditType}">
+                    ##                        <input type="hidden" name="adjustDtls[$!{rationDtl.itemOrder}].itemOrder" value="$!{rationDtl.itemOrder}">
+                    $!{rationDtl.itemName}
+                </td>
+                <td align="center">
+                    $dictTag.get("rat.creditType", $!{rationDtl.creditType})
+                </td>
+                #if($!{vcount} == "0")##授信额度
+                    <td rowspan="$!{ratBkrationPage.compItemSize}" align="right">
+                        #set($ratMoney=$!{rationDtl.money})
+							$!number.formatNumeric($!{rationDtl.money})
+                    </td>
+                #end
+                <td align="right">##最高额度
+                    <input type="hidden" class="bt-biz-moneyType" data-name="$!{rationDtl.itemOrder}maxMoney"
+                           data-biz-name="$!{rationDtl.itemOrder}maxMoney" id="$!{rationDtl.itemOrder}maxMoney"
+                           value="$!{rationDtl.maxMoney}">
+                    $!number.formatNumeric($!{rationDtl.maxMoney})
+                </td>
+                #if($!{ratBkrationAdjust.businessType} == "0" && $!{ratBkrationPage.ratMode} == "0")##授信录入且授信模式是集团授信
+                    ##分配额度
+                    <td align="right">
+                        <input type="hidden" class="bt-biz-moneyType" data-name="$!{rationDtl.itemOrder}disMoney"
+                               data-biz-name="$!{rationDtl.itemOrder}disMoney" value="$!{rationDtl.disMoney}">
+                        $!number.formatNumeric($!{rationDtl.disMoney})
+                    </td>
+                    ##调整后最高额度
+                    <td>
+                        #set($maxAdjustMoney=$!{ratMoney})
+                        #set($minAdjustMoney=$!{rationDtl.disMoney})
+                        <input type="text" data-name="adjustDtls[$!{rationDtl.itemOrder}].money"
+                               id="$!{rationDtl.itemOrder}money" data-biz-name="$!{rationDtl.itemOrder}money"
+                               class="layui-input bt-biz-moneyType"
+                               data-row="$!{rationDtl.itemOrder}"
+                               data-decimal="2" data-minus="false" data-max="$!{maxAdjustMoney}"
+                               data-min="$!{minAdjustMoney}" value="$!{rationDtl.adjustedMoney}">
+                    </td>
+                    ##可用最高额度
+                    <td align="right">
+                        #set($canUseMaxMoney=($!{rationDtl.adjustedMoney}-$!{rationDtl.disMoney}))
+                        <span id="$!{rationDtl.itemOrder}canUseMaxMoney"> $!number.formatNumeric($!{canUseMaxMoney})</span>
+                    </td>
+                #elseif($!{ratBkrationAdjust.businessType} == "0" && $!{ratBkrationPage.ratMode} == "1")##授信录入且授信模式是自主授信
+                    ##占用额度
+                    <td align="right">
+                        <input type="hidden" class="bt-biz-moneyType" data-name="$!{rationDtl.itemOrder}applyMoney"
+                               data-biz-name="$!{rationDtl.itemOrder}applyMoney"
+                               value="$!{rationDtl.superProcessMoney}">
+                        $!number.formatNumeric($!{rationDtl.superProcessMoney})
+                    </td>
+                    ##调整后最高额度
+                    <td>
+                        #set($maxAdjustMoney=$!{ratMoney})
+                        #set($minAdjustMoney=$!{rationDtl.superProcessMoney})
+                        <input type="text" data-name="adjustDtls[$!{rationDtl.itemOrder}].money"
+                               id="$!{rationDtl.itemOrder}money" data-biz-name="$!{rationDtl.itemOrder}money"
+                               class="layui-input bt-biz-moneyType"
+                               data-row="$!{rationDtl.itemOrder}"
+                               data-decimal="2" data-minus="false" data-max="$!{maxAdjustMoney}"
+                               data-min="$!{minAdjustMoney}" value="$!{rationDtl.adjustedMoney}">
+                    </td>
+                    ##可用最高额度
+                    <td align="right">
+                        #set($canUseMaxMoney=($!{rationDtl.adjustedMoney}-$!{rationDtl.superProcessMoney}))
+                        <span id="$!{rationDtl.itemOrder}canUseMaxMoney"> $!number.formatNumeric($!{canUseMaxMoney})</span>
+                    </td>
+                #elseif($!{ratBkrationAdjust.businessType} == "1" && $!{ratBkrationPage.ratMode} == "0")##授信分配且授信模式是集团授信（并且分配方式为金额共享）
+                    ##占用额度
+                    <td align="right">
+                        <input type="hidden" class="bt-biz-moneyType" data-name="$!{rationDtl.itemOrder}applyMoney"
+                               data-biz-name="$!{rationDtl.itemOrder}applyMoney"
+                               value="$!{rationDtl.superProcessMoney}">
+                        $!number.formatNumeric($!{rationDtl.superProcessMoney})
+                    </td>
+                    ##调整后最高额度
+                    <td>
+                        #set($maxAdjustMoney=$!{rationDtl.inputMaxMoney})
+                        #set($minAdjustMoney=$!{rationDtl.superProcessMoney})
+                        <input type="text" data-name="adjustDtls[$!{rationDtl.itemOrder}].money"
+                               id="$!{rationDtl.itemOrder}money" data-biz-name="$!{rationDtl.itemOrder}money"
+                               class="layui-input bt-biz-moneyType"
+                               data-row="$!{rationDtl.itemOrder}"
+                               data-decimal="2" data-minus="false" data-max="$!{maxAdjustMoney}"
+                               data-min="$!{minAdjustMoney}" value="$!{rationDtl.adjustedMoney}">
+                    </td>
+                    ##可用最高额度
+                    <td align="right">
+                        #set($canUseMaxMoney=($!{rationDtl.inputMaxMoney}-$!{rationDtl.superProcessMoney}))
+                        <span id="$!{rationDtl.itemOrder}canUseMaxMoney"> $!number.formatNumeric($!{canUseMaxMoney})</span>
+                    </td>
+                #end
+            </tr>
+            #end
+            <tr>
+                ##备注
+                <td class="textRight" width="15%">#springMessage('table.ratBkration.remark')</td>
+                <td colspan="8">
+                    <input type="text" id="remark" name="remark" style="width:90%"
+                           autocomplete="off" class="layui-input" value="$!{ratBkrationAdjust.remark}"
+                           placeholder="#springMessage('table.ratBkration.remark')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('table.ratBkration.attach')</td>
+                <td style="text-align: center;" colspan="8">
+                    <!-- 附件上传 -->
+                    <input id="annexName" name="attachmentId" type="hidden" value="$!{ratBkrationAdjust.attachmentId}">
+                    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="layui-table layui-table-border">
+        <tr colspan="9" style="text-align: center;">
+            <td>
+                <button class="layui-btn" lay-submit="" lay-filter="temp" value="0">#springMessage(
+                    'common.button.temp')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="submit" value="11">#springMessage(
+                    'common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="close">#springMessage(
+                    'common.button.close')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratBkrationAdjust.edit.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('table.cmsLease.payDate')</th>
+            <th>#springMessage('table.cmsLease.payPlanDate')</th>
+            <th>#springMessage('table.cmsLease.leaseMonry')</th>
+            <th>#springMessage('table.cmsLease.leaseInterest')</th>
+            <th>#springMessage('table.cmsLease.thisMoney')</th>
+            <th>#springMessage('table.cmsLease.thisCost')</th>
+            <th>#springMessage('table.cmsLease.surplusMoney')</th>
+            <th>#springMessage('table.cmsLease.rmk')</th>
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+        <tbody>
+            #set ($isFirstUnRepay = true)
+            #foreach($LeaseCapitalPlanDelVO in $list)
+            <tr>
+                <td align="center">$!date.format('yyyy-MM-dd',$!{LeaseCapitalPlanDelVO.payDate})</td>
+                <td align="center">$!date.format('yyyy-MM-dd',$!{LeaseCapitalPlanDelVO.payPlanDate})</td>
+                <td class="textRight">$number.formatNumeric($!{LeaseCapitalPlanDelVO.leaseMonry})</td>
+                <td class="textRight">$number.formatNumeric($!{LeaseCapitalPlanDelVO.leaseInterest})</td>
+                <td class="textRight">$number.formatNumeric($!{LeaseCapitalPlanDelVO.thisMoney})</td>
+                <td class="textRight">$number.formatNumeric($!{LeaseCapitalPlanDelVO.thisCost})</td>
+                <td class="textRight">$number.formatNumeric($!{LeaseCapitalPlanDelVO.surplusMoney})</td>
+                <td align="center">$!{LeaseCapitalPlanDelVO.rmk}</td>
+                <td>
+                    #if("$!{interestID}" == $!{LeaseCapitalPlanDelVO.id})##还款已经选中的数据
+                        <span style="color:#009688">#springMessage('cms.msg.select')</span>
+                    #else
+                        #if("$!{LeaseCapitalPlanDelVO.isRepay}" == "0"  && $isFirstUnRepay)
+                            <button class="layui-btn" type="button" onClick="interest('$!date.format(
+                                'yyyy-MM-dd',$!LeaseCapitalPlanDelVO.payPlanDate)','$!{LeaseCapitalPlanDelVO.leaseMonry}','$!{LeaseCapitalPlanDelVO.leaseInterest}','$!{LeaseCapitalPlanDelVO.id}');">#springMessage(
+                                                'common.button.select')</button>
+                            #set ($isFirstUnRepay = false)                                    ## ③ 显示后才置 false
+                        #elseif("$!{LeaseCapitalPlanDelVO.isRepay}" == "0")
+                            ## ④ 后续未还：此时 flag 已是 false → 走这里，不显示
+                        #else
+                            <span style="color:#5FB878"> #springMessage('cms.repaymentSchedule.used') </span>
+                        #end
+                    #end
+                </td>
+            </tr>
+            #end
+        </tbody>
+    </table>
+</div>
+<div style="text-align: center;">
+    <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage(
+        'common.button.close')</button>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['jquery', "form", 'bttable', 'moneyType'], function () {
+        var $ = bt.jquery;
+        var index = 1;
+        moneyFun = bt.moneyType.getFun();
+    });
+
+    function merge(tableId) {
+        var tr = document.getElementById(tableId);
+        for (var i = 1; i < tr.rows.length; i++) {                //表示数据内容的第二行
+            if (tr.rows[i].cells[col].innerHTML == tr.rows[i - 1].cells[col].innerHTML) {//col代表列
+                t = i - 1;
+                while (tr.rows[i].cells[col].innerHTML == tr.rows[t].cells[col].innerHTML) {
+                    tr.rows[i].cells[col].style.display = "none";
+                    if (tr.rows[t].cells[col].rowSpan <= (i - t)) {
+                        tr.rows[t].cells[col].rowSpan += 1;      //设置前一行的rowspan+1
+                    }
+                    i++;
+                }
+            }
+        }
+    }
+
+    function interest(payPlanDate, leaseMonry, leaseInterest, id) {
+        var webObj = bt.navtab.getParentDom();
+        webObj.setSelectInterestData(payPlanDate, leaseMonry, leaseInterest, id);
+        bt.navtab.closeCurrent();
+    }
+</script>
+</html>

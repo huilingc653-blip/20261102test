@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .pwBox{
+            display: flex;
+            align-items: center;
+            border: 1px solid #EBEDF1;
+        }
+        .pwBox input{
+            border: none;
+            margin: 0;
+            flex: 1;
+        }
+        .pwBox .eyeBtn{
+            margin: 0 10px;
+            width: 16px;
+            height: 16px;
+            line-height: 15px;
+            cursor: pointer;
+        }
+        .pwBox .eyeBtn img{
+            width: 100%;
+            height: 100%;
+        }
+        .cks {
+            max-height: 60px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+        .cks.expanded {
+            max-height: 500px;
+        }
+        .currency-expand-btn {
+            text-align: left;
+        }
+        .currency-expand-btn a {
+            color: #1E9FFF;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .currency-expand-btn a:hover {
+            color: #007DDB;
+        }
+        .currency-expand-btn .layui-icon {
+            font-size: 12px;
+            margin-right: 3px;
+            transition: transform 0.3s ease;
+        }
+        .currency-expand-btn.expanded .layui-icon {
+            transform: rotate(180deg);
+        }
+        .cks .layui-form-checkbox {
+            width: 15%!important;
+            text-align: left!important;
+        }
+        .cks .layui-form-checkbox span{
+            position: absolute;
+            left: 16px;
+        }
+
+    </style>
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="id" name="id" type="hidden" value="$!{btBankAccPage.id}">
+    <input id="status" name="status" type="hidden" value="$!{btBankAccPage.status}">
+    <input id="createBy" name="createBy" type="hidden" value="$!{btBankAccPage.createBy}">
+    <input id="createDate" name="createDate" type="hidden" value="$!{btBankAccPage.createDate}">
+    <input id="updateBy" name="updateBy" type="hidden" value="$!{btBankAccPage.updateBy}">
+    <input id="updateDate" name="updateDate" type="hidden" value="$!{btBankAccPage.updateDate}">
+    <input id="prov" name="prov" type="hidden" value="$!{btBankAccPage.prov}">
+    <input id="city" name="city" type="hidden" value="$!{btBankAccPage.city}">
+    <input id="electricBill" name="electricBill" type="hidden" value="$!{btBankAccPage.electricBill}">
+    <input id="todate" name="todate" type="hidden" value="$!{todate}">
+    <table class="layui-table breakRow">
+        <tbody>
+        <tr>
+        ##单位ID
+            <td class="textRight"><span class="pl"><span class="required-icon">*</span></span>#springMessage(
+                'table.btBankAcc.corpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-biz-name="corpId"
+                         data-name="corpId" data-resource="netbank:bankAcc:btBankAcc:create"
+                         data-scope="all"
+                         data-required="true" data-callback="bt.corpCallback"
+                         data-defaultvalue="$!{btBankAccPage.corpId}"></div>
+                </div>
+            </td>
+        ##账户名称
+            <td class="textRight" width="150">#springMessage('table.btBankAcc.accName')</td>
+            <td width="40%">
+                <input type="text" id="accName" name="accName" lay-verify="required"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.accName')"
+                       value="$!{btBankAccPage.accName}">
+            </td>
+        </tr>
+        ##币别
+        <tr>
+            <td class="textRight"><span class="pl"><span class="required-icon">*</span></span>#springMessage(
+                'table.btBankAccApp.curId')</td>
+            <td colspan="3">
+                <input type="hidden" value=" " name="curId" id="curId" data-required="true"/>
+                <div class="cks" data-biz-name="cur"></div>
+                <div class="currency-expand-btn" style="margin-top: 5px;">
+                    <a href="javascript:void(0);" id="toggleCurrencyBtn" onclick="toggleCurrencyList()">
+                        <i class="layui-icon layui-icon-down"></i>
+                        <span id="toggleCurrencyText">查看更多</span>
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##境内/境外账号
+            <td class="textRight">#springMessage('table.btBankAccApp.isDomesticBank')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="btBankAcc.isDomesticBank" data-required="true"
+                     data-defaultvalue="1" data-name="isDomesticBank" data-biz-name="isDomesticBank" data-callback="bt.isDomesticBank"></div>
+            </td>
+            ##是否离岸账号
+            <td class="textRight">#springMessage('table.btBankAccApp.isOffshoreAccount')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn"
+                     data-defaultvalue="0" data-name="isOffshoreAccount" data-biz-name="isOffshoreAccount"></div>
+            </td>
+        </tr>
+        <tr>
+        ##银行账号
+            <td class="textRight" width="10%">#springMessage('table.btBankAcc.bankAcc')</td>
+            <td width="40%">
+                <input type="text" id="bankAcc" name="bankAcc" lay-verify="required|strlength" data-maxlength="32"
+                       autocomplete="off" class="layui-input bank"
+                       placeholder="#springMessage('table.btBankAcc.bankAcc')" value="$!{btBankAccPage.bankAcc}">
+            </td>
+            ##银行类别
+            <td class="textRight">#springMessage('table.btBankAcc.bankTypeId')</td>
+            <td>
+                <input type="hidden" id="bankTypeIdHid" value=""/>
+                <input type="hidden" id="bankPrefix" value=""/>
+                <div data-name="bankTypeId" class="bt-biz-selectType"
+                     data-url="${basePath}/basic/business/btbanktype/json"
+                     data-valueField="id"
+                     data-biz-name="bankTypeId"
+                     data-textField="typeName"
+                     data-required="true"
+                     data-callback="bt.bankTypeChange"
+                     data-search="true" data-defaultvalue="$!{btBankAccPage.bankTypeId}"></div>
+            </td>
+        </tr>
+        <tr>
+        ##开户行行号
+            <td class="textRight">#springMessage('table.btBankAccApp.bankCode')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="bankCode" name="bankCode" lay-verify="required" readonly="readonly"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAccApp.bankCode')">
+                    ##境外
+                    <div class="bt-div-search isSwiftY" style="display:none">
+                        <button class="bt-biz-swiftInfo" id="selPayeeBankBut" type="button"  data-callback="bt.swiftInfoCallback" title="#springMessage('common.button.select')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                    ##境内
+                    <div class="bt-div-search isSwiftN">
+                        <button class="bt-biz-bankInfo" type="button"  data-callback="bt.bankinfoCallback" data-beforeClick="bt.bankInfoBeforeClick" title="#springMessage('common.button.bank')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        ##开户行名称
+            <td class="textRight">#springMessage('table.btBankAcc.bankName')</td>
+            <td>
+                <input type="text" id="bankName" name="bankName" lay-verify="required" readonly="readonly"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.bankName')"
+                       value="$!{btBankAccPage.bankName}">
+            </td>
+        </tr>
+        <tr>
+        ##账户性质
+            <td class="textRight" width="10%">#springMessage('table.btBankAcc.natureId')</td>
+            <td>
+                <div type="list" field="natureId" fieldHref="${basePath}/bankacc/btaccnature/json" dictField="id"
+                     dictText="natureName" data-required="true" defaultVal="$!{btBankAccPage.natureId}"></div>
+            </td>
+        ##账户属性
+            <td class="textRight" width="10%">#springMessage('table.btBankAcc.attributeId')</td>
+            <td>
+                <div type="list" field="attributeId" fieldHref="${basePath}/bankacc/bisaccattribute/json" dictField="id"
+                     dictText="attributeName" data-required="true" defaultVal="$!{btBankAccPage.attributeId}"></div>
+            </td>
+        </tr>
+        <tr class="tp">
+        ##账户类别
+            <td class="textRight">#springMessage('table.btBankAcc.accType')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="btBankAcc.accType" data-required="true"
+                     data-defaultvalue="$!{btBankAccPage.accType}" data-name="accType" data-biz-name="accType"
+                     data-callback="bt.chang"></div>
+            </td>
+	        <td align="right" class="type"></td>
+            <td class="typeText"></td>
+            ##绑定账号
+##            <td class="textRight" id="bindingBankAccTd" style="display: none;">绑定账号</td>
+##            <td id="bindingBankAccTextTd" style="display: none;">
+##                <input type="hidden" id="bindingBankAccHid" name="bindingBankAcc"/>
+##                <button class="layui-btn" type="button" onclick="chooseBindingBankAcc()">选择</button>
+##                <button class="layui-btn" type="button" onclick="viewBindingBankAcc()">查看</button>
+##            </td>
+        </tr>
+        <tr>
+        ##接口代码
+            <td class="textRight">#springMessage('table.btBankAcc.bifCode')</td>
+            <td>
+                <div data-name="bifCode" class="bt-biz-selectType"
+                     data-url="${basePath}/basic/business/bisbifinit/getByBankType/0"
+                     data-valueField="id"
+                     data-biz-name="bifCode"
+                     data-textField="name"
+                     data-required="true"
+                     data-callback="bt.isOnlineHandleCallback"
+                     data-search="true" data-defaultvalue="$!{btBankAccPage.bifCode}"></div>
+            </td>
+        ##是否资金池账号
+            <td class="textRight">#springMessage('table.btBankAcc.isCapitalPool')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="0"
+                     data-name="isCapitalPool" data-biz-name="isCapitalPool"></div>
+            </td>
+        </tr>
+        <tr>
+        ##开户日期
+            <td class="textRight">#springMessage('table.btBankAcc.regDate')</td>
+            <td>
+                <input type="text" id="regDate" name="regDate" class="layui-input" lay-verify="required"
+                       autocomplete="off">
+            </td>
+        ##是否上线
+            <td class="textRight">#springMessage('table.btBankAcc.isOnline')</td>
+            <td>
+            ##                        <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="1" data-name="isOnline" data-biz-name="isOnline"></div>
+                <input type="radio" name="isOnline" value="1" checked title="#springMessage('nis.sc_yn.yes')"
+                       lay-filter="isOnline">
+                <input type="radio" name="isOnline" value="0" title="#springMessage('nis.sc_yn.no')"
+                       lay-filter="isOnline">
+            </td>
+        </tr>
+        ##				<tr>
+        ##
+        ##    				##是否查询余额或明细
+        ##                    <td class="textRight">#springMessage('table.btBankAcc.scanFlag')</td>
+        ##    				<td>
+        ##                        <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="1" data-name="scanFlag" data-biz-name="scanFlag"></div>
+        ##    				</td>
+        ##				</tr>
+        <tr>
+        ##是否有效
+            <td class="textRight">#springMessage('table.btBankAcc.validSign')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="1"
+                     data-name="validSign" data-biz-name="validSign"></div>
+            </td>
+        ##账户年检到期日
+            <td  class="textRight">#springMessage('table.btBankAcc.checkExpireDate')</td>
+            <td>
+                <input type="text" id="checkExpireDate" name="checkExpireDate" class="layui-input" autocomplete="off">
+            </td>
+        </tr>
+        <tr>
+        ##备注
+            <td class="textRight">#springMessage('table.btBankAcc.rmk')</td>
+            <td>
+                <input type="text" id="rmk" name="rmk"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.rmk')">
+            </td>
+            ##到期日期
+            <td class="textRight">#springMessage('table.btBankAcc.endDate')</td>
+            <td>
+                <input type="text" name="endDate" class="layui-input bt-biz-dateType" autocomplete="off" value="$!date.format('yyyy-MM-dd',$!{btBankAccPage.endDate})">
+            </td>
+        </tr>
+        <tr>
+            ##是否线上办理
+            <td class="textRight">#springMessage('table.btBankAcc.isOnlineHandle')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="0" data-name="isOnlineHandle" data-biz-name="isOnlineHandle"
+                     data-callback="bt.isOnlineHandleCallback"></div>
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="textRight">是否参与资金需求计算</td>
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="0" data-name="isDemand" data-biz-name="isDemand"></div>
+            </td>
+            <td class="textRight">账号用途</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-mulselectType" data-url="${basePath}/netbank/bankAccUse/json" data-method="get"
+                         data-valuefield="useCode" data-textfield="useName"  data-inputvalue="inputvalue"
+                         data-name="accUseCode" data-biz-name="accUseCode"  data-search="true" data-defaultvalue="$!{btBankAccPage.accUseCode}"
+                         onfocusout="validateAccUseCode(this)"   ></div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div id="virtualTag" class="layui-input-inline ignore-required-hide" style="display: none">
+        <table id="virtualTable" class="layui-table layui-form table-border" style="width:100%;" >
+            <thead>
+            <tr>
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btBankAccVirtual.virtualNo')</th>
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btBankAccVirtual.virtualName')</th>
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btBankAccVirtual.bankCode')</th>
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btBankAccVirtual.overCtrl')</th>
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btBankAccVirtual.closeType')</th>
+                <th><span class="pl"><span class="required-icon">*</span></span>#springMessage('table.btBankAccVirtual.backType')</th>
+                <th>#springMessage('common.table.thead.operation')</th>
+            </tr>
+            </thead>
+            <tbody class="ignore-required-icon layui-form">
+            <tr row="0">
+                <td>
+                    <input type="text" name="bankAccVirtual[0].virtualNo" lay-verify="required|strlength" data-maxlength="10">
+                </td>
+                <td>
+                    <input type="text" name="bankAccVirtual[0].virtualName" lay-verify="required|strlength" data-maxlength="20">
+                </td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="btBankAccVirtual.bankCode" data-defaultvalue="" data-name="bankAccVirtual[0].bankCode" data-biz-name="bankCode0" data-required="true"></div>
+                </td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="btBankAccVirtual.overCtrl" data-defaultvalue="Y" data-name="bankAccVirtual[0].overCtrl" data-biz-name="overCtrl0" data-required="true"></div>
+                </td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="btBankAccVirtual.closeType" data-defaultvalue="Y" data-name="bankAccVirtual[0].closeType" data-biz-name="closeType0" data-required="true"></div>
+                </td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="btBankAccVirtual.backType" data-defaultvalue="Y" data-name="bankAccVirtual[0].backType" data-biz-name="backType0" data-required="true"></div>
+                </td>
+                <td></td>
+            </tr>
+            <tr id="sumTr" style="display: none">
+                <td colspan="6"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div onclick="divclick();" style="text-align: center">
+        <i class="layui-icon" style="margin-right: 10px" id="otherInfoIcon">&#xe602;</i>#springMessage(
+        'cms.loan.OtherInfo')</div>
+    <div id="otherInfo" style="display: none">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                ##利率r>
+                <td class="textRight" width="150">#springMessage('table.btBankAcc.rates')</td>
+                <td width="40%">
+                    #if($!{btBankAccPage.rates})
+                        <input type="text" data-name="rates" class="layui-input bt-biz-rateType"
+                               placeholder="#springMessage('table.btBankAcc.rates')" value="$!{btBankAccPage.rates}" >
+                    #else
+                        <input type="text" data-name="rates" class="layui-input bt-biz-rateType"
+                               placeholder="#springMessage('table.btBankAcc.rates')" value="">
+                    #end
+
+
+                </td>
+            ##对私编号
+                <td class="textRight" width="150">#springMessage('table.btBankAcc.privateNo')</td>
+                <td width="40%">
+                    <input type="text" id="privateNo" name="privateNo"
+                           autocomplete="off" class="layui-input inlineblock"
+                           placeholder="#springMessage('table.btBankAcc.privateNo')"
+                           value="$!{btBankAccPage.privateNo}">
+                    <div class="inlineblock">(#springMessage("table.btBankAcc.privateNo.rmk"))</div>
+                </td>
+            </tr>
+            <tr>
+            ##利率是否浮动
+                <td class="textRight">#springMessage('table.btBankAcc.ratesFloat')</td>
+                <td>
+                    <input type="radio" name="ratesFloat" checked="checked" title="#springMessage('common.sc_yn.no')"
+                           value="0" lay-filter="ratesFloat">
+                    <input type="radio" name="ratesFloat" title="#springMessage('common.sc_yn.yes')" value="1"
+                           lay-filter="ratesFloat"/>
+                </td>
+            ##浮动百分比
+                <td class="textRight">#springMessage('table.btBankAcc.ratesFloatPer')</td>
+                <td>
+                    <input type="text" data-name="ratesFloatPer" data-biz-name="ratesFloatPer"
+                           class="layui-input bt-biz-ratioType" disabled
+                           placeholder="#springMessage('table.btBankAcc.ratesFloatPer')"
+                           value="$!{btBankAccPage.ratesFloatPer}">
+                </td>
+            </tr>
+            <tr>
+            ##计息周期
+                <td class="textRight">#springMessage('table.btBankAcc.interestCycle')</td>
+                <td>
+                    <input type="radio" name="interestCycle" checked="checked"
+                           title="#springMessage('table.btBankAcc.interestCycle.month')" value="1"
+                           lay-filter="interestCycle">
+                    <input type="radio" name="interestCycle"
+                           title="#springMessage('table.btBankAcc.interestCycle.season')" value="0"
+                           lay-filter="interestCycle"/>
+                    #if ($btBankAccPage.interestCycle != 1 && $btBankAccPage.interestCycle != 0)
+                        <input type="radio" name="interestCycle" value="-1" checked
+                               title="#springMessage('table.fbsBudget.detail.nothing')" lay-filter="interestCycle">
+                    #else
+                        <input type="radio" name="interestCycle" value="-1"
+                               title="#springMessage('table.fbsBudget.detail.nothing')" lay-filter="interestCycle">
+                    #end
+                </td>
+            ##计息日
+                <td class="textRight">#springMessage('table.btBankAcc.interestDate')</td>
+                <td>
+                    <div class="layui-inline" id="interestDateDiv">
+                        <div class="bt-biz-dict" data-type="select" data-group="btBankAcc.interestDate"
+                             data-defaultvalue=""
+                             data-name="interestDate" data-biz-name="interestDate"
+                             placeholder="#springMessage('common.placeholder.select')"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr style="display: none">
+            ##余额初始日期
+                <td class="textRight">#springMessage('table.btBankAcc.initBalanceDate')</td>
+                <td>
+                ##<div type="date" field="initBalanceDate" defaultVal="$!{btBankAccPage.initBalanceDate}"></div>
+                    <input type="text" name="initBalanceDate" class="layui-input bt-biz-dateType">
+                </td>
+            ##初始余额
+                <td class="textRight">#springMessage('table.btBankAcc.initBalance')</td>
+                <td>
+                    <input type="text" data-id="initBalance" name="initBalance" decimal="2"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           placeholder="#springMessage('table.btBankAcc.initBalance')"
+                           value="$!{btBankAccPage.initBalance}">
+                </td>
+            </tr>
+            <tr>
+            ##本册笔号
+                <td class="textRight">#springMessage('table.btBankAcc.volumeNum')</td>
+                <td>
+                    <input type="text" id="volumeNum" name="volumeNum"
+                           autocomplete="off" class="layui-input inlineblock"
+                           placeholder="#springMessage('table.btBankAcc.volumeNum')"
+                           value="$!{btBankAccPage.volumeNum}">
+                    <div class="inlineblock">(#springMessage("table.btBankAcc.bankbookNum.rmk"))</div>
+                </td>
+            ##存则册号
+                <td class="textRight">#springMessage('table.btBankAcc.bankbookNum')</td>
+                <td>
+                    <input type="text" id="bankbookNum" name="bankbookNum"
+                           autocomplete="off" class="layui-input inlineblock"
+                           placeholder="#springMessage('table.btBankAcc.bankbookNum')"
+                           value="$!{btBankAccPage.bankbookNum}">
+                    <div class="inlineblock">(#springMessage("table.btBankAcc.bankbookNum.rmk"))</div>
+                </td>
+            </tr>
+            <tr>
+            ##银行组织机构代码
+                <td class="textRight">#springMessage('table.btBankAcc.bankOrgCode')</td>
+                <td>
+                    <input type="text" id="bankOrgCode" name="bankOrgCode" lay-verify="strlength" data-maxlength="20"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAcc.bankOrgCode')">
+                </td>
+                ## 是否启用限额管理
+                <td class="textRight isLimit">#springMessage('table.sysCorp.enable.limit')</td>
+                <td class="isLimit">
+                    <input type="checkbox" name="isLimitQuota" lay-skin="switch" lay-text="YES|NO" lay-filter="limit">
+                </td>
+            </tr>
+            <tr class="limit" style="display: none">
+                ## 日累计支付限额
+                <td class="textRight">#springMessage('table.sysCorp.day.limit')</td>
+                <td>
+                    <input type="text" name="dayLimitQuota" autocomplete="off" class="layui-input bt-biz-moneyType"
+                           data-minus="true"  data-type="number" id="dayLimitQuota" data-moneyendid="monthLimitQuota"
+                           placeholder="#springMessage('table.sysCorp.day.limit')">
+                </td>
+                ## 月累计支付限额
+                <td class="textRight">#springMessage('table.sysCorp.month.limit')</td>
+                <td>
+                    <input type="text" name="monthLimitQuota" autocomplete="off" class="layui-input bt-biz-moneyType"
+                           id="monthLimitQuota"
+                           placeholder="#springMessage('table.sysCorp.month.limit')">
+                </td>
+            </tr>
+            <tr class="limit" style="display: none">
+                ## 单笔支付限额
+                <td class="textRight">#springMessage('table.sysCorp.pay.limit')</td>
+                <td>
+                    <input type="text" name="payLimitQuota" autocomplete="off" class="layui-input bt-biz-moneyType"
+                           data-minus="true" data-type="number" data-moneyendid="dayLimitQuota"
+                           placeholder="#springMessage('table.sysCorp.pay.limit')">
+                </td>
+                <td></td>
+                <td></td>
+                ## 透支额度
+##                <td class="textRight">#springMessage('table.sysCorp.over.limit')</td>
+##                <td>
+##                    <input type="text" name="overLimitQuota" autocomplete="off" class="layui-input bt-biz-moneyType"
+##                           data-moneyendid="t20" placeholder="#springMessage('table.sysCorp.over.limit')">
+##                </td>
+            </tr>
+            <tr>
+            ##印鉴
+                <td class="textRight">#springMessage('table.btBankAcc.seal')</td>
+                <td id="updiv" colspan="3">
+                    <img id="imger1" style="width:100px;height:100px"/>
+                    <input type="file" id="seal1" lay-ext="jpg|png|gif" name="seal1" class="layui-upload-file">
+                    <input id="sealDirectory1" type="hidden" name="sealDirectoryList[0]">
+
+                    <img id="imger2" style="width:100px;height:100px"/>
+                    <input type="file" id="seal2" lay-ext="jpg|png|gif" name="seal2" class="layui-upload-file">
+                    <input id="sealDirectory2" type="hidden" name="sealDirectoryList[1]">
+
+                    <img id="imger3" style="width:100px;height:100px"/>
+                    <input type="file" id="seal3" lay-ext="jpg|png|gif" name="seal3" class="layui-upload-file">
+                    <input id="sealDirectory3" type="hidden" name="sealDirectoryList[2]">
+                    <span style="color:#ff0000">#springMessage('netbank.input.img.desc')</span>
+                </td>
+            </tr>
+            <tr>
+            ##预留印鉴联系人
+                <td class="textRight">#springMessage('table.btBankAcc.seal.person')</td>
+                <td>
+                    <input type="text" name="sealPerson" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAcc.seal.person')">
+                </td>
+                <td class="textRight">#springMessage('table.btBankAcc.seal.phone')</td>
+                <td>
+                    <input type="text" name="sealPhone" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAcc.seal.phone')">
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage('table.btBankAcc.seal.email')</td>
+                <td>
+                    <input type="text" name="sealEmail" lay-verify="strlength|emailFormat"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAcc.seal.email')">
+                </td>
+                <td class="textRight">#springMessage('table.btBankAcc.account.management.department')</td>
+                <td>
+                    <input type="text" name="mgtDepartment" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.btBankAcc.account.management.department')">
+                </td>
+            </tr>
+            <tr>
+                ## 网银管理员
+                <td class="textRight">#springMessage('table.bankacc.ukey.uKeyAdmin')</td>
+                <td>
+                    <input type="text" name="uKeyAdmin" autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.bankacc.ukey.uKeyAdmin')">
+                </td>
+                ## 网银操作员
+                <td class="textRight">#springMessage('table.bankacc.ukey.uKeyOperator')</td>
+                <td>
+                    <input type="text" name="uKeyOperator" autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.bankacc.ukey.uKeyOperator')">
+                </td>
+            </tr>
+            <tr>
+                ## 网银复核员1
+                <td class="textRight">#springMessage('table.bankacc.ukey.uKeyReviewers1')</td>
+                <td>
+                    <input type="text" name="uKeyReviewers1" autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.bankacc.ukey.format')">
+                </td>
+                ## 网银复核员2
+                <td class="textRight">#springMessage('table.bankacc.ukey.uKeyReviewers2')</td>
+                <td>
+                    <input type="text" name="uKeyReviewers2" autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.bankacc.ukey.format')">
+                </td>
+            </tr>
+            <tr>
+                ## 网银复核员3
+                <td class="textRight">#springMessage('table.bankacc.ukey.uKeyReviewers3')</td>
+                <td>
+                    <input type="text" name="uKeyReviewers3" autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('table.bankacc.ukey.format')">
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                ##网银功能
+                <td class="textRight" rowspan="2">#springMessage('table.bankacc.ukey.uKeyFunction')</td>
+                <td colspan="4">
+                    <div class="bt-biz-dict cks123" data-type="checkbox" data-group="ukey.function"
+                         data-name="uKeyFunction" data-biz-name="uKeyFunction" data-required="false" data-callback="ukeyFunc"
+                         id="uKeyFunction" data-defaultvalue="$!{btBankAccPage.uKeyFunction}"></div>
+                </td>
+            </tr>
+            <tr>
+                <td><input style="display: none" type="text" name="uKeyFunctionOther" autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('cms.loan.OtherInfo')"></td>
+                <td colspan="4"></td>
+            </tr>
+                ##RPA功能
+            <tr>
+                <td class="textRight">RPA功能</td>
+                <td colspan="3">
+                    <div class="bt-biz-dict cks123" data-type="checkbox" data-group="ukey.rpaFunction"
+                         data-name="rpaFunction" data-biz-name="rpaFunction" data-required="false" data-callback="rpaFunctionCallback"
+                         id="rpaFunction" data-defaultvalue="$!{btBankAccPage.rpaFunction}"></div>
+                </td>
+            </tr>
+                ##是否代管账户
+            <tr id="isRpaEscrowTr" style="display: none">
+                <td class="textRight">#springMessage('table.bankacc.ukey.isRpaEscrow')</td>
+                <td colspan="3">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn"
+                         data-defaultvalue="0" data-name="isRpaEscrow" data-biz-name="isRpaEscrow" data-callback="bt.isRpaEscrow"></div>
+                </td>
+            </tr>
+            <tr>
+                ## 绑定人名称
+                <td class="textRight">绑定人名称</td>
+                <td>
+                    <input type="text" name="bindingByName" autocomplete="off" class="layui-input" placeholder="绑定人名称">
+                </td>
+                ## 绑定人手机
+                #if($shiro.hasPermission("netbank:bankAcc:btBankAcc:binder"))
+                    <td class="textRight">绑定人手机</td>
+                    <td>
+                        <input type="text" name="bindingByMobile" onblur="checkPhone(this)" autocomplete="off" class="layui-input" placeholder="绑定人手机">
+                    </td>
+                #end
+            </tr>
+            #if($shiro.hasPermission("netbank:bankAcc:btBankAcc:binder"))
+                <tr>
+                    ## 登录密码
+                    <td class="textRight">登录密码</td>
+                    <td>
+                        <div class="pwBox layui-input">
+                            <input type="password" name="loginPassword" id="loginPassword"  lay-verify="strlength" data-maxlength="20" autocomplete="off" placeholder="登录密码">
+                            <div class="eyeBtn">
+                                <img src="${basePath}/static/v3.2/images/pw_close.png" class="eye" >
+                                <img style="display: none" src="${basePath}/static/v3.2/images/pw.png" class="eye_show" >
+                            </div>
+                        </div>
+                    </td>
+                    ## 支付密码
+                    <td class="textRight">支付密码</td>
+                    <td>
+                        <div class="pwBox layui-input">
+                            <input type="password" name="payPassword" id="payPassword" lay-verify="strlength" data-maxlength="20" autocomplete="off" placeholder="支付密码">
+                            <div class="eyeBtn">
+                                <img src="${basePath}/static/v3.2/images/pw_close.png" class="eye" >
+                                <img style="display: none" src="${basePath}/static/v3.2/images/pw.png" class="eye_show" >
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            #end
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <table class="layui-table breakRow">
+            <tr>
+                <td colspan="4" align="center">
+                    <button class="layui-btn" lay-submit="" lay-filter="submit" value="95">#springMessage(
+                        'common.button.save')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary"
+                            data-callback="resetCallback">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <!-- 附件上传 -->
+    <input id="attachmentId" name="attachmentId" type="hidden" value="$!{btBankAccPage.attachmentId}">
+    <div id="uploader" class="layui-input-inline" style="width: 100%"></div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    function checkPhone(obj){
+        var phonePattern = /^1[3-9]\d{9}$/;
+        var value = $(obj).val();
+        if (!phonePattern.test(value)) {
+            layer.alert(bt.lang("请输入正确的手机号码！"), {icon: 2});
+            $(obj).val('');
+        }
+    }
+    function clearInputField(event) {
+        // Check if the input field is not already empty
+        if (event.target.value !== '') {
+            // Clear the input field
+            event.target.value = '';
+        }
+        // Optionally, remove this listener so it only triggers once
+        event.target.removeEventListener('focus', clearInputField);
+    }
+
+    window.onload = function() {
+        // Attach the clearInputField function to the focus event of your input field
+        document.getElementById('loginPassword').addEventListener('focus', clearInputField);
+        document.getElementById('payPassword').addEventListener('focus', clearInputField);
+    };
+</script>
+<script src="${basePath}/static/modules/bankacc/btBankAccHandle.add.js?_btv=${resourceVersion}"></script>
+</html>

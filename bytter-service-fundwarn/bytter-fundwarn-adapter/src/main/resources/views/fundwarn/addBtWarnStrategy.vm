@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .dataTables_empty {
+            border-bottom: 1px solid #DFE0E4 !important;
+        }
+
+        .dark-skin .dataTables_empty {
+            border-bottom: 1px solid #2E2F34 !important;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" method="post" id="searchForm">
+    <input type="hidden" name="corpIdAndAccStr" id="corpIdAndAccStr" value=" "/>
+    <div class="layui-collapse" style="margin-bottom: 60px;">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('table.btwarnstrategy.add.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##预警币别
+                        <td class="textRight">#springMessage('table.btwarnstrategy.curName')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <select lay-filter="curId" name="curId" id="curId" lay-verify="required" lay-search="">
+                                    <option value="">#springMessage('common.placeholder.select')</option>
+                                </select>
+                                <input type="hidden" name="curCode" id="curCode"/>
+                            </div>
+                        </td>
+                        ##策略代码
+                        <td width="10%" class="textRight">#springMessage('table.btwarnstrategy.code')</td>
+                        <td width="40%">
+                            <div class="layui-inline">
+                                <input type="text" name="code" id="code" lay-verify="required|strlength"
+                                       onblur="checkWarnCode()" data-maxlength="20"
+                                       autocomplete="off" class="layui-input"
+                                       placeholder="#springMessage('table.btwarnstrategy.code')">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        ##预警类别
+                        <td class="textRight">#springMessage('table.btwarnstrategy.typeCode')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="select"
+                                     data-group="FUNDWARN_TYPE_CODE"
+                                     data-name="typeCode"
+                                     data-biz-name="typeCode"
+                                     data-required="true"
+                                     data-callback="changeState"
+                                ></div>
+                            </div>
+                        </td>
+                        ##策略名称
+                        <td class="textRight">#springMessage('table.btwarnstrategy.name')</td>
+                        <td>
+                            <input type="text" id="name" name="name" lay-verify="required|strlength" data-maxlength="80"
+                                   autocomplete="off" class="layui-input"
+                                   placeholder="#springMessage('table.btwarnstrategy.name')">
+
+                        </td>
+                    </tr>
+                    <tr>
+                        ##预警级别
+                        <td class="textRight">#springMessage('table.btwarnstrategy.level')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="select"
+                                     data-group="btwarnstrategy.level"
+                                     data-name="warnLevel"
+                                     data-biz-name="warnLevel"
+                                     data-required="true"
+                                ></div>
+                            </div>
+                        </td>
+                        ##预警维度
+                        <td class="textRight">#springMessage('table.btwarnstrategy.dimensionCode')</td>
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict"
+                                     data-type="select"
+                                     data-group="FUNDWARN_DIMENSION_CODE"
+                                     data-name="dimensionCode"
+                                     data-biz-name="dimensionCode"
+                                     data-required="true"
+                                     data-callback="changeView"
+                                ></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="statusView" style="display: none">
+                        <td class="textRight">#springMessage('table.btwarnstrategy.status')</td>
+                        ##状态
+                        <td>
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-dict" data-type="select" data-group="FUNDWARN_STATUS"
+                                     data-defaultvalue="0"
+                                     data-name="status" data-biz-name="status" id="status"></div>
+                            </div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        ##预警条件设置
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('table.btwarnstrategy.condition.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr id="forwardTimeId">
+                        <td class="textRight">#springMessage('table.btwarnstrategy.forwardTime')</td>
+                        ##扫描数据提前期
+                        <td>
+                            <input type="text" id="forwardTime" name="forwardTime" data-minus="true" data-decimal="0"
+                                   lay-verify="required" data-biz-name="forwardTime" autocomplete="off"
+                                   class="layui-input bt-biz-moneyType" value="$!{btWarnStrategy.forwardTime}"
+                                   placeholder="#springMessage('table.btwarnstrategy.forwardTime')">
+                        </td>
+                    </tr>
+                    <tr id="conditionTr">
+                        <td class="textRight" width="35%" id="warnConditionHead"></td>
+                        <td class="textLeft" width="65%">
+                            <div class="bt-biz-dict" data-type="select" data-width="70px" data-group="FUNDWARN_OPERATOR"
+                                 data-defaultvalue="10" data-inputvalue="false"
+                                 data-name="beginOperator" id="beginOperator" data-biz-name="beginOperator"
+                                 data-placeholder="" data-required="true"
+                            ></div>
+                            <div class="layui-input-inline">
+                                <input class="layui-input bt-input-inline  bt-biz-moneyType" type="text" id="beginNum"
+                                       name="beginNum" style="width: 120px;" autocomplete="off" placeholder=""
+                                       data-maxlength="18">
+                            </div>
+                            <div style="display: none" class="bt-biz-dict  addClass2" data-type="select"
+                                 data-width="70px" data-group="FUNDWARN_NUM_OPERATOR" data-inputvalue="false"
+                                 data-defaultvalue="02"
+                                 data-name="numOperator" id="numOperator" data-biz-name="numOperator"
+                                 data-placeholder=""
+                                 data-callback=""></div>
+                            <div style="display: none" class="bt-biz-dict addClass2" data-type="select"
+                                 data-width="80px" data-group="FUNDWARN_OPERATOR" data-inputvalue="false"
+                                 data-name="endOperator" id="endOperator" data-biz-name="endOperator"
+                                 data-placeholder=""
+                                 data-callback=""></div>
+                            <div class="layui-input-inline addClass2" style="display: none">
+                                <input class="layui-input bt-input-inline  bt-biz-moneyType" type="text"
+                                       data-biz-name="endNum" id="endNum" name="endNum" style="width: 120px;"
+                                       autocomplete="off" class="layui-input" placeholder="" data-maxlength="18">
+                            </div>
+                            <div onclick="delCondition()" class="layui-input-inline addClass2" style="cursor:pointer; display: none"><i class="layui-icon">&#x1006;</i>
+                            </div>
+                            <div onclick="addCondition()" class="layui-input-inline addClass3" style="cursor:pointer;"><i class="layui-icon">&#xe608;</i>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr id="remarkTr" style="display:none">
+                        <td width="100%" colspan="2" id="remarkTd" style="color: red;text-align: left"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        ##单位、银行账户、内部账户选择及显示
+        <div class="layui-colla-item" id="AccountDiv">
+            <h2 class="layui-colla-title">
+                <span id="accSelectH2"></span>
+            </h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##网点名称
+                        <td class="textRight">#springMessage('table.btwarnstrategy.netName')</td>
+                        <td >
+                            <div class="layui-input-inline">
+                                <div class="bt-biz-corp"
+                                     data-tree-type="check"
+                                     data-biz-type="net"
+                                     data-name="netIdDiv"
+                                     data-type="selectTree"
+                                     data-group="corpGroup"
+                                     data-callbackData="netChange"
+                                     data-resource="fundwarn:warnstrategy:query"
+                                     data-scope="net"
+                                     data-required="true">
+                                </div>
+                                <input type="hidden" name="netId" id="netIdStr"/>
+                            </div>
+                        </td>
+
+                        <td width="10%"></td>
+                        <td width="40%">
+                            <div class="bt-biz-dict" data-type="radio" data-group="FUNDWARN_CORPACC"
+                                 data-defaultvalue="1" data-name="corpAccSelect" data-biz-name="corpAccSelect"
+                                 data-callback="corpAccSelectCallback" id="corpAccSelect"
+                                 data-beforeinit="initCorpAccSelectData"></div>
+                            ##单位选择
+                            <div class="layui-input-inline" id="mulCorpsDiv">
+                                <button class="bt-biz-mulCorp" id="mulCorps" type="button"
+                                        data-beforeClick="bt.externalNetIdParams"
+                                        data-callback="bt.externalMulCorpCallback"
+                                        title="#springMessage('table.btwarnstrategy.corpselect.title')">
+                                    #springMessage('table.btwarnstrategy.corpselect.title')
+                                </button>
+                            </div>
+                            ##银行账户选择
+                            <div class="layui-input-inline" id="mulBankAccDiv" style="display: none">
+                                <button class="bt-biz-mulBankAccInfo" id="mulBankAccInfo" type="button"
+                                        data-beforeClick="bt.externalMulBankAccInfoNetIdParams"
+                                        data-callback="bt.externalMulBankAccInfoCallback"
+                                        title="#springMessage('table.btwarnstrategy.accountselect.title')">
+                                    #springMessage('table.btwarnstrategy.accountselect.title')
+                                </button>
+                            </div>
+                            ##内部账户选择
+                            <div class="layui-input-inline" id="mulAccDiv" style="display: none">
+                                <button class="bt-biz-mulAccInfo" id="mulAccInfo" type="button"
+                                        data-beforeClick="bt.externalMulAccInfoNetIdParams"
+                                        data-callback="bt.externalMulAccInfoCallback"
+                                        title="#springMessage('table.btwarnstrategy.accountselect.title')">
+                                    #springMessage('table.btwarnstrategy.accountselect.title')
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div id="appTableId" style="margin-bottom: 12px;">
+                    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis">
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        ##三方账户选择模块
+        <div class="layui-colla-item" id="tpAccountDiv" style="display: none;">
+            <h2 class="layui-colla-title">
+                <span id="tpAccSelectH2"></span>
+            </h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td class="textRight" width="35%"><span id="selectName"></span></td>
+                        <td>
+                            ##平台选择
+                            <div class="layui-input-inline " id="platformDiv" style="display: none;">
+                                <div class="bt-biz-dict"
+                                     data-type="mulselect"
+                                     data-group="tp.ds.platform"
+                                     data-name="platformCode"
+                                     data-biz-name="platformCode"
+                                     data-required="true"
+                                     data-callback="platformChange">
+                                </div>
+                            </div>
+                            ##商户号选择
+                            ##                            <div class="bt-biz-selectType bt-biz-warn layui-input-w100" id="merchantDiv" data-url="${basePath}/ttpay/merchant/list/DSMerchant"
+                            ##                                 data-name="merchantNo" data-biz-name="merchantNo" data-valueField="merchantNo" data-textField="merchantNoAndName" data-required="true" data-callback="merchantChange"></div>
+                            <div class="layui-input-inline" id="merchantDiv" style="display: none;">
+                                <div class="bt-biz-mulselectType layui-input-w100"  data-url="${basePath}/ttpay/merchant/list/DSMerchant" data-method="get"
+                                     data-valueField="merchantNo" data-textField="merchantNoAndName" data-name="merchantNo" data-inputvalue="inputvalue" data-search="true" data-required="true"
+                                     data-callback="merchantChange" data-biz-name="merchantNo" style="width: 214px"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="layui-colla-item" id="operationattributeDiv" style="display:none">
+            <h2 class="layui-colla-title">#springMessage('table.btwarnstrategy.operationattribute.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <div id="bankAccDiv" style="display:none">
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                            <td class="textRight">#springMessage('table.btwarnstrategy.bankaccattribute')</td>
+                            <td>
+                                <div class="bankAccAtt" data-biz-name="bankAccAttribute"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="textRight">#springMessage('table.btwarnstrategy.bankacctype')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="checkbox" data-group="btBankAcc.accType"
+                                     data-name="bankAccType" data-biz-name="bankAccType" data-callback=""></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="textRight">#springMessage('table.btwarnstrategy.bankacconline')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="checkbox" data-group="bankacconline"
+                                     data-name="bankAccOnline" data-biz-name="bankAccOnline" data-callback=""></div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="interiorAccDiv" style="display:none">
+                    <table class="layui-table">
+                        <tbody>
+                        <tr>
+                            <td class="textRight">#springMessage('table.btwarnstrategy.bankaccnature')</td>
+                            <td>
+                                <div class="bankAccNature" data-biz-name="bankAccNature"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="textRight">#springMessage('table.fcAccbookDtl.subjectCode')</td>
+                            <td>
+                                <div class="bt-biz-dict" data-type="radio" data-group="FUNDWARN_CORPACC"
+                                     data-defaultvalue="1" data-name="subjectRadio" data-biz-name="subjectRadio"
+                                     data-callback="subjectChange" id="subjectRadio"></div>
+                                <div class="layui-input-inline" id="subjectDiv">
+                                    <div class="selectDemo bt-biz-mulselectType"
+                                         data-url="${basePath}/finacial/paramconfig/fcsubject/jsonSubjectDate"
+                                         data-method="get"
+                                         data-valuefield="id" data-textfield="subjectName"
+                                         data-name="subjectName"></div>
+
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        ## 预算执行进度 显示及隐藏
+        <div class="layui-colla-item" id="timeTypeSelectDiv" style="display:none">
+            <h2 class="layui-colla-title">#springMessage('table.btwarnstrategy.operationattribute.title')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td width="25%" class="textRight">#springMessage('config.fbs.timeType')</td>
+                        <td width="75%">
+                            <div class="bt-biz-dict" data-type="radio" data-group="fbs.timeType" data-name="timeType" id="timeType"
+                                 data-biz-name="timeType" data-defaultvalue="$!{btWarnCondition.timeType}"></div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" type="button" lay-submit="" value="W" lay-filter="submit">#springMessage(
+                    'common.button.submit')</button>
+            <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/fundwarn/btWarnStrategy.add.js?_btv=${resourceVersion}"></script>
+    #parse("views/fundwarn/BaseBtWarnData.vm")
+</html>

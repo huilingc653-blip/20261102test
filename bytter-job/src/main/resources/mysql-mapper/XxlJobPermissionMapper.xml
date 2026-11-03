@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bytter.job.admin.dao.XxlJobPermissionDao">
+
+    <resultMap id="XxlJobPermission" type="com.bytter.job.admin.core.model.XxlJobPermission" >
+        <result column="id" property="id" />
+        <result column="job_id" property="jobId" />
+        <result column="user_id" property="userId" />
+        <result column="permission_type" property="permissionType" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="is_deleted" property="isDeleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        t.id,
+		t.job_id,
+		t.user_id,
+		t.permission_type,
+        t.create_by,
+        t.create_time,
+        t.update_by,
+        t.update_time,
+        t.is_deleted
+    </sql>
+
+    <insert id="save" parameterType="com.bytter.job.admin.core.model.XxlJobPermission" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO xxl_job_permission (
+        `job_id`,
+        `user_id`,
+        `permission_type`,
+        `create_by`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `is_deleted`
+        ) VALUES (
+        #{jobId},
+        #{userId},
+        #{permissionType},
+        #{createBy},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{isDeleted}
+        );
+
+    </insert>
+
+    <insert id="batchSavePermissions">
+        INSERT INTO xxl_job_permission (job_id, user_id, permission_type, create_by, create_time)
+            SELECT id, #{userId}, #{permissionType}, #{userName}, NOW() FROM xxl_job_info t
+        <trim prefix="WHERE" prefixOverrides="AND | OR" >
+            <if test="jobGroup gt 0">
+                AND t.job_group = #{jobGroup}
+            </if>
+            <if test="jobDesc != null and jobDesc != ''">
+                AND t.job_desc like CONCAT(CONCAT('%', #{jobDesc}), '%')
+            </if>
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="com.bytter.job.admin.core.model.XxlJobPermission">
+        UPDATE xxl_job_permission
+        <set>
+            <if test="jobId != null">
+                `job_id` = #{jobId},
+            </if>
+            <if test="userId != null">
+                `user_id` = #{userId},
+            </if>
+            <if test="permissionType != null">
+                `permission_type` = #{permissionType},
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM xxl_job_permission WHERE id = #{id}
+    </delete>
+    <delete id="deleteByUserId">
+        DELETE FROM xxl_job_permission WHERE user_id = #{userId}
+    </delete>
+    <delete id="deleteByUserAndJob">
+        DELETE FROM xxl_job_permission WHERE user_id = #{userId} AND job_id = #{jobId}
+    </delete>
+    <delete id="deleteByJobId">
+        DELETE FROM xxl_job_permission WHERE job_id = #{jobId}
+    </delete>
+
+    <select id="findByUserId" resultMap="XxlJobPermission">
+        SELECT <include refid="Base_Column_List" /> FROM xxl_job_permission AS t
+        WHERE t.user_id = #{userId}
+    </select>
+    <select id="findByUserAndJob" resultMap="XxlJobPermission">
+        SELECT <include refid="Base_Column_List" /> FROM xxl_job_permission AS t
+        WHERE t.user_id = #{userId}
+        AND t.job_id = #{jobId}
+    </select>
+
+
+</mapper>

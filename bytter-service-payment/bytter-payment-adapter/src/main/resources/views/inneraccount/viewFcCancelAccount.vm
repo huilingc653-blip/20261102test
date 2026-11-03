@@ -1,0 +1,144 @@
+
+#parse("views/common/head.vm")
+#if(${listCancelVOPage.fcAcc.accType} == "01")
+<table class="layui-table">
+    <tr>
+        <td width="10%" class="textRight">#springMessage('table.nisBillhead.tallyDate')</td>
+        <td width="40%" >
+            <div class="layui-input-inline">
+            <input type="text" name="tallyDate" id="tallyDate" lay-verify="required" value="$!date.format('yyyy-MM-dd',$!listCancelVOPage.dayOver)" class="layui-input bt-biz-dateType" >
+            </div>
+        </td>
+        <td width="10%" class="textRight">#springMessage('table.bisFinanceExc.payeeAcc')</td>
+        <td width="40%">
+            <div class="layui-inline">
+            <select name="transferAcc"  lay-filter="transferAcc" lay-verify="required"  id="transferAcc" onchange="tChange();">
+                <option value="">#springMessage('common.placeholder.select')</option>
+                #foreach($tfoa in $!{listCancelVOPage.transferOutAcc})
+                    <option value="$!{tfoa.blnctrAcc}">$!{tfoa.blnctrAcc}</option>
+                #end
+            </select>
+            </div>
+        </td>
+
+    </tr>
+    <tr>
+        <td class="textRight">#springMessage('table.fcAcc.interestStartDate')</td>
+        <td nowrap>
+            <div class="layui-input-inline">
+                <input type="text" name="startDate" id="startDate" value="$!date.format('yyyy-MM-dd',$!listCancelVOPage.dayOver)" lay-verify="required" class="layui-input bt-biz-dateType" >
+            </div>
+        </td>
+        <td class="textRight"><span class="pl ignore-required-icon"><span class="required-icon">*</span></span>#springMessage('table.fcAccbook.voucherType')：</td>
+    ##凭证种类
+        <td>
+        <div class="layui-input-inline">
+            <div type="list" field="voucherType" fieldHref="${basePath}/netbank/fcvouchertype/json" dictField="id" dictText="voucherName" ></div>
+        </div>
+        </td>
+    </tr>
+    <input type="hidden" name="blnctrAcc"  value="$!{listCancelVOPage.fcAcc.blnctrAcc}"/>
+</table>
+#end
+
+<table class="layui-table">
+    #if($!{size} >0 )
+    <thead>
+    <tr>
+        <td width="17%" height="25" align="center" nowrap><span style="color: #fa0202">* </span>#springMessage('table.fcAccbookDtl.summaryContent')</td>
+        <td width="16%" align="center" nowrap>#springMessage('table.nisBillhead.accId')</td>
+    ##        <td width="17%" align="center" nowrap>原始凭证号</td>
+        <td width="16%" align="center" nowrap>#springMessage('table.fcloanrepay.debitMoney')</td>
+        <td width="17%" align="center" nowrap>#springMessage('table.fcloanrepay.creditMoney')</td>
+    </tr>
+    </thead>
+    #end
+    <tbody>
+    #foreach($list in $!{listCancelVOPage.listFcVoucher})
+        #set($vcount = $velocityCount - 1)
+        <tr>
+            <td>
+                <input type="hidden" id="summary$vcount" value="${list.summary}">
+                <div class="layui-inline">
+                <select name="summaryContent" lay-verify="required" id="summaryContent$vcount" style="width:100%">
+                    <option value="">#springMessage('common.placeholder.select')</option>
+                    #foreach($listSummary in ${listCancelVOPage.listBtSummary})
+                        <option value="$!{listSummary.id}" #if(${list.summary} == ${listSummary.id}) selected #end >$!{listSummary.summaryContent}</option>
+                    #end
+                </select>
+                </div>
+            </td>
+            <td>
+                <span id="accountSpan#if(${list.entryType} ==10 && ${list.balanceWay} == -1)Show#end">
+                    #if(${list.entryType} == 30)
+                        $!{list.account}
+                    #elseif (${list.entryType} == 40 && ${list.balanceWay} == 1)
+                        $!{list.account}
+
+                    #elseif (${list.entryType} == 10 && ${list.balanceWay} == 1)
+                        #if( ${listCancelVOPage.fcAcc.accState} == "K")
+    ##                        "dormancyBlnctrAcc" 如果是休眠账户
+                        #else
+                            $!{listCancelVOPage.fcAcc.blnctrAcc}
+                        #end
+
+                    #end
+                </span>
+            </td>
+##            <td></td>
+            <td class="textRight">
+                #if(${list.entryType} == 30 && ${list.balanceWay} == 1)
+                    #set($vRushMoney = 0 - ${listCancelVOPage.rushMoney})
+                    $number.formatNumeric(${vRushMoney})
+                #elseif (${list.entryType} == 40 && ${list.balanceWay} == 1)
+                    $number.formatNumeric(${listCancelVOPage.interest})
+                #elseif (${list.entryType} == 10 && ${list.balanceWay} == 1)
+                    $number.formatNumeric($!{listCancelVOPage.fcOnlineLedger.checkBalance})
+                #end
+
+            </td>
+            <td class="textRight">
+                #if(${list.entryType} == 30 && ${list.balanceWay} == -1)
+                    #set($vRushMoney = 0 -$!{listCancelVOPage.rushMoney})
+                    $number.formatNumeric(${vRushMoney})
+                #elseif (${list.entryType} == 10 && ${list.balanceWay} == -1)
+                    #set($vbal = $!{listCancelVOPage.fcOnlineLedger.checkBalance} + $!{listCancelVOPage.interest})
+                    $number.formatNumeric(${vbal})
+                #end
+            </td>
+        </tr>
+
+        #if(${list.entryType} == 30 && ${list.balanceWay} == 1)
+            #set($vRushMoney = 0 - $number.formatNumeric(${listCancelVOPage.rushMoney}))
+            <input type="hidden" name="account" id="account$vcount" value="$!{list.account}"/>
+            <input type="hidden" name="debitMoney" id="debitMoney$vcount" value="${vRushMoney}"/>
+            <input type="hidden" name="creditMoney" id="creditMoney$vcount" value="0"/>
+        #elseif (${list.entryType} == 30 && ${list.balanceWay} == -1)
+            #set($vRushMoney = 0 - $number.formatNumeric(${listCancelVOPage.rushMoney}))
+            <input type="hidden" name="account" id="account$vcount" value="$!{list.account}"/>
+            <input type="hidden" name="debitMoney" id="debitMoney$vcount" value="0"/>
+            <input type="hidden" name="creditMoney" id="creditMoney$vcount" value="${vRushMoney}"/>
+        #elseif (${list.entryType} == 40 && ${list.balanceWay} == 1)
+            <input type="hidden" name="account" id="account$vcount" value="$!{list.account}"/>
+            <input type="hidden" name="debitMoney" id="debitMoney$vcount" value="${listCancelVOPage.interest}"/>
+            <input type="hidden" name="creditMoney" id="creditMoney$vcount" value="0"/>
+        #elseif (${list.entryType} == 10 && ${list.balanceWay} == 1)
+            <input type="hidden" name="debitMoney" id="debitMoney$vcount" value="$!{listCancelVOPage.fcOnlineLedger.checkBalance}"/>
+            <input type="hidden" name="creditMoney" id="creditMoney$vcount" value="0"/>
+            #if(${list.fcAcc.accState} == "K")
+                <input type="hidden" name="account" id="account$vcount" value=""/>
+            #else
+                <input type="hidden" name="account" id="account$vcount" value="$!{listCancelVOPage.fcAcc.blnctrAcc}"/>
+            #end
+        #elseif (${list.entryType} == 10 && ${list.balanceWay} == -1)
+            #set($vbal = $!{listCancelVOPage.fcOnlineLedger.checkBalance} + $!{listCancelVOPage.interest})
+            <input type="hidden" name="debitMoney" id="debitMoney$vcount" value="0"/>
+            <input type="hidden" name="creditMoney" id="creditMoney$vcount" value="${vbal}"/>
+        #end
+    #end
+##    <input type="text" value="$!{listCancelVOPage.isNeedBusRule}" id="isNeedBusRule" >
+    <input type="hidden" value="$!{listCancelVOPage.isInterestAcc}" id="isInterestAcc" />
+    <input type="hidden" value="$!{listCancelVOPage.listFcVoucher.size()}" id="count"/>
+    </tbody>
+</table>
+<script src="${basePath}/static/modules/inneraccount/fcCancelAccount.js?_btv=${resourceVersion}"></script>

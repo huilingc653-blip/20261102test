@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        table.dataTable tbody tr:hover {
+            background-color: inherit;
+        }
+        .table-dark .hover {
+            background-color: inherit!important;
+        }
+         #appTable table tbody tr:hover {
+            background-color: #F4F4F6!important;
+        }
+        .dark-skin #appTable table tbody tr:hover {
+            background-color: #2A2B30!important
+        }
+    </style>
+</head>
+<body>
+<input id="hidOpDate" type="hidden" value="$!{FcSubjectDayPage.optDate}">
+<input id="pageNum" name="pageNum" type="hidden" value="$!{pageNum}">
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				##所属网点
+				<td class="textRight">#springMessage('table.fcCarry.netId')</td>
+				<td width="40%">
+					<div class="layui-input-inline">
+						<div class="bt-biz-corp" data-name="eqs_netId" data-biz-type="net"
+						data-scope="net"  data-type="selectTree" data-defaultvalue="$!{FcSubjectDayPage.netId}"
+						data-resource="finacial:fcsubjectday:query"></div>
+					</div>
+				</td>
+				##结转日期
+				<td class="textRight">#springMessage('table.fcSubjectDay.optDate')</td>
+				<td width="40%">
+					<div class="layui-inline">
+						<input type="text" name="eqd_optDate" class="layui-input bt-biz-dateType" data-type="date" data-biz-name="optDate">
+					    ##<div class="date-single"></div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				##币别代码
+				<td class="textRight">#springMessage('table.fcSubjectDay.curCode')</td>
+				<td width="40%">
+					<div class="layui-inline">
+						<div class=bt-biz-selectType  data-name="eqs_curId" data-textField="curName" data-valueField="id" data-url="${basePath}/basic/business/btcurrency/json" data-biz-name="t22" ></div>
+					</div>
+				</td>
+				##科目名称
+				<td class="textRight">#springMessage('table.fbsBudgetDetail.itemName')</td>
+				<td>
+					<div class="layui-input-inline">
+						<div class="bt-biz-selectType" data-url="${basePath}/paramconfig/fcbusinessruledefine/jsonSubject" data-valuefield="id" data-textfield="subjectName" data-name="likes_subjectId"  data-search="true" data-defaultvalue="" ></div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+	<thead>
+		<tr>
+			<th>#springMessage('common.fcSubjectDay')</th>##标题/科目日结单
+    	</tr>
+    </thead>
+</table>
+
+#parse("views/common/footer.vm")
+</body>
+<script>
+bt.use(['form','datatable','btdate','corp','moneyType','dateType','selectType'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.corp.init();
+    bt.selectType.init();
+    bt.dateType.init();
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        searchForm:{
+            formElem:"#searchForm",
+            formFilter:"search"
+        },
+        colReorder: false,
+        ordering:false,
+        autowidth:false,
+        ajax: {
+            'url': basePath+"/finacial/closedeal/fcsubjectday/datatable"
+        },
+        buttons:[],
+        ignoreButtons:['colvis','output','print','state'],
+        columns: [
+            {data:null,bSortable:false,fixedColumns:false,className:'center',render: function (data, type, full, meta) {
+                var html='';
+                html += '<br/>';
+               	//表头
+                html += '<div  class="layui-input-inline" style="margin-right: 200px;"><span>'+bt.lang('table.capitalStock.netName')+':'+'</span>&nbsp;<span>'+full.netName+'</span></div>';
+                html += '<div  class="layui-input-inline" style="margin-right: 200px;"><span>'+bt.lang('cms.report.date')+':'+'</span>&nbsp;<span>'+full.optDate+'</span></div>';
+                html += '<div  class="layui-input-inline" style="margin-right: 200px;"><span>'+bt.lang('table.fbsBudgetDetail.itemCode')+':'+'</span>&nbsp;<span>'+full.subjectCode+'</span></div>';
+                html += '<div  class="layui-input-inline" style="margin-right: 200px;"><span>'+bt.lang('table.fbsBudgetDetail.itemName')+':'+'</span>&nbsp;<span>'+full.subjectName+'</span></div>';
+                html += '<div  class="layui-input-inline" style="margin-right: 200px;"><span>'+bt.lang('table.fcSubjectDay.curCode')+':'+'</span>&nbsp;<span>'+full.curName+'</span></div>';
+                //列表
+                /*第一行*/
+                html += '<table  class="layui-form" style="width:100%;margin-top:5px;">';
+                html += '<thead><tr><th rowSpan="2" width="20%"></th>'; //空白处
+                html += '<th colspan="2" width="40%">'+bt.lang('table.fcVoucherEntryDefine.debit')+'</th>';//借方
+                html += '<th colspan="2" width="40%">'+bt.lang('table.fcVoucherEntryDefine.credit')+'</th></tr>';//贷方
+                /*第二行*/
+                html += '<th width="20%">'+bt.lang('table.fcUnionAccbook.sendMoney')+'</th>';//金额
+                html += '<th width="20%">'+bt.lang('table.fcAccBalance.cnt')+'</th>';//笔数
+                html += '<th width="20%">'+bt.lang('table.fcUnionAccbook.sendMoney')+'</th>';//金额
+                html += '<th width="20%">'+bt.lang('table.fcAccBalance.cnt')+'</th></tr></thead>';//笔数
+                /*数据行*/
+                html += '<tbody><tr><td>'+bt.lang('common.subject.day.moeny')+'</td>';//现金
+                html += '<td class="textRight">'+bt.moneyType.getFun().format(full.cashDebitMoneySum,2)+'</td>';
+                html += '<td>'+full.cashDebitCntSum+'</td>';
+                html += '<td class="textRight">'+bt.moneyType.getFun().format(full.cashCreditMoneySum,2)+'</td>';
+                html += '<td>'+full.cashCreditCntSum+'</td></tr>';
+                html += '<tr><td>'+ bt.lang('table.fcSubjectDay.transfer_accounts') +'</td>';//转账
+                html += '<td class="textRight">'+bt.moneyType.getFun().format(full.trDebitMoneySum, 2)+'</td>';
+                html += '<td>'+full.trDebitCntSum+'</td>';
+                html += '<td class="textRight">'+bt.moneyType.getFun().format(full.trCreditMoneySum,2)+'</td>';
+                html += '<td>'+full.trCreditCntSum+'</td></tr>';
+                html += '<tr><td>'+bt.lang('table.adjustDetail.moneySum')+'</td>';//合计
+                var debitMoney = full.cashDebitMoneySum + full.trDebitMoneySum;
+              	var creditMoney =  full.cashCreditMoneySum + full.trCreditMoneySum;
+                html += '<td class="textRight">'+bt.moneyType.getFun().format(debitMoney,2)+'</td>';
+                html += '<td></td>';
+                html += '<td class="textRight">'+bt.moneyType.getFun().format(creditMoney,2)+'</td>';
+                html += '<td></td></tr>';
+                html += '<tr><td colspan="4">'+bt.lang('table.fcSubjectDay.yestBalance')+'</td><td align="right">'+bt.moneyType.getFun().format(full.yestBalanceSum,2)+'</td></tr>';//昨日余额
+           		html += '<tr><td colspan="4">'+bt.lang('table.fcSubjectDay.todayBalance')+'</td><td align="right">'+bt.moneyType.getFun().format(full.todayBalanceSum,2)+'</td></tr>';//今日余额
+				html += '</tbody></table>';
+                return html;
+            }}
+        ]
+    });
+});
+
+</script>
+</html>

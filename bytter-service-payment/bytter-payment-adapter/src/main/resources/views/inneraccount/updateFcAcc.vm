@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input id="id" name="id" type="hidden" value="$!{fcAccPage.id}">
+    <input type="hidden"  name="accAccNoRule" id="accAccNoRule" value="$!{fcAccPage.accAccNoRule}"/>
+    <input type="hidden"  name="status" id="status" value="$!{fcAccPage.accState}"/>
+    <input type="hidden"  name="isView" id="isView" value="$!{isView}"/>
+    <input type="hidden" name="poolSign" id="poolSign" value="$!{fcAccPage.poolSign}"/>
+    <input type="hidden" name="accTypeHid" id="accTypeHid" value="$!{fcAccPage.accType}"/>
+    <input type="hidden" name="subjectIdHid" id="subjectIdHid" value="$!{fcAccPage.subjectId}"/>
+    <input type="hidden" name="sysSubjectCodeHid" id="sysSubjectCodeHid" value="$!{fcAccPage.sysSubjectCode}"/>
+    <input type="hidden" name="netCode" id="netCode" value="$!{netCode}"/>
+    <table class="layui-table">
+        <tbody>
+            #if($!{fcAccPage.poolSign} == "1")
+            <tr>
+                ##资金池
+                <td class="textRight" width="10%">#springMessage('nis.pool.fcCorpPool.pool')</td>
+                <td width="25%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-selectType" data-url="${basePath}/inneraccount/fcacc?getUserCorpPools" data-name="netId" data-biz-name="netId" data-callback="netIdCallback"
+                             data-valuefield="id" data-textfield="showName" data-required="required" data-defaultvalue="$!{fcAccPage.netPoolId}"></div>
+                        <input type="hidden"  name="netIdHid" id="netIdHid" value="$!{fcAccPage.netPoolId}"/>
+                    </div>
+                </td>
+                ##账户类别
+                <td width="10%" class="textRight">#springMessage('table.fcAcc.accType')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <select lay-filter="accType" lay-verify="required" name="accType">
+                            <option value="">#springMessage("common.placeholder.select")</option>
+                            #foreach($dict in $dictTag.list("InnerAccount.AccType"))
+                                #if($dict.code == "01" || $dict.code == "02" || $dict.code == "07")
+                                    <option value="$dict.code">$dict.name</option>
+                                #end
+                            #end
+
+                        </select>
+                    </div>
+                    ##科目代码
+                    <div class="layui-inline">
+                        <select lay-filter="subjectId" name="subjectId" id="subjectId" lay-verify="required" lay-search="">
+                            <option value="" >#springMessage("common.placeholder.select")</option>
+                        </select>
+                    </div>
+                </td>
+            <tr>
+            #else
+                ##网点
+                <td width="10%" class="textRight">#springMessage('table.fcAcc.netId')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="net"
+                             data-type="selectTree"
+                             data-name="netId"
+                             data-callback="netChange"
+                             data-group="corpGroup"
+                             data-change="corpId"
+                             data-resource="netbank:innerAccount:fcAcc:query"
+                             data-scope="net"
+                             data-required="true"
+                             data-defaultvalue="$!{fcAccPage.netId}"></div>
+                    </div>
+                    <input type="hidden"  name="netIdHid" id="netIdHid" value="$!{fcAccPage.netId}"/>
+                </td>
+                ##账户类别
+                <td width="10%" class="textRight">#springMessage('table.fcAcc.accType')</td>
+                <td width="40%">
+                    <div class="layui-inline">
+                        <select lay-filter="accType" name="accType" >
+                            <option value="">#springMessage('common.placeholder.select')</option>
+                            #foreach($dict in $dictTag.list("InnerAccount.AccType"))
+                                #if($dict.code != "15")
+                                    <option value="$dict.code">$dict.name</option>
+                                #end
+                            #end
+
+                        </select>
+                    </div>
+                    ##科目代码
+                    <div class="layui-input-inline">
+                        <!--number-->
+                        <select lay-filter="subjectId" name="subjectId" id="subjectId" lay-verify="required" lay-search="">
+                            <option value="" >#springMessage('common.placeholder.select')</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            #end
+        <tr>
+            ##币别
+            <td class="textRight">#springMessage('table.fcAcc.curId')</td>
+            <td><div class="layui-inline">
+                <select lay-filter="curId" name="curId" id="curId" lay-verify="required" lay-search="">
+                    <option value="" >#springMessage('common.placeholder.select')</option>
+                </select>
+                <input type="hidden" name="curIdHid" id="curIdHid" value="$!{fcAccPage.curId}"/>
+                <input type="hidden" name="curCode" id="curCode"/>
+            </div>
+            </td>
+            ##结算中心账号
+            <td class="textRight">#springMessage('table.fcAcc.blnctrAcc')</td>
+            <td>
+                <input type="text" id="blnctrAcc" name="blnctrAcc"
+                       autocomplete="off" class="layui-input" readonly="readonly" placeholder="#springMessage('table.fcAcc.blnctrAcc')"  value="$!{fcAccPage.blnctrAcc}">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.fcAcc.seqNum')</td>
+            ##顺序号
+            <td>
+                #if($!{fcAccPage.poolSign} != '1' && $!{seqNumPage} == '0')
+                    <input type="text" id="seqNum" name="seqNum" maxlength="$!{relen}"
+                           autocomplete="off" class="layui-input" onchange="getNum(this)"
+                           onkeyup="value=zhzs(this.value)"
+                           placeholder="#springMessage('table.fcAcc.seqNum')" value="$!{fcAccPage.seqNum}">
+                #else
+                    <input type="text" id="seqNum" name="seqNum"
+                           autocomplete="off" class="layui-input" readonly="readonly"
+                           placeholder="#springMessage('table.fcAcc.seqNum')" value="$!{fcAccPage.seqNum}">
+                #end
+            </td>
+            <td class="textRight">#springMessage('table.fcAcc.shortcut')</td>
+            ##助记码
+            <td>
+                <input type="text" id="shortcut" name="shortcut" lay-verify="strlength"
+
+                       autocomplete="off" class="layui-input" data-maxlength="10" placeholder="#springMessage('table.fcAcc.shortcut')" value="$!{fcAccPage.shortcut}">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+            ##开户单位ID
+            #if($!{fcAccPage.poolSign} == "1")
+                <td width="25%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-selectType" data-url="${basePath}/inneraccount/fcacc?getUserCorpPoolChilds&poolId=$!{fcAccPage.netPoolId}" data-name="corpId" data-biz-name="corpId" data-callback="corpIdCallback"
+                             data-valuefield="corpId" data-textfield="showName" data-search="true" data-required="required" data-defaultvalue="$!{fcAccPage.corpId}"data-extraData="false"></div>
+                    </div>
+                    <input type="hidden"  name="corpIdHid" id="corpIdHid" value="$!{fcAccPage.corpId}"/>
+                </td>
+            #else
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-name="corpId"
+                             data-tips="#springMessage('common.placeholder.select')#springMessage('table.fcAcc.netId')"
+                             data-group="corpGroup"
+                             data-scope="all" data-callbackData="corpChange"
+                             data-resource="netbank:innerAccount:fcAcc:query"
+                             data-required="true"
+                             data-defaultvalue="$!{fcAccPage.corpId}"></div>
+                        <input type="hidden"  name="corpIdHid" id="corpIdHid" value="$!{fcAccPage.corpId}"/>
+                    </div>
+                </td>
+            #end
+            <td class="textRight">#springMessage('table.fcAcc.accName')</td>
+            ##账户名称
+            <td>
+                <input type="text" id="accName" name="accName"
+                       lay-verify="required|strlength"
+                       autocomplete="off" class="layui-input" data-maxlength="80" placeholder="#springMessage('table.fcAcc.accName')" value="$!{fcAccPage.accName}">
+            </td>
+        </tr>
+
+        <tr class="bankClass" style="display:none;">
+            <td class="textRight">#springMessage('table.fcAcc.bankCode')</td>
+            ##银行代码
+            <td>
+                <div class="layui-inline">
+                    <input type="text" id="bankCode" name="bankCode" readonly="readonly" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAcc.bankCode')" value="$!{fcAccPage.bankCode}">
+                    <div class="bt-div-search">
+                        <button class="bt-biz-bankInfo" type="button"  data-callback="bt.bailBankInfoCallback" title="#springMessage('common.button.bank')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.fcCheckInit.bankAccName')</td>
+            ##银行名称
+            <td>
+                <span id="bankAccName">$!{fcAccPage.bankName}</span>
+            </td>
+        </tr>
+            #if($!{fcAccPage.poolSign} != "1")
+            <tr>
+                <td class="textRight">#springMessage('table.fcAcc.unionNet')</td>
+                ##联行网点
+                <td>
+                    <div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="net"
+                             data-type="selectTree"
+                             data-callback="unionNetChange"
+                             data-afterInit="initCorpComplete"
+                             data-resource="netbank:innerAccount:fcAcc:query"
+                             data-name="unionNet"
+                             data-scope="net" data-defaultvalue="$!{fcAccPage.unionNet}"></div>
+                    </div>
+                </td>
+                <td class="textRight">#springMessage('table.fcAcc.unionAcc')</td>
+                ##联行账号
+                <td>
+                    <div class="layui-input-inline">
+                        <input type="text" name="unionAcc" lay-verify="tableData" id="unionAcc" value="$!{fcAccPage.unionAcc}" class="layui-input acc" data-biz-name="unionAcc">
+                    </div>
+                </td>
+            </tr>
+            #end
+        <tr>
+            <td class="textRight">#springMessage('table.fcAcc.balanceWay')</td>
+            ##余额方向
+            <td>
+                <div class="layui-inline">
+                    <select lay-filter="balanceWay" name="balanceWay" disabled="disabled">
+                        <option value="0">#springMessage('common.placeholder.select')</option>
+                        #foreach($dict in $dictTag.list("Admin.BalanceWay"))
+                            <option value="$dict.code">$dict.name</option>
+                        #end
+
+                    </select>
+                    <input type="hidden" name="balanceWayHid" id="balanceWayHid" value="$!{fcAccPage.balanceWay}"/>
+                </div>
+            </td>
+            <td class="textRight">#springMessage('table.fcAcc.ifCompare')</td>
+            ##是否对账
+            <td>
+                <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-defaultvalue="$!{fcAccPage.ifCompare}" data-name="ifCompare" data-biz-name="ifCompare"
+                     #if($!{fcAccPage.accType}=="07" || $!{fcAccPage.accType}=="14")data-disabled="true"#end></div>
+            </td>
+        </tr>
+
+        <tr id="intAccShow" style="display:none;">
+            ##计息账号
+            <td class="textRight">#springMessage('inneraccount.fcAcc.interestAcc')</td>
+            <td>
+                <div class="layui-input-inline" id="interestAccDiv">
+                    <input type="text" id="interestAcc" name="interestAcc"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('inneraccount.fcAcc.interestAcc')" title="$!{fcAccPage.interestAcc}" value="$!{fcAccPage.interestAcc}">
+                    <div class="bt-div-search">
+                        <button  class="bt-biz-fcAccInfo" id="selInterestAccBut" type="button" data-beforeClick="bt.accInfoParams" data-callback="bt.interestAccCallback" title="#springMessage('common.button.select')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+            <td colspan="2"></td>
+        </tr>
+        </tbody>
+    </table>
+    <div id="tagFcAcc">
+
+    </div>
+    <table id="endTable" class="layui-table">
+        <tr id="endTrCheckBackReason">
+            <td width="10%" class="textRight" >#springMessage('table.fcAcc.checkBackReason')</td>
+            <td colspan="6" >
+                <div class="layui-input-inline">
+                    <textarea placeholder="#springMessage('table.fcAcc.checkBackReason')" rows=4 cols=64 readonly="readonly" class="layui-textarea" id="checkBackReason" name="checkBackReason">$!{fcAccPage.checkBackReason}</textarea>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" value="T"  lay-filter="submit">#springMessage('common.button.temp')</button>
+                <button class="layui-btn" lay-submit="" value="W"  lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button id="reset" type="button" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/inneraccount/fcAcc.common.edit.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/inneraccount/fcAcc.update.js?_btv=${resourceVersion}"></script>
+</html>

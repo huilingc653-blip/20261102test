@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            min-width: 300px;
+        }
+        .bt-selectTree-close {
+            top:4px;
+        }
+        .bt-selectTree-hover{
+            color: #fff;
+            background-color: #c2c2c2;
+            border-radius: 8px;
+            width: 16px;
+            height: 16px;
+            font-size: 12px;
+            padding-left: 2px;
+            padding-top: 1px;
+            line-height: 15px;
+            box-sizing: border-box;
+        }
+        .hide {
+            display: none!important;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" action="">
+    <div class="layui-form-item">
+        <label class="layui-form-label">#springMessage("system.homeWidget.category")</label>
+        `        <div class="layui-input-inline" style="width:50%;">
+        <div style="line-height: 28px;">$!{flowCategory.name}</div>
+        <input type="hidden" name="modelId" value="$!{modelId}">
+        <input type="hidden" name="categoryId" value="$!{flowCategory.id}">
+        <input type="hidden" id="corpIdList" value="$!{corpIdList}">
+        <input type="hidden" id="categoryIdList" value="$!{categoryIdList}">
+        <div style="float:left;">
+            <a href="javascript:void(0)"  style="margin-left:0px;color:blue;float:left;"  id="select-all">#springMessage("common.check.all")</a>
+            <a href="javascript:void(0)"  style="margin-left:10px;color:blue;float:left;" id="unselect-all">#springMessage("common.button.cancel")</a>
+            <a href="javascript:void(0)"  style="margin-left:10px;color:blue;float:left;" id="expand-all">#springMessage("common.open.all")</a>
+            <a href="javascript:void(0)"  style="margin-left:10px;color:blue;float:left;" id="close-all">#springMessage("common.close.all")</a>
+        </div>
+    </div>
+    </div>
+    <label class="layui-form-label">#springMessage("common.button.clone")</label>
+    <div  class="layui-inline"  style="padding-top: 2px">
+        <select id="copyType" name="copyType" lay-filter="copyType">
+            <option value="corp">#springMessage("bpm.model.copyToCorp")</option>
+            #if(!$hasExclusiveGateway)
+                <option value="category">#springMessage("bpm.model.copyToBusiness")</option>
+            #end
+        </select>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">#springMessage("sys.home.widget.search")</label>
+        <div class="layui-inline ">
+            <input type="text" id="corpTreeSearch" autocomplete="off" class="layui-input">
+            <a href="javascript:void(0);"><i class="layui-icon bt-selectTree-close" style="right:7px;">ဆ</i></a>
+        </div>
+        <div class="layui-inline hide">
+            <input type="text" id="categoryTreeSearch" autocomplete="off" class="layui-input">
+            <a href="javascript:void(0);"><i class="layui-icon bt-selectTree-close" style="right:7px;">ဆ</i></a>
+        </div>
+    </div>
+    <div class="layui-form-item corpTree">
+        <label class="layui-form-label">#springMessage("table.fbsBudget.corpId")</label>
+        <div class="layui-input-inline" style="width:auto">
+            <ul id="corpTree" class="ztree" data-input="corpTreeSearch"></ul>
+        </div>
+    </div>
+
+    <div class="layui-form-item categoryTree" hidden>
+        <label class="layui-form-label">#springMessage("bpm.model.business")</label>
+        <div class="layui-input-inline" style="width:auto">
+            <ul id="categoryTree" class="ztree" data-input="categoryTreeSearch"></ul>
+        </div>
+    </div>
+
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="modelSubmit">#springMessage("common.button.submit")</button>
+            <button type="reset" class="layui-btn layui-btn-primary" id="reset">#springMessage("common.button.reset")</button>
+            <button type="button"  class="layui-btn" id="closeWindow">#springMessage("common.button.cancel")</button>
+        </div>
+    </div>
+</form>
+
+    #parse("views/common/footer.vm")
+
+<script>
+    bt.use(['form','jquery','ztree','ztreeCheck','ztreeHide'], function(){
+        var form = bt.form(),$  = bt.jquery;
+        var ztree =  $.fn.zTree;
+
+        var corpTreeNodes = {
+            Obj:null,
+            treeList:'corpTree',// corpTree categoryTree
+            hiddenNodes:[]
+        };
+        var categoryNodes = {
+            Obj:null,
+            treeList:'category',// corpTree categoryTree
+            hiddenNodes:[]
+        };
+
+        //流程复制方式下拉框改变事件
+        form.on('select(copyType)', function(data){
+            if(data.value === "category"){
+                $(".categoryTree").show();
+                $(".corpTree").hide();
+                $("#categoryTreeSearch").parent().removeClass("hide");
+                $("#corpTreeSearch").parent().addClass("hide");
+                $("#categoryTreeSearch").val("").trigger("focus");
+            } else {
+                $(".categoryTree").hide();
+                $(".corpTree").show();
+                $("#categoryTreeSearch").parent().addClass("hide");
+                $("#corpTreeSearch").parent().removeClass("hide");
+                $("#corpTreeSearch").val("").trigger("focus");
+            }
+        });
+
+        function beforeInit(nodes) {
+            for (var k in nodes) {
+                var node = nodes[k];
+                nodes[k].corpName = node.name;
+                nodes[k].name = '(' + node.code + ') ' + node.name;
+                if(nodes[k].children && nodes[k].children.length > 0){
+                    nodes[k].children = beforeInit(nodes[k].children);
+                }
+            }
+            return nodes;
+        }
+
+        //流程分类下拉树
+        {
+            var categoryZtreeSetting = {
+                data: {simpleData: {enable: true}},
+                check: {enable: true, chkStyle: "checkbox", chkboxType: {"Y": "s", "N": "s"}},
+                callback: {
+                    onClick: zTreeOnClick,
+                    beforeClick: function(treeId, treeNode, clickFlag) {
+                        return !treeNode.isParent
+                    }
+                }
+            };
+
+            var categoryZtree;
+            $.get(basePath + "/bpm/flowCategory/tree", function (nodes) {
+                zNodes = beforeInit(zNodes);
+                categoryNodes.obj = categoryZtree = ztree.init($("#categoryTree"), categoryZtreeSetting, nodes);
+                var categoryIdList = $('#categoryIdList').val().replace("[", "").replace("]", "").replace(/\s+/g,"").split(",");
+                var nodes = categoryZtree.transformToArray (categoryZtree.getNodes());
+                for(var i in nodes){
+                    for(var j in categoryIdList){
+                        if(nodes[i].id == categoryIdList[j]){
+                            //禁用节点
+                            categoryZtree.setChkDisabled(nodes[i] ,true);
+                        }
+                    }
+                }
+                categoryZtree.expandAll(true);
+            }, "JSON");
+        }
+
+        //网点下拉树
+        var corpZtree;
+        var corpZtreeSetting = {
+            check: {enable: true, chkStyle: "checkbox", chkboxType: {"Y": "s", "N": "s"}},
+            data: {simpleData: {enable: true, idKey: "id", pIdKey: "pId"}},
+            callback: {
+                onClick: zTreeOnClick,
+                onCheck: removeHalfCheck
+            }
+        };
+
+
+        var zNodes;
+        var treeObj;
+        $.get(basePath + "/sys/corp/tree?resource=bpm:mode:op",function(result){
+            zNodes = result;
+            zNodes = beforeInit(zNodes);
+            corpZtree = ztree.init($("#corpTree"), corpZtreeSetting, zNodes);
+            //已经存在指定流程的网点禁用复选
+            var corpIdList = $('#corpIdList').val().replace("[", "").replace("]", "").replace(/\s+/g,"").split(",");
+            corpTreeNodes.obj = treeObj = ztree.getZTreeObj("corpTree");
+            var nodes = treeObj.transformToArray (treeObj.getNodes());
+            for(var i in nodes){
+                for(var j in corpIdList){
+                    if(nodes[i].id == corpIdList[j]){
+                        //禁用节点
+                        treeObj.setChkDisabled(nodes[i] ,true);
+                    }
+                }
+            }
+            corpZtree.expandAll(true);
+            //移除下拉树的鼠标事件，阻止前端鼠标移动到复选框上造成半选效果
+            $("#corpTree").off('mouseout');
+            $("#corpTree").off('mouseover');
+        },'JSON');
+
+        function zTreeOnClick(event, treeId, treeNode) {
+            ztree.getZTreeObj(treeId).checkNode(treeNode);
+            if (treeId === 'corpTree'){
+                removeHalfCheck(null, treeId, treeNode);
+            }
+        }
+
+        //移除节点的半选效果半选状态
+        function removeHalfCheck(event, treeId, treeNode) {
+            var parentNode = treeNode.getParentNode();
+            //递归到父节点
+            if(parentNode != null){
+                removeHalfCheck(null, treeNode.tId, parentNode)
+            }
+            if( treeNode.isParent == true && treeNode.chkDisabled == false){
+                if(treeNode.checked == true){
+                    $('#'+treeNode.tId+"_check").removeClass("checkbox_false_part checkbox_false_part_focus checkbox_true_part checkbox_true_part_focus");
+                    $('#'+treeNode.tId+"_check").addClass("checkbox_true_full");
+                }else  {
+                    $('#'+treeNode.tId+"_check").removeClass("checkbox_false_part checkbox_false_part_focus checkbox_true_part checkbox_true_part_focus");
+                    $('#'+treeNode.tId+"_check").addClass("checkbox_false_full");
+                }
+            }
+        };
+
+
+        function getCurrentTree(){
+            var copyType = $("dd.layui-this").attr("lay-value");
+            var tree = ztree.getZTreeObj(copyType+"Tree");
+            return tree;
+        }
+
+
+
+        // 字符串转数组
+        var toArray = function(str){
+            var arr = str.split(" ");
+            for(var i = 0 ;i<arr.length;i++){
+                if(arr[i] == "" || typeof(arr[i]) == "undefined") {
+                    arr.splice(i,1);
+                    i= i-1;
+                }
+            }
+            return arr;
+        };
+        //　节流函数
+        function throttle(fn, threshhold) {
+            var timeout
+            var start = new Date;
+            var threshhold = threshhold || 10
+            return function () {
+                var context = this, args = arguments, curr = new Date() - 0;
+                clearTimeout(timeout)//总是干掉事件回调
+                if(curr - start >= threshhold){
+                    fn.apply(context, args) //只执行一部分方法，这些方法是在某个时间段内执行一次
+                    start = curr
+                }
+            }
+        }
+        //查找不符合条件的叶子节点
+        function filterFunc(node){
+            var id = $("#"+node.tId).parents(".ztree").data("input");
+            var _keywords= $.trim( $('#'+id).val());
+            var textArr = toArray( _keywords );
+            var isSearch = true,len = textArr.length;
+
+            if( len ){
+                for(var i = 0;i< len;i++){
+                    if( node.name.indexOf( textArr[i] ) === -1 ){
+                        isSearch = false;
+                        break;
+                    }
+                }
+            }
+            if( node.isParent){
+                if( len && isSearch ){
+                    $("#" + node.tId).addClass('search_result');//设置检索
+                }else{
+                    $("#" + node.tId).removeClass('search_result');
+                }
+                return false;
+            }
+            if( isSearch ){
+                if( len ){
+                    $("#" + node.tId).addClass('search_result')
+                }else{
+                    $("#" + node.tId).removeClass('search_result');
+                }
+                return false;
+            }
+
+            $("#" + node.tId).removeClass('search_result');
+            return true;
+        }
+
+        var searchCorpTree = throttle(function() {
+            // 显示所有节点
+            $( '#corpTree').find('.layui-hide').removeClass('layui-hide');
+            corpTreeNodes.obj.showNodes(corpTreeNodes.hiddenNodes);
+            //获取不符合条件的叶子结点
+            corpTreeNodes.hiddenNodes = corpTreeNodes.obj.getNodesByFilter(filterFunc);
+            corpTreeNodes.obj.hideNodes(corpTreeNodes.hiddenNodes);
+        });
+
+        var searchCategoryTree = throttle(function() {
+            // 显示所有节点
+            $( '#category' ).find('.layui-hide').removeClass('layui-hide');
+            categoryNodes.obj.showNodes(categoryNodes.hiddenNodes);
+            //获取不符合条件的叶子结点
+            categoryNodes.hiddenNodes = categoryNodes.obj.getNodesByFilter(filterFunc);
+            categoryNodes.obj.hideNodes(categoryNodes.hiddenNodes);
+        });
+
+
+        //监听提交，只有打钩的单位或网点才进行复制
+        form.on('submit(modelSubmit)', function (data) {
+            bt.loading.show();
+            var tree = getCurrentTree();
+            var isCorpType = tree.setting.treeId === "corpTree";
+            var nodes = tree.getCheckedNodes(true);
+            var nodesArr = new Array();
+            if( nodes.length < 1){
+                parent.layer.alert(isCorpType ? "请选择要复制的目标单位" : "请选择要复制的流程分类", {icon: 2});
+                bt.loading.hide();
+                return false;
+            }
+            for (var j = 0; j < nodes.length; j++) {
+                var node = nodes[j];
+                //如果和源modelId相同则不传入后端
+                if (node.id === data.field.modelId) {
+                    continue;
+                }
+                //如果和源categoryId相同则不传入后端
+                if (!isCorpType && (node.id === data.field.categoryId || node.isParent)) {
+                    continue;
+                }
+                nodesArr.push(node.id);
+            }
+            if(nodesArr.length<1){
+                parent.layer.alert(isCorpType ? "请选择要复制的目标单位" : "请选择要复制的流程分类", {icon: 2});
+                bt.loading.hide();
+                return false;
+            }
+            if (isCorpType){
+                data.field.corpId = nodesArr;
+            } else {
+                data.field.categoryId = nodesArr;
+            }
+            $.post(basePath + "/bpm/model"+(isCorpType?"/copy" : "/copyCrossCategory"), data.field, function (result) {
+                bt.loading.hide();
+                if (result.success) {
+                    parent.layer.closeAll();
+                }
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                //取消alert的刷新
+            }, 'JSON');
+            return false;
+        });
+        //重置下拉树
+        $("#reset").on('click', function () {
+            $("#copyType").next().find("dd").eq(0).click()
+            corpZtree.checkAllNodes(false);
+            categoryZtree.checkAllNodes(false);
+        });
+        //全选
+        $("#select-all").on('click', function () {
+            var tree = getCurrentTree();
+            tree.checkAllNodes(true);
+        });
+        $("#unselect-all").on('click', function () {
+            var tree = getCurrentTree();
+            tree.checkAllNodes(false);
+        });
+        $("#expand-all").on('click', function () {
+            var tree = getCurrentTree();
+            tree.expandAll(true);
+        });
+        $("#close-all").on('click', function () {
+            var tree = getCurrentTree();
+            tree.expandAll(false);
+        });
+
+        $('#corpTreeSearch').on('input propertychange',function(){
+            //执行搜索下拉树回调
+            searchCorpTree();
+        }).on('focus',function(){
+            //显示上次搜索后背隐藏的结点
+            if (!$(this).val().length && corpTreeNodes.obj){ // 0.1.18 输入框有内容时，不显示树所有内容
+                $('#corpTree').find('.layui-hide').removeClass('layui-hide');
+                corpTreeNodes.obj.showNodes(corpTreeNodes.hiddenNodes);
+                corpTreeNodes.hiddenNodes = [];
+                $('#corpTree').find('.search_result').removeClass('search_result');
+            }
+            $(this).siblings('a').find('.bt-selectTree-close').addClass('bt-selectTree-hover');
+        }).on('blur',function () {
+            $(this).siblings('a').find('.bt-selectTree-close').removeClass('bt-selectTree-hover');
+        });
+
+        $('#categoryTreeSearch').on('input propertychange',function(){
+            //执行搜索下拉树回调
+            searchCategoryTree();
+        }).on('focus',function(){
+            //显示上次搜索后背隐藏的结点
+            if (!$(this).val().length && categoryNodes.obj){ // 0.1.18 输入框有内容时，不显示树所有内容
+                $('#category').find('.layui-hide').removeClass('layui-hide');
+                categoryNodes.obj.showNodes(categoryNodes.hiddenNodes);
+                categoryNodes.hiddenNodes = [];
+                $('#category').find('.search_result').removeClass('search_result');
+            }
+            $(this).siblings('a').find('.bt-selectTree-close').addClass('bt-selectTree-hover');
+        }).on('blur',function () {
+            $(this).siblings('a').find('.bt-selectTree-close').removeClass('bt-selectTree-hover');
+        });
+
+        //清除搜索框内容
+        $('.bt-selectTree-close').on('click',function () {
+            $(this).parent().siblings('input').val('').trigger('focus')
+        });
+
+        //关闭按钮
+        $('#closeWindow').click(function () {
+            var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+            parent.layer.close(index); //再执行关闭
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+
+<form id="searchForm" class="layui-form">
+	<input id="opType" name="opType" type="hidden" value="list">
+    <input id="sign" name="sign" type="hidden" value="$!{sign}">
+		<table class="layui-table">
+            <tbody>
+                    ##委托日期
+                    <td class="textRight">#springMessage('table.cgsBill.consignDate')</td>
+                    <td>
+                        <input type="text" name="ged_consignDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="led_consignDate" >
+                        <span class="date-mid">~</span>
+                        <input type="text" name="led_consignDate" class="layui-input bt-input-inline bt-biz-dateType" id="led_consignDate">
+                    </td>
+					<td colspan="2"></td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+						<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cgsBill.consignDate')</th>
+        <th>#springMessage('table.cgsBill.consignCode')</th>
+        <th>#springMessage('table.cgsBill.payerCorpId')</th>
+        <th>#springMessage('table.cgsBill.payeeCorpId')</th>
+        <th>#springMessage('table.cgsBill.payeeAcc')</th>
+        <th>#springMessage('table.cgsBill.money')</th>
+        <th>#springMessage('table.cgsBill.pactCode')</th>
+        <th>#springMessage('table.cgsBill.abs')</th>
+        <th>#springMessage('table.cgsBill.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+	#paymentWorkFlowHtml()
+    #parse("views/common/footer.vm")
+	#paymentWorkFlowScript()
+</body>
+<script>
+        bt.use(['form','datatable','money'], function(){
+            $ = bt.jquery,form = bt.form();
+            var table = bt.datatable.init({
+                elem: "#appTable",
+                dom: 'Brtlip',
+                colReorder: true,
+                checkbox:true,
+                order: [1,'desc'],
+                searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+                },
+                ajax: {
+                    'url': basePath+"/netbank/cgsbill/dataTableApprove"
+                },
+                buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+                ],
+                fixedColumns: {
+                    rightColumns:1//代表冻结右边一列
+                },
+                columns: [
+                          {data:"consignDate",bSortable:true},
+                          {data:"consignCode",bSortable:true},
+                          {data:"payerCorpName",bSortable:true},
+                          {data:"payeeCorpName",bSortable:true},
+                          {data:"payeeAcc",bSortable:true},
+                          {data:"money",bSortable:true,className:'textRight',
+                              render: function ( data, type, full, meta ) {
+                              	return bt.money.format(full.money);
+                              }
+                          },
+                          {data:"pactCode",bSortable:true},
+                          {data:"abs",bSortable:true},
+                          {data:"status",bSortable:true,
+                              render: function ( data, type, full, meta ) {
+                                  return bt.dict("cgsBill.status",full.status);
+                              }
+                          },
+                    {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>';
+                        return html;
+                    }}
+                ]
+            });
+        });
+    </script>
+<script src="${basePath}/static/modules/netbank/cgsBillApprove.list.js?_btv=${resourceVersion}"></script>
+</html>

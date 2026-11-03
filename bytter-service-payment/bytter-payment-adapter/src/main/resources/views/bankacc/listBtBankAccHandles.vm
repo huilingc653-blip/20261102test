@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<input type="hidden" id="sign" value="$!{type}">
+    <form id="searchForm" class="layui-form">
+        <table class="layui-table">
+    		<tbody>
+    			<tr>
+    				##单位ID
+                    <td class="textRight">#springMessage('table.btBankAcc.corpId')</td>
+                    <td>
+                		<div class="layui-input-inline">
+                			<div class="bt-biz-corp"
+                            data-biz-type="corp"
+                            data-type="selectTree"
+                            data-name="eqs_corpId"
+                            data-scope="all" data-resource="netbank:bankAcc:btBankAcc:query"
+                        	data-callback=""></div>
+                        </div>
+            		</td>
+                    <td class="textRight">#springMessage('table.btBankAccApp.bankAcc')</td>
+                    <td>
+                        <input type="text" name="likes_bankAcc"
+							autocomplete="off" class="bank layui-input" placeholder="#springMessage('table.btBankAccApp.bankAcc')">
+                    </td>
+					<td class="textRight">#springMessage('table.btBankAcc.accName')</td>
+					<td>
+						<input type="text" name="likes_accName"
+                            autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.accName')">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">#springMessage('table.btBankAccApp.bankTypeId')</td>
+                    <td>
+                        <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/listFilter"
+                             data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id" data-textField="typeName"  ></div>
+    				</td>
+                    <td class="textRight">#springMessage('table.btBankAcc.bankName')</td>
+                    <td>
+                        <input type="text" name="likes_bankName"
+                            autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.bankName')">
+                    </td>
+                    <td class="textRight">
+                        #springMessage('table.btBankAcc.isValidSign')
+                    </td>
+                    <td>
+                        <input type="hidden" name="eqs_validSign" value="1">
+                        <div class="bt-biz-dict" data-type="select" data-disabled="true"
+                             data-group="sf_yn" data-name="eqs_validSign" ></div>
+                    </td>
+        		</tr>
+                <tr>
+                    <td class="textRight">
+                        #springMessage('table.btBankAcc.isOnlineView')
+                    </td>
+                    <td>
+                        <div class="bt-biz-dict" data-type="select"
+                             data-group="sf_yn" data-name="eqs_isOnline" ></div>
+                    </td>
+                    <td class="textRight">#springMessage('table.btBankAccApp.isDomesticBank')</td>
+                    <td>
+                        <input type="hidden" name="eqs_isDomesticBankName" value="$!{type}"/>
+                        <div class="bt-biz-dict" data-type="select" data-group="btBankAcc.isDomesticBank" data-disabled="true"
+                             data-name="eqs_isDomesticBankName" data-biz-name="isDomesticBank" data-defaultvalue="$!{type}"></div>
+                    </td>
+                    <td class="textRight">#springMessage('table.btBankAcc.isElectricBillAcc')</td>
+                    <td>
+                        <div class="bt-biz-dict" data-type="select"
+                             data-group="sf_yn" data-name="eqs_electricBillName"></div>
+                    </td>
+                </tr>
+               <tr>
+               	 <td align="center" colspan="6">
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                 </td>
+               </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+            <tr>
+                <th>#springMessage('common.table.thead.operation')</th>
+                <th>#springMessage('table.btBankAccApp.bankAcc')</th>
+                <th>#springMessage('table.btBankAccApp.accName')</th>
+                <th>#springMessage('table.btBankAccApp.corpId')</th>
+                <th>#springMessage('table.btBankAccApp.curId')</th>
+                <th>#springMessage('table.btBankAccApp.isDomesticBank')</th>
+                <th>#springMessage('table.btBankAccApp.accType')</th>
+                <th>#springMessage('table.btBankAccApp.attributeId')</th>
+                <th>#springMessage('table.btBankAccApp.natureId')</th>
+                <th>#springMessage('table.btBankAccApp.bankTypeId')</th>
+                <th>#springMessage('table.btBankAccApp.bankName')</th>
+
+            </tr>
+        </thead>
+    </table>
+    #parse("views/common/footer.vm")
+</body>
+<script >
+    bt.use(['form', 'datatable', 'selectType', 'corp', 'btImport', 'bank', 'dicts'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.corp.init();
+        bt.dicts.init();
+        bt.selectType.init();
+        bt.bank.init({
+            elem: '.bank',
+        });
+
+        //生成列表
+        var table = bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/bankacc/btbankacchandle/datatable"
+            },
+            fixedColumns: {
+                leftColumns: 1//代表冻结右边一列
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="bankAccAbroad-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                {data: "bankAcc", bSortable: true},
+                {data: "accName", bSortable: true},
+                {data: "corpName", bSortable: true},
+                {data: "curName", bSortable: false},
+                {data: "isDomesticBankName",bSortable:true},
+                {data: "accTypeName", bSortable: true},
+                {data: "attributeName", bSortable: true},
+                {data: "natureName", bSortable: true},
+                {data: "bankTypeName", bSortable: true},
+                {data: "bankName", bSortable: true},
+            ]
+        });
+
+        table.on('click', '.bankAccAbroad-select', function (event) {
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var className = '';
+            if($("#sign").val() == "1"){//境内
+                className = 'bt-biz-bankAccDomestic';
+            }else {
+                className = 'bt-biz-bankAccAbroad';
+            }
+            var isMultiIframes =  top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+            if(isMultiIframes){
+                var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack[className]['callback'];
+            } else {
+                var func = top.frames[currentParentIframe].window.btSelectCallBack[className]['callback'];
+            }
+
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+
+
+</script>
+</html>

@@ -1,0 +1,101 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="."/>
+    <springProperty scope="context" name="SPRING_PROFILES_ACTIVE" source="spring.profiles.active" defaultValue="default"/>
+    <!--定义参数,后面可以通过${APP_NAME}使用-->
+    <property name="APP_NAME" value="${appName}" />
+    <property name="LOG_PATH" value="${user.home}/logs/${APP_NAME}" />
+    <property name="INFO_FILE" value="${LOG_PATH}/info/${APP_NAME}.log" />
+    <property name="ERROR_FILE" value="${LOG_PATH}/error/${APP_NAME}-error.log" />
+    <property name="JSON_LOG_FILE" value="${user.home}/logs/Loki/${APP_NAME}/${APP_NAME}"/>
+
+    <!-- JSON Pattern Layout - 手动构建JSON字符串 -->
+    <property name="JSON_PATTERN" value='{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","thread":"%thread","logger":"%logger{50} : %line","message":"%msg","exception":"%ex","app":"${APP_NAME}","env":"${SPRING_PROFILES_ACTIVE}","serverIp":"%X{serverIp:-}","clientIp":"%X{clientIp:-}","requestPath":"%X{requestPath:-}","traceId":"%X{traceId:-}","spanId":"%X{spanId:-}"}%n'/>
+
+    <!-- JSON文件输出 -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${JSON_LOG_FILE}.log</file>
+        <encoder>
+            <pattern>${JSON_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${JSON_LOG_FILE}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>3</maxHistory>
+            <maxFileSize>50MB</maxFileSize>
+            <totalSizeCap>20GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="INFO"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--定义日志输出的路径-->
+        <file>${INFO_FILE}</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${INFO_FILE}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>3</maxHistory>
+            <maxFileSize>50MB</maxFileSize>
+            <totalSizeCap>20GB</totalSizeCap>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] - [%-5level] [%logger{50} : %line] - %msg%n</pattern>
+        </layout>
+    </appender>
+
+    <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <!--定义日志输出的路径-->
+        <file>${ERROR_FILE}</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${ERROR_FILE}.%d{yyyy-MM-dd}.%i-error.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+            <maxFileSize>50MB</maxFileSize>
+            <totalSizeCap>20GB</totalSizeCap>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] - [%-5level] [%logger{50} : %line] - %msg%n</pattern>
+        </layout>
+    </appender>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev,test,dockerenv,dsl-dev,stage,prod">
+        <root level="INFO">
+            <!--定义了两个appender，日志会通过往这两个appender里面写-->
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="INFO" />
+            <appender-ref ref="ERROR" />
+            <appender-ref ref="JSON_FILE" />
+        </root>
+    </springProfile>
+    <logger name="druid.sql.Statement" level="off">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!--应用日志-->
+    <!--这个logger没有指定appender，它会继承root节点中定义的那些appender-->
+
+    <!--数据库日志-->
+    <!--由于这个logger自动继承了root的appender，root中已经有stdout的appender了，自己这边又引入了stdout的appender-->
+    <!--如果没有设置 additivity="false" ,就会导致一条日志在控制台输出两次的情况-->
+    <!--additivity表示要不要使用rootLogger配置的appender进行输出-->
+    <logger name="com.apache.ibatis" level="off">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    <Logger name="com.alibaba.nacos" level="off" />
+    <Logger name="org.apache.dubbo" level="off" />
+</configuration>
+

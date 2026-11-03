@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+	<table class="layui-table">
+		<tbody>
+		   	<tr>
+		   		##业务种类Code
+				<td class="textRight" width="25%">#springMessage('table.FcManualFinacialType.sysRaceCode')</td>
+		   		<td width="25%">
+		   			<input name="eqs_sysRaceCode" class="layui-input" placeholder="#springMessage('table.FcManualFinacialType.sysRaceCode')">
+		   		</td>
+		   		##业务种类名称
+		   		<td class="textRight" width="25%">#springMessage('table.FcManualFinacialType.name')</td>
+		   		<td width="25%">
+					<input name="likes_name" class="layui-input" placeholder="#springMessage('table.FcManualFinacialType.name')">
+		   		</td>
+		   	</tr>
+		   	<tr>
+		   		##流程种类
+				<td class="textRight" width="25%">#springMessage('table.FcManualFinacialType.flowType')</td>
+		   		<td width="25%">
+		   			<div class="bt-biz-dict" 
+		         		data-name="eqs_flowType" 
+		         		data-type="select" 
+		         		data-biz-name="flowType" 
+		         		data-group="manual.finacial.flow.type" >
+		         	</div>
+		   		</td>
+		   		<td colspan="2">
+					
+		   		</td>
+		   	</tr>
+		   	<tr>
+		   		<td colspan="4" style="text-align: center;">
+		   			<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+		           	<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+		   		</td>
+		   	</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+    	<th>#springMessage('table.FcManualFinacialType.sysRaceCode')</th>
+    	<th>#springMessage('table.FcManualFinacialType.name')</th>
+    	<th>#springMessage('table.FcManualFinacialType.flowType')</th>
+    	<th>#springMessage('table.FcManualFinacialType.url')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+bt.use(['form','datatable','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.dicts.init();//字典
+    //生成列表
+    datatable = bt.datatable.init({
+        elem: "#appTable",
+        searchForm:{
+            formElem:"#searchForm",
+            formFilter:"search"
+        },
+        checkbox:true,
+        mulselect:false,
+        ajax: {
+            'url': basePath+"/finacial/bankCollect/manualFinacial/manualFinacialDatatable"
+        }, 
+        buttons: [
+            {
+                text: bt.lang('common.button.add'),
+                action: function ( e, dt, node, config ) {
+                    add();
+                }
+            },{
+            	text: bt.lang('common.button.clone'),
+                action: function ( e, dt, node, config ) {
+                	var data = dt.rows('.selected').data();
+                    var len = data.length;
+                    if(len<1){
+                    	layer.msg(bt.lang('config.fcs.relationAccount.selectOne'));//请选择一条数据
+                    	return;
+                    }
+                    var rowData = data.splice(0,len);
+                    copy(rowData);
+                }
+            }
+        ],
+        fixedColumns: {
+            rightColumns:1//代表冻结右边一列
+        },
+        columns: [
+            {data:"sysRaceCode"},
+			{data:"name"},
+            {data:"flowTypeName"},
+            {data:"url"},
+            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+            	var html = "";
+            	html += ' \<span class="text-explode">|</span>\ <a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+            	html += ' \<span class="text-explode">|</span>\ <a class="" href="#" data-row="'+meta.row+'" onclick="edit(this)">'+bt.lang("common.button.edit")+'</a>';
+            	html += ' \<span class="text-explode">|</span>\ <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+            	return html;
+            }}
+        ]
+    });
+});
+
+function add(){
+    bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/finacial/bankCollect/manualFinacial/edit");
+    return;
+}
+
+function view(el){
+	
+}
+
+function edit(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	bt.navtab.addNavtab(bt.lang('common.edit.data'),basePath + "/finacial/bankCollect/manualFinacial/edit?id=" + data.id);
+	return;
+}
+
+function copy(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	bt.navtab.addNavtab(bt.lang('common.edit.data'),basePath + "/finacial/bankCollect/manualFinacial/copy?id=" + data.id);
+	return;
+}
+
+function del(el){
+	var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+	var url = basePath + "/finacial/bankCollect/manualFinacial/delete?id=" + data.id;
+	$.post(url, function(result){
+    	if(result.success){
+    		datatable.draw();
+    	}
+        parent.layer.alert(result.msg, {icon: result.success?1:2});
+    },'JSON');
+}
+</script>
+</html>

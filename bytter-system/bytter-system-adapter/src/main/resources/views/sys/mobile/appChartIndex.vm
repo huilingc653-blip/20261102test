@@ -1,0 +1,1044 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>报表</title>
+</head>
+#set($resourceVersion=$resourceVersion.get())
+#set($basePath=$springMacroRequestContext.contextPath)
+<link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css?_btv=${resourceVersion}">
+<link rel="stylesheet" href="${basePath}/static/css/mobile/index.css?_btv=${resourceVersion}">
+<style>
+    html {
+        width: 100%
+    }
+
+    body {
+        -webkit-user-select: initial;
+        background-color: #F5F5F5;
+        /*width: 100%;*/
+        /*margin: 0;*/
+    }
+
+    p {
+        margin: 0;
+    }
+
+    .module-item-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        background-color: #FFFFFF;
+        border-radius: 10px;
+        padding: 10px 10px 10px 10px;
+    }
+
+    .module-item-icon-container {
+        display: flex;
+        width: 42px;
+        height: 42px;
+        border-radius: 50px;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .module-item-name-text {
+        font-size: 14px;
+        color: #333333;
+        font-weight: bold;
+        padding-top: 5px;
+        width: 160px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .module-item-description-text {
+        font-size: 12px;
+        color: #999999;
+        text-overflow: ellipsis;
+        width: 160px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .module-item-add-container {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FFFFFF;
+        border-radius: 10px;
+        padding: 10px 10px 10px 10px;
+    }
+</style>
+
+
+<style>
+    body {
+        background-color: #f5f5f5;
+    }
+
+    .swipe {
+        overflow: hidden;
+        visibility: hidden;
+        position: relative;
+    }
+
+    .swipe-wrap {
+        overflow: hidden;
+        position: relative;
+    }
+
+    .swipe-wrap > div {
+        float: left;
+        width: 100%;
+        position: relative;
+    }
+
+    .bt-chart-title {
+        margin-top: 0.05rem;
+        height: 0.46rem;
+        overflow: hidden;
+    }
+
+    .bt-chart {
+        background: rgba(255, 255, 255, 1);
+        border-radius: 0.2rem;
+    }
+
+    .bt-chart-title > div {
+        height: 0.46rem;
+        line-height: 0.46rem;
+    }
+
+    .report-biz-title {
+        height: 0.46rem;
+        font-size: 0.16rem;
+        font-family: PingFangSC-Medium, PingFang SC;
+        font-weight: 700;
+        color: rgba(51, 51, 51, 1);
+        line-height: 0.46rem;
+        padding-left: 0.15rem;
+        margin-top: 0.05rem;
+    }
+
+    .report-biz-content {
+        height: 3.05rem;
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0px 1px 5px 2px rgba(198, 204, 216, 0.2);
+        border-radius: 0.1rem;
+        margin: 0 0.15rem;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    .report-biz-header {
+        border-bottom: 1px solid #EFEFEF;
+        margin: 0 0.1rem;
+        padding: 0.05rem 0;
+        box-sizing: border-box;
+    }
+
+    .report-biz-corp {
+        position: relative;
+        height: 0.22rem;
+
+    }
+
+    .report-biz-corp div {
+        line-height: 0.22rem;
+        height: 0.22rem;
+        font-size: 0.12rem;
+        font-family: PingFangSC-Medium, PingFang SC;
+        font-weight: 700;
+        color: rgba(51, 51, 51, 1);
+        text-align: center;
+    }
+
+    .report-biz-corp span {
+        position: absolute;
+        top: 0;
+        right: 0.12rem;
+        height: 0.22rem;
+        line-height: 0.22rem;
+        font-size: 0.12rem;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 400;
+        color: rgba(153, 153, 153, 1);
+    }
+
+    .report-biz-number {
+        position: relative;
+        height: 0.28rem;
+    }
+
+    .report-biz-number div {
+        height: 0.28rem;
+        font-size: 0.2rem;
+        font-family: DINAlternate-Bold, DINAlternate;
+        font-weight: bold;
+        color: rgba(41, 136, 255, 1);
+        line-height: 0.28rem;
+        text-align: center;
+    }
+
+    .report-biz-content > span {
+        position: absolute;
+    }
+
+    .report-biz-content .report-biz-next {
+        top: 0.3rem;
+        right: 0.12rem;
+    }
+
+    .report-biz-content .report-biz-prev {
+        top: 0.3rem;
+        left: 0.12rem;
+    }
+
+    .report-biz-content > span > img {
+        width: 0.28rem;
+        margin-left: 0.08rem;
+    }
+
+    .report-biz-body {
+        height: 1.75rem;
+        margin: 0 0.05rem;
+    }
+
+    .report-biz-footer {
+        margin: 0 0.1rem;
+        height: 0.64rem;
+        border-top: 1px solid #EFEFEF;
+    }
+
+    .report-biz-table {
+        width: 100%;
+    }
+
+    .report-biz-table th {
+        min-width: 0.3rem;
+        font-size: 0.12rem;
+        height: 0.28rem;
+        line-height: 0.28rem;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 400;
+        color: rgba(153, 153, 153, 1);
+        text-align: center;
+    }
+
+    .report-biz-table td {
+        height: 0.35rem;
+        font-size: 0.12rem;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 700;
+        color: rgba(51, 51, 51, 1);
+        line-height: 0.35rem;
+        text-align: left;
+    }
+
+    .report-biz-table img {
+        width: 0.2rem;
+        height: 0.2rem;
+        padding: 0.04rem;
+        padding-bottom: 0;
+    }
+
+    .report-footer-item {
+        padding-top: 0.05rem;
+
+    }
+
+    .report-footer-title {
+        display: inline-block;
+        height: 0.28rem;
+        font-size: 0.12rem;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 400;
+        color: rgba(102, 102, 102, 1);
+        line-height: 0.28rem;
+    }
+
+    .report-footer-number {
+        height: 0.2rem;
+        font-size: 0.14rem;
+        font-family: PingFangSC-Medium, PingFang SC;
+        font-weight: 700;
+        color: rgba(51, 51, 51, 1);
+        line-height: 0.2rem;
+    }
+
+    .report-footer-header,
+    .report-footer-number {
+        padding-left: 0.1rem;
+    }
+
+    .report-footer-header img {
+        width: 0.15rem;
+        margin-top: 0.02rem;
+    }
+
+    .report-biz-table .green {
+        color: #29D0A7;
+    }
+
+    .report-biz-table .red {
+        color: #FF7229;
+    }
+
+    .report-biz-prev {
+        display: none;
+    }
+
+    .report-swipe-bar {
+        text-align: center;
+        height: 0.15rem;
+        margin-top: 0.1rem;
+    }
+
+    .report-swipe-bar span {
+        display: inline-block;
+        width: 0.24rem;
+        height: 0.03rem;
+    }
+
+    .report-swipe-bar span span {
+        float: left;
+        width: 0.12rem;
+        height: 0.03rem;
+        border-radius: 0.02rem;
+        background-color: #D8D7D7;
+        border: none;
+    }
+
+    .report-swipe-bar .active {
+        background: rgba(41, 136, 255, 1);
+    }
+
+    .report-footer-header {
+        height: 0.3rem;
+        margin-top: 0.05rem;
+    }
+
+    .report-biz-footer {
+        position: relative;
+    }
+
+    .report-footer-line {
+        position: absolute;
+        top: 0.15rem;
+        left: 50%;
+        height: 0.34rem;
+        width: 1px;
+        background-color: #EFEFEF;
+    }
+
+    .bt-chart-info-trend div {
+        text-align: center;
+    }
+
+
+    .report-chart-refresh {
+        margin-left: 0.1rem;
+    }
+
+    .report-chart-refresh img {
+        width: 0.16rem;
+        margin-top: 0.15rem;
+    }
+</style>
+
+<section class="ui-container">
+    <input type="hidden" id="corpId" value="$!{corpId}">
+    <input type="hidden" id="netId" value="$!{netId}">
+    <input type="hidden" id="toMonthBal">
+    <input type="hidden" id="days">
+
+    <div>
+        <div id='slider' class='swipe'>
+            <div class='swipe-wrap'>
+                <div>
+                    <section class="bt-content">
+                        <div id="bt-loading" class="bt-loading">
+                            <center><img style="width:25px;" src="${basePath}/static/mobile/icon/loadinggif.gif">
+                            </center>
+                        </div>
+                        <div class="bt-chart">
+                            <div class="bt-chart-title">
+                                <div class="fl bt-chart-title-left">账户余额</div>
+                                <div class="fr bt-chart-title-right"> <span class="report-chart-refresh"
+                                                                            onclick="refreshBalance()"><img
+                                        src="${basePath}/static/mobile/icon/common/refresh@2x.png" alt=""></span></div>
+                                <div class="fr bt-chart-title-right">单位:万元</div>
+
+                            </div>
+                            <div class="bt-chart-map">
+                                <canvas id="accountBal" width="345" height="200"></canvas>
+                            </div>
+                            <div class="bt-chart-info clear">
+                                <div class="fl bt-chart-info-left width50 ">
+                                    <div>
+                                        <div class="bt-chart-info-name">
+                                            <span></span>
+                                            银行账户
+                                        </div>
+                                        <div class="bt-chart-info-money" id="bankAccBal">0.00</div>
+                                        <div class="bt-chart-info-trend clear">
+                                            <div class="fl width50 ">
+                                                <div class="trend-name">同比</div>
+                                                <div class="font-green" id="bankAccYearOnYear">+0.00%</div>
+                                            </div>
+                                            <div class="fr width50">
+                                                <div class="trend-name">环比</div>
+                                                <div class="font-orange" id="bankAccMonthOnMonth">+0.00%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fr bt-chart-info-right width50">
+                                    <div>
+                                        <div class="bt-chart-info-name">
+                                            <span></span>
+                                            内部账户
+                                        </div>
+                                        <div class="bt-chart-info-money" id="innerAccBal">0.00</div>
+                                        <div class="bt-chart-info-trend clear">
+                                            <div class="fl width50">
+                                                <div class="trend-name">同比</div>
+                                                <div class="font-green" id="innerAccYearOnYear">+0.00%</div>
+                                            </div>
+                                            <div class="fr width50">
+                                                <div class="trend-name">环比</div>
+                                                <div class="font-orange" id="innerAccMonthOnMonth">+0.00%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </section>
+
+                </div>
+                <div style="background-color: #f5f5f5" class="report-biz-detail">
+
+                    <div class="report-biz-title">资金概览</div>
+                    <div class="report-biz-content">
+                        <div id='slider1' class='swipe '>
+                            <div class='swipe-wrap'>
+                                <div class="report-header-item">
+                                    <div class="report-biz-header">
+                                        <div class="report-biz-corp">
+                                            <div>
+                                                本日账户余额
+                                            </div>
+                                            <span>单位:万元</span>
+                                        </div>
+                                        <div class="report-biz-number">
+                                            <div class="" id="toDayBal">0.00</div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="report-header-item">
+                                    <div class="report-biz-header">
+                                        <div class="report-biz-corp">
+                                            <div>
+                                                本日流入
+                                            </div>
+                                            <span>单位:万元</span>
+                                        </div>
+                                        <div class="report-biz-number">
+                                            <div style="color: #29D0A7;" id="inDayAmt">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="report-header-item">
+                                    <div class="report-biz-header">
+                                        <div class="report-biz-corp">
+                                            <div>
+                                                本日流出
+                                            </div>
+                                            <span>单位:万元</span>
+                                        </div>
+                                        <div class="report-biz-number">
+                                            <div style="color: #FF7229;" id="outDayAmt">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="report-header-item">
+                                    <div class="report-biz-header">
+                                        <div class="report-biz-corp">
+                                            <div>
+                                                月日均余额
+                                            </div>
+                                            <span>单位:万元</span>
+                                        </div>
+                                        <div class="report-biz-number">
+                                            <div style="color:#8C6BF5;" id="avgDayBal">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="report-biz-next" id="nextPage" onclick="nextPage()"><img
+                                src="${basePath}/static/mobile/icon/common/next1@2x.png" alt=""></span>
+                        <span class="report-biz-prev" id="prevPage" onclick="prevPage()"><img
+                                src="${basePath}/static/mobile/icon/common/prev1@2x.png" alt=""></span>
+                        <div id="bt-loading1" class="bt-loading">
+                            <center><img style="width:25px;" src="${basePath}/static/mobile/icon/loadinggif.gif">
+                            </center>
+                        </div>
+                        <div class="report-body-container">
+                            <div class="report-biz-body">
+                                <table class="report-biz-table" id="depositTable">
+                                    <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>存款类别</th>
+                                        <th>余额</th>
+                                        <th>占比</th>
+                                        <th>月环比</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="report-biz-footer">
+                                <div class="report-footer-line"></div>
+                                <div class="ui-row-flex">
+                                    <div class="ui-col ui-col">
+                                        <div class="report-footer-header">
+                                            <span><img src="${basePath}/static/mobile/icon/common/save@2x.png"
+                                                       alt=""></span>
+                                            <span class="report-footer-title">到期票据(7天)</span>
+                                        </div>
+                                        <div class="report-footer-number" id="endBillBal">0.00</div>
+                                    </div>
+                                    <div class="ui-col ui-col" style=" padding-left: 0.2rem;">
+                                        <div class="report-footer-header">
+                                            <span><img src="${basePath}/static/mobile/icon/common/bill@2x.png"
+                                                       alt=""></span>
+                                            <span class="report-footer-title">到期存款(7天)</span>
+                                        </div>
+                                        <div class="report-footer-number" id="endDepositBal">0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="report-swipe-bar">
+      <span id="swipBar">
+        <span class="report-swipe-left active"></span>
+        <span class="report-swipe-right "></span>
+      </span>
+        </div>
+    </div>
+
+    <div style="display: flex;flex-direction: row;justify-content: space-around;flex-wrap: wrap;">
+
+        #foreach($mobileChartModule in $mobileChartModuleList)
+
+            ##            <div style="width: 46%;margin: 5px;height:110px;">
+            ##                <a onclick="onChartModuleClick('$!{mobileChartModule.url}')">
+            ##                    <div class="module-item-container">
+            ##                        <div class="module-item-icon-container" style="${mobileChartModule.iconStyle}">
+            ##                            <img width="22px" height="22px" src="${basePath}$!{mobileChartModule.iconUrl}"/>
+            ##                        </div>
+            ##                        <h4 class="module-item-name-text">
+            ##                            $!{mobileChartModule.name}
+            ##                        </h4>
+            ##                        <p class="module-item-description-text">
+            ##                            $!{mobileChartModule.description}
+            ##                        </p>
+            ##                    </div>
+            ##                </a>
+            ##            </div>
+
+
+            <div style="width: 46%;margin: 5px;height:110px;">
+                <a onclick="onChartModuleClick('$!{mobileChartModule.url}','$!{mobileChartModule.chartModuleKey}')">
+                    <div class="module-item-container">
+                        <div class="module-item-icon-container" style="${mobileChartModule.iconStyle}">
+                            <img width="22px" height="22px" src="${basePath}$!{mobileChartModule.iconUrl}"/>
+                        </div>
+                        <h4 class="module-item-name-text">
+                            $!{mobileChartModule.name}
+                        </h4>
+                        <p class="module-item-description-text">
+                            $!{mobileChartModule.description}
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+        #end
+
+        <div style="width: 46%;margin: 5px;height:110px;">
+            <a onclick="openChartModulesManagePage()"
+               style="height:105px;display: flex;flex:1;border: 1px dashed #CACACA;border-radius: 10px;">
+                <div class="module-item-add-container">
+                    <img width="25" height="25"
+                         src="${basePath}/static/mobile/icon/chartModule/icon_chart_add_module.png"/>
+                    <h4 style=" font-size: 14px;color: #333333;font-weight: bold;margin-top: 5px;">
+                        添加模块
+                    </h4>
+                </div>
+            </a>
+        </div>
+
+        <div style="width: 46%;margin: 5px;">
+
+        </div>
+
+    </div>
+
+</section>
+<script src="$!{basePath}/static/modules/mobile/webViewAppScriptBridage.js?_btv=${resourceVersion}"></script>
+<script src="$!{basePath}/static/modules/mobile/webViewApp.js?_btv=${resourceVersion}"></script>
+##<script src="${basePath}/static/plugins/frozen/js/zepto.min.js?_btv=${resourceVersion}" charset="utf-8"></script>
+<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js?_btv=${resourceVersion}" charset="utf-8"></script>
+<script src="${basePath}/static/mobile/plugins/f2/f2.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/plugins/swipe/swipe.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/js/mobile/money.js"></script>
+
+<script>
+    var now = new Date();
+    var basePath = "${basePath}";
+    $("#days").val(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
+    window.getInitAccountBal = (data)=>{
+
+        window.initAccountBal(data)
+    }
+    window.getBankAccountCapital = (data)=>{
+
+        window.setBankAccountCapital(data)
+    }
+
+    //
+    /**
+     * 打开报表模块管理页面
+     */
+    function openChartModulesManagePage() {
+        var data = BTAppBridge.openChartModulesManagePage && BTAppBridge.openChartModulesManagePage()
+        console.log('点击了添加模块',data)
+        //向uniapp传值
+        uni.postMessage({
+            data: data
+        });
+        // window.BTAppBridge.openChartModulesManagePage && window.BTAppBridge.openChartModulesManagePage();
+    }
+
+    // function onChartModuleClick(url) {
+    //     BTAppBridge.jump({url: url, corpId: $("#corpId").val(), netId: $("#netId").val()});
+    // }
+
+    function onChartModuleClick(url, chartModuleKey) {
+        var data = BTAppBridge.jump({
+            url: "/api/chart/appSecondChartMenuPage",
+            chartModuleKey: chartModuleKey,
+            corpId: $("#corpId").val(),
+            netId: $("#netId").val()
+        });
+
+        //向uniapp传值
+        uni.postMessage({
+            data: data
+        });
+    }
+
+
+    (function (doc, win) {
+
+        refreshBalance = function () {
+            $('#bt-loading').show();
+            var url = "/bi/reportAccountBalMobile/getAccountBal";
+            // $.ajax({
+            //     type: "post",
+            //     url: url,
+            //     async: true,
+            //     data: {"type":"1"},
+            //     dataType: "json",
+            //     success: function (data) {
+            //         initAccountBal(data);
+            //     }
+            // });
+
+            setTimeout(function () {
+                var data = BTAppBridge.post(url, {"type": "1", "corpId": "$!{corpId}"}, 'initAccountBal');
+                uni.postMessage({
+                    data:data
+                })
+            }, 100);
+        }
+
+        var url = "/bi/reportAccountBalMobile/getAccountBal";
+        // $.ajax({
+        //     type: "post",
+        //     url: url,
+        //     async: true,
+        //     data: {"type":"0"},
+        //     dataType: "json",
+        //     success: function (data) {
+        //         initAccountBal(data);
+        //     }
+        // });
+
+        setTimeout(function () {
+            $('#bt-loading').show();
+            var data = BTAppBridge.post(url, {"type": "1", "corpId": "$!{corpId}"}, 'initAccountBal');
+            uni.postMessage({
+                data: data
+            });
+        }, 100);
+
+        initAccountBal = function (data) {
+            console.log(JSON.stringify(data))
+            $('#bt-loading').hide();
+            if (data) {
+                var maxBalance = 0;
+                $.each(data, function (index, item) {
+                    if (item.bal > maxBalance) {
+                        maxBalance = item.bal;
+                    }
+                });
+                //数据
+                var datas = [];
+                // var datas = [{"name": "银行账户", "month": "6月", "value": 494}];
+                var curMonth = new Date().getMonth() + 1;
+                $.each(data, function (index, item) {
+                    var d = {};
+                    d["name"] = item.type;
+                    d["month"] = item.month + "月";
+                    d["value"] = item.bal;
+                    d["bal"] = bt.money.format(item.bal);
+                    d["yearOnYear"] = item.yearOnYear;
+                    d["monthOnMonth"] = item.monthOnMonth;
+                    datas.push(d);
+                    if (curMonth == item.month) {
+                        if (item.type === '内部账户') {
+                            console.log(JSON.stringify(item))
+                            $("#innerAccBal").text(bt.money.format(item.bal));
+                            $("#innerAccYearOnYear").text(handleScale(item.yearOnYear));
+                            $("#innerAccMonthOnMonth").text(handleScale(item.monthOnMonth));
+                        } else if (item.type === '银行账户') {
+                            $("#toMonthBal").val(item.bal);
+                            var days = $("#days").val();
+                            $("#avgDayBal").text(bt.money.format(bt.money.div(item.bal, days)));
+                            $("#bankAccBal").text(bt.money.format(item.bal));
+                            $("#bankAccYearOnYear").text(handleScale(item.yearOnYear));
+                            $("#bankAccMonthOnMonth").text(handleScale(item.monthOnMonth));
+                        }
+                    }
+                });
+                // Step 1: 创建 Chart 对象
+                F2.track(false);
+                // https://antv-f2.gitee.io/zh
+                const chart = new F2.Chart({
+                    id: 'accountBal',
+                    pixelRatio: window.devicePixelRatio, // 指定分辨率
+                });
+
+                // Step 2: 载入数据源
+                var originDates = "$!{months}".split(",");
+                maxBalance = Math.ceil(maxBalance);
+                if(maxBalance>100){
+                    maxBalance = Math.floor(maxBalance / 100 ) * 100
+                }else{
+                    maxBalance = 100
+                }
+                console.log(maxBalance)
+                chart.source(datas, { //1、立即更新数据chart.changeData(data);　2、
+                    'month': {
+                        type: 'cat',
+                        tickCount: 5,
+                        values: originDates
+                    },
+                    steps: {
+                        tickCount: 6
+                    },
+                    'value': { // value代表纵轴映射的健
+                        tickCount: 5, //设置纵轴刻度
+                        min: 0,
+                        max: maxBalance
+                    }
+                });
+
+                //设置横坐标样式
+                chart.axis('month', { // 横坐标样式
+                    tickLine: { // 横坐标名字上面那个突出的小线段
+                        length: 0,
+                        stroke: '#EFEFEF' //小线段的颜色
+                    },
+                    label: function (text, index, total) {  //横坐标文字设置
+                        return {
+                            text: text,//内容
+                            fill: '#666666' //字体颜色
+                        }
+                    },
+                    line: {
+                        top: true
+                    }
+                });
+
+                //设置纵坐标样式
+                chart.axis('value', {
+                    position: 'left', // 纵坐标位置
+                    label: function label(text) {
+                        return {
+                            text: text,
+                            fill: '#666666'
+                        };
+                    },
+                    tickCount: 5,
+                    grid: { //网格线
+                        stroke: '#EFEFEF',
+                        border: 'line'
+                    }
+                });
+
+                chart.tooltip({
+                    showItemMarker: false,
+                    background: {
+                        fill: '#69A4FF',
+                        radius: 4,
+                    },
+                    valueStyle: {
+                        fontSize: 10,
+                        fill: '#fff',
+                    },
+                    titleStyle: {
+                        fontSize: 10,
+                        fill: '#fff',
+                    }, // tooltip 标题的文本样式配置，showTitle 为 false 时不生效
+                    nameStyle: {
+                        fontSize: 10,
+                        fill: '#fff',
+
+                    },
+                    onShow: function onShow(ev) {
+                        var items = ev.items;
+                        var bank;
+                        var inner;
+                        if (items[0] && items[0].origin) {
+                            if (items[0].origin.name == "内部账户") {
+                                inner = items[0].origin;
+                            } else {
+                                bank = items[0].origin;
+                            }
+                        }
+                        if (items[1] && items[1].origin) {
+                            if (items[1].origin.name == "内部账户") {
+                                inner = items[1].origin;
+                            } else {
+                                bank = items[1].origin;
+                            }
+                        }
+                        if (bank) {
+                            $("#bankAccBal").text(bt.money.format(bank.bal));
+                            $("#bankAccYearOnYear").text(handleScale(bank.yearOnYear));
+                            $("#bankAccMonthOnMonth").text(handleScale(bank.monthOnMonth));
+                        }
+                        if (inner) {
+                            $("#innerAccBal").text(bt.money.format(inner.bal));
+                            $("#innerAccYearOnYear").text(handleScale(inner.yearOnYear));
+                            $("#innerAccMonthOnMonth").text(handleScale(inner.monthOnMonth));
+                        }
+                    }
+                });
+
+                // Step 3：创建图形语法，绘制柱状图，由 month 和 value 两个属性决定图形位置，month 映射至 x 轴，value 映射至 y 轴
+                chart.legend(false) // 是否显示图例
+                chart.interval().position('month*value')
+                        .size(6) //设置柱状大小
+                        .color('name', function (name) { //设置柱状图的颜色
+                            if (name === '内部账户') {
+                                return '#99C2FF'
+                            } else if (name === '银行账户') {
+                                return '#2988FF'
+                            }
+                        })
+                        .adjust({
+                            type: 'dodge',
+                            marginRatio: 0.05 // 设置分组间柱子的间距
+                        })
+                        .style('type', {
+                            radius: function radius() {　//设置柱状图圆角
+                                return [3, 3, 3, 3]
+                            }
+                        });
+
+                // Step 4: 渲染图表
+                chart.render();
+            }
+
+        }
+
+        /**
+         * 处理比例
+         */
+        function handleScale(scale) {
+            var newScale = bt.money.changeDecimalBuZero(scale);
+            return scale > 0 ? ("+" + newScale + "%") : (newScale + "%");
+        }
+        //轮播1
+        window.mySwipe = new Swipe(document.getElementById('slider'), {
+            startSlide: 0,
+            speed: 400,
+            auto: false,
+            continuous: false,
+            disableScroll: false,
+            stopPropagation: false,
+            callback: function (index, elem) {
+                $('#swipBar').find('.active').removeClass('active');
+                if (index === 0) {
+                    $('#swipBar').find('.report-swipe-left').addClass('active');
+                } else {
+                    getDayBankAccountCapital();
+                    $('#swipBar').find('.report-swipe-right').addClass('active');
+                }
+            },
+            transitionEnd: function (index, elem) {
+
+            }
+        });
+
+        /**
+         * 获取银行账户当日资金信息
+         */
+        function getDayBankAccountCapital() {
+            console.log('cscscsc')
+            var url = "/bi/reportAccountBalMobile/getDayBankAccountCapital";
+            // $.ajax({
+            //     type: "post",
+            //     url: url,
+            //     async: true,
+            //     data: {},
+            //     dataType: "json",
+            //     success: function (result) {
+            //         setBankAccountCapital(result);
+            //     }
+            // });
+            $('#bt-loading1').show();
+            setTimeout(function () {
+                var data = BTAppBridge.post(url, {"corpId": "$!{corpId}"}, 'setBankAccountCapital');
+                uni.postMessage({
+                    data:data
+                })
+            }, 100);
+        }
+
+        /**
+         * 设置资金概览
+         */
+        setBankAccountCapital = function (result) {
+            setToDayBal(result.toDay);
+            setBankDepositTable(result.depositList);
+            setEndBal(result);
+        }
+
+        /**
+         * 设置当日余额情况
+         */
+        function setToDayBal(data) {
+            console.log(JSON.stringify(data))
+            $("#toDayBal").text(bt.money.format(data.toDayBal));
+            $("#inDayAmt").text(bt.money.format(data.inDayAmt));
+            $("#outDayAmt").text(bt.money.format(data.outDayAmt));
+            var toMonthBal = $("#toMonthBal").val();
+            var days = $("#days").val();
+            $("#avgDayBal").text(bt.money.format(bt.money.div(toMonthBal, days)));
+        }
+
+        /**
+         * 设置存款表格
+         */
+        function setBankDepositTable(data) {
+            $('#bt-loading1').hide();
+            $("#depositTable > tbody").html("");
+            var html = '';
+            $.each(data, function (index, item) {
+                var row = (index + 1);
+                html += '<tr>';
+                html += '<td style="text-align: center"><img src="${basePath}/static/mobile/icon/common/' + row + '@2x.png" alt=""></td>';
+                html += '<td style="text-align: center">' + item.busTypeName + '</td>';
+                html += '<td style="text-align: right">' + bt.money.format(item.balance) + '</td>';
+                html += '<td style="text-align: right">' + (item.proportion == 0 ? "0.00" : bt.money.changeDecimalBuZero(item.proportion)) + '%</td>';
+                html += ' <td style="text-align: right" class="' + (row === 1 || row === 2 ? "green" : "red") + '">' + handleScale(item.monthOnMonth) + '</td>';
+                html += '</tr>';
+            });
+            $("#depositTable > tbody").append(html)
+        }
+
+        /**
+         * 设置到期余额
+         */
+        function setEndBal(data) {
+            $("#endBillBal").text(bt.money.format(data.endBillBal));
+            $("#endDepositBal").text(bt.money.format(data.endDepositBal));
+
+        }
+
+        window.mySwipe1 = new Swipe(document.getElementById('slider1'), {
+            startSlide: 0,
+            speed: 400,
+            auto: false,
+            continuous: false,
+            disableScroll: false,
+            stopPropagation: false,
+            callback: function (index, elem) {
+            },
+            transitionEnd: function (index, elem) {
+
+            }
+        });
+
+    })(document, window);
+
+    /**
+     * 下一页
+     */
+    function nextPage() {
+        if (mySwipe1) {
+            mySwipe1.next();
+            var index = mySwipe1.getPos();
+            if (index === 3) {
+                $('#nextPage').hide();
+                $('#prevPage').show();
+            } else {
+                $('#prevPage').show();
+            }
+
+        }
+    }
+
+    /**
+     * 上一页
+     */
+    function prevPage() {
+        if (mySwipe1) {
+            mySwipe1.prev();
+            var index = mySwipe1.getPos();
+            if (index === 0) {
+                $('#nextPage').show();
+                $('#prevPage').hide();
+            } else {
+                $('#prevPage').show();
+                $('#nextPage').show();
+            }
+        }
+    }
+
+</script>
+

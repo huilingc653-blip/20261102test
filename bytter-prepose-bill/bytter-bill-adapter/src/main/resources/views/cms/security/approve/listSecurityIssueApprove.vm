@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+	#parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}" />
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##资产证券化发行编号
+            <td class="textRight" >#springMessage('资产证券化发行编号')</td>
+            <td >
+                <input type="text"  name="likes_securityIssueCode" autocomplete="off"
+                       class="layui-input"/>
+            </td>
+
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('cms.security.securityIssueCode')</th>##证券发行编号
+        <th>#springMessage('table.cmsBond.leadUnderwriter')</th>##主承销商
+        <th>#springMessage('table.cmsBond.batchNo')</th>##批次
+        <th>#springMessage('cms.security.level')</th>##层级
+        <th>#springMessage('cms.security.issueMoney')</th>##发行金额
+        <th>#springMessage('cms.security.issueDate')</th>##发行日期
+        <th>#springMessage('cms.security.expectEndDate')</th>##预计到期日期
+        <th>#springMessage('table.cmsProvideLoanInfo.rmk')</th>##备注
+        <th>#springMessage('table.fcFreeze.status')</th>##操作
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(["jquery", "datatable", "form", "moneyType", "selectType", "dicts", "corp","dateType"], function () {
+        $ = bt.jquery;
+        form = bt.form()
+        dicts = bt.dicts.init();
+        selectType = bt.selectType.init();
+        bt.dateType.init();//日期时间
+        bt.moneyType.init();
+        corp = bt.corp.init();//单位
+
+        /**
+         * 生成列表
+         */
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search",
+                isInitData:"false"
+            },
+            ajax: {
+                'url': basePath + "/cms/security/issue/dataTableApprove"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 2//代表冻结右边一列
+            },
+            columns: [
+                {data:"securityIssueCode",className:"center",bSortable: true},
+                {data:"underwriter",className:"center",bSortable: true},
+                {data:"batchNo",className:"center",bSortable: true},
+                {data:"levelName",className:"center",bSortable: true},
+                {data:"issueMoney",className:"textRight",render: function ( data, type, full, meta ){
+                        return bt.money.format(full.issueMoney);
+                    }},
+                {data:"issueDate",className:"center",render:function ( data, type, full, meta ){
+                        return bt.date.format(full.issueDate,'yyyy-mm-dd');
+                    }},
+                {data:"expectEndDate",className:"center",render:function ( data, type, full, meta ){
+                        return isNull(full.expectEndDate)?'':bt.date.format(full.expectEndDate,'yyyy-mm-dd');
+                    }},
+                {data:"rmk",className:"center",bSortable: true},
+                {data:"status",className:"center",render:function ( data, type, full, meta ){
+                        return bt.dict("nisExpenseDetail.status", full.status);
+                    }},
+                {data:null,bSortable:false,className:'center',
+                    render: function (data, type, full, meta) {
+                        var html='';
+                        if($("#flowStatus").val()=='todo'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                        }
+                        html += '<a class="" href="#" data-row="'+meta.row+'" onclick="bt.workFlow.trackFlow(\''+full.processInstanceId+'\')">'+bt.lang("common.button.trackFlow")+'</a>';
+                        return html;
+                    }
+                }
+            ]
+        });
+
+        /**
+         * 判断是否为空 true：空 false:不为空
+         * @param data
+         */
+        function isNull(data) {
+            return (data == "" || data == undefined || data == null) ? true : false;
+        }
+    });
+
+    /*审核*/
+    function approve(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.approve') ,basePath + "/cms/security/issue/approve?businessId=" + data.id + "&taskId=" + data.taskId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/security/issue/approve?businessId=" + data.id + "&taskId=" + data.taskId
+        });
+    }
+
+    /**
+     * 判断是否为空 true：空 false:不为空
+     * @param data
+     */
+    function isNull(data) {
+        return (data == "" || data == undefined || data == null) ? true : false;
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form">
+    <input type="hidden" id="bondIds" name="bondIds" value="$!{bondIds}">
+    <table class="layui-table layui-table-border">
+        <tbody>
+            <tr>
+                <td class="textRight" width="50%">利率</td>
+                <td>
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input bt-biz-rateType" lay-verify="required" id="interestRate" name="interestRate" data-biz-name="interestRate" autocomplete="off">
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="text-align: center; padding-top: 10px;">
+        <button type="button" class="layui-btn" lay-submit lay-filter="bondSubmit">#springMessage('common.button.submit')</button>
+        <button type="button" class="layui-btn layui-btn-primary" onclick="BondCancel()">#springMessage('common.button.cancel')</button>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+<script>
+    var $, form, rateType;
+    bt.use(['form', 'rateType'], function () {
+        $ = bt.jquery;
+        form = bt.form();
+        rateType = bt.rateType.init();
+
+        // 确认监听事件
+        form.on('submit(bondSubmit)', function (data) {
+            bt.loading.show();
+            parent.layer.confirm('确定要批量编辑利率吗？', function (index) {
+                var action = "/bond/fcbond/batchEditInterestRate";
+                $.post(basePath + action, data.field, function (result) {
+                    bt.loading.hide();
+                    if (result.success) {
+                        parent.layer.closeAll();
+                    }
+                    parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                }, 'JSON');
+            });
+            return false;
+        });
+    })
+
+    // 返回
+    function BondCancel() {
+        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+    }
+</script>
+</body>
+</html>

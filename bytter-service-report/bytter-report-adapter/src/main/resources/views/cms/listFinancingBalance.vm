@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <div class="layui-collapse" lay-filter="collapse">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title"></h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        ##日期
+                        <td class="textRight">#springMessage('bi.cms.financingBalance.date')</td>
+                        <td>
+                            <div class="layui-inline">
+                                <input name="queryDate" data-biz-name="queryDate" data-today="true"
+                                       lay-verify="required"
+                                       class="layui-input bt-biz-dateType" type="text">
+                            </div>
+                        </td>
+                        ##币种
+                        <td class="textRight">#springMessage('bi.cms.financingBalance.curName')</td>
+                        <td>
+                            <div class="bt-biz-selectType" data-name="curId" data-biz-name="curId" data-required="true"
+                                 data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id"
+                                 data-textfield="curName"></div>
+                        </td>
+                        ##币种
+                        <td class="center">#springMessage('bi.cms.financingBalance.unit')</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" style="text-align: center;">
+                            <button class="layui-btn" onclick="search()" type="button">#springMessage(
+                    'common.button.search')</button>
+                            <button type="button" class="layui-btn layui-btn-primary" onclick="reset()">#springMessage(
+                    'common.button.reset')</button>
+                            <button type="button" class="layui-btn"
+                                    onclick="exports()">#springMessage(
+                    'common.button.exports')</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+<div id="print">
+    <div style="min-height: 300px;">
+        <table class="layui-table dark-layui-table">
+            <thead id="detailThead">
+            <th style="text-align: center;">#springMessage('bi.cms.financingBalance.number')</th>
+            <th style="text-align: center;">#springMessage('bi.cms.financingBalance.financeType')</th>
+            <th style="text-align: center">#springMessage('bi.cms.financingBalance.money')</th>
+            <th style="text-align: center">#springMessage('bi.cms.financingBalance.money.scale')</th>
+            <th style="text-align: center;">#springMessage('bi.cms.financingBalance.bondMoney')</th>
+            <th style="text-align: center">#springMessage('bi.cms.financingBalance.openMoney')</th>
+            <th style="text-align: center">#springMessage('bi.cms.financingBalance.openMoney.scale')</th>
+            </thead>
+            <tbody id="detailTable">
+
+            </tbody>
+        </table>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form', 'dateType', 'moneyType', 'selectType', 'verify'], function () {
+        $ = bt.jquery, form = bt.form(), moneyFun = bt.moneyType.getFun();
+        var dateType = bt.dateType.init();
+        var selectType = bt.selectType.init();
+
+        search = function () {
+            if (!form.verifyFun("#searchForm")) {
+                return;
+            }
+            bt.loading.show();
+
+            $("#detailTable").html("");
+            var param = {
+                "queryDate": dateType.get("queryDate").val(),
+                "curId": selectType.get("curId").val()
+            };
+            $.ajax({
+                url: basePath + "/bi/cms/financingBalance/search/",
+                method: 'POST',
+                data: param,
+                async: true,
+                success: function (result) {
+                    bt.loading.hide();
+                    var data = result;//JSON.parse(result);
+                    if (data && data.length) {
+                        setDetail(data);
+                    } else {
+                        noData();
+                    }
+                }
+            });
+        }
+
+        /**
+         * 设置明细数据
+         */
+        function setDetail(data) {
+            var html = "";
+            var rowIndex = 1;
+            for (var index in data) {
+                var row = data[index];
+                if (row.typeCode) {
+                    html += "<tr>";
+                    html += "   <td class='center width80' >" + rowIndex + "</td>";
+                    rowIndex++;
+                } else {
+                    html += "<tr style='font-weight: 800;'>";
+                    html += "   <td class='center width80' ></td>";
+                }
+                html += "   <td class='center width80' >" + row.typeName + "</td>";
+                html += "   <td class='textRight width150' >" + moneyFun.format(bt.money.toMillion(row.money)) + " </td>";
+                if (row.typeName === "合计") {
+                    html += "   <td class='textRight width80' ></td>";
+                    html += "   <td class='textRight width150' >" + moneyFun.format(bt.money.toMillion(row.bondMoney)) + "</td>";
+                    html += "   <td class='textRight width150'  >" + moneyFun.format(bt.money.toMillion(row.openMoney)) + "</td>";
+                    html += "   <td class='textRight width80' ></td>";
+                } else {
+                    html += "   <td class='textRight width80' >" + moneyFun.format(row.scale) + "%</td>";
+                    html += "   <td class='textRight width150' >" + moneyFun.format(bt.money.toMillion(row.bondMoney)) + "</td>";
+                    html += "   <td class='textRight width150'  >" + moneyFun.format(bt.money.toMillion(row.openMoney)) + "</td>";
+                    html += "   <td class='textRight width80' >" + moneyFun.format(row.openMoneyScale) + "%</td>";
+                }
+                html += "</tr>";
+            }
+            $("#detailTable").append(html);
+        }
+
+        /**
+         * 暂无数据
+         */
+        function noData() {
+            $("#detailTable").html("");
+            var html = " <tr class=\"odd\"><td colspan=\"7\" class='no-data'>" + bt.lang('common.msg.temporarily_no_data') + "</td></tr>";
+            $("#detailTable").append(html);
+        }
+
+        exports = function () {
+            if (!form.verifyFun("#searchForm")) {
+                return;
+            }
+            var param = {
+                "queryDate": dateType.get("queryDate").val(),
+                "curId": selectType.get("curId").val()
+            };
+            var url = basePath + "/bi/cms/financingBalance/export?queryDate=" + param.queryDate + "&curId=" + param.curId;
+            window.location.href = url;
+        };
+    });
+
+
+</script>
+</html>

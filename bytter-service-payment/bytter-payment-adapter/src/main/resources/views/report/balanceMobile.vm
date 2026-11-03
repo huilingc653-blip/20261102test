@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #set($resourceVersion=$resourceVersion.get())
+    #set($basePath=$springMacroRequestContext.contextPath)
+    <script>var basePath = "${basePath}"</script>
+    <meta charset="utf-8">
+    <title>资金余额统计表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+    <link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css?_btv=${resourceVersion}" media="all"/>
+    <link rel="stylesheet" href="${basePath}/static/mobile/plugins/fixedTable/table.min.css?_btv=${resourceVersion}">
+    <link rel="stylesheet" href="${basePath}/static/css/mobile/index.css?_btv=${resourceVersion}" media="all"/>
+    <style type="text/css">
+
+        canvas {
+            display: block;
+            width: 100%;
+        }
+
+        @media all and (orientation: landscape) {
+            canvas {
+                display: block;
+                width: 100vw;
+                height: 48.12593703vw;
+            }
+        }
+
+        .bt-chart-title-left {
+            color: #333333;
+        }
+
+        .bt-content {
+            background-color: #fff;
+        }
+
+        .balance-summary .ui-tab-nav {
+            height: auto;
+            width: 5.5rem;
+        }
+
+        .balance-summary .ui-tab-nav-multi > li {
+            margin: 0;
+        }
+
+        .balance-summary .header-biz-box {
+            height:auto;
+            /*margin-right: 15px;*/
+            background-color: #0a6aa1;
+            border-radius: 10px;
+        }
+
+        .balance-summary .header-biz-box div {
+            height: 30px;
+            line-height: 30px;
+        }
+
+        .balance-summary .header-biz-box .price {
+            font-size: .16rem;
+            font-weight: bold;
+            padding: 9pt 9pt 0 9pt;
+            text-align: left;
+        }
+
+        .balance-summary .header-biz-box .body {
+            text-align: left;
+            padding: 0 9pt 0 9pt;
+            height: 20px;
+            line-height: 20px;
+        }
+
+        .balance-summary .header-biz-box .dot {
+            height: 6pt;
+            width: 6pt;
+            line-height: 30px;
+            display: inline-block;
+            border-radius: 5rem;
+            margin-right: 5px;
+        }
+
+        .chart-container-header {
+            padding: 0.15rem 0.05rem 0 0;
+            border-bottom: 1pt solid #EFEFEF;
+        }
+
+        .chat-container img {
+            width: 20pt;
+            height: 20pt;
+        }
+
+        .chat-container .hide {
+            display: none;
+        }
+
+        .charts {
+            background: #fff;
+        }
+
+        .data-table {
+            margin: 0.05rem 0.05rem 0;
+            overflow: hidden;
+        }
+
+        .balance-summary .ui-tab-nav {
+            width: 10.35rem;
+            min-height: 0.92rem;
+            margin-top: 0.10rem;
+        }
+        .balance-summary .header-biz-box {
+            /*margin-right: 0.1rem;*/
+            /*margin-left: 0.1rem;*/
+            min-height: 1rem;
+            background-color:#E5FFF0;
+            border-radius: 0.06rem;
+            padding: 0 0.24rem;
+            position: relative;
+
+        }
+        .balance-summary .header-biz-box div {
+            text-align: left;
+        }
+        .balance-summary .header-biz-box .bm-biz-title {
+            font-weight: 700;
+            color: #333333;
+            height: 0.22rem;
+        }
+        .bm-biz-type {
+            font-size:0.12rem;
+            font-family:PingFangSC-Regular,PingFang SC;
+            font-weight:400;
+            color:rgba(102,102,102,1);
+            line-height: 0.22rem!important;
+            height: 0.22rem!important;
+            margin-top: 0.1rem;
+
+        }
+        .bm-biz-money {
+            font-size:0.12rem;
+            font-family:PingFangSC-Regular,PingFang SC;
+            font-weight:400;
+            color:rgba(51,51,51,1);
+            line-height: 0.22rem!important;
+            height: 0.22rem!important;
+        }
+        .bm-biz-more {
+            position: absolute;
+            bottom: 0;
+            width: 2.7rem;
+            text-align: center!important;
+            height: 0.22rem;
+            line-height: 0.22rem;
+            font-size:0.12rem;
+            font-family:PingFangSC-Regular,PingFang SC;
+            font-weight:400;
+            color:rgba(41,136,255,1);
+        }
+        .ui-col-50 {
+            width: 50% !important;
+        }
+        .ui-tab-nav >li li:first-child:nth-last-child(2), .ui-tab-nav > li li:first-child:nth-last-child(2) ~ li {
+             width: auto;
+            /* display: inline-block; */
+        }
+        .navMore {
+            overflow: hidden
+        }
+
+        .bm-date-input {
+            border: none;
+            height: 0.32rem;
+            background-color: #F5F5F5;
+            border-radius: 0.16rem;
+            padding: 0 0.15rem;
+            width: 1.8rem;
+            font-size: 0.14rem;
+            font-family: PingFangSC-Medium,PingFang SC;
+            font-weight: 400;
+            color: rgba(188,188,188,1);
+            padding-right: 0.28rem;
+            padding-left: 0.3rem;
+        }
+        .bm-date-icon {
+            width: 0.14rem;
+            position: absolute;
+            left: 0.12rem;
+            top: 0.08rem;
+        }
+        .nis-body{
+            overflow: hidden;
+            height: calc(100vh);
+        }
+        .bt-content-title {
+            padding:0 0.15rem;
+            background: #fff;
+        }
+       .bt-content-title .ui-tab-nav li {
+            text-align: left;
+        }
+        .bt-content-title .ui-tab-nav li span {
+            height: 0.45rem;
+        }
+        .ui-searchbar {
+            margin: 0px;
+        }
+        .bt-content .ui-searchbar-wrap {
+            height: 0.52rem;
+        }
+    </style>
+</head>
+<body>
+<input type="hidden" id="corpId" value="">
+<input type="hidden" id="netId" value="$!{netId}">
+<div class="bt-body" id="bd">
+    <!--第一部分-->
+    <section class="bt-content balance-summary" style="padding-bottom: 0.1rem">
+        <div class="fl bt-chart-title-left">资金余额合计</div>
+        <div class="ui-tab ">
+            <div class="ui-tab-nav-wrap" id="curInfo">
+
+            </div>
+        </div>
+
+    </section>
+    <!--第二部分-->
+    <section class="bt-content-title" style="margin-top:0.01rem;">
+        <div class="ui-tab">
+            <ul class="ui-tab-nav ui-border-b bi-type">
+                <li class="current" data-type="2"><span>银行存款</span></li>
+                <li data-type="1"><span>内部存款</span></li>
+                <li data-type="3"><span>票据</span></li>
+            </ul>
+        </div>
+    </section>
+    <section class="bt-content" style="margin-top:0.01rem;">
+        <div class="ui-searchbar-wrap ui-border-b">
+            <div class="ui-col ui-col">
+                <div class="ui-searchbar-wrap ui-border-b focus">
+                    <div class="ui-searchbar ui-border-radius" id="corpDiv">
+                        <i class="ui-icon-search"></i>
+                        <div class="ui-searchbar-text" id="select_corp">请选择单位</div>
+                        <div class="ui-searchbar-input">
+                            <input value="" id="corpIdShow" name="corpIdShow" type="text" placeholder="请选择单位"
+                                   autocapitalize="off" readonly="readonly">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui-row-flex">
+            <div class="ui-col ui-col-3">
+                <div style="position:relative;">
+                    <input type="text" value="$!{startDateStr}-$!{endDateStr}" id="checkDate" readonly="readonly" class="bm-date-input"/>
+                    <img class="bm-date-icon" src="${basePath}/static/modules/images/calendar@2x.png" alt="">
+                    <input type="hidden" id="startDate" name="startDate" value="$!{startDateStr}"/>
+                    <input type="hidden" id="endDate" name="endDate" value="$!{endDateStr}"/>
+                </div>
+
+            </div>
+            <div class="ui-col">
+                ##币别
+                <div class="bt-select-popup" style="">
+                    <input type="text" id="btn1" readonly="readonly" placeholder="更多" value="更多" style="width: 0.45rem;">
+                </div>
+            </div>
+        </div>
+        ##币别控制
+        <div class="popup-block">
+            <div class="ui-actionsheet" id="actionsheet1" data-link="btn1">
+                <div class="ui-actionsheet-cnt am-actionsheet-down" id="cnt-cut-top">
+                    <section class="bt-popup-container">
+                    <div class="bt-card" id="currency">
+                        <div class="bt-card-header">
+                            币别选择
+                            <input type="hidden" id="curId" name="currency" value="">
+                        </div>
+                    <div class="bt-card-body">
+                        #foreach($cur in $curList)
+                            #set($vcount = $velocityCount - 1)
+                            #if($!{vcount}%3 == 0)
+                            <div class="ui-row-flex ui-whitespace">
+                            #end
+                            <div class="ui-col ui-col">
+                                <div class="bt-card-item"
+                                     data-value="$!{cur.id}">$!{cur.curName}</div>
+                            </div>
+                            #if($!{foreach.last})
+                                #if($velocityCount % 3 == 1)
+                                    <div class="ui-col ui-col"></div>
+                                    <div class="ui-col ui-col"></div>
+                                </div>
+                                #elseif($velocityCount % 3 == 2)
+                                    <div class="ui-col ui-col"></div>
+                                </div>
+                                #else
+                                </div>
+                                #end
+                            #else
+                                #if($velocityCount % 3 == 0)
+                                </div>
+                                #end
+                            #end
+                        #end
+                        </div>
+                    </div>
+                    <div class="bt-card" id="unitCard">
+                        <div class="bt-card-header">
+                            金额单位
+                            <input type="hidden" id="unit" name="unit" value="">
+                        </div>
+                        <div class="bt-card-body">
+                            <div class="ui-row-flex ui-whitespace">
+                                <div class="ui-col ui-col">
+                                    <div class="bt-card-item"
+                                         data-value="1">元</div>
+                                </div>
+                                <div class="ui-col ui-col">
+                                    <div class="bt-card-item"
+                                         data-value="10000">万元</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </section>
+                    <div class="bt-popup-bottom">
+                        <button type="button" id="clearValue1" class="bt-popup-reset resetBtn">重置</button>
+                        <button type="button" id="submitValue1" class="bt-popup-submit submitBtn">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="chat-container ui-row">
+            <div class="ui-col ui-col-100 chart-container-header">
+                <div class="fl bt-chart-title-left">资金余额统计表</div>
+                <div class="fr" style="height: 0.2rem">
+                    <span data-name="pie" class="bt-tab-pie active" style="margin-right: 0.16rem;"></span>
+                    <span data-name="list" class="sp-tab-list">
+            </span>
+                </div>
+            </div>
+        </div>
+    </section>
+<div id="bt-loading" class="" style="background: #ffffff">
+    <center style="padding-top: 0.2rem"><img style="width:25px;" src="${basePath}/static/mobile/icon/loadinggif.gif"></center>
+</div>
+<div id="reloadData">
+    <div>
+        <div class="bt-chart-title ui-border-b" id="titleList" style="background: #ffffff;display: none">
+            <div class="fl bt-chart-title-left" id="dataList" style="margin-left: 0.15rem;font-size: 0.14rem;display: none"><span
+                    class="sp_head_vHeads" id="sp_head_vHeads">数据列表</span>
+                <span id="unitTable" class="sp_head_vHeads" style="margin-left: 0.15rem;font-size: 0.14rem;">金额单位：元</span>
+            </div>
+        </div>
+    </div>
+    <div class="charts" id="sp-pie" style="height:3rem">
+        <div id="unitChart" class="sp_head_vHeads" style="margin-left: 0.15rem;font-size: 0.14rem;">金额单位：元</div>
+        <canvas id="mountNode"></canvas>
+    </div>
+
+    <!--这里写表格-->
+    <div class="tables" id="sp-list" style="margin-bottom: 0.1rem; height: calc(100vh - 4rem);overflow-y: auto;background: #ffffff;display: none" >
+        <div class="data-table" >
+            <!--1.0 冻列 -->
+            <div class="t_l" style="width: 150px;">
+                <!--1.1 冻结列表头-->
+                <table>
+                    <tbody id="biBody">
+
+                    </tbody>
+                </table>
+                <!--1.2 冻结列表体-->
+                <div class="t_l_freeze" style="width: 150px;">
+                    <table width="100%">
+                        <tbody id="biLeft">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!--2.0 表格-->
+            <div class="t_r">
+                <!--2.1　冻结行表头-->
+                <div class="t_r_t">
+                    <table>
+                        <tbody id="biHead">
+
+                        </tbody>
+                    </table>
+                </div>
+                <!--2.2 表格中心内容区域-->
+                <div class="t_r_content">
+                    <table width="100%">
+                        <tbody id="biRight">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div></div>
+</div>
+
+</div>
+
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script src="${basePath}/static/mobile/plugins/zepto/zepto.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/plugins/f2/f2.min.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/js/mobile/date.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/js/mobile/money.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/js/iscroll-probe.min.js?_btv=${resourceVersion}" id="probe"></script>
+<script src="${basePath}/static/mobile/plugins/fixedTable/table.min.js?_btv=${resourceVersion}" id="tableJS"></script>
+<script src="${basePath}/static/mobile/js/popup.js?_btv=${resourceVersion}" id="tableJS"></script>
+<script src="${basePath}/static/plugins/web-view/webView.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/mobile/js/webViewScriptBridage.js?_btv=${resourceVersion}"></script>
+<script>
+    var seachType = ""
+    var flag = true;
+    window.getMobileBalance = (data)=>{
+        // once()
+        postData(data)
+    }
+
+    window.getMobileBalanceRefreshData = (data)=>{
+        // once()
+        refreshData(JSON.parse(data))
+    }
+    function once() {
+        if (flag) {
+            $('.current').click()
+            flag = false;
+        } else {
+            return;
+        }
+    }
+    window.getMobileBalanceSeach = (data)=>{
+        console.log('seach')
+        seachType = "seach"
+        searchActionCallback(JSON.parse(data))
+    }
+
+    //单位搜索组件
+    function openCorpSelectionPage() {
+        setTimeout(function () {
+           var data = BTAppBridge.openCorpSelectionPage && BTAppBridge.openCorpSelectionPage('searchActionCallback',{
+                resource:"netbank:report:fundsBalanceStatistics:query"
+            });
+           uni.postMessage({
+               data:data
+           })
+        }, 100);
+
+    }
+
+    //时间组件
+    function openDatePickerPage() {
+        BTAppBridge.openDatePickerPage && BTAppBridge.openDatePickerPage('searchActionCallback');
+    }
+
+    var innerClick;
+    var bankClick;
+    var billClick;
+    $(function () {
+        F2.track(false);
+        /**
+         * 搜索回调方法
+         * @param data
+         */
+        window.searchActionCallback = function (data) {
+            console.log('回调'+data)
+            // 根据data参数，查询数据
+            if (data.corpNames && data.corpNames.length > 0) {
+                /* let msg = "选择的成员单位名称：" + JSON.stringify(data.corpNames);
+                 msg = msg + ", 成员单位ID：" + JSON.stringify(data.corpIds)*/
+                $("#corpIdShow").val(data.corpNames);
+                $("#select_corp").text(data.corpNames);
+
+            } else {
+                $("#corpIdShow").val('');
+                $("#select_corp").text('');
+
+            }
+            if (data.corpIds) {
+                $("#corpId").val(data.corpIds);
+                $("#select_corp").text(data.corpIds);
+                /*setTimeout(function () {
+                    BTAppBridge.post(basePath+"/report/fundsbalancestatistics/getInfoList", searchParams, 'postData');
+                }, 100);*/
+                refreshPage();
+            }
+            if (data.datePickData) {
+                var dateObj = data.datePickData;
+                var startDate = dateObj.startDate;
+                var endDate = dateObj.endDate;
+                var startTemp = dateFormat(parseInt(startDate),"yyyy.MM.dd");
+                var endTemp = dateFormat(parseInt(endDate), "yyyy.MM.dd");
+                $("#checkDate").val(startTemp+"-"+endTemp);
+                $("#startDate").val(startTemp);
+                $("#endDate").val(endTemp);
+                /*setTimeout(function () {
+                    BTAppBridge.post(basePath+"/report/fundsbalancestatistics/getInfoList", searchParams, 'postData');
+                }, 100);*/
+                refreshPage();
+            }
+        }
+
+        //单位选择
+        $("#corpDiv").click(function () {
+            openCorpSelectionPage();
+        });
+
+        //时间选择
+        $("#checkDate").click(function () {
+            openDatePickerPage();
+        });
+
+        //弹框选择
+        function addSheet($this,id){
+            if( $this.parent().hasClass('active')){
+                hideSheet($this);
+                $("#bd").removeClass("nis-body");
+                return
+            }
+            $('.ui-actionsheet').removeClass('show');
+            $('.bt-select-popup').removeClass('active');
+                $this.parent().addClass('active');
+            $(id).addClass('show');
+            $("#bd").addClass("nis-body");
+        }
+        //弹框选择
+        function hideSheet($this){
+            $('.ui-actionsheet').removeClass('show');
+                $this.parent().removeClass('active');
+        }
+
+        //币别控制
+        $("#btn1").click(function () {
+            moreClose("1",true);
+            moreClose("2",true);
+            moreClose("3",true);
+            addSheet($(this),'#actionsheet1');
+            var x = $('#btn1').offset().top-$(window).scrollTop();
+            $("#cnt-cut-top").css("top",x+32);
+            $("#actionsheet1").css("top",x+32);
+
+        });
+
+        //指标控制
+        $("#btn2").click(function () {
+            moreClose("1",true);
+            moreClose("2",true);
+            moreClose("3",true);
+            addSheet($(this),'#actionsheet2');
+           var x = $('#btn2').offset().top-$(window).scrollTop();
+            $("#cnt-type-top").css("top",x+32);
+            $("#actionsheet2").css("top",x+32);
+
+        });
+
+
+        var ACTIVE = 'active';
+
+        function initCard(id,value,clickCallback,isNotInit){
+            if(!id){
+                return
+            }
+            var $card = $(id);
+            var hiddenInput = $card.find('.bt-card-header input');
+            var items = $card.find('.bt-card-item');
+            items.removeClass(ACTIVE);
+            hiddenInput.val('');
+            //设置选中值
+            if(value){
+                for( var i=0;i < items.length; i++ ){
+                    if(value === $(items[i]).data('value')){
+                        $(items[i]).addClass(ACTIVE);
+                        hiddenInput.val(value);
+                        break
+                    }
+                }
+            }
+            if(isNotInit){
+                return;
+            }
+
+            $(id).on('click','.bt-card-item',function(){
+                var value = '';
+                if($(this).hasClass(ACTIVE)){ //如果当前被选中时，点击会取消选中
+                    $(this).removeClass(ACTIVE);
+                } else {
+                        $card.find('.bt-card-item').removeClass(ACTIVE);
+                    $(this).addClass(ACTIVE);
+                    value = $(this).data('value');
+                }
+                hiddenInput.val(value);
+                if(clickCallback){
+                    clickCallback(value);
+                }
+            })
+        }
+
+        //初始化
+        initCard('#currency','$!{natualId}');
+        initCard('#unitCard',1);
+
+        //点击确定
+        $('.submitBtn').on('click',function(){
+            var btn = $(this).parents('.ui-actionsheet').removeClass('show')
+                    .data('link');
+            $('#' + btn).removeClass('active');
+            $('.bt-select-popup').removeClass('active');
+            $("#bd").removeClass("nis-body");
+            //确认提交
+            refreshPage();
+        })
+        //重置
+        $('#clearValue1').on('click',function(){
+            initCard('#currency','$!{natualId}','',true);
+            initCard('#unitCard',1,'',true);
+        })
+
+        //类型切换
+        $('.bi-type li').click(function () {
+            if($("#btn1").parent().hasClass('active')){
+                return;
+            }
+            if($("#btn2").parent().hasClass('active')){
+                return;
+            }
+            $('.bi-type li').removeClass("current");
+            if ($(this).hasClass("current")) {
+                $(this).removeClass("current");
+            } else {
+                $(this).addClass("current");
+            }
+            fetchData();
+        });
+
+        function setCurDiv(res){
+            console.log(res.bankMap+'res'+res)
+            var dataDiv = document.getElementById("curInfo");
+            var showHtml = '';
+        ##银行存款
+            showHtml += '<ul class="ui-tab-nav ui-tab-nav-multi ui-border-b ">';
+            showHtml += '<li><div class="header-biz-box" style="background-color: #DEFFEC"><div class="bm-biz-title">银行存款</div>';
+
+            var bankLength = Object.keys(res.bankMap).length - 1;//vcount
+            var k = 0;
+            var l = 1;
+            $.each(res.bankMap, function (key, value) {
+
+                if(k < 2){
+                    if(l%2 == 1){
+                        showHtml += '<ul class="ui-row">';
+                    }
+                }else{
+                    if(k == 2){
+                        showHtml += '<ul class="ui-row" id="bankshow" style="display: none;padding-bottom: 0.3rem;">';
+                    }
+                }
+
+                if(k%2 < 2){
+                    showHtml += '<li class="ui-col ui-col-50">';
+                }
+
+                showHtml += '<div class="bm-biz-type">';
+                showHtml += '<span class="dot" style="background-color:#00C391"></span>';
+                showHtml += key;
+                showHtml += '</div>';
+                showHtml += '<div class="bm-biz-money">'+value+'</div>';
+
+                if(k == bankLength){
+                    if(k % 2 == 1){
+                        showHtml += '</li></ul>';
+                    }else{
+                        showHtml += '<li class="ui-col ui-col-50"></li></ul>';
+                    }
+                }else{
+                    if(k < 2){
+                        if(k % 2 == 0){
+                            showHtml += '</li>';
+                        }else{
+                            showHtml += '</li></ul>';
+                        }
+
+                    }
+                }
+                k++;
+                l++;
+            });
+            if(k > 1 ){
+                showHtml += '<div class="bm-biz-more" id="bankMore" onclick="bankClick()">更多</div>';
+            }
+            showHtml += '</div></li>';
+            ##内部存款
+
+            showHtml += '<li>';
+            showHtml += '<div class="header-biz-box" style="background-color: #DEF1FF">';
+            showHtml += '<div class="bm-biz-title">内部存款</div>';
+
+            var innerLength = Object.keys(res.innerMap).length - 1;//vcount
+            var i = 0;
+            var j = 1;
+            $.each(res.innerMap, function (key, value) {
+
+                if(i < 2){
+                    if(j%2 == 1){
+                        showHtml += '<ul class="ui-row">';
+                    }
+                }else{
+                    if(i == 2){
+                        showHtml += '<ul class="ui-row" id="innershow" style="display: none;padding-bottom: 0.3rem;">';
+                    }
+                }
+
+                if(i%2 < 2){
+                    showHtml += '<li class="ui-col ui-col-50">';
+                }
+
+                showHtml += '<div class="bm-biz-type">';
+                showHtml += '<span class="dot" style="background-color:#4B83FD"></span>';
+                showHtml += key;
+                showHtml += '</div>';
+                showHtml += '<div class="bm-biz-money">'+value+'</div>';
+
+                if(i == innerLength){
+                    if(i % 2 == 1){
+                        showHtml += '</li></ul>';
+                    }else{
+                        showHtml += '<li class="ui-col ui-col-50"></li></ul>';
+                    }
+                }else{
+                    if(i < 2){
+                        if(i % 2 == 0){
+                            showHtml += '</li>';
+                        }else{
+                            showHtml += '</li></ul>';
+                        }
+
+                    }
+                }
+                i++;
+                j++;
+            });
+            if(i > 1 ){
+                showHtml += '<div class="bm-biz-more" id="innerMore" onclick="innerClick()">更多</div>';
+            }
+            showHtml += '</div></li>';
+
+
+
+
+            ##票据
+            showHtml += '<li><div class="header-biz-box" style="background-color: #FFECD0"><div class="bm-biz-title">票据</div>';
+
+            var billLength = Object.keys(res.billMap).length - 1;//vcount
+            var g = 0;
+            var h = 1;
+            $.each(res.billMap, function (key, value) {
+
+                if(g < 2){
+                    if(h%2 == 1){
+                        showHtml += '<ul class="ui-row">';
+                    }
+                }else{
+                    if(g == 2){
+                        showHtml += '<ul class="ui-row" id="billshow" style="display: none;padding-bottom: 0.3rem;">';
+                    }
+                }
+
+                if(g%2 < 2){
+                    showHtml += '<li class="ui-col ui-col-50">';
+                }
+
+                showHtml += '<div class="bm-biz-type">';
+                showHtml += '<span class="dot" style="background-color:#FF885D"></span>';
+                showHtml += key;
+                showHtml += '</div>';
+                showHtml += '<div class="bm-biz-money">'+value+'</div>';
+
+                if(g == billLength){
+                    if(g % 2 == 1){
+                        showHtml += '</li></ul>';
+                    }else{
+                        showHtml += '<li class="ui-col ui-col-50"></li></ul>';
+                    }
+                }else{
+                    if(g < 2){
+                        if(g % 2 == 0){
+                            showHtml += '</li>';
+                        }else{
+                            showHtml += '</li></ul>';
+                        }
+
+                    }
+                }
+                g++;
+                h++;
+            });
+            if(g > 1 ){
+                showHtml += '<div class="bm-biz-more" id="billMore" onclick="billClick()">更多</div>';
+            }
+            showHtml += '</div></li>';
+
+            dataDiv.innerHTML = showHtml;
+        }
+
+        //内部余额更多
+        innerClick = function()
+        {
+            if($("#btn1").parent().hasClass('active')){
+                return;
+            }
+            if($("#btn2").parent().hasClass('active')){
+                return;
+            }
+            if($("#innershow").hasClass('show')) {
+                moreClose("1",true)
+            }else{
+                moreClose("1",false)
+            }
+        }
+
+        //银行余额更多
+        bankClick = function(){
+            if($("#btn1").parent().hasClass('active')){
+                return;
+            }
+            if($("#btn2").parent().hasClass('active')){
+                return;
+            }
+            if($("#bankshow").hasClass('show')) {
+                moreClose("2",true)
+            }else{
+                moreClose("2",false)
+            }
+        }
+
+        //票据余额更多
+        billClick = function(){
+            if($("#btn1").parent().hasClass('active')){
+                return;
+            }
+            if($("#btn2").parent().hasClass('active')){
+                return;
+            }
+            if($("#billshow").hasClass('show')) {
+                moreClose("3",true)
+            }else{
+                moreClose("3",false)
+            }
+        }
+
+        //余额更多显示
+        function moreClose(moreType,isShow){
+            if("1" == moreType){
+                if(isShow){
+                    $("#innershow").hide();
+                    $("#innershow").removeClass("show");
+                    $(".ui-tab-nav-wrap").removeClass("navMore");
+                    $("#innerMore").html("更多");
+                }else{
+                    $("#innershow").show();
+                    $("#innershow").addClass("show");
+                    $(".ui-tab-nav-wrap").addClass("navMore");
+                    $("#innerMore").html("收起");
+                }
+            }else if("2" == moreType){
+                if(isShow){
+                    $("#bankshow").hide();
+                    $("#bankshow").removeClass("show");
+                    $(".ui-tab-nav-wrap").removeClass("navMore");
+                    $("#bankMore").html("更多");
+                }else{
+                    $("#bankshow").show();
+                    $("#bankshow").addClass("show");
+                    $(".ui-tab-nav-wrap").addClass("navMore");
+                    $("#bankMore").html("收起");
+                }
+            }else{
+                if(isShow){
+                    $("#billshow").hide();
+                    $("#billshow").removeClass("show");
+                    $(".ui-tab-nav-wrap").removeClass("navMore");
+                    $("#billMore").html("更多");
+                }else{
+                    $("#billshow").show();
+                    $("#billshow").addClass("show");
+                    $(".ui-tab-nav-wrap").addClass("navMore");
+                    $("#billMore").html("收起");
+                }
+            }
+        }
+
+        //报表类型切换
+        var fetchData = function () {
+            console.log('切换')
+            //报表种类，1、内部存款。2、银行存款。3、票据
+            var type = $('.bi-type li.current').data("type");
+            if("3" == type){
+                $(".bt-tab-pie").hide();
+                $(".sp-tab-list").addClass("active");
+                $("#sp-pie").hide();
+                $("#sp-list").show();
+                $("#dataList").show();
+                $("#titleList").show();
+            }else{
+                $(".bt-tab-pie").show();
+                $(".bt-tab-pie").addClass("active");
+                $(".sp-tab-list").removeClass("active");
+                $("#chart-icon").addClass("active");
+                $("#sp-pie").show();
+                $("#sp-list").hide();
+                $("#dataList").hide();
+                $("#titleList").hide();
+            }
+            refreshPage();
+        };
+
+        //图标tab切换 列表和图表切换
+        $('.fr > span').on('click', function () {
+            var name = $(this).data('name');
+            $(this).addClass('active').siblings('span').removeClass('active');
+            if (name == 'list') {
+                $("#sp-list").show();
+                $("#dataList").show();
+                $("#titleList").show();
+                $("#sp-pie").hide();
+            } else {
+                $("#sp-list").hide();
+                $("#dataList").hide();
+                $("#titleList").hide();
+                $("#sp-pie").show();
+            }
+            refreshPage();
+        });
+
+
+        //金额格式化
+        function numberFormat(number, decimals, dec_point, thousands_sep) {
+            number = (number + '').replace(/[^0-9+-Ee.]/g, '');
+            var n = !isFinite(+number) ? 0 : +number,
+                    prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+                    sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+                    dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+                    s = '',
+                    toFixedFix = function (n, prec) {
+                        var k = Math.pow(10, prec);
+                        return '' + Math.ceil(n * k) / k;
+                    };
+            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+            var re = /(-?\d+)(\d{3})/;
+            while (re.test(s[0])) {
+                s[0] = s[0].replace(re, "$1" + sep + "$2");
+            }
+            if ((s[1] || '').length < prec) {
+                s[1] = s[1] || '';
+                s[1] += new Array(prec - s[1].length + 1).join('0');
+            }
+            return s.join(dec);
+        }
+
+        /**
+         * 图表金额
+         */
+        function moneyData(type,res) {
+            console.log('111'+type,res)
+            if("1" == type){
+                charData = {
+                    colorMap: {
+                        '现金': '#4B83FD',
+                        '定期': '#FF885D',
+                        '活期': '#00C391',
+                        '通知': '#FE686A',
+                    },
+                    context: [{
+                        type: "现金",
+                        prices: res.total.ixj,
+                    }, {
+                        type: "定期",
+                        prices: res.total.idq,
+                    }, {
+                        type: "活期",
+                        prices: res.total.ihq,
+                    }, {
+                        type: "通知",
+                        prices: res.total.itz,
+                    }],
+                    beginDate: bt.date.format($("#startDate").val(),'yyyy-MM-dd'),
+                    endDate:  bt.date.format($("#endDate").val(),'yyyy-MM-dd')
+                };
+            }else{
+                charData = {
+                    colorMap: {
+                        '定期': '#4B83FD',
+                        '活期': '#FFC169',
+                        '虚拟户': '#61ABFF',
+                        '协定': '#FF935D',
+                        '通知': '#79E3FE',
+                        '专用户': '#FE686A',
+                        '保证金': '#00C391',
+                        '贷款户': '#F792C6',
+                    },
+                    context: [{
+                        type: "定期",
+                        prices: res.total.bdq,
+                    }, {
+                        type: "活期",
+                        prices: res.total.bhq,
+                    }, {
+                        type: "虚拟户",
+                        prices: res.total.bxn,
+                    }, {
+                        type: "协定",
+                        prices: res.total.bxd,
+                    }, {
+                        type: "通知",
+                        prices: res.total.btz,
+                    }, {
+                        type: "专用户",
+                        prices: res.total.bzy,
+                    }, {
+                        type: "保证金",
+                        prices: res.total.bbz,
+                    }, {
+                        type: "贷款户",
+                        prices: res.total.bdk,
+                    }],
+                    beginDate: bt.date.format($("#startDate").val(),'yyyy-MM-dd'),
+                    endDate:  bt.date.format($("#endDate").val(),'yyyy-MM-dd')
+                };
+            }
+            return charData;
+        }
+        var chart = new F2.Chart({
+            id: 'mountNode',
+            height: 270,
+            pixelRatio: window.devicePixelRatio,
+            padding: ['auto', 'auto', 'auto', -180]
+        });
+        var charData = {};
+
+        initData();
+
+        //初始化列表数据
+        function initData() {
+            $("#reloadData").hide();
+            $("#bt-loading").show();
+
+            //通过Ajax获取数据
+           setTimeout(function () {
+               var data = BTAppBridge.post("/report/fundsbalancestatistics/getInfoList", getSubData(),'postData');
+               uni.postMessage({
+                   data:data
+               })
+            },100);
+
+            postData = function (res) {
+                $("#bt-loading").hide();
+                $("#reloadData").show();
+                setCurDiv(res);
+                moneyData("2",res);
+                //true为实心圆，false为空心圆
+                drawInnerMoney(moneyData("2",res), false);
+            }
+            /*$.ajax({
+                type: "get",
+                url: basePath + "/report/fundsbalancestatistics/getInfoList1",
+                async: true,
+                data: getSubData(),
+                dataType: "json",
+                success: function (res) {
+                    $("#bt-loading").hide();
+                    $("#reloadData").show();
+                    setCurDiv(res);
+                    moneyData("2",res);
+                    //true为实心圆，false为空心圆
+                    drawInnerMoney(moneyData("11",res), false);
+                },
+                error: function (jqXHQ) {
+                    alert("发生错误:" + jqXHQ.status);
+                }
+            });*/
+        }
+
+        /**
+         * 重绘图形
+         */
+
+        var drawInnerMoney = function (data, isFullCircle) {
+            // 设置图例项的内容
+            var legendItems = [];
+            var totalPrices = 0;
+            data.context.map(function (obj) {
+                var item = {
+                    name: obj.type,
+                    value: '    ' + numberFormat(obj.prices, 2, ".", ",") + '       ',
+                    marker: {
+                        symbol: 'circle',
+                        fill: data.colorMap[obj.type],
+                        radius: 4
+                    }
+                };
+                totalPrices += obj.prices;
+                obj.const = 'const';
+                legendItems.push(item);
+            });
+            chart.source(data.context);
+            chart.coord('polar', {
+                transposed: true,
+                innerRadius: isFullCircle ? 0 : 0.7,
+                radius: 0.85
+            });
+            chart.legend({
+                position: 'bottom',
+                custom: true,
+                items: legendItems,
+            });
+            chart.axis(false);
+            chart.interval().position('const*prices').color('type', function (val) {
+                return data.colorMap[val];
+            }).adjust('stack');
+            chart.guide().html({
+                position: ['84%', '50%'],
+                html: '<div style="width: 190px;"><div style="font-size: 16px;color:#2988FF;font-weight: bold"><span style="color:#333333">合计：</span>' + numberFormat(totalPrices, 2, ".", ",") + '</div><div style="font-size: 11px;color:#999999"><span>期间:</span>' + data.beginDate + '至' + data.endDate + '</div></div>'
+            });
+            chart.render();
+        };
+
+        var redrawInnerMoney = function (data, isFullCircle) {
+            chart.clear();
+            // 设置图例项的内容
+            var legendItems = [];
+            var totalPrices = 0;
+            data.context.map(function (obj) {
+                var item = {
+                    name: obj.type,
+                    value: '    ' + numberFormat(obj.prices, 2, ".", ",") + '       ',
+                    marker: {
+                        symbol: 'circle',
+                        fill: data.colorMap[obj.type],
+                        radius: 4
+                    }
+                };
+                totalPrices += obj.prices;
+                obj.const = 'const';
+                legendItems.push(item);
+            });
+            chart.source(data.context);
+            chart.coord('polar', {
+                transposed: true,
+                innerRadius: isFullCircle ? 0 : 0.7,
+                radius: 0.85
+            });
+            chart.legend({
+                position: 'bottom',
+                custom: true,
+                items: legendItems,
+            });
+            chart.axis(false);
+            chart.interval().position('const*prices').color('type', function (val) {
+                return data.colorMap[val];
+            }).adjust('stack');
+            chart.guide().html({
+                position: ['84%', '50%'],
+                html: '<div style="width: 190px;"><div style="font-size: 16px;color:#2988FF;font-weight: bold"><span style="color:#333333">合计：</span>' + numberFormat(totalPrices, 2, ".", ",") + '</div><div style="font-size: 11px;color:#999999"><span>期间:</span>' + data.beginDate + '至' + data.endDate + '</div></div>'
+            });
+            chart.render();
+        };
+
+        /**
+         * 获取提交参数
+         */
+        function getSubData() {
+            var params = {};
+            params.corpId = $("#corpId").val();
+            var curTemp = $("#curId").val();
+            var unit = $("#unit").val();
+            if(isEmpty(curTemp)){
+                params.curId = "$!{natualId}"
+            }else{
+                params.curId = curTemp;
+            }
+            if(isEmpty(unit)){
+                params.unit = 1;
+            }else{
+                params.unit = unit;
+            }
+            params.startDate = bt.date.format($("#startDate").val(),"yyyy-MM-dd");
+            params.endDate = bt.date.format($("#endDate").val(),"yyyy-MM-dd");
+            return params;
+        }
+        /**
+         *刷新请求数据
+         */
+        function refreshPage() {
+
+            $("#bt-loading").show();
+            $("#reloadData").hide();
+            setTimeout(function () {
+               var data = BTAppBridge.post("/report/fundsbalancestatistics/getInfoList", getSubData(), 'refreshData');
+               uni.postMessage({
+                   data:data
+               })
+            }, 100);
+
+            /**
+             * 刷新数据
+             */
+            var type = $('.bi-type li.current').data("type");
+            refreshData = function (res) {
+                console.log('刷新数据')
+                $("#unitChart").html(res.unitName);
+                $("#unitTable").html(res.unitName);
+                $("#bt-loading").hide();
+                $("#reloadData").show();
+                setCurDiv(res);
+                createDataTable(type,res.list);
+                    chart.clear();
+                    if("3" !== type){
+                        if("1" == type){
+                            redrawInnerMoney(moneyData(type,res), false);
+                        }else{
+                            redrawInnerMoney(moneyData(type,res), true);
+                        }
+                    }
+            };
+
+            /*var type = $('.bi-type li.current').data("type");
+            var url = basePath +"/report/fundsbalancestatistics/getInfoList1";
+            $.ajax({
+                type: "get",
+                url: url,
+                async: true,
+                data: getSubData(),
+                dataType: "json",
+                success: function (res) {
+                    $("#bt-loading").hide();
+                    $("#reloadData").show();
+                    setCurDiv(res);
+                    createDataTable(type,res.list);
+                    chart.clear();
+                    if("3" !== type){
+                        if("1" == type){
+                            drawInnerMoney(moneyData(type,res), false);
+                        }else{
+                            drawInnerMoney(moneyData(type,res), true);
+                        }
+                    }
+
+                },
+                error: function (jqXHQ) {
+                    alert("发生错误:" + jqXHQ.status);
+                }
+            });*/
+            seachType = ""
+        }
+
+
+
+
+        /**
+         * 创建表格
+         */
+        function createDataTable(type,data) {
+            var html1 = "";
+            var html2 = "";
+            var head = "<tr>";
+
+            if("1" == type){
+                head += "<th>现金</th>";
+                head += "<th>活期</th>";
+                head += "<th>定期</th>";
+                head += "<th>通知</th>";
+            }else if("2" == type){
+                head += "<th>定期</th>";
+                head += "<th>活期</th>";
+                head += "<th>虚拟户</th>";
+                head += "<th>协定</th>";
+                head += "<th>通知</th>";
+                head += "<th>专用户</th>";
+                head += "<th>保证金</th>";
+                head += "<th>贷款户</th>";
+            }else{
+                head += "<th>活期(票据专户)</th>";
+            }
+
+            var Subtotal = {
+                subAccType01 : 0,
+                subAccType02 : 0,
+                subAccType03 : 0,
+                subAccType04 : 0,
+                subAccType05 : 0,
+                subAccType06 : 0,
+                subAccType07 : 0,
+                subAccType09 : 0,
+                subAccType10 : 0,
+                subAccType11 : 0,
+                subAccType12 : 0,
+                subAccType13 : 0,
+                subAccType14 : 0,
+            };
+            head += "</tr>";
+            $.each(data, function (index, item) {
+                html1 += "<tr><td style='width: 150px'>"+item.corpName+"</td></tr>";
+                html2 += "<tr>";
+                if("1" == type){//内部
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType11)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType12)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType13)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType14)+"</td>";
+                }else if("2" == type){//银行
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType02)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType01)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType09)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType07)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType06)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType05)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType04)+"</td>";
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType03)+"</td>";
+                }else{//票据
+                    html2 += "<td style='text-align:right;'>"+bt.money.format(item.accType10)+"</td>";
+                }
+
+                html2 += "</tr>";
+                Subtotal.subAccType01 = bt.money.add(Subtotal.subAccType01,item.accType01);
+                Subtotal.subAccType02 = bt.money.add(Subtotal.subAccType02,item.accType02);
+                Subtotal.subAccType03 = bt.money.add(Subtotal.subAccType03,item.accType03);
+                Subtotal.subAccType04 = bt.money.add(Subtotal.subAccType04,item.accType04);
+                Subtotal.subAccType05 = bt.money.add(Subtotal.subAccType05,item.accType05);
+                Subtotal.subAccType06 = bt.money.add(Subtotal.subAccType06,item.accType06);
+                Subtotal.subAccType07 = bt.money.add(Subtotal.subAccType07,item.accType07);
+                Subtotal.subAccType09 = bt.money.add(Subtotal.subAccType09,item.accType09);
+                Subtotal.subAccType10 = bt.money.add(Subtotal.subAccType10,item.accType10);
+                Subtotal.subAccType11 = bt.money.add(Subtotal.subAccType11,item.accType11);
+                Subtotal.subAccType12 = bt.money.add(Subtotal.subAccType12,item.accType12);
+                Subtotal.subAccType13 = bt.money.add(Subtotal.subAccType13,item.accType13);
+                Subtotal.subAccType14 = bt.money.add(Subtotal.subAccType14,item.accType14);
+            });
+            html1 += "<tr><td style='width: 200px;'>小计</td>";
+            if("1" == type) {//内部
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType11)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType12)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType13)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType14)+"</td>";
+            }else if("2" == type){
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType02)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType01)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType09)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType07)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType06)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType05)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType04)+"</td>";
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType03)+"</td>";
+            }else{
+                html2 += "<td style='text-align:right;'>"+bt.money.format(Subtotal.subAccType10)+"</td>";
+            }
+            html2 += "</tr>";
+            $("#biBody").html("<tr><th style='width: 150px'>单位</th></tr>");
+            $("#biHead").html(head);
+            $("#biLeft").html(html1);
+            $("#biRight").html(html2);
+            adjustHeight();
+            if("1" == type){
+                initTableSize('450px');
+            }else if("2" == type){
+                initTableSize('800px');
+            }else{
+                initTableSize('230px');
+            }
+        }
+
+        /**判断字符串是否为空*/
+        function isEmpty(ms) {
+            if (typeof (ms) == "undefined" || ms == null || ms == "" || ms == " ") {
+                return true;
+            }
+            return false;
+        }
+
+    });
+
+    /**
+     * 日期格式化
+     */
+    function dateFormat(date,fmt) {
+        if(!date){
+            return;
+        }
+        fmt = fmt || "yyyy.MM.dd";
+        if(fmt.length > 8 && fmt.indexOf('hh') > 0){  //保证两种格式yy-mm-dd/yy-MM-dd 都没有问题
+            fmt = 'yyyy.MM.dd hh:mm:ss';
+        }else if(fmt.length === 8){
+            fmt = "yyyyMMdd";
+        }else{
+            fmt = "yyyy.MM.dd";
+        }
+        if(date.length > 19){ //解决后台时间长度超过19的问题
+            date = date.substr(0,19);
+        }
+        date = DATE.get(date);
+        if(date == null){ return '';}
+        var o = {
+            "M+": date.getMonth() + 1, //月份
+            "d+": date.getDate(), //日
+            "h+": date.getHours(), //小时
+            "m+": date.getMinutes(), //分
+            "s+": date.getSeconds(), //秒
+            "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+            "S": date.getMilliseconds() //毫秒
+        };
+        if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    }
+
+</script>
+
+</body>
+</html>

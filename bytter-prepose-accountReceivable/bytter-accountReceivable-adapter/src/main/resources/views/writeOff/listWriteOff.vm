@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+
+    <style>
+        .select-column {
+            overflow: visible!important;
+        }
+        a.dt-button.disabled {
+            color: #999 !important;
+        }
+       .layui-colla-item .tips{
+            background-color: rgb(224 255 255 / 40%);
+            border: none;
+            padding: 8px 20px;
+		}
+		.tips.open {
+		    height:auto;
+
+		}
+		.tips.open > span {
+		    display:block!important;
+		}
+		.tips .layui-colla-icon {
+            right: 20px;
+            left: auto;
+            margin-top: 10px;
+		}
+		.tips > h2{
+			font-size: 18px;
+			color: black;
+			line-height: 26px;
+			font-weight: 700;
+			margin-bottom: 8.42px;
+		}
+		.tips > span{
+			display: block;
+			font-size: 14px;
+			color: #666666;
+			line-height: 22px;
+			font-weight: 400;
+			padding-left:70px;
+			display:none;
+		}
+		.umb{
+            display:inline-block;
+            margin-left:23px;
+            color:rgba(102,102,102,0.9);
+            font-size:14px;
+        }
+        .umb-active{
+            color:#C70D0D;
+        }
+        .umb:hover{
+            cursor:pointer
+        }
+
+        .ui-arrow-down-dtl,
+        .ui-arrow-down-bill,
+        .ui-arrow-down-lc {
+            margin-left: 4px;
+            height: 20px;
+            width: 20px
+        }
+
+		.write-off-button {
+		    padding: 0 10px;
+		    min-width: 100px;
+		    text-align: left;
+		    position: relative;
+		    border: 1px solid #ddd;
+		    background: #fff;
+		    cursor: pointer;
+		}
+		.write-off-button .layui-edge {
+		    position: absolute;
+		    right: 5px;
+		    top: 50%;
+		    transform: translateY(-50%);
+		}
+		/* 下拉箭头样式 */
+		.layui-edge {
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+		    border-top: 6px solid #666;
+		    margin-left: 5px;
+		    vertical-align: middle;
+		}
+		/* 下拉菜单样式 */
+		#writeOffMenu {
+		    border: 1px solid #ddd;
+		    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+		/* 菜单选项样式 */
+		.write-off-option {
+		    font-size: 15px; /* 调整字体大小 */
+		    padding: 5px 4px; /* 调整内边距 */
+		    display: block;
+		    color: #333;
+		    text-decoration: none;
+		}
+		.write-off-option.active {
+		    color: #C70D0D;
+		    font-weight: bold;
+		}
+		/* 添加的禁用状态样式 */
+		.write-off-option.disabled {
+		    color: #c2c2c2 !important;
+		    cursor: not-allowed !important;
+		    pointer-events: none;
+		}
+
+    table.dataTable tbody tr.row_bg td, table tbody tr.row_bg td {
+	   color:rgb(210, 210, 210);
+    }
+    </style>
+</head>
+<body>
+<div class="layui-collapse" lay-filter="collapse" style="border-color:#f2f2f2;">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title tips">
+            <div>
+                温馨提示
+                <span style="font-weight: 400;color: #666;padding-left: 10px;">1.自动核销：仅当结算方式为银行流水且匹配规则符合条件时可用。符合规则的应收单和收入将自动完成核销。</span>
+            </div>
+
+            <span>2.取消核销：可撤销已核销的应收单据，恢复应收款额度。</span>
+            <span>3.手工核销：对不符合自动核销条件的情况，支持异币种核销，支持一对一、一对多或多对一的手工核销操作。系统会根据核销情况提示是否部分核销或继续核销。</span>
+            <span>4.强制核销：即使未完全核销也可标记为“已核销”，需登记原因。</span>
+        </h2>
+        <div class="layui-colla-content">
+
+        </div>
+    </div>
+</div>
+<!--<div class="tips">-->
+<!--    <h2>温馨提示</h2>-->
+<!--    <span>1.自动核销：仅当结算方式为银行流水且匹配规则符合条件时可用。符合规则的应收单和收入将自动完成核销。</span>-->
+<!--    <span>2.取消核销：可撤销已核销的应收单据，恢复应收款额度。</span>-->
+<!--    <span>3.手工核销：对不符合自动核销条件的情况，支持异币种核销，支持一对一、一对多或多对一的手工核销操作。系统会根据核销情况提示是否部分核销或继续核销。</span>-->
+<!--    <span>4.强制核销：即使未完全核销也可标记为“已核销”，需登记原因。</span>-->
+<!--</div>-->
+<input id="paymentMeansDefault" type="hidden" value="$!{paymentMeansDefault}">
+<form id="docSearchForm" class="layui-form">
+    <input type="hidden" name="eqs_id" id="doc_Id" value="$!{docId}"/>
+    <input type="hidden" name="curIdRMB" id="curIdRMB" value="$!{curIdRMB}"/>
+    <table class="layui-table">
+        <tbody >
+        <tr>
+            ##单据编号
+            <td class="textRight" width="10%">#springMessage('单据编号')</td>
+            <td width="30%">
+                <input type="text" id="doc_likes_code" name="likes_code"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('请输入')">
+            </td>
+            ##单位
+            <td class="textRight" width="10%">#springMessage('单位')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-tree-type="radio"
+                         data-name="eqs_corpId"
+                         id="doc_eqs_corpId"
+                         data-biz-name="doc_eqs_corpId"
+                         data-scope="all" data-resource="accountReceivable:writeOff:op"
+                         data-callback="docCorpCallback"
+                         data-placeholder="请选择"></div>
+                </div>
+            </td>
+            ##应收币种
+            <td class="textRight" width="10%">#springMessage('应收币种')</td>
+            <td width="30%">
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json" data-value="$!{curIdRMB}"
+                     data-name ="eqs_curIdShow" data-biz-name ="doc_eqs_curIdShow"  data-valueField="id" data-textField="curName"
+                     data-callBack="changeDocCurShowCallback"></div>
+                <input id="doc_eqs_curId" type="hidden"  name="eqs_curId" value="$!{curIdRMB}">
+            </td>
+
+        </tr>
+
+        <tr>
+            ##状态
+            <td class="textRight" width="10%">#springMessage('状态')</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-type="select" data-group="docManage.status" data-name="eqi_status" name="eqi_status"
+                     data-biz-name="doc_eqi_status" data-displayData="-1,11,95"
+                ></div>
+            </td>
+            ##核销状态
+            <td class="textRight" width="10%">#springMessage('核销状态')</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-group="writeOff.status" data-name="ins_writeOffStatus" name="ins_writeOffStatus"
+                     data-biz-name="doc_ins_writeOffStatus" data-defaultvalue="0,1" data-type="mulselect"
+                ></div>
+            </td>
+            ##核销类型
+            <td class="textRight" width="10%">#springMessage('核销类型')</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-type="select" data-group="writeOff.type" data-name="eqs_writeOffType" name="eqs_writeOffType"
+                     data-biz-name="doc_eqs_writeOffType"
+                ></div>
+            </td>
+        </tr>
+        </tbody>
+        <tbody id="hide-search">
+        <tr>
+            ##交易合同编号
+            <td class="textRight" width="10%">#springMessage('交易合同编号')</td>
+            <td width="30%">
+                <input type="text" id="doc_likes_contractCode" name="likes_contractCode"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('请输入')">
+            </td>
+            ##结算方式
+            <td class="textRight" width="10%">#springMessage('结算方式')</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-type="select" data-group="account.receivable.doc.voucherType" data-name="eqs_voucherType"
+                     data-biz-name="doc_eqs_voucherType" data-defaultvalue="" ></div>
+            </td>
+            ##账龄起算日
+            <td class="textRight" width="10%">#springMessage('账龄起算日')</td>
+            <td width="30%">
+                <input type="text" name="ged_agingDate" data-type="date" id="doc_ged_agingDate" data-biz-name="doc_ged_agingDate"
+                       class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="doc_led_agingDate">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_agingDate" data-type="date" id="doc_led_agingDate" data-biz-name="doc_led_agingDate"
+                       class="layui-input bt-input-inline bt-biz-dateType" >
+            </td>
+        </tr>
+        <tr>
+            ##客商名称
+            <td class="textRight" width="10%">#springMessage('客商名称')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_externalName" id="doc_likes_externalName" data-biz-name="doc_likes_externalName"
+                           autocomplete="off" class="layui-input"
+                           placeholder="#springMessage('请选择')">
+                    <div class="bt-div-search">
+                        <button  class="bt-biz-externalCorpBankAcc" id="doc_selexternalName" type="button" data-beforeClick="bt.externalCorpBankAccParams" data-callback="bt.externalCorpCallback" title="#springMessage('common.button.select')">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+            ##客商类型
+            <td class="textRight" width="10%">#springMessage("table.externalCorp.externalType")</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-type="select" data-group="external.type"
+                     name="eqs_externalType" data-name="eqs_externalType" data-biz-name="doc_eqs_externalType"></div>
+            </td>
+            ##业务类型
+            <td class="textRight" width="10%">业务类型</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-selectType" data-name="eqs_batchBusType" data-biz-name="doc_eqs_batchBusType" data-defaultvalue=""
+                         data-url="${basePath}/netbank/niscorpbus/listNisCorpBusVOByCorpIdAndCdSign?cdSign=0&corpId="
+                         data-valuefield="busId" data-textfield="busTypeName" data-search="true" data-beforeinit="batchBusTypeBefore" ></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ##到期日期
+            <td class="textRight" width="10%">#springMessage('到期日期')</td>
+            <td width="30%">
+                <input type="text" name="ged_endDate" data-type="date" id="doc_ged_endDate" data-biz-name="doc_ged_endDate"
+                       class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="led_endDate">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_endDate" data-type="date" id="doc_led_endDate" data-biz-name="doc_led_endDate"
+                       class="layui-input bt-input-inline bt-biz-dateType" >
+            </td>
+
+            ##单据来源
+            <td class="textRight" width="10%">#springMessage('单据来源')</td>
+            <td width="30%">
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="select" data-group="writeOff.docSource"
+                         data-defaultvalue="" data-callBack=""
+                         data-name="eqs_source" data-biz-name="doc_eqs_source"></div>
+                </div>
+            </td>
+
+            ##单据日期
+            <td class="textRight" width="10%">#springMessage('单据日期')</td>
+            <td width="30%">
+                <input type="text" name="ged_receiptDate" data-type="date" id="doc_ged_receiptDate" data-biz-name="doc_ged_receiptDate"
+                       class="layui-input bt-input-inline bt-biz-dateType"
+                       data-endid="doc_led_receiptDate">
+                <span class="date-mid">~</span>
+                <input type="text" name="led_receiptDate" data-type="date" id="doc_led_receiptDate" data-biz-name="doc_led_receiptDate"
+                       class="layui-input bt-input-inline bt-biz-dateType" >
+            </td>
+        </tr>
+        </tbody>
+        <tbody>
+        ##查询
+        <tr>
+            <td colspan="6" class="center">
+                <button class="layui-btn" lay-submit lay-filter="docSearch" type="button">#springMessage('common.button.search')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="clearDocFrom()">#springMessage('common.button.reset')</button>
+                <span class="ui-more-btn" onclick="showMoreBtn()">更多筛选</span><img src="${basePath}/static/images/table/icon_arrow_down.svg" class="ui-arrow-down">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="appTableDoc" class="layui-table layui-form" style="width:100%;" data-biz-name="appTableDoc">
+    <div id="writeOffMenu" class="layui-form" style="display: none; position: absolute; z-index: 1000; background: #fff; border: 1px solid #ddd; padding: 15px;">
+        <ul class="layui-unselect">
+            <li><a href="javascript:;" class="write-off-option manualButton active" data-type="manual" id="manualWriteOff">手工核销</a></li>
+            <li><a href="javascript:;" class="write-off-option cancelButton" data-type="cancel" id="cancelWriteOff">取消核销</a></li>
+            <li><a href="javascript:;" class="write-off-option forceButton" data-type="force" id="forceWriteOff">强制核销</a></li>
+        </ul>
+    </div>
+    <thead>
+    <tr>
+        <th>#springMessage('单据编号')</th>
+        <th>#springMessage('单位')</th>
+        <th>#springMessage('业务类型')</th>
+        <th>#springMessage('单据来源')</th>
+        <th>#springMessage('核销状态')</th>
+        <th>#springMessage('状态')</th>
+        <th>#springMessage('核销类型')</th>
+        <th>#springMessage('结算方式')</th>
+        <th>#springMessage('单据日期')</th>
+        <th>#springMessage('到期日期')</th>
+        <th>#springMessage('账龄起算日')</th>
+        <th>#springMessage('应收金额')</th>
+        <th>#springMessage('应收余额')</th>
+        <th>#springMessage('应收币种')</th>
+        <th>#springMessage('客商名称')</th>
+        <th>#springMessage('客商类型')</th>
+        <th>#springMessage('交易合同编号')</th>
+    </tr>
+    </thead>
+</table>
+
+<!--选择结算方式，以带出对应表格数据-->
+<!--<form id="formPaymentMeans" class="layui-form">
+    <table class="layui-table">
+        <tr>
+            ##结算方式
+            <td class="textRight class-paymentMeans-td-1" width="10%">#springMessage('结算方式')</td>
+            <td width="30%">
+                <div class="bt-biz-dict" data-type="select" data-group="basic.paymentMeans" data-name="eqs_paymentMeans"
+                     data-biz-name="eqs_paymentMeans" data-defaultvalue="$!{paymentMeansDefault}" data-displayData="$!{paymentMeans}"
+                     data-callBack="paymentMeansCallBack"></div>
+            </td>
+            <td class="textRight" width="10%"></td>
+            <td width="30%"></td>
+            <td class="textRight" width="10%"></td>
+            <td width="30%"></td>
+        </tr>
+    </table>
+</form>-->
+<div class="layui-tab layui-tab-brief" lay-filter="paymentMeansTab">
+    <ul class="layui-tab-title">
+        <li data-paymentMeans="1" class="layui-this tab-type"　#if($paymentMeans.indexOf("1") < 0) style="display:none;" #end>#springMessage("银行流水")</li>
+        <li data-paymentMeans="2" #if($paymentMeans.indexOf("2") < 0) style="display:none;" #end>#springMessage("票据")</li>
+        <li data-paymentMeans="3" #if($paymentMeans.indexOf("3") < 0) style="display:none;" #end>#springMessage("信用证")</li>
+    </ul>
+</div>
+
+
+<!--结算方式-银行流水-->
+<div id="div_Dtl" #if($!{paymentMeansDefault}!="1") style="display:none;" #end>
+    <form id="searchFormDtl" class="layui-form">
+        <input type="hidden" name="eqs_id" id="eqs_dtl_id"/>
+        <table class="layui-table">
+            <tbody >
+            <tr>
+                ##单位
+                <td class="textRight" width="10%">#springMessage('单位')</td>
+                <td width="20%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-tree-type="radio"
+                             data-name="eqs_corpId"
+                             id="dtl_eqs_corpId"
+                             data-biz-name="dtl_eqs_corpId"
+                             data-scope="all" data-resource="accountReceivable:writeOff:op"
+                             data-placeholder="请选择"
+                             data-callback="dtlCorpCallback"></div>
+                    </div>
+                </td>
+                ##核销状态
+                <td class="textRight" width="10%">#springMessage('核销状态')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-group="writeOff.status" data-name="ins_writeOffStatus" name="ins_writeOffStatus"
+                         data-biz-name="dtl_ins_writeOffStatus" data-defaultvalue="0,1" data-type="mulselect"
+                    ></div>
+                </td>
+                ##银行类别
+                <td class="textRight">#springMessage('银行类别')</td>
+                <td>
+                    <div class="bt-biz-bankType" data-name="eqs_bankType" data-biz-name="dtl_eqs_bankType" ></div>
+                </td>
+            </tr>
+            <tr>
+                ##核销类型
+                <td class="textRight" width="10%">#springMessage('核销类型')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-type="select" data-group="writeOff.type" data-name="eqs_writeOffType" name="eqs_writeOffType"
+                         data-biz-name="dtl_eqs_writeOffType" data-filterData="3"
+                    ></div>
+                </td>
+                ##对方账号
+                <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.oppAccNo')</td>
+                <td width="30%">
+                    <input type="text" id="dtl_likes_oppAccNo" name="likes_oppAccNo" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off" placeholder="#springMessage('请输入')"
+                           data-biz-name="dtl_likes_oppAccNo"  data-name="dtl_oppAccNo"
+                           class="layui-input bt-biz-accountTable dtl_likes_oppAccNo" data-resource="netbank:bankAcc:bisAccBal:managerQuery"
+                           data-callback="accountCallBack4" data-valuefromtable="true"
+                    >
+                </td>
+                ##对方
+                <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.oppAccName')</td>
+                <td width="30%">
+                    <input type="text" id="dtl_likes_oppAccName" name="likes_oppAccName" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('请输入')">
+                </td>
+            </tr>
+            </tbody>
+            <tbody id="hide-search-dtl">
+            <tr>
+                ##交易金额
+                <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.amt')</td>
+                <td width="30%">
+                    <div class="layui-inline">
+                        <input type="text" name="geg_amt" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline" data-biz-name="dtl_geg_amt" data-callback="dtlGegAmtChange"
+                               style="text-align:right" id="dtl_geg_amt" data-moneyendid="dtl_leg_amt" placeholder="#springMessage('最小金额')">
+                        <span class="date-mid">~</span>
+                        <input type="text" name="leg_amt" autocomplete="off" class="layui-input bt-biz-moneyType bt-input-inline" data-biz-name="dtl_leg_amt" data-callback="dtlLegAmtChange"
+                               style="text-align:right" id="dtl_leg_amt" placeholder="#springMessage('最大金额')">
+                    </div>
+                </td>
+                ##交易日期
+                <td class="textRight" width="10%">#springMessage('table.btNetChalk.transTime')</td>
+                <td width="30%">
+                    <input type="text" name="ged_transTime" data-type="date" id="dtl_ged_transTime" placeholder="#springMessage('开始日期')" data-biz-name="dtl_ged_transTime" class="layui-input bt-input-inline bt-biz-dateType" data-endid="dtl_led_transTime">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_transTime" data-type="date" id="dtl_led_transTime" placeholder="#springMessage('结束日期')" data-biz-name="dtl_led_transTime" class="layui-input bt-input-inline bt-biz-dateType">
+                </td>
+                ##银行流水号
+                <td class="textRight">#springMessage('table.bisExc.bankSerialNo')</td>
+                <td>
+                    <input type="text" id="dtl_likes_bankSerialNo" name="likes_bankSerialNo" class="bank layui-input" autocomplete="off"
+                           placeholder="#springMessage('请输入')">
+                </td>
+            </tr>
+            <tr>
+                ##用途
+                <td class="textRight">#springMessage('用途')</td>
+                <td>
+                    <input type="text" id="dtl_likes_uses" name="likes_uses" class="layui-input" autocomplete="off"
+                           placeholder="#springMessage('请输入')">
+                </td>
+                ##附言
+                <td class="textRight">#springMessage('附言')</td>
+                <td>
+                    <input type="text" id="dtl_likes_postscript" name="likes_postscript" class="layui-input" autocomplete="off"
+                           placeholder="#springMessage('请输入')">
+                </td>
+                ##币别
+                <td class="textRight">#springMessage('table.btBankAccDtl.curName')</td>
+                <td>
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-name ="eqs_curId" name ="eqs_curId" data-biz-name ="dtl_eqs_curId"  data-valueField="id" data-textField="curName"></div>
+                </td>
+            </tr>
+            <tr>
+                ##本方账号
+                <td class="textRight" width="10%">#springMessage('table.btBankAccDtl.bankAcc')</td>
+                <td width="30%">
+                    <input type="text" id="dtl_likes_bankAcc" name="likes_bankAcc" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off"  placeholder="#springMessage('请输入')"
+                           data-biz-name="dtl_likes_bankAcc"  data-name="dtl_bankAcc"
+                           class="layui-input bt-biz-accountTable" data-resource="netbank:bankAcc:bisAccBal:managerQuery"
+                           data-callback="accountCallBack3" data-valuefromtable="true"
+                    >
+                </td>
+                ##本方账户名
+                <!--<td class="textRight" width="10%">#springMessage('table.btBankAccDtl.accName')</td>
+                <td width="30%">
+                    <input type="text" id="dtl_accName" name="likes_accName" lay-verify="strlength" data-maxlength="30"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAccDtl.accName')">
+                </td>-->
+            </tr>
+            </tbody>
+            <tbody>
+            ##查询
+            <tr>
+                <td colspan="6" class="center">
+                    <button class="layui-btn" lay-submit lay-filter="dtlSearch" type="button">#springMessage('common.button.search')</button>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="clearDtlForm()">#springMessage('common.button.reset')</button>
+                    <span class="ui-more-btn-dtl umb" onclick="showMoreBtnDtl()">更多筛选</span><img src="${basePath}/static/images/table/icon_arrow_down.svg" class="ui-arrow-down-dtl">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <table id="appTableDtl" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('银行流水号')</th>
+            <th>#springMessage('table.btNetChalk.transTime')</th>
+            <th>#springMessage('流水时间')</th>
+            <th>#springMessage('币别')</th>
+            <th>#springMessage('金额')</th>
+            <th>#springMessage('可核销金额')</th>
+            <th>#springMessage('table.btBankAccDtl.accName')</th>
+            <th>#springMessage('本方账户银行名称')</th>
+            <th>#springMessage('table.btBankAccDtl.bankAcc')</th>
+            <th>#springMessage('table.btBankAccDtl.oppAccName')</th>
+            <th>#springMessage('table.btBankAccDtl.oppAccNo')</th>
+            <th>#springMessage('table.btBankAccDtl.uses')</th>
+            <th>#springMessage('附言')</th>
+            <th>#springMessage('核销状态')</th>
+            <th>#springMessage('核销类型')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+
+<!--结算方式-票据-->
+<div id="div_Bill" #if($!{paymentMeansDefault}!="2") style="display:none;" #end>
+    <form id="searchFormBill" class="layui-form">
+        <input type="hidden" name="eqs_id" id="eqs_bill_id"/>
+        <table class="layui-table">
+            <tbody >
+            <tr>
+                ##单位
+                <td class="textRight" width="10%">#springMessage('票据单位')</td>
+                <td width="20%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-tree-type="radio"
+                             data-name="eqs_corpId"
+                             data-biz-name="bill_eqs_corpId"
+                             id="bill_eqs_corpId"
+                             data-scope="all" data-resource="accountReceivable:writeOff:op"
+                             data-callback="billCorpCallback"></div>
+                    </div>
+                </td>
+                ##核销状态
+                <td class="textRight" width="10%">#springMessage('核销状态')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-group="writeOff.status" data-name="ins_writeOffStatus" name="ins_writeOffStatus"
+                         data-biz-name="bill_ins_writeOffStatus" data-defaultvalue="0,1" data-type="mulselect"
+                    ></div>
+                </td>
+                ##票据类型
+                <td class="textRight" width="10%">#springMessage('table.abVoucherinfo.billType')</td>
+                <td width="20%">
+                    <div class=layui-form>
+                        <div class=bt-biz-dict data-type="select" data-name="eqi_billType" data-biz-name="bill_eqi_billType" data-group="AB_BILL_TYPE">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                ##出票日期
+                <td class="textRight">#springMessage('table.abVoucherinfo.startDate')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_ged_startDate" data-biz-name="bill_ged_startDate" name="ged_startDate" class="layui-input bt-input-inline  bt-biz-dateType" data-endid="bill_led_startDate" placeholder="#springMessage('table.abVoucherinfo.startDate')">
+                        <span class="date-mid">~</span>
+                        <input type="text" id="bill_led_startDate" data-biz-name="bill_led_startDate" name="led_startDate" class="layui-input bt-input-inline  bt-biz-dateType" placeholder="#springMessage('table.abVoucherinfo.startDate')">
+                    </div>
+                </td>
+                ##票据（包）号码
+                <td class="textRight">#springMessage('table.abVoucherinfo.origNo')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_likes_origNo" name="likes_origNo" autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.origNo')">
+                    </div>
+                </td>
+                ##核销类型
+                <td class="textRight" width="10%">#springMessage('核销类型')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-type="select" data-group="writeOff.type" data-name="eqs_writeOffType" name="eqs_writeOffType"
+                         data-biz-name="bill_eqs_writeOffType" data-filterData="1,3"
+                    ></div>
+                </td>
+            </tr>
+            </tbody>
+            <tbody id="hide-search-bill">
+            <tr>
+                ##到期日期
+                <td class="textRight">#springMessage('table.abVoucherinfo.endDate')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_ged_endDate" data-biz-name="bill_ged_endDate" name="ged_endDate" class="layui-input bt-input-inline  bt-biz-dateType" data-endid="bill_led_endDate" placeholder="#springMessage('table.abVoucherinfo.endDate')">
+                        <span class="date-mid">~</span>
+                        <input type="text" id="bill_led_endDate" data-biz-name="bill_led_endDate" name="led_endDate" class="layui-input bt-input-inline  bt-biz-dateType" placeholder="#springMessage('table.abVoucherinfo.endDate')">
+                    </div>
+                </td>
+                ##出票人
+                <td class="textRight">#springMessage('table.abVoucherinfo.payer')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_likes_payer" name="likes_payer" autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.payer')">
+                    </div>
+                </td>
+                ##承兑人
+                <td class="textRight">#springMessage('table.abVoucherinfo.acceptor')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_likes_acceptor" name="likes_acceptor" autocomplete="off" class="layui-input" placeholder="#springMessage('table.abVoucherinfo.acceptor')">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                ##票据（包）金额
+                <td class="textRight">#springMessage('table.abVoucherinfo.billMoney')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_geg_billMoney" data-biz-name="bill_geg_billMoney" name="geg_billMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="bill_leg_billMoney" data-callback="billGegBillMoneyChange" placeholder="#springMessage('table.abVoucherinfo.billMoney')">
+                        <span class="date-mid">~</span>
+                        <input type="text" id="bill_leg_billMoney" data-biz-name="bill_leg_billMoney" name="leg_billMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-callback="billLegBillMoneyChange" placeholder="#springMessage('table.abVoucherinfo.billMoney')">
+                    </div>
+                </td>
+                ##业务日期
+                <td class="textRight">#springMessage('table.btwarnstrategy.warnDate')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <input type="text" id="bill_ged_businessDate" data-biz-name="bill_ged_businessDate" name="ged_businessDate" class="layui-input bt-input-inline  bt-biz-dateType" data-endid="bill_led_businessDate" placeholder="#springMessage('table.btwarnstrategy.warnDate')">
+                        <span class="date-mid">~</span>
+                        <input type="text" id="bill_led_businessDate" data-biz-name="bill_led_businessDate" name="led_businessDate" class="layui-input bt-input-inline  bt-biz-dateType"
+                               placeholder="#springMessage('table.btwarnstrategy.warnDate')">
+                    </div>
+                </td>
+                ##流通介质
+                <td class="textRight" width="10%">#springMessage('table.abVoucherinfo.billFlag')</td>
+                <td width="30%">
+                    <div class=layui-form>
+                        <div class=bt-biz-dict data-type="select" data-name="eqi_billFlag" data-biz-name="bill_eqi_billFlag" data-group="AB_BILL_FLAG">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                ##所属库存
+                <td class="textRight">#springMessage('table.abVoucherinfoVice.enterStock')</td>
+                <td width="24%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-dict" data-type="select" data-group="AB_ENTER_STOCK" data-defaultvalue="$!{abReceiveBillPage.enterStock}" data-name="eqs_enterStock"
+                             data-biz-name="bill_eqs_enterStock"></div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+            <tbody>
+            ##查询
+            <tr>
+                <td colspan="6" class="center">
+                    <button class="layui-btn" lay-submit lay-filter="billSearch" type="button">#springMessage('common.button.search')</button>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="clearBillForm()">#springMessage('common.button.reset')</button>
+                    <span class="ui-more-btn-bill umb" onclick="showMoreBtnBill()">更多筛选</span><img src="${basePath}/static/images/table/icon_arrow_down.svg" class="ui-arrow-down-bill">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <table id="appTableBill" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('table.abVoucherinfo.billType')</th>
+            <th>#springMessage('table.abVoucherinfo.billFlag')</th>
+            <th>#springMessage('table.abVoucherinfoVo.corpId')</th>
+            <th>#springMessage('票据单位统一社会信用代码')</th>
+            <th>#springMessage('table.abVoucherinfo.payer')</th>
+            <th>#springMessage('table.abVoucherinfo.acceptor')</th>
+            <th>#springMessage('table.abVoucherinfo.origNo')</th>
+            <th>#springMessage('票据（包）金额')</th>
+            <th>#springMessage('实付金额')</th>
+            <th>#springMessage('可核销金额')</th>
+            <th>#springMessage('table.abVoucherinfo.startDate')</th>
+            <th>#springMessage('table.abVoucherinfo.endDate')</th>
+            <th>#springMessage('table.btwarnstrategy.warnDate')</th>
+            <th>#springMessage('业务类型')</th>
+            <th>#springMessage('所属库存')</th>
+            <th>#springMessage('table.abVoucherinfo.newStmIssuofpprInd')</th>
+            <th>#springMessage('table.abVoucherinfo.blgrdbagcrclPrmtInd')</th>
+            <th>#springMessage('table.abVoucherinfo.sbbllRngStrtSn')</th>
+            <th>#springMessage('table.abVoucherinfo.sbbllRngEndSn')</th>
+            <th>#springMessage('table.abVoucherinfo.blStdAmt')</th>
+            <th>#springMessage('转让标记')</th>
+            <th>#springMessage('核销状态')</th>
+            <th>#springMessage('核销类型')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+
+<!--结算方式-信用证-->
+<div id="div_Lc" #if($!{paymentMeansDefault}!="3") style="display:none;" #end>
+    <form id="searchFormLc" class="layui-form">
+        <input type="hidden" name="eqs_id" id="eqs_lc_id"/>
+        <table class="layui-table">
+            <tbody >
+            <tr>
+                ##单位
+                <td class="textRight" width="10%">#springMessage('table.bisAccBal.corp')</td>
+                <td width="20%">
+                    <div class="layui-input-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-tree-type="radio"
+                             data-name="eqs_corpId"
+                             data-biz-name="lc_eqs_corpId"
+                             id="lc_eqs_corpId"
+                             data-scope="all" data-resource="accountReceivable:writeOff:op"
+                             data-callback="lcCorpCallback"></div>
+                    </div>
+                </td>
+                ##信用证类型
+                <td class="textRight" width="10%">#springMessage('international.credit.lcInter')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-type="select" data-group="letter_of_credit_inter" data-name="eqs_lcInter" name="eqs_lcInter"
+                         data-biz-name="lc_eqs_lcInter"
+                    ></div>
+                </td>
+                ##信用证号
+                <td class="textRight" width="10%">#springMessage('international.credit.creditNo')</td>
+                <td width="30%">
+                    <input type="text" id="lc_likes_creditNo" name="likes_creditNo" class="layui-input" />
+                </td>
+            </tr>
+            <tr>
+                ##交单日期
+                <td class="textRight" width="10%">#springMessage('table.arrival.paymentDate')</td>
+                <td width="30%">
+                    <input type="text" name="ged_paymentDate" data-type="date" id="lc_ged_paymentDate" data-biz-name="lc_ged_paymentDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="lc_led_paymentDate">
+                    <span class="date-mid">~</span>
+                    <input type="text" name="led_paymentDate" data-type="date" id="lc_led_paymentDate" data-biz-name="lc_led_paymentDate" class="layui-input bt-input-inline bt-biz-dateType">
+                </td>
+                ##核销类型
+                <td class="textRight" width="10%">#springMessage('核销类型')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-type="select" data-group="writeOff.type" data-name="eqs_writeOffType" name="eqs_writeOffType"
+                         data-biz-name="bill_eqs_writeOffType" data-filterData="1,3"
+                    ></div>
+                </td>
+                ##核销状态
+                <td class="textRight" width="10%">#springMessage('核销状态')</td>
+                <td width="30%">
+                    <div class="bt-biz-dict" data-group="writeOff.status" data-name="ins_writeOffStatus" name="ins_writeOffStatus"
+                         data-biz-name="lc_ins_writeOffStatus" data-defaultvalue="0,1" data-type="mulselect"
+                    ></div>
+                </td>
+            </tr>
+            </tbody>
+            <tbody id="hide-search-lc">
+            <tr>
+                ##币别
+                <td class="textRight">#springMessage('table.btBankAccDtl.curName')</td>
+                <td>
+                    <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                         data-name ="eqs_curId" data-biz-name ="lc_eqs_curId"  data-valueField="id" data-textField="curName"></div>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+            <tbody>
+            ##查询
+            <tr>
+                <td colspan="6" class="center">
+                    <button class="layui-btn" lay-submit lay-filter="lcSearch" type="button">#springMessage('common.button.search')</button>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="clearLcForm()">#springMessage('common.button.reset')</button>
+                    <span class="ui-more-btn-lc umb" onclick="showMoreBtnLc()">更多筛选</span><img src="${basePath}/static/images/table/icon_arrow_down.svg" class="ui-arrow-down-lc">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <table id="appTableLc" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('table.internation.arrival.com.no')</th>##到单号
+            <th>#springMessage('单位名称')</th>
+            <th>#springMessage('international.credit.creditNo')</th>##信用证号
+            <th>#springMessage('international.credit.lcInter')</th>##信用证类型
+            <th>#springMessage('table.internation.arrival.bank')</th>##交单银行
+            <th>#springMessage('international.credit.beneficiary')</th>##受益人
+            <th>#springMessage('交单金额')</th>
+            <th>#springMessage('需收款金额')</th>
+            <th>#springMessage('已收款金额')</th>
+            <th>#springMessage('可核销金额')</th>
+            <th>#springMessage('已抵押金额')</th>
+            <th>#springMessage('已议付金额')</th>
+            <th>#springMessage('币别')</th>
+            <th>#springMessage('交单日期')</th>
+            <th>#springMessage('所属库存')</th>
+            <th>#springMessage('核销状态')</th>
+            <th>#springMessage('核销类型')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+
+#parse("views/common/footer.vm")
+<script>
+    function dtlGegAmtChange(){
+    var dtlGegAmt = moneyType.get("dtl_geg_amt").val();
+    if(dtlGegAmt<=0){
+        moneyType.get("dtl_geg_amt").val('');
+    }
+}
+
+function dtlLegAmtChange(){
+    var dtlLegAmt = moneyType.get("dtl_leg_amt").val();
+    if(dtlLegAmt<=0){
+        moneyType.get("dtl_leg_amt").val('');
+    }
+}
+
+function billGegBillMoneyChange(){
+    var billGegBillMoney = moneyType.get("bill_geg_billMoney").val();
+    if(billGegBillMoney<=0){
+        moneyType.get("bill_geg_billMoney").val('');
+    }
+}
+
+function billLegBillMoneyChange(){
+    var billLegBillMoney = moneyType.get("bill_leg_billMoney").val();
+    if(billLegBillMoney<=0){
+        moneyType.get("bill_leg_billMoney").val('');
+    }
+}
+</script>
+</body>
+<script src="${basePath}/static/modules/writeOff/writeOff.list.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/writeOff/writeOff.list.dtl.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/writeOff/writeOff.list.bill.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/writeOff/writeOff.list.lc.js?_btv=${resourceVersion}"></script>
+</html>

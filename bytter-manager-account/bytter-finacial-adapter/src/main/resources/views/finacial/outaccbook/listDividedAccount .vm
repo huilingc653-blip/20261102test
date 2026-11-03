@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<!-- 分户账查询 -->
+<body>
+<form  class="layui-form tt" id="searchForm">
+	<input id="pageNum" name="pageNum" type="hidden" value="$!{pageNum}">
+<table  class="layui-table ">
+	<tbody>
+	
+		<tr>
+			<!-- 网点 -->
+			<td class="textRight">#springMessage('table.fcAcc.netId')</td>
+			<td width="40%"><div id="netId" class="bt-biz-corp" data-scope="net" data-biz-name="netId" data-name="netId" data-biz-type="net" data-type="selectTree" data-resource="finacial:outaccbook:dividedAccountList:query" data-defaultvalue="$!{search.netId}"></div></td>
+			
+			<!-- 开户单位 -->
+			<td class="textRight">#springMessage('table.fcAcc.corpId')</td>
+			<td width="40%">
+				<div id="corpId" 
+					class="bt-biz-corp" 
+					data-name="corpId" 
+					data-biz-name="corpId"
+					data-biz-type="corp" 
+					data-type="selectTree" 
+					data-resource="finacial:outaccbook:dividedAccountList:query"
+					data-defaultvalue="$!{search.corpId}">
+				</div>
+			</td>		
+		</tr>	
+
+		<tr>
+			<!-- 记账日期 -->
+			<td class="textRight">#springMessage('table.nisBillhead.tallyDate')</td>
+			<td width="40%">
+				<div class=layui-inline>
+					<input id="t1" class="layui-input bt-input-inline bt-biz-dateType" type=text name="ge_tallyDate" data-endid="t2" value="$!date.format('yyyy-MM-dd',$!search.ge_tallyDate)" data-biz-name="ge_tallyDate">
+					<span class=date-mid>~</span>
+					<input id=t2 class="layui-input bt-input-inline bt-biz-dateType" type=text name="le_tallyDate"  value="$!date.format('yyyy-MM-dd',$!search.le_tallyDate)" data-biz-name="le_tallyDate">
+				</div>
+			</td>
+			
+			<!-- 账号 -->
+			<td class="textRight">#springMessage('table.nisBillhead.accId')</td>
+			<td width="40%">
+				<input type="text" name="account" class="layui-input" id="account" value="$!{search.account}"/>
+	     	</td>
+	    </tr>
+	    
+	    <tr> 	
+	     	<!-- 科目 -->
+	     	<td class="textRight">#springMessage('fcInstrate.subjectCode')</td>
+	     	<td width="40%">
+	     		<div class="layui-form">
+	     			<!-- <div id="subjectSort" class="bt-biz-dict" data-type="select" data-name="subjectSort" data-biz-name="subjectSort"  data-defaultvalue="$!{search.subjectSort}" data-group="Admin.SubjectSort"></div> -->
+	     			<div class="layui-inline">
+            			<div id="subjectSort" />
+            			<input type="hidden" id="subjectSortValue" data-biz-name="subjectSortValue" value="$!{search.subjectSort}" >
+	            	</div>
+				</div>
+	     	</td>
+	     	
+			<td></td>
+			<td></td>
+		</tr>
+
+	<!--提交按钮 -->
+	<tr>
+	   <td style="text-align: center;" colSpan="6">
+	 		 <button class="layui-btn" lay-submit=""lay-filter="search"type="button">#springMessage('common.button.search')</button>
+             <button id="reset" type="button" class="layui-btn" style="background-color:#009688;color:#fbfbfb;">#springMessage('common.button.reset')</button>
+	   </td>
+	</tr>
+	
+</tbody>
+</table>
+</form>
+<div id="print">
+	##记账日期区间
+	<div  class="layui-input-inline" style="width: 20%;">
+		<span>#springMessage('table.divided.tally_date'):</span>
+		<span>#if($!{accObj.startDate})
+				$!{accObj.startDate}~$!{accObj.endDate}
+			  #end
+		</span>
+	</div> 
+	##单位名称
+	<div  class="layui-input-inline"  style="width: 15%;">
+		<span>#springMessage('table.nisPersonnelDetail.corpId'):</span>
+		<span>$!{accObj.corpName}</span>
+	</div> 
+	##币别
+	<div  class="layui-input-inline"  style="width: 15%;">
+		<span>#springMessage('table.fcAcc.curId'):</span>
+		<span>$!{accObj.curName}</span>
+	</div> 
+	##账号
+	<div  class="layui-input-inline"   style="width: 15%;">
+		<span>#springMessage('table.nisBillhead.accId'): $!{accObj.account}</span>
+		<span></span>
+	</div>  
+	##户名
+	<div  class="layui-input-inline"  style="width: 15%;">
+		<span>#springMessage('table.nisPersonnelDetail.accName'):</span>
+		<span>$!{accObj.accname}</span>
+	</div>	 
+	##期初余额
+	<div  class="layui-input-inline"  style="width: 15%;">
+		<span>#springMessage('table.accountSummary.beginning_balance'):</span>
+		<span>$!number.formatNumeric($!{qcbalance})</span>
+	</div>
+	<br><br>
+	
+	<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    	<thead>
+   	 		<tr>
+    			<th>#springMessage('table.fcOutAccbook.tallyDate')</th>
+    			<th>#springMessage('finacial.paramConfig.fcSubject.subjectName')</th>
+    			<th>#springMessage('table.fcOutAccbook.voucherNo')</th>
+    			<th>#springMessage('table.fcAccbookDtl.summaryContent')</th>
+    			<th>#springMessage('table.fcOutAccbook.billsNo')</th>
+    			<th>#springMessage('table.fcOutAccbook.contractNo')</th>
+    			<th>#springMessage('table.cmsPrecativeLoanInfo.endDate')</th>
+    			<th>#springMessage('fcAccDetail.creditMoney')</th>
+    			<th>#springMessage('fcAccDetail.debitMoney')</th>
+    			<th>#springMessage('table.fcAccbookDtlHis.balance')</th>
+    			<th>#springMessage('finacial.paramConfig.fcSubject.balanceWay')</th>    	
+   			</tr>
+   		</thead>
+   		
+   		
+   		#if($!{dataCount} > 0)
+   			#foreach($item in $res)	
+   				<tr>
+   					<td align="center">$!{item.tallyDate}</td>
+   					<td align="center">$!{item.subjectName}</td>
+   					<td align="center">$!{item.voucherNo}</td>
+   					<td align="center">$!{item.summaryContent}</td>
+   					<td align="center">$!{item.billsNo}</td>
+   					<td align="center">$!{item.contractNo}</td>
+   					<td align="center">$!{item.endDate}</td>
+   					<td class="textRight">$!number.formatNumeric($!{item.debitMoney})</td>
+   					<td class="textRight">$!number.formatNumeric($!{item.creditMoney})</td>
+   					<td class="textRight">$!number.formatNumeric($!{item.balance})</td>
+   					<td align="center">$dictTag.get("Tally.Direction",$!{item.balanceWay})</td>
+   				
+   				</tr>
+   			#end
+   		#else
+   			<tr>
+   				<td colspan="11" align="center">#springMessage('common.msg.temporarily_no_data')</td>
+   			</tr>
+   		#end
+	</table>
+</div>
+	<div id="page" style="position:fixed ; bottom:0px;width:100%"></div>
+	<input id="accSize" type="hidden" value="$!{accSize}">
+#parse("views/common/footer.vm")
+</body>
+<script
+	src="${basePath}/static/modules/finacial/outaccbook/dividedAccount.list.js?_btv=${resourceVersion}"></script>
+</html>

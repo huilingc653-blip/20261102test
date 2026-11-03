@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+    <style>
+        html, body {
+        }
+
+        .menuContent {
+            overflow: auto;
+            height: 600px;
+            padding: 10px 0;
+        }
+
+        .treeContainer {
+            padding: 0;
+            height: 100%;
+        }
+
+        .treeContainer li.box {
+            float: left;
+            width: 300px;
+            height: 100%;
+            padding: 0 10px;
+            border-right: 1px dashed #b7b7b7;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+<fieldset class="layui-elem-field layui-field-title">
+    <legend>正在给“$!{role.name}”授权菜单资源</legend>
+</fieldset>
+<div class="treePositionButton layui-btn-group margin-bottom"></div>
+<div class="menuContent">
+    <ul class="treeContainer"></ul>
+</div>
+<input type="hidden" name="roleId" value="$!{role.id}">
+<input type="hidden" name="newMenuIds" value="$!{newMenuIds}"/>
+<input type="hidden" name="newResourcesIds" value="$!{newResourcesIds}"/>
+<input type="hidden" name="hiddenMenuIds" value="$!{hiddenMenuIds}"/>
+<input type="hidden" name="hiddenResourcesIds" value="$!{hiddenResourcesIds}"/>
+    #workFlowHtml()
+    #parse("views/common/footer.vm")
+    #workFlowScript()
+<script>
+    bt.use(['form', 'jquery', 'ztree', 'ztreeCheck', 'jqColor'], function () {
+        var form = bt.form();
+        var $ = bt.jquery, layer = parent ? parent.layer : layer;
+        var setting = {
+            view: {showIcon: false, dblClickExpand: false, fontCss: getFont, nameIsHTML: true},
+            check: {enable: true, nocheck: false, chkStyle: "checkbox", chkboxType: {"Y": "ps", "N": "ps"}},
+            data: {simpleData: {enable: true, idKey: "id", pIdKey: "parentId"}},
+            callback: {
+                beforeCheck: function (treeId, treeNode) {
+                    return false;
+                }
+            }
+        }
+
+        function addTreeContainer() {
+            var treeHtml = '';
+            for (var i = 0; i < menus.length; i++) {
+                var menu = menus[i];
+                treeHtml += '<li class="box"><ul id="menuTree_' + menu.id + '" class="ztree resources-tree"></ul></li>';
+            }
+            $(".treeContainer").html(treeHtml).css("width", 325 * menus.length);
+        }
+
+        function addTreePositionButton() {
+            var treeHtml = '';
+            for (var i = 0; i < menus.length; i++) {
+                var menu = menus[i];
+                treeHtml += '<button id="#menuTree_' + menu.id + '" class="scroll-btn layui-btn layui-btn-primary layui-btn-small">' + menu.name + '</button>';
+            }
+            $(".treePositionButton").html(treeHtml);
+        }
+
+        function getAllNodes() {
+            var nodesArr = [];
+            for (var i = 0; i < menus.length; i++) {
+                var menu = menus[i];
+                var zTree = $.fn.zTree.getZTreeObj("menuTree_" + menu.id);
+                var nodes = zTree.getCheckedNodes(true);
+                for (var j = 0; j < nodes.length; j++) {
+                    var node = nodes[j];
+                    nodesArr.push(node);
+                }
+            }
+            return nodesArr;
+        }
+
+        var animateFlag = true;
+        $(document).on('click', ".scroll-btn", function () {
+            var that = $(this);
+            if (!animateFlag) {
+                return;
+            }
+            animateFlag = false;
+            var index = that.index();
+            var liContainer = $("ul" + that.attr("id")).parents("li");
+            liContainer.css("background", "#ff9");
+            $(".menuContent").animate({scrollLeft: 320 * index + 'px'}, 500, function () {
+                animateFlag = true;
+                //渐变恢复容器的颜色
+                liContainer.animate({backgroundColor: "#fff"}, 2000);
+            });
+        });
+
+
+        function getFont(treeId, node) {
+            return node.font ? node.font : {};
+        }
+
+        var menus;
+        var treeArr = [];
+        bt.loading.show();
+        $.ajax({
+            url: basePath + "/sys/menu/json",
+            method: 'GET',
+            async: true,
+            dataType: 'json',
+            data: {type: "bytter"},
+            success: function (data) {
+                menus = data;
+                addTreePositionButton();
+                addTreeContainer();
+                var bodyHeight = $('body').innerHeight();
+                var fieldHeight = $(".layui-elem-field").height();
+                var treePositionButtonHeight = $(".treePositionButton").height();
+                var addHeight = $(".add").outerHeight();
+                $('.menuContent').height(bodyHeight - fieldHeight - treePositionButtonHeight - addHeight - 50);
+                var newMenuIds = $('input[name="newMenuIds"]').val();
+                var hiddenMenuIds = $('input[name="hiddenMenuIds"]').val();
+                var newResourcesIds = $('input[name="newResourcesIds"]').val();
+                var hiddenResourcesIds = $('input[name="hiddenResourcesIds"]').val();
+
+                for (var i = 0; i < menus.length; i++) {
+                    var menu = menus[i];
+                    setTreeNode(menu, newMenuIds, hiddenMenuIds, newResourcesIds, hiddenResourcesIds);
+                }
+                setTimeout(function () {
+                    bt.loading.hide();
+                }, 2000);
+            },
+            error: function () {
+                closeLoading();
+            }
+        });
+
+        function setTreeNode(menu, newMenuIds, hiddenMenuIds, newResourcesIds, hiddenResourcesIds) {
+            $.ajax({
+                url: basePath + "/sys/menu/treeAndResources",
+                type: "GET",
+                data: {id: menu.id},
+                async: true,
+                dataType: "JSON",
+                success: function (nodes) {
+                    //将资源项标识为红色
+                    var temp = [];
+                    var parentNode;
+                    for (var i = 0; i < nodes.length; i++) {
+                        var node = nodes[i];
+                        if (!node.parent) {
+                            parentNode = node;
+                        }
+                        if (node.isMenu) {
+                            var styleObj = {'color': ''};
+                            var result = checkNewOrOld(node, newMenuIds, hiddenMenuIds);
+                            if (result == 1) {
+                                styleObj = {'color': '#669900'};
+                            } else if (result == -1) {
+                                styleObj = {'color': '#FF0000'};
+                            }
+                            node.font = styleObj;
+                        } else {
+                            var styleObj = {'color': '#9966FF'};
+                            var result = checkNewOrOld(node, newResourcesIds, hiddenResourcesIds);
+                            if (result == 1) {
+                                styleObj = {'color': '#669900'};
+                            } else if (result == -1) {
+                                styleObj = {'color': '#FF0000'};
+                            }
+                            node.font = styleObj;
+                        }
+                        temp.push(node);
+                    }
+                    temp.sort(function (a, b) {
+                        return a.sort - b.sort;
+                    });
+                    var ztree = $.fn.zTree.init($("#menuTree_" + menu.id), setting, temp);
+                    ztree.expandAll(true);
+                    //设置显示状态
+                    var nodes = ztree.transformToArray(ztree.getNodes());
+                    for (var i = 0; i < nodes.length; i++) {
+                        var node = nodes[i];
+                        if (node.isMenu) {
+                            var result = checkNewOrOld(node, newMenuIds, hiddenMenuIds);
+                            if (result == 1 || result == 2) {
+                                ztree.checkNode(node, true, false);
+                            }
+                        } else {
+                            var result = checkNewOrOld(node, newResourcesIds, hiddenResourcesIds);
+                            if (result == 1 || result == 2) {
+                                ztree.checkNode(node, true, false);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        //检测菜单是否为新增，是返回1,否返回-1,都存在返回2，没有返回0
+        checkNewOrOld = function (node, newMenuIds, oldMenuIds) {
+
+            if (oldMenuIds.indexOf(node.id) == -1 && newMenuIds.indexOf(node.id) >= 0) {
+                return 1;
+            }
+            if (oldMenuIds.indexOf(node.id) >= 0 && newMenuIds.indexOf(node.id) == -1) {
+                return -1;
+            }
+            if (oldMenuIds.indexOf(node.id) >= 0 && newMenuIds.indexOf(node.id) >= 0) {
+                return 2;
+            }
+            return 0;
+        }
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+
+dubbo:
+  scan:
+    base-packages: com.bytter.*.service.impl,com.bytter.*.*.*.service.impl
+  application:
+    logger: slf4j
+  consumer:
+    check: false
+local:
+  massage:
+    transaction: close
+spring:
+  cloud:
+    stream:
+      bindings:
+        finacial-to-payment-out-0:
+          destination: finacial-exchange
+          group: finacial-group
+          content-type: application/json
+          producer:
+            auto-startup: true
+        initNetDayClose-in-0: # system发送消息 channel bindingName
+          destination: system-initNetDayClose-exchange # exchange
+          group: queue-1
+          contentType: application/json
+        recordBooking-in-0: # payment发送消息
+          destination: payment-finacial-exchange
+          group: payment-group
+          contentType: application/json
+      rabbit:
+        bindings:
+          finacial-to-payment-out-0:
+            producer:
+              declare-exchange: true
+              exchangeType: direct
+              routing-key-expression: headers["ftopkey"]
+          initNetDayClose-in-0:
+            consumer:
+              exchangeType: direct
+              bindingRoutingKey: InitNetDay
+          recordBooking-in-0:
+            consumer:
+              exchangeType: direct
+              durableSubscription: true
+              bindingRoutingKey: bookkeeping
+      function:
+        definition: recordBooking;initNetDayClose

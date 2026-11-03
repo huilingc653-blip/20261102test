@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form input150-container"> 
+    <input type="hidden" id="currentPage" value="1">
+    <input type="hidden" id="count" value="1"> 
+        <table class="layui-table">
+                <tr> 
+                	##网点
+                    <td class="textRight">#springMessage('table.fcAcc.netId')</td>
+	        		<td class="rCode" width="25%">
+	       				<div class="layui-input-inline">
+	                   		<div class="bt-biz-corp" data-biz-type="net" data-type="selectTree" data-resource="finacial:accrualrecord:query"
+	                   		data-name="netId" data-scope="net" data-biz-name="netId" data-defaultvalue="$!{netId}"></div>
+	           			</div>
+	           		</td>
+	           		##记账日期
+	           		<td class="textRight">#springMessage('table.fcAccbook.tallyDate')</td>
+            		<td class="rCode" width="40%"> 
+            		<div class="layui-inline">
+                    	<input type="text" name="gedTallyDate" data-type="date" data-biz-name="gedTallyDate"
+                    	class="layui-input bt-biz-dateType" data-endid="startDate" value="$!{gedTallyDate}">
+                	</div> 
+                	<div class="layui-inline">~</div>
+                	<div class="layui-inline">
+                    	<input type="text" name="ledTallyDate" data-type="date" data-biz-name="ledTallyDate"
+                    	class="layui-input bt-biz-dateType" id="startDate" value="$!{ledTallyDate}">
+                	</div>
+            		</td>
+                </tr>
+                <tr>
+                	##币别
+        			<td class="textRight">
+        				#springMessage('table.fcBusinessRuleDefine.curCode')
+	        		</td> 
+	                <td class="rCode" width="25%">
+	                <div class="layui-input-inline">
+						<div class="bt-biz-selectType" data-biz-name="curCode" data-url="${basePath}/basic/business/btcurrency/json" 
+						data-valuefield="id" data-textfield="curName" data-name="curCode" data-defaultvalue="$!{curCode}"></div>
+						</div>
+	                </td> 
+	                <td></td>
+	                <td width="40%"></td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+            			<button type="reset" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+                        <button class="layui-btn " lay-submit lay-filter="excel">#springMessage('common.button.exports')</button>
+                        <button class="layui-btn bt-biz-printType" type="button" data-printareaid="print">打印</button>
+                    </td>
+                </tr>
+        </table>
+    </form>
+<div id="tbl" style="width:100%;overflow:auto" >
+<div id="print">
+<table width="100%" align="center" id="search">
+		<tr>
+			<td align="right" width="25%">#springMessage('table.divided.tally_date')：</td>
+			<td width="25%"><span id="tallyDateStr" ></span></td>
+			<td align="right" width="25%">#springMessage('table.fcBusinessRuleDefine.curCode')：</td>
+			<td width="25%"><span id="curName"></span></td>	
+		</tr>
+	</table>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th width="10%">#springMessage('table.fcAccbook.orderNo')</th>
+        <th width="10%">#springMessage('table.accrualRecord.startdate')</th>
+        <th width="10%">#springMessage('table.accrualRecord.enddate')</th>
+        <th width="15%">#springMessage('table.accrualRecord.account')</th>
+        <th width="15%">#springMessage('table.fcChargeAccrue.operatorCode')</th>
+        <th width="10%">#springMessage('table.fcChargeAccrue.accrueTime')</th>
+    	<th width="10%">#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead> 
+</table>
+</div>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/report/export.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+var corpInit;
+var dateType;
+var selectType;
+var dicts;
+var moneyType;
+var moneyFun;
+bt.use(['form','bttable','btdate','datatable','corp','moneyType','laypage','dateType','selectType','date','dicts','jquery','element','selectTable','page','printType'], function(){
+	$ = bt.jquery,form = bt.form();
+	dateType=bt.dateType.init();
+	selectType=bt.selectType.init();
+	dicts=bt.dicts.init();
+	moneyType=bt.moneyType.init();
+	moneyFun = bt.moneyType.getFun();
+	corpInit = bt.corp.init();
+    bt.printType.init();
+	
+	var page = null;
+    var table = null;
+    var headOtherInfo=null;
+    //表格控件初始化设置
+    table=bt.bttable.init({
+        elem: "#appTable",
+       // scrollY:"200px",
+        url: basePath+"/finacial/report/fcaccrualrecordquery/datatable",
+        urldata:getParam(), 
+        columns: [
+            {data:"targetOrderNo",className:"center",bSortable:false},
+         	{data:"startDate",className:"center",bSortable:false,
+            	render: function( data, type, full, meta ){
+		    		return bt.date.format(data.startDate, "yyyy-mm-dd");
+		    	}
+            },
+            {data:"endDate",className:"center",bSortable:false,
+            	render: function( data, type, full, meta ){
+		    		return bt.date.format(data.endDate, "yyyy-mm-dd");
+		    	}
+            },
+            {data:"account",className:"center",bSortable:false},
+            {data:"operatorCode",className:"center",bSortable:false},
+            {data:"accrueTime",className:"center",bSortable:false,
+            	render: function( data, type, full, meta ){
+		    		return bt.date.format(data.accrueTime, "yyyy-mm-dd");
+		    	}
+            },
+            {data:null,className:"center",bSortable:false,
+            	render: function( data, type, full, meta ){
+                    var id = data.id;
+		    		return '<a class="" href="#" data-row="'+type+'" id="'+id+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+		    	}
+            }
+        ],
+        tableInitCallback:function(data){ 
+        	headOtherInfo(data);
+        },
+        tableDrawCallback:function (data) {
+            if(!page && data){
+            	var pages;
+            	if(data.length){
+            		pages=data[0].accrualNum;
+            	}else{
+            		pages=1;
+            	}
+                page = bt.page.init({
+                    elem:'#page',//分页组件容器
+                    pages:pages,
+                    count:data.length, //表格总页码
+                    currentPage:$("#currentPage").val(),//当前页码，默认值为 0,即第一页
+                    len : data.length, //当前显示条数
+                    lengthMenu:false,
+                    custom:{
+                        start:1
+                    },
+                    jump:function(obj){ //翻页回调方法
+                        var curr = obj.curr;
+                        var len = obj.len;
+                        $("#currentPage").val(curr); 
+                        if(table){
+                            table.draw({
+                            	url: basePath+"/finacial/report/fcaccrualrecordquery/datatable",
+                                urldata:getParam()
+                            })
+                        }
+                    }
+                })
+            }else{
+                var elem = $("#page").find('.wrapper');
+                var pages;
+                var currentPage = $("#currentPage").val();
+                var start = 1;
+                if(data.length){
+                    pages = data[0].accrualNum;
+                }else{ 
+                    pages = 1;
+                    currentPage = 1;
+                    start = 0;
+                }
+                elem.find('.total').text(pages);
+                elem.find('.table-record .table-startRecord1').text( start );
+                elem.find('.table-pageNumber').val(currentPage);//更新当前页码
+                page.updateStyle(elem.find('.table-record '),currentPage,pages);//更新样式
+                elem.find('.table-record .table-endRecord1').text( data.length );//更新结束数据条数
+                elem.find('.table-record .table-totalRecord1').text( data.length );//更新总条数
+            }
+            headOtherInfo(data);
+        }
+    });
+    
+  //监听提交
+   	form.on('submit(search)', function(data) { 
+   		
+   		if(table){
+            $("#currentPage").val(1);
+            table.draw({
+            	url: basePath+"/finacial/report/fcaccrualrecordquery/datatable",
+                urldata:getParam()
+			})
+		}
+   	});
+
+    form.on('submit(excel)', function(data) {
+        var url = basePath+"/finacial/report/fcaccrualrecordquery/exportExcel";
+        DownLoadFile({url:url,data:data.field,method:'post'});
+        return false;
+    });
+
+   	headOtherInfo=function(data){
+   		if(data.length){
+   			$("#tallyDateStr").html(dateType.get('gedTallyDate').val()+" - "+dateType.get('ledTallyDate').val());
+       		$("#curName").html(data[0].curName);
+   		}else{ 
+   			//清空账户信息
+   	   		$("#search tr").each(function(){
+   	   			$(this).children('td').children('span').text("");
+   	   		}); 
+   		}
+   	}
+    
+});
+
+var getParam = function(){
+	var param="";
+	param += "netId="+corpInit.get('netId').val()+
+	"&gedTallyDate="+dateType.get('gedTallyDate').val()+"&ledTallyDate="+dateType.get('ledTallyDate').val()+
+	"&curCode="+selectType.get('curCode').val()+"&start="+$("#currentPage").val(); 
+	return param;
+}
+
+
+function view(el){
+    var id = el.id;
+    parent.layer.open({
+        type: 2,
+        area: ['1120px', '700px'],
+        maxmin: true,
+        content: basePath + "/finacial/accbook/fcaccbook/view?id=" + id
+    });
+}
+</script>
+</html>

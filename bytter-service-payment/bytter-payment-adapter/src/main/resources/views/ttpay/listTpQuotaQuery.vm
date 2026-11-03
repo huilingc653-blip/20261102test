@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##所属单位
+            <td class="textRight" width="10%">#springMessage('sys.user.corpContain.show')</td>
+            <td width="20%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="likes_corpId"
+                         data-resource="ttpay:quotaQuery:query"
+                         data-scope="all"
+                         data-callback="bt.corpCallback"></div>
+                </div>
+            </td>
+            <td class="textRight" width="10%">#springMessage('ttpay.payType')</td>
+            <td width="20%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-dict" data-type="mulselect" data-name="ins_payWay"
+                         data-biz-name="payWay"
+                         data-group="TTPAY_PAY_TYPE"></div>
+                </div>
+            </td>
+            <td class="textRight" width="10%">#springMessage('ttpay.merchantNo')</td>
+            <td width="30%">
+                <div class="layui-input-inline">
+                    <input type="text" name="likes_merchantNo" id="merchantNo" value="$!{queryVO.merchantNo}"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('ttpay.merchantNo')">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage(
+                    'common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('ttpay.merchantNo')</th>
+        <th>#springMessage('sys.user.corpContain.show')</th>
+        <th>#springMessage('ttpay.payType')</th>
+        <th>#springMessage('sys.organtype.effective')</th>
+        <th>#springMessage('ttpay.quota.daysingle')</th>
+        <th>#springMessage('ttpay.quota.dayTotal')</th>
+        <th>#springMessage('ttpay.quota.monthTotal')</th>
+        <th>#springMessage('sys.cell.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script type="text/javascript">
+    bt.use(['form', 'datatable', 'region', 'corp', 'btImport', 'dicts', 'moneyType', 'dateType', 'select', 'selectType'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.region.init();
+        bt.corp.init();
+        bt.dicts.init();//字典
+        date = bt.dateType.init();//时间
+        moneyType = bt.moneyType.init();//金额
+
+
+        //生成列表-加载数据
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            order: [[1, 'desc']],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath + "/ttpay/quotaQuery/datatable"
+            },
+            selectCss: false,
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ]
+            , columns: [
+                {data: "merchantNo", bSortable: true},
+                {data: "corpName", bSortable: false},
+                {
+                    data: "payWay", className: 'center', bSortable: false,
+                    render: function (data, type, full, meta) {
+                        return bt.dict("TTPAY_PAY_TYPE", full.payWay);
+                    }
+                },
+                {data: "effectDate", bSortable: true, className: "center"},
+                {
+                    data: "daySingle", className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return full.daySingle ? bt.money.format(full.daySingle) : "";
+                    }
+                },
+                {
+                    data: "dayTotal", className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return full.dayTotal ? bt.money.format(full.dayTotal) : "";
+                    }
+                },
+                {
+                    data: "monthTotal", className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return full.monthTotal ? bt.money.format(full.monthTotal) : "";
+                    }
+                },
+                {
+                    data: "validSign", className: "center", bSortable: false,
+                    render: function (data, type, full, meta) {
+                        return bt.dict("valid_sign", full.validSign);
+                    }
+                },
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        var html = '';
+                        html += '<a href="#" data-row="' + meta.row + '" onclick="view(this)">' + bt.lang("common.button.view") + '</a><span class="text-explode">&nbsp;</span>';
+                        html += '<a href="#" data-row="' + meta.row + '" onclick="log(this)">' + bt.lang("common.button.logInfo") + '</a><span class="text-explode">&nbsp;</span>';
+                        return html;
+                    }
+                }
+            ]
+        });
+    });
+
+    //查看
+    function view(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+
+        parent.layer.open({
+            type: 2,
+            area: ['1000px', '700px'],
+            maxmin: true,
+            content: basePath + "/ttpay/quota/view/" + data.id
+
+        });
+    }
+
+    //日志列表
+    function log(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.button.logInfo'), basePath + "/ttpay/tpLog/listMsgData?quoteId=" + data.id);
+                return;
+            }
+        }
+    }
+
+</script>
+
+

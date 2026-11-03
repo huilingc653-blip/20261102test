@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+    #parse("views/common/head.vm")
+    <style>
+        .input-fps,
+        .input-mail{
+            width: 160px;
+        }
+        .input-tel {
+            display: inline-block;
+            width: 100px;
+            margin-left: 8px;
+        }
+        .input-code {
+            width: 68px;
+            display: inline-block;
+        }
+    </style>
+    <input type="hidden" id="type" value="$!{type}">
+    <input type="hidden" id="isView" value="$!{isView}">
+    <form class="layui-form">
+        #if(${isView} != '1')
+            <button class="layui-btn" type="button" id="addBtn">#springMessage('common.addTr')</button> ##增加
+        #end
+        ## FPS客商 ##  PAYPAL客商
+        <div>
+            <table class="layui-table layui-table-border">
+                <thead>
+                <tr>
+                    <th>#springMessage('table.externalCorpQuickPay.email')</th>
+                    <th>#springMessage('table.externalCorpQuickPay.tel')</th>
+                    #if($!{isFpsQuickPay})
+                        <th>#springMessage('table.externalCorpQuickPay.fpsId')</th>
+                        <th>#springMessage('table.externalCorpQuickPay.creditCard')</th>
+                        <th>#springMessage('table.externalCorpQuickPay.hkId')</th>
+                    #end
+                    <th>#springMessage('table.externalCorpQuickPay.isDefaultAcc')</th>
+                    #if(!$!{isView})
+                        <th>#springMessage('table.common.operation')</th>
+                    #end
+                </tr>
+                </thead>
+                <tbody id="body">
+                </tbody>
+            </table>
+        </div>
+        <div class="layui-form-item layui-form-submit">
+            <div class="layui-input-block">
+            #if(${isView} == '1')
+                <button class="layui-btn" type="button" id="closeBtn">#springMessage('common.button.close')</button>
+            #else
+                <button class="layui-btn" lay-submit="" lay-filter="submit" type="button">#springMessage('common.button.submit')</button>
+                <button id="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            #end
+            </div>
+        </div>
+
+    </form>
+
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['form', 'jquery', 'corp','select','selectType'],function () {
+        var $ = bt.jquery,form = bt.form();
+        var type = $('#type').val();
+        var isFpsQuickPay = '$!{isFpsQuickPay}' == 'true';
+
+        //  获取父页面的快捷支付参数
+        var cacheQuickyPayInfo = bt.navtab.getCurrentDom().cacheQuickyPayInfo;
+        // 获取当前类型的数据
+        var currentTypeData = cacheQuickyPayInfo[type]
+        if(currentTypeData){
+            // 查看功能
+            if($('#isView').val()){
+              var html = '';
+                bt.each(currentTypeData,function (i,row) {
+                    html += createRowHtml(type,row)
+                })
+                $('#body').html(html);
+            }else{ // 编辑功能
+                bt.each(currentTypeData,function (i,row) {
+                    addRow(type,row)
+                })
+            }
+        }
+        $('#closeBtn').click(function () {
+            parent.layer.closeAll()
+        })
+
+       //自定义验证规则
+        form.verify({
+            onlyOne:function (value,elem) { // 每行至少填写了一个参数校验
+                if(!value){
+                    var items = $(elem).closest('tr').find('input.only-one');
+                    var isRowPass = false;
+                    bt.each(items,function (j,item) {
+                        if(item.name){
+                            var itemValue = item.value
+                            if(item.name === 'tel'){
+                                itemValue = $(item).siblings('input').val() + itemValue;
+                            }
+                            if(itemValue){
+                                isRowPass = true
+                            }
+                        }
+                        if(isRowPass){
+                            return isRowPass
+                        }
+                    })
+
+                    if(!isRowPass){
+                        return bt.lang('ttpay.message.error.shoptypeno.leastone')
+                    }
+
+                }else{
+                    // 1. 找前几行数据不能重复
+                    var beforeTrs = $(elem).closest('tr').prevAll('tr');
+                    var isPass = true;
+                    var name = $(elem).attr('name');
+                    var currentNameValue = $(elem).val();
+                    if(beforeTrs[0] && currentNameValue){
+                        bt.each(beforeTrs,function () {
+                            // 2. 判断
+                            if( currentNameValue == $(this).find('[name="'+name+'"]').val()){
+                                isPass = false;
+                                return isPass
+                            }
+                        })
+
+                    }
+                    if(!isPass){
+                        return bt.lang('table.externalCorpQuickPay.data.repeat')
+                    }
+                }
+            },
+            emailFex: function (value) {
+                if (value && !/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(value)) {
+                    return bt.lang('sys.form.verify.emailError')//'邮箱格式不正确';
+                }
+            },
+            mobile: function (value,elem) {
+                if(value){
+                    // 上一行
+                    // 1. 找前几行数据不能重复
+                    if(elem.name == 'tel'){
+                        var currentTrValue = $(elem).closest('tr').find('[name="countryCode"]').val() + $(elem).closest('tr').find('[name="tel"]').val();
+                        var beforeTrs = $(elem).closest('tr').prevAll('tr');
+                        if(beforeTrs[0] && $(elem).siblings('input').val()){
+                            var isPass = true
+                            bt.each(beforeTrs,function (i,item) {
+                                var beforeTrValue = $(item).find('[name="countryCode"]').val() + $(item).find('[name="tel"]').val();
+                                if(beforeTrValue == currentTrValue){
+                                    isPass = false;
+                                }
+                            })
+
+                            if(!isPass){
+                                return bt.lang('table.externalCorpQuickPay.data.repeat')
+                            }
+                        }
+                    }
+                }else{
+                    if(elem.name == 'tel'){
+                        var siblingValue = $(elem).siblings('input').val();
+                        if(siblingValue){
+                            return bt.lang('ttpay.message.error.shoptypeno.leastone')
+                        }
+                    }
+                    // 整行校验
+                    var items = $(elem).closest('tr').find('input.only-one');
+                    var isRowPass = false;
+                    for (var i = 0; i < items.length; i++) {
+                        var item = items[i];
+                        if(item.name){
+                            if(item.name == 'tel' && item.value){
+                                isRowPass = false
+                                break
+                            }
+                            if(item.value){
+                                isRowPass = true;
+                                break
+                            }
+
+                        }
+                    }
+                    if(!isRowPass){
+                        return bt.lang('ttpay.message.error.shoptypeno.leastone')
+                    }
+                }
+            },
+            countryCode: function (value,elem) {
+                if(!value) {
+                    var siblingValue = $(elem).siblings('input').val();
+                    if(siblingValue){
+                        return bt.lang('ttpay.message.error.shoptypeno.leastone')
+                    }
+                }
+            },
+            number: function (value,elem) {
+                if (value && !/^\d+$/.test(value)) {
+                    return bt.lang('sys.form.verify.mustBeNumber')
+                }
+            }
+        })
+        // 提交
+        form.on('submit(submit)',function () {
+            var fields = getFormFields();
+            bt.navtab.getCurrentDom().sendDataFormEdit({type:type,data:fields});
+            parent.layer.closeAll();
+        })
+        // 删除
+        $('#body').on('click','.del-btn-1',function () {
+            var this_ = $(this);
+            parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+                this_.closest('tr').remove();
+            });
+        })
+
+        // 新增
+        $('#addBtn').on('click',function () {
+            addRow(type,{})
+        })
+
+        form.on('switch(defaultAcc)', function (data) {
+            var elem = data.elem; // 获得 checkbox 原始 DOM 对象
+            var checked = elem.checked; // 获得 checkbox 选中状态
+            if(checked){
+                var siblingsTrs = data.othis.closest('tr').siblings('tr');
+                if(siblingsTrs[0]){
+                    bt.each(siblingsTrs.find('[name="isDefaultAcc"]'),function () {
+                        this.checked = false;
+                    })
+                    form.render('checkbox');
+                }
+            }
+
+        });
+
+        // 新增行
+        // 4c182f17455f4614a79d66bdfd755c8d PAYPAL
+        // 53f8408e666b42b9abbe2dcf8372bc76 香港FPS产品
+        function addRow(type,row) {
+            var html = '<tr>';
+            html += '<td><input type="text" class="layui-input input-mail only-one" name="email" lay-verify="onlyOne|emailFex" value="'+(row.email || "") +'"><input type="hidden" class="layui-input" name="proId" value="'+ type +'"></td>'
+            html += '<td><input type="text" class="layui-input input-code" placeholder="'+ bt.lang('table.externalCorpQuickPay.countryCode') +'" name="countryCode" value="'+(row.countryCode || "") +'" lay-verify="mobile|number|countryCode"><input type="text" class="layui-input input-tel only-one" name="tel" placeholder="'+ bt.lang('table.externalCorpQuickPay.tel') +'" lay-verify="mobile|number" value="'+(row.tel || "") +'"></td>'
+            if(isFpsQuickPay){
+                html += '<td><input type="text" class="layui-input input-fps only-one" name="fpsId" lay-verify="onlyOne" value="'+(row.fpsId || "") +'"></td>'
+                html += '<td><input type="text" class="layui-input only-one" name="creditCard" lay-verify="onlyOne" value="'+(row.creditCard || "") +'"></td>'
+                html += '<td><input type="text" class="layui-input only-one" name="hkId" lay-verify="onlyOne" value="'+(row.hkId || "") +'"></td>'
+            }
+
+            html += '<td><input type="checkbox" name="isDefaultAcc" lay-skin="switch" lay-value="on|off" lay-text="' + bt.lang("common.sc_yn.yes") + '|' + bt.lang("common.sc_yn.no") + '"'
+           if(row.isDefaultAcc == '1'){
+               html += 'checked '
+           }
+            html += ' lay-filter="defaultAcc"></td>'
+            html += '<td><a class="del-btn-1" href="#">'+ bt.lang('common.button.delete') +'</a></td>'
+            html +='</tr>'
+            $('#body').append(html);
+            form.render('checkbox')
+        }
+
+        // 查看新增行
+        function createRowHtml(type,row) {
+            var html = '<tr>';
+            html += '<td>'+(row.email || "") +'</td>'
+            html += '<td>'+(row.countryCode || "") +'-'+(row.tel || "") +'</td>'
+            if(isFpsQuickPay){
+                html += '<td>'+(row.fpsId || "") +'</td>'
+                html += '<td>'+(row.creditCard || "") +'</td>'
+                html += '<td>'+(row.hkId || "") +'</td>'
+            }
+            html += '<td>'
+            html += (row.isDefaultAcc == '1'?bt.lang("common.sc_yn.yes"):bt.lang("common.sc_yn.no"))
+            html += '</td>'
+            html +='</tr>'
+            return html
+        }
+
+
+        function getFormFields() {
+          var trs = $('#body').find('tr');
+          var fields = []
+          bt.each(trs,function (i,row) {
+            var items = $(row).find('input,select,textarea');
+            //产品组件名称键值对
+            var obj = {type:$('#type').val()};
+            bt.each(items,function (j,item) {
+                if(item.name){
+                  if(item.name ==='isDefaultAcc'){
+                      obj[item.name] = $(item).is(':checked')
+                  }else{
+                      obj[item.name] = item.value
+                  }
+                }
+            })
+              fields.push(obj);
+          })
+
+          return fields
+        }
+    })
+
+    //重置页面信息
+    $("#reset").click(function(){
+        location.reload();
+        return false ;
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+var dicts;
+var form;
+bt.use(['form', 'layedit', 'dicts', 'selectTree','corp'], function () {
+    var $ = bt.jquery;
+    dicts = bt.dicts.init();
+    var corp = bt.corp.init();
+    form = bt.form();
+    //监听提交
+    form.on('submit(submit)', function (data) {
+        var action = "/netbank/nisbustype/save";
+        $.post(basePath + action, $('#nisBusTypeForm').serialize(), function (result) {
+            parent.layer.alert(result.msg, {icon: result.success ? 1 : 2}, function () {
+                parent.layer.closeAll();
+                if (result.success) {
+                    if (bt.navtab) {
+                        bt.navtab.refreshParent();
+                        bt.navtab.refreshCurrent()
+                    } else {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                    }
+                }
+            })
+        }, 'JSON');
+        return false;
+    });
+
+    //初始化资金计划科目
+    var tree = bt.selectTree.init({
+        url: basePath + "/netbank/nisbustype/getItem?cdSign=0",
+        elem: ".item-selectTree-normal",
+        name: 'itemCode',
+        checkType: 'radio',
+        id: 'itemCode',
+        pId: 'superItemCode',
+        required: false,
+        beforeInit: function (nodes) {
+            for (k in nodes) {
+                var node = nodes[k];
+                if (!node.canSelect) {
+                    nodes[k].chkDisabled = true;
+                }
+            }
+            return nodes;
+        }
+    });
+    form.renderIcon();//渲染必填
+    bt.fun = function (data) {
+        tree.setUrl(basePath + "/netbank/nisbustype/getItem?cdSign=" + data.value);
+    };
+    form.on('select', function (data) {
+        var row = data.othis.closest("tr").attr('row');
+        if(data.value == 1 || data.value == 2){
+            if($("#matchContent"+ row).is(":hidden")) {
+                $("#matchContent" + row).val(data.value);
+            }
+        }
+    });
+});
+
+getCdSign = function (data) {
+    bt.fun(data);
+    if(data.value == "0"){
+        var sysBusType = dicts.get("sysBusType").val();
+        if(sysBusType > 3 || sysBusType.trim() == "" ){
+            $("#matchContentTr").show();
+        }else {
+            $("#matchContentTr").hide();
+        }
+        dicts.get("sysBusType").attr({"data-filterData":"1,2,3,15"});
+    }else{
+        $("#matchContentTr").show();
+        dicts.get("sysBusType").attr({"data-filterData":"1,2,3,4,5,6,7,8,9,10,11,12,13,14"});
+    }
+}
+
+getSysBusType = function (data) {
+    var sysBusType = data.value;
+    if(sysBusType > 3 || sysBusType.trim() == ""){
+        $("#matchContentTr").show();
+    }else {
+        $("#matchContentTr").hide();
+    }
+    if(sysBusType == 7 || sysBusType == 8){
+        dicts.get('settleType').val("1");
+    }else if(sysBusType == 10){
+        dicts.get('settleType').val("2");
+    }else{
+        dicts.get('settleType').val("0");
+    }
+}
+/**
+ * 增加一行
+ */
+addTr = function () {
+    var row = $("#matchContentTable tbody tr:last").attr('row');
+    if (isNaN(row)) {
+        row = 0;
+    }
+    var newRow = row + 1;
+    var html = '<tr row="' + newRow + '">';
+    html += '<td class="textCenter"><div class="bt-biz-dict" data-type="select" data-group="FUNDWARN_NUM_OPERATOR"  data-name="matchRule"></div></td>';
+    html += '\t<td class="textCenter">\n' +
+        '<div class="layui-input-inline">\n' +
+        '<select name="leftParenthesis"   data-search="false" data-inputvalue="true">\n' +
+        '<option value=" ">'+ bt.lang("common.placeholder.select")+'</option>\n' +
+        '<option value="(">(</option>\n' +
+        '</select>\n' +
+        '</div>\n' +
+        '</td>';
+    html += '<td class="textCenter"><div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchElements"  data-name="matchElements" data-biz-name="matchElements' + newRow + '" data-callback="onchangeMatchElements"></div></td>';
+    html += '<td class="textCenter"><div class="bt-biz-dict" data-type="select" data-group="nisBusTypeRule.matchRelations"  data-name="matchRelations" data-biz-name="matchRelations' + newRow + '" data-filterData="5,6,7,8" data-callback="onchangeMatchRelations"></div></td>';
+    html += '<td class="textCenter"><input type="text" name="matchContent"  id="matchContent' + newRow + '" placeholder="'+bt.lang('table.netbank.nisproject.matchContent')+'" autocomplete="off" class="layui-input" lay-verify="strlength" data-maxlength="100">' +
+        '<div class="layui-input-inline" id="number' + newRow + '" style="display: none;">\n' +
+        '<select  lay-search="" data-inputvalue="true" >\n' +
+        '<option value="1">'+ bt.lang("table.number.odd") +'</option>\n' +
+        '<option value="2">'+ bt.lang("table.number.even") +'</option>\n' +
+        '</select>\n' +
+        '</div></td>';
+    html += '<td class="textCenter">\n' +
+        '<div class="layui-input-inline">\n' +
+        '<select name="rightParenthesis"  data-search="false" data-inputvalue="true">\n' +
+        '<option value=" ">'+ bt.lang("common.placeholder.select")+'</option>\n' +
+        '<option value=")">)</option>\n' +
+        '</select>\n' +
+        '</div>\n' +
+        '</td>';
+    html += '<td class="textCenter"><a href="javascript:void (0)" onclick="deleteDtl(this)">' + bt.lang("common.button.delete") + '</a></td>';
+    html += '</tr>';
+    $("#matchContentTable").find('tbody').append(html);
+    dicts.render();
+}
+/**
+ * 删除
+ * @param _this
+ */
+deleteDtl = function (_this) {
+    $(_this).parents("tr").not("#matchContentTr").remove();
+}
+onchangeMatchElements = function (data) {
+    var row = data.othis.closest("tr").attr('row');
+    var val = data.value;
+    if(val == "amt"){
+        $("#matchContent"+row).hide();
+        $("#number"+row).show();
+        $("#matchContent"+row).val("1");
+        dicts.get('matchRelations'+row).attr({'data-filterData': ''});
+        dicts.get('matchRelations'+row).val("3");
+    }else{
+        $("#matchContent"+row).show();
+        $("#number"+row).hide();
+        $("#matchContent"+row).val("");
+        dicts.get('matchRelations'+row).attr({'data-filterData': '5,6,7,8'});
+        dicts.get('matchRelations'+row).val("");
+    }
+}
+onchangeMatchRelations = function (data) {
+    var row = data.othis.closest("tr").attr('row');
+    var val = data.value;
+    var matchElements = dicts.get('matchElements'+row).val();
+    if(matchElements == "amt" && (val == "1" || val == "2" || val == "3" || val == "4")){
+        $("#matchContent"+row).hide();
+        $("#number"+row).show();
+        $("#matchContent"+row).val("1");
+    } else {
+        $("#matchContent"+row).show();
+        $("#number"+row).hide();
+        $("#matchContent"+row).val("");
+    }
+}

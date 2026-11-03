@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="orgtId" name="orgtId" value="$!{orgtId}" />
+    <input type="hidden" id="corpId" name="corpId" value="$!{corpId}" />
+    <h2 class="layui-colla-title">#springMessage('sys.organtype.editLevels')</h2>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight" width="30%">#springMessage('sys.organtype.corpSup')</td>
+            <td  width="70%">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-organtypeCorp"
+                         data-tree-type="radio"
+                         data-biz-name="parentId"
+                         data-type="selectTree"
+                         data-name="parentId"
+                        ## data-callback="corpCallback"
+                         data-required="true"
+                         data-orgtid="$!{orgtId}"
+                         data-beforeInit="beforeInitCorp"
+                        ## data-resource="abpool:limitallot:resource:op"
+                         data-placeholder="#springMessage('sys.organtype.corpSup')">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="layui-form-item layui-form-submit">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.save')</button>
+            <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script language="javascript" type="text/javascript">
+    var form;
+    var corp;
+    bt.use(['form','btdate','dateType','corp','organtypeCorp'], function(){
+        var $ = bt.jquery;
+        form = bt.form();
+        bt.organtypeCorp.init();
+        //监听提交
+        form.on('submit(submit)', function (data) {
+            bt.loading.show();
+            var orgtId = $("#orgtId").val();
+            var action = "/sys/organtype/organtype/saveOrgtSupCorp";
+            $.post(basePath + action, data.field, function (result) {
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success) {
+                    if (bt.navtab) {
+                        parent.layer.closeAll();//重载当前页面
+                    } else {
+                        parent.layer ? parent.layer.closeAll() : layer.closeAll();
+                    }
+                   /*var iframeName =  top.$('#tab-content').children('.layui-show').find('iframe').attr('name');
+                    if(iframeName){
+                        top.frames[iframeName].loadOrgtCorpTree(orgtId);
+                    }*/
+                }
+                bt.loading.hide();
+            }, 'JSON');
+            return false;
+        });
+
+    });
+    /**
+     * 单位树加载时    选择的单位不可选择且单位下的子单位也不可选择
+     * @param nodes
+     * @returns {Array}
+     */
+    function beforeInitCorp(nodes) {
+        var corpId = $("#corpId").val();
+        for (k in nodes) {
+            var node = nodes[k];
+            if(corpId == node.corpId){
+                node.chkDisabled = true;
+            }
+            if (node.children && node.children.length > 0 && corpId == node.corpId) {
+                node.children = beforeSonCorp(node.children);
+            }else if(node.children && node.children.length > 0 ){
+                node.children = beforeInitCorp(node.children);
+            }
+        }
+        return nodes;
+    }
+
+    //把所有子单位都设置为禁用
+    function beforeSonCorp(nodes) {
+        for (k in nodes) {
+            var node = nodes[k];
+            node.chkDisabled = true;
+            if (node.children && node.children.length > 0) {
+                node.children = beforeSonCorp(node.children);
+            }
+        }
+        return nodes;
+    }
+
+
+
+</script>
+</html>

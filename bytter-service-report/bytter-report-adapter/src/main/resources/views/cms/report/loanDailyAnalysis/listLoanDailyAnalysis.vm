@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form" method="post">
+##        <input type="hidden" name="standardCurId" lay-verify="isNatualCur" value="$!{standardCurId}">
+        <input type="hidden" id="searchSatrtMonth" value="$!{searchSatrtMonth}">
+        <input type="hidden" id="searchEndMonth" value="$!{searchEndMonth}">
+        <input type="hidden" id="searchDateMax" value="$!{searchDateMax}">
+	    <table class="layui-table">
+	    	<tbody>
+	    	<tr>
+	    		<td class="textRight" >#springMessage('table.report.corpId')</td>##单位
+	    		<td >
+	    			<div class="bt-biz-corp"
+	    				 data-name="corpId"
+                         data-biz-name="corpId"
+        				 data-type="selectTree"
+        				 data-tree-type="check"
+        				 data-checkkboxtype="{'Y':'ps','N':'s'}"
+                         data-resource="cms:report:loandaily:anaylsis:query"
+        				 data-scope="all">
+        			</div>
+	    		</td>
+                <td class="textRight" >#springMessage('cms.report.loanType')</td>##融资种类
+                <td >
+                    <div class="bt-biz-dict"
+                         data-name="loanSign"
+                         data-biz-name="loanSign"
+                         data-type="select"
+                         data-group="Loan.Sign">
+                    </div>
+                </td>
+            ##是否包含在途金额
+                <td class="textRight">#springMessage("common.is.included")</td>
+                <td>
+                    <div class="layui-form">
+                        <div class="bt-biz-dict" data-type="radio" data-defaultvalue="1" data-biz-name="isContain"  data-name="isContain" data-group="sf_yn" ></div>
+                    </div>
+                </td>
+	    	</tr>
+			<tr>
+                <td class="textRight" >#springMessage('cms.report.cur')</td>##币别
+                <td >
+                    <input type="hidden" name="curCode" id="curCode" value="$!{standardCurId}">
+                    <div class="bt-biz-selectType"
+                         data-name="curId"
+                         data-biz-name="curId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id"
+                         data-textfield="curName"
+##                         data-defaultvalue="$!{standardCurId}"
+                         data-required="true"
+                         data-callback="changeCur"
+                    >
+                    </div>
+                </td>
+                <td class="textRight" >#springMessage('common.isConvert.currency')</td>##是否折合币种
+                <td >
+                    <div class="layui-form">
+                        <div class="bt-biz-dict is_not_render" data-type="radio" data-group="sf_yn" data-defaultvalue="0"
+                             data-name="isConvertStandCur" data-biz-name="isConvertStandCur" data-callback="changeCurSelect"></div>
+                    </div>
+                </td>
+                <td class="textRight" >#springMessage('commom.converted.into.currency')</td>##折合币种
+                <td >
+                    <div class="bt-biz-selectType"
+                         data-name="convertCurId"
+                         data-biz-name="convertCurId"
+                         data-url="${basePath}/basic/business/btcurrency/json"
+                         data-valuefield="id"
+                         data-textfield="curName"
+                         data-disabled = "true"
+                         data-callback="checkConvertCurCallBack"
+                    ##                         data-defaultvalue="$!{standardCurId}"
+                    >
+                    </div>
+                </td>
+			</tr>
+	    	<tr>
+                <td class="textRight" >#springMessage('common.moneyType')</td>##金额单位
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="cms.MoneyType"
+                         data-defaultvalue="1" data-value="$!{moneyUnit}"
+                         data-name="moneyUnit" data-biz-name="moneyUnit" data-selecttext="false"></div>
+                </td>
+	    		<td class="textRight" >#springMessage('table.report.searchFrequency')</td>##查询频率：默认按天查询
+                <td>
+                    <div class="bt-biz-dict"
+                         data-name="searchFrequency"
+                         data-biz-name="searchFrequency"
+                         data-type="select"
+                         data-group="search.frequency"
+                         data-defaultvalue="0"
+                         data-callback="setSearchDate">
+                    </div>
+                </td>
+                <td class="textRight" >#springMessage('cms.report.date')</td>##统计日期
+                <td >
+                    <div class="layui-inline dateShowDiv">
+                        <input type="text" data-biz-name="startDate" name="startDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="endDate"  data-today="true" data-callback="bt.changeStartDate"lay-verify="required" data-max="$!{searchDateMax}">
+                        <span class="date-mid">~</span>
+                        <input type="text"data-biz-name="endDate"  name="endDate" class="layui-input bt-input-inline bt-biz-dateType" id="endDate" data-today="true" data-callback="bt.changeEndDate" lay-verify="required" data-max="$!{searchDateMax}">
+                    </div>
+                </td>
+	    	</tr>
+            <tr>
+                <td class="textRight" >#springMessage('balance.query.Statistical.dimension')</td>##统计维度
+                <td >
+                    <div class="layui-form" autocomplete="off">
+                        <div class="bt-biz-dict" data-type="select" data-defaultvalue="0" data-selecttext="false" data-biz-name="typesOfStatistics"  data-required="true" data-name="typesOfStatistics" data-group="sort.type"  data-callback="setSortType"></div>
+                    </div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+	    	<tr>
+	    		<td colspan="6" style="text-align: center;">
+                    <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary" data-callback="resetCallback">#springMessage('common.button.reset')</button>
+	    		</td>
+	    	</tr>
+	    	</tbody>
+	    </table>
+    </form>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th rowspan="2">#springMessage('table.report.corpId')</th><!-- 单位 -->
+            <th rowspan="2">#springMessage('cms.report.cur')</th><!--币别  -->
+            <th colspan="2">#springMessage('table.report.current')</th><!--本期  -->
+            <th colspan="3">#springMessage('table.report.prior')</th><!--较上期  -->
+            <th colspan="3">#springMessage('table.report.lastYear')</th><!--较上年同期  -->
+        </tr>
+        <tr>
+            <th>#springMessage('table.report.endingBalance')</th><!--期末余额  -->
+            <th class="averageTh">#springMessage('table.report.dailyAverage')</th><!--日均  -->
+            <th class="averageTh">#springMessage('table.report.dailyAverage')</th><!--日均 -->
+            <th>#springMessage('table.report.difference')</th><!--差额  -->
+            <th>#springMessage('table.report.ratio')</th><!--比例  -->
+            <th class="averageTh">#springMessage('table.report.dailyAverage')</th><!--日均 -->
+            <th>#springMessage('table.report.difference')</th><!--差额  -->
+            <th>#springMessage('table.report.ratio')</th><!--比例  -->
+        </tr>
+        </thead>
+    </table>
+    <table id="bankTable" class="layui-table layui-form" style="width:100%;display: none">
+        <thead>
+        <tr>
+            <th rowspan="2">#springMessage('table.report.bankOrNet')</th><!-- 银行/结算中心 -->
+            <th rowspan="2">#springMessage('cms.report.cur')</th><!--币别  -->
+            <th colspan="2">#springMessage('table.report.current')</th><!--本期  -->
+            <th colspan="3">#springMessage('table.report.prior')</th><!--较上期  -->
+            <th colspan="3">#springMessage('table.report.lastYear')</th><!--较上年同期  -->
+        </tr>
+        <tr>
+            <th>#springMessage('table.report.endingBalance')</th><!--期末余额  -->
+            <th class="averageTh">#springMessage('table.report.dailyAverage')</th><!--日均  -->
+            <th class="averageTh">#springMessage('table.report.dailyAverage')</th><!--日均 -->
+            <th>#springMessage('table.report.difference')</th><!--差额  -->
+            <th>#springMessage('table.report.ratio')</th><!--比例  -->
+            <th class="averageTh">#springMessage('table.report.dailyAverage')</th><!--日均 -->
+            <th>#springMessage('table.report.difference')</th><!--差额  -->
+            <th>#springMessage('table.report.ratio')</th><!--比例  -->
+        </tr>
+        </thead>
+    </table>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/loan/cmsLoanDailyAnalysis.list.js?_btv=${resourceVersion}"></script>
+</html>

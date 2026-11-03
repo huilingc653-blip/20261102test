@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-table > thead th, .layui-table td {
+            position: static;
+        }
+        #page .wrapper {
+            margin-right: 20px;
+        }
+        .layui-table-contain-tr{
+            border-bottom:1px solid #e2e2e2 !important;
+        }
+        .layui-table-contain tr:nth-last-child(1)
+        {
+            border:none !important;
+        }
+        .layui-table-contain-itemFlag {
+            border-right:1px solid #e2e2e2 !important;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <table class="layui-table">
+        <tr>
+        ##授信银行
+            <td class="textRight" width="14%">#springMessage('table.ratBkration.bankName')</td>
+            <td width="36%" class="rCode">
+                <div class="layui-input-inline" >
+                    <select name="bankCode" id="bankCode" lay-search="" style="width: 200px">
+                        <option value="">#springMessage('common.placeholder.all')</option>
+                        #foreach($bank in $!{bankDTOs})
+                            #if($!{bank.bankCode} == $!{searchVO.bankCode})
+                                <option value="$!{bank.bankCode}" selected="selected">$!{bank.bankName}</option>
+                            #else
+                                <option value="$!{bank.bankCode}">$!{bank.bankName}</option>
+                            #end
+                        #end
+                    </select>
+                </div>
+            </td>
+        ##授信单位
+            <td class="textRight">#springMessage('table.ratBkration.corpId')</td>
+            <td class="rCode">
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-biz-type="corp" data-type="selectTree"
+                         data-tree-type="check" data-checkkboxtype='{"Y":"s","N":"s"}' data-resource="cms:rat:amountCalculate:query"
+                         data-name="corpId" data-scope="all" data-biz-name="corpId" data-defaultvalue="$!{searchVO.corpId}"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##授信品种
+            <td class="textRight" width="14%">#springMessage('table.ratBkrationDetail.itemCode')</td>
+            <td class="rCode" width="36%">
+                <div class="layui-inline">
+                    <div class="selectDemo bt-biz-mulselectType" id="itemCode" data-biz-name="itemCode" data-method="get" data-defaultvalue="$!{searchVO.itemCode}"
+                         data-url="${basePath}/cms/rat/ratitemcustom/getAllRatItem?type=0" data-valuefield="id" data-textfield="name"
+                         data-name="itemCode" ></div>
+                </div>
+            </td>
+        ##授信币种
+            <td class="textRight">
+                #springMessage('table.ratBkration.curCode')
+            </td>
+            <td class="rCode">
+                <div class="layui-inline showCur">
+                    #if($!{searchVO.isConvertCur}=="1")
+                        <div class="selectDemo bt-biz-mulselectType" data-biz-name="curCode" data-method="get"
+                             data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id"
+                             data-textfield="curName" data-required="true" data-callback="checkConvertCurCallBack"
+                             data-name="curCode" data-defaultvalue="$!{searchVO.curCode}"></div>
+                        #else
+                            <div class="bt-biz-selectType" data-biz-name="curCode"
+                                 data-url="${basePath}/basic/business/btcurrency/json"
+                                 data-valuefield="id" data-textfield="curName" data-name="curCode"
+                                 data-defaultvalue="$!{searchVO.curCode}"></div>
+                    #end
+                </div>
+            </td>
+        </tr>
+        <tr>
+        ##是否折合币种
+            <td class="textRight">#springMessage('common.isConvert.currency')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" data-type="radio" data-group="sf_yn" data-value="$!{searchVO.isConvertCur}" data-defaultvalue="0"
+                         data-name="isConvertCur" data-biz-name="isConvertCur" data-callback="isConvertCallBack"></div>
+                </div>
+            </td>
+        ##汇率类型
+            <td class="textRight">#springMessage('table.btRateType.typeName')</td>
+            <td>
+                <div type="list" data-name="exRateType" data-biz-name="exRateType" class="bt-biz-selectType"
+                    #if($!{searchVO.isConvertCur}!="1")
+                     data-disabled="true"
+                     #else
+                     data-required="true"
+                    #end
+                     data-value="$!{searchVO.exRateType}"
+                     data-url="${basePath}/cms/report/ratBkAmountCalculate/getExchangeRate" data-valueField="id" data-textField="typeName" ></div>
+            </td>
+        </tr>
+        <tr>
+        ##折合币种
+            <td class="textRight">#springMessage('commom.converted.into.currency')</td>
+            <td>
+                <div class="bt-biz-selectType" data-name="convertCurId" data-biz-name="convertCurId"
+                    #if($!{searchVO.isConvertCur}!="1")
+                     data-disabled="true"
+                     #else
+                     data-required="true"
+                    #end
+                     data-inputValue="false"
+                     data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id"
+                     data-callback="checkConvertCurCallBack"
+                     data-textfield="curName" data-defaultvalue="$!{searchVO.convertCurId}"></div>
+            </td>
+        ##预测结束日期
+            <td class="textRight">#springMessage('table.ratBkration.calEndDate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input type="text" data-type="date" data-biz-name="calEndDate" data-min="$date.format('yyyy-MM-dd',$!{curDate})"
+                           class="layui-input bt-biz-dateType" value="$!{searchVO.calEndDate}">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                <button class="layui-btn" lay-submit="" lay-filter="excel"  type="button">#springMessage('common.button.exports')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<div style="width:100%;overflow:auto" >
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th width="14%">#springMessage('table.ratBkration.bankName')</th>
+            <th width="16%">#springMessage('table.ratBkration.corpId')</th>
+            #if($!{searchVO.isConvertCur}!="1")
+                <th width="6%">#springMessage('table.ratBkration.curCode')</th>
+            #end
+            <th width="6%">#springMessage('table.ratBkration.begindate')</th>
+            <th width="6%">#springMessage('table.ratBkration.enddate')</th>
+            <th width="7%">#springMessage('table.ratBkrationDetail.itemCode')</th>
+            <th width="8%">#springMessage('table.ratBkration.money')</th>
+            <th width="8%">#springMessage('table.ratBkrationDisDetail.superProcessMoney')</th>
+            <th width="8%">#springMessage('table.ratBkrationDisDetail.checkProcessMoney')</th>
+            <th width="8%">#springMessage('table.ratBkration.releaseMoney')</th>##预测释放额度
+            <th width="8%">#springMessage('table.ratBkration.calLeftMoney')</th>##预测剩余额度
+        </tr>
+        </thead>
+        <tbody>
+            #if($!ratBean&&$!ratBean.size()>0)
+                #foreach($rat in $!{ratBean})
+                <tr>
+                        #if($!{rat.corpId} =='total')<!--币别合计  -->
+                        <td align="right" style='color: red;'
+                            #if($!{searchVO.isConvertCur}!="1")
+                            colspan="6"
+                            #else
+                            colspan="5"
+                            #end
+                          >
+                        $!{rat.corpName}</td>
+                        <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.money})</td>
+                        <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.useMoney})</td>
+                        <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.approveMoney})</td>
+                        <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.calReleaseMoney})</td>
+                        <td align="right" style='color: red;'>$!number.formatNumeric($!{rat.calLeftMoney})</td>
+                    </tr>
+                    #else
+                        #set ($corpCount = 1 )
+                    <td align="right" rowspan="$!{rat.totalSize}">$!{rat.bankName}</td>
+                        #foreach($corp in $!{rat.corpDtls})
+                            #if($!corpCount!=1)<!--第二个单位换行  -->
+                            <tr>
+                            #end
+                                #if($!{corp.corpId}=='subTotal')<!--币别小计  -->
+                                <td align="right" style='color: green;'
+                                    #if($!{searchVO.isConvertCur}!="1")
+                                    colspan="5"
+                                    #else
+                                    colspan="4"
+                                    #end
+                                >$!{corp.corpName}</td>
+                                <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.money})</td>
+                                <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.useMoney})</td>
+                                <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.approveMoney})</td>
+                                <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.calReleaseMoney})</td>
+                                <td align="right" style='color: green;'>$!number.formatNumeric($!{corp.calLeftMoney})</td>
+                            #else
+                                <td align="center" rowspan="$!{corp.rationSize}">$!{corp.corpName}</td>
+                                #if($!{searchVO.isConvertCur}!="1")
+                                    <td align="center" rowspan="$!{corp.rationSize}">$!{corp.curName}</td>
+                                #end
+                                <td align="center" rowspan="$!{corp.rationSize}">$!{corp.beginDate}</td>
+                                <td align="center" rowspan="$!{corp.rationSize}">$!{corp.endDate}</td>
+                                #set($itemCount=1)
+                                #foreach($item in $!{corp.rationDlts})
+                                        #if($!itemCount!=1)<!--第二条明细换行  -->
+                                    <tr>
+                                    #end
+                                <td align="center" style="padding: 0">
+                                    #if($!{item.itemFlag} == "0")
+                                    $!{item.itemName}
+                                    #else
+                                        <table style="width: 100%;">
+                                            <tr>
+                                                <td rowspan="$!{item.rationSize}" class="layui-table-contain-itemFlag">$dictTag.get("RatModel.ItemFlag", 1)</td>
+                                                <td style="padding: 0">
+                                                    <table class="layui-table-contain" style=" width: 100%;">
+                                                        #foreach($dtl in $!{item.rationDlts})
+                                                            <tr class="layui-table-contain-tr">
+                                                                <td align="center" >$!{dtl.itemName}</td>
+                                                            </tr>
+                                                        #end
+                                                    </table>
+                                                </td>
+                                            <tr>
+                                        </table>
+                                    #end
+                                </td>
+                                    <td align="right">$!number.formatNumeric($!{item.money})</td>
+                                    <td align="right">$!number.formatNumeric($!{item.useMoney})</td>
+                                    <td align="right">$!number.formatNumeric($!{item.approveMoney})</td>
+                                    <td align="right">$!number.formatNumeric($!{item.calReleaseMoney})</td>
+                                    <td align="right">$!number.formatNumeric($!{item.calLeftMoney})</td>
+                                    #if($!itemCount!=1)
+                                    </tr>
+                                    #end
+                                    #set($itemCount = $itemCount+1)
+                                #end
+                                #if($!corpCount==1)<!--第一个条银行结束  -->
+                                </tr>
+                                #end
+                                #set($corpCount = $corpCount+1)
+                            #end
+                        #end
+                    #end
+                #end
+                #else
+                <tr>
+                    <td colspan="11" align="center">#springMessage('common.msg.temporarily_no_data')</td>
+                </tr>
+            #end
+        </tbody>
+    </table>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratBkAmountCal.list.js?_btv=${resourceVersion}"></script>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+<input type="hidden" name="changeType" id="changeType" value="${changeType}">
+</form>
+<div>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('common.table.thead.operation')</th>
+<!--         <th>#springMessage('table.ratUrationApply.corpNo')</th> -->
+        <th>#springMessage('table.ratBkration.bankName')</th> ##授信银行
+        <th>#springMessage('table.ratBkration.ratCode')</th>##授信编号
+        <th>#springMessage('table.ratBkration.contractNo')</th>##授信合同号
+        <th>#springMessage('table.ratBkrationDetail.itemCode')</th>
+        <th align="center">#springMessage('table.ratBkrationDetail.creditType')</th> ## 授信方式
+        <th>#springMessage('table.ratBkration.money')</th>
+        <th>#springMessage('table.ratBkrationDisDetail.superProcessMoney')</th>##占用额度
+        <th>#springMessage('table.ratBkrationDisDetail.checkProcessMoney')</th>##在审占用额度
+        <th>#springMessage('table.ratBkrationDisDetail.leftDisMoney')</th>##剩余授信额度
+        <th>#springMessage('table.ratBkrationDisDetail.overPlusMoney')</th>##可用额度
+        <th>#springMessage('table.ratBkrationDisDetail.ratOccupyRatio')</th>##授信占用比列
+        <th bgcolor style="color:red;">#springMessage('table.ratBkrationDisDetail.ratOccupiedRation')</th>##已占用比列
+        <th>#springMessage('table.ratBkration.curCode')</th>
+        <th>#springMessage('table.ratUrationApply.beginDate')</th>
+        <th>#springMessage('table.ratUrationApply.endDate')</th>
+    </tr>
+    </thead>
+#if($!{rationDtls} == "1")
+#foreach($ration in $!{rations})
+    #set($ratNo = $!{ration.ratNo})
+    #set($contractNo = $!{ration.contractNo})
+    #set($bankTypeName = $!{ration.bankTypeName})
+	<tr>
+	#foreach($rationDlt in $!{ration.rationDlts})
+		#set($vcount = $velocityCount - 1)
+		#if($!{vcount} == "0")
+		<td align="center"><a href="#" onclick="rationselect('$!{ration.ratCode}','$!{rationDlt.itemFlag}','$!{rationDlt.itemCode}',
+                '$!{rationDlt.overPlusMoney}','$!{rationDlt.leftMoney}','$!{rationDlt.assurepercent}',
+                '$!{ration.isHangGuarantee}','$!{rationDlt.bankCode}','$contractNo','$bankTypeName','$!{rationDlt.bankName}')">#springMessage('common.button.select')</td>
+			#if($!{rationDlt.itemFlag} == "0")
+                <td align="center">$!{rationDlt.bankName}</td>
+                <td align="center">$ratNo</td>
+                #if(!$contractNo)
+                    <td align="center"></td>
+                #else
+                    <td align="center">$contractNo</td>
+                #end
+                <td align="center">$!{rationDlt.itemName}</td>
+                <td align="center">$dictTag.get("rat.creditType",$!{rationDlt.creditType})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.money})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.useMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.approveMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.leftMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.overPlusMoney})</td>
+                <td align="right">$number.formatNumeric($math.mul($!{rationDlt.ratOccupyRatio},100),"0.00")%</td>
+			#else
+                <td align="center">$!{rationDlt.bankName}</td>
+                <td align="center">$ratNo</td>
+                #if(!$contractNo)
+                    <td align="center"></td>
+                #else
+                    <td align="center">$contractNo</td>
+                #end
+                <td align="center">
+                    <table class="layui-table" width="100%" style="margin:0px">
+                        <tr>
+                            <th>#springMessage("table.ratBkrationDetail.itemCode")</th>
+                            <th>#springMessage("table.ratBkrationDetail.leftMaxMoney")</th>
+                        </tr>
+						#foreach($uratDtl in $!{rationDlt.rationDlts})
+							#set($vcount1 = $velocityCount - 1)
+                            <tr>
+                                <td align="center">$!{uratDtl.itemName}</td>
+                                <td align="right">$number.formatNumeric($!{uratDtl.itemMoney})</td>
+                            </tr>
+						#end
+                    </table>
+                </td>
+                <td align="center">$dictTag.get("rat.creditType",$!{rationDlt.creditType})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.money})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.useMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.approveMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.leftMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.overPlusMoney})</td>
+                <td align="right">$number.formatNumeric($math.mul($!{rationDlt.ratOccupyRatio},100),"0.00")%</td>
+			#end
+		<td align="center" style="color:red;font-weight: bold;" rowspan="$!{ration.rationSize}">$number.formatNumeric($math.mul($!{ration.ratOccupiedRation},100),"0.00")%</td>
+		<td align="center" rowspan="$!{ration.rationSize}">$!{ration.curName}</td>
+		<td align="center" rowspan="$!{ration.rationSize}">$!date.format('yyyy-MM-dd',$!ration.beginDate)</td>
+		<td align="center" rowspan="$!{ration.rationSize}">$!date.format('yyyy-MM-dd',$!ration.endDate)</td>
+		#else
+        </tr>
+        <tr>
+            <td align="center"><a href="#" onclick="rationselect('$!{ration.ratCode}','$!{rationDlt.itemFlag}',
+                    '$!{rationDlt.itemCode}','$!{rationDlt.overPlusMoney}','$!{rationDlt.leftMoney}','$!{rationDlt.assurepercent}',
+                    '$!{ration.isHangGuarantee}','$!{rationDlt.bankCode}','$!{contractNo}','$bankTypeName','$!{rationDlt.bankName}')">#springMessage('common.button.select')</td>
+			#if($!{rationDlt.itemFlag} == "0")
+                <td align="center">$!{rationDlt.bankName}</td>
+                <td align="center">$ratNo</td>
+                #if(!$contractNo)
+                    <td align="center"></td>
+                #else
+                    <td align="center">$contractNo</td>
+                #end
+                <td align="center">$!{rationDlt.itemName}</td>
+                <td align="center">$dictTag.get("rat.creditType",$!{rationDlt.creditType})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.money})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.useMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.approveMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.leftMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.overPlusMoney})</td>
+                <td align="right">$number.formatNumeric($math.mul($!{rationDlt.ratOccupyRatio},100),"0.00")%</td>
+			#else
+                <td align="center">$!{rationDlt.bankName}</td>
+                <td align="center">$ratNo</td>
+                #if(!$contractNo)
+                    <td align="center"></td>
+                #else
+                    <td align="center">$contractNo</td>
+                #end
+                <td align="center">
+                    <table class="layui-table" width="100%" style="margin:0px">
+                        <tr>
+                            <th>#springMessage("table.ratBkrationDetail.itemCode")</th>
+                            <th>#springMessage("table.ratBkrationDetail.maxMoney")</th>
+                        </tr>
+						#foreach($uratDtl in $!{rationDlt.rationDlts})
+							#set($vcount1 = $velocityCount - 1)
+                            <tr>
+                                <td align="center">$!{uratDtl.itemName}</td>
+                                <td align="right">$number.formatNumeric($!{uratDtl.itemMoney})</td>
+                            </tr>
+						#end
+                    </table>
+                </td>
+                <td align="center">$dictTag.get("rat.creditType",$!{rationDlt.creditType})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.money})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.useMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.approveMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.leftMoney})</td>
+                <td align="right">$number.formatNumeric($!{rationDlt.overPlusMoney})</td>
+                <td align="right">$number.formatNumeric($math.mul($!{rationDlt.ratOccupyRatio},100),"0.00")%</td>
+			#end
+		#end
+	#end
+</tr>
+#end
+#else
+<tr>
+	<td colspan="14" align="center"><font color="red">#springMessage('cms.rat.bkration.notexists')</font></td>
+</tr>
+#end
+</table>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/bkration/ratUrationSelect.list.js?_btv=${resourceVersion}"></script>
+</html>

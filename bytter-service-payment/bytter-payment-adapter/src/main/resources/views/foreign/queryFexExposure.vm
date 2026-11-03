@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+		<table class="layui-table">
+			<tbody>
+				<tr>
+                    <td class="textRight" width="12%">#springMessage('table.nisBillhead.corpId')</td>
+                    <td width="20%">
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-corp"
+                                 data-biz-type="corp"
+                                 data-type="selectTree"
+                                 data-name="corpId"
+                                 data-biz-name="corpId"
+                                 data-scope="all"
+                                 data-resource="foreign:fexexposurereport:query"
+                                 data-required="true"
+                                 data-callback="bt.corpCallback"></div>
+                        </div>
+                    </td>
+					<td class="textRight" width="12%">#springMessage('table.fexExposureTemplate.templateName')</td>
+					<td width="20%">
+                        <div class="bt-biz-selectType" data-url="${basePath}/foreign/fexCorpExposureTemplate/json?corpId=-1" data-name ="templateId" data-biz-name ="templateId"
+                             data-valueField="templateId" data-textField="templateName" data-required = "true" data-callback="bt.templateIdCallback" data-beforeInit="templateBeforeInit"></div>
+                    </td>
+                    <td class="textRight" width="13%">#springMessage('table.fexExposure.enrolDate')</td>
+                    <td width="25%">
+                        <input type="text" class="layui-input" id="enrolDate" name="enrolDate">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">#springMessage('table.nisBillhead.curId')</td>
+                    <td>
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-mulselectType" data-url="${basePath}/foreign/fexCorpExposureTemplate/listCurByCorpExposureId?corpId=-1&templateId=-1" data-method="get" data-name ="curId" data-biz-name ="curId"
+                                 data-valueField="id" data-textField="englishCode" data-inputvalue="inputvalue" data-search="true"></div>
+                        </div>
+                    </td>
+                    <td class="textRight">#springMessage('table.fbsBudgetYear.itemCode')</td>
+                    <td>
+                        <div class="layui-input-inline">
+                            <div class="bt-biz-mulselectType" data-url="${basePath}/foreign/fexCorpExposureTemplate/listTemplateItemById?id=-1" data-method="get" data-name ="itemCode" data-biz-name ="itemCode"
+                                 data-valueField="itemCode" data-textField="itemName" data-inputvalue="inputvalue" data-search="true" data-beforeInit="itemCodeBeforeInit"></div>
+                        </div>
+                    </td>
+                    <td class="textRight">#springMessage('table.fexExposure.exposurePeriod')</td>
+                    <td>
+                        <input type="text" name="beginDate" class="layui-input bt-input-inline bt-biz-dateType"
+                               data-endid="endDate" data-biz-name="beginDate">
+                        <span class="date-mid">~</span>
+                        <input type="text" name="endDate" class="layui-input bt-input-inline bt-biz-dateType"
+                               id="endDate" data-biz-name="endDate">
+                    </td>
+                </tr>
+                #*<tr>
+                    <td class="textRight">#springMessage('table.fexExposure.sumUnit')</td>
+                    <td>
+                        <div class="bt-biz-dict" data-type="select" data-group="fexExposureTemplate.timeType"
+                             data-name="sumUnit" data-biz-name="sumUnit" data-displayData="1,2"></div>
+                    </td>
+                </tr>*#
+    			<tr >
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+    				</td>
+    			</tr>
+            </tbody>
+		</table>
+        <!-- 敞口上报 -->
+        <div id="tagExposure"></div>
+    </form>
+#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form', 'layedit', 'btdate', 'moneyType', 'toLigerTree', 'corp', 'selectType', 'mulselect','dicts','dateType'], function () {
+        var $ = bt.jquery, form = bt.form();
+        /** 月份 begin*/
+        var laydate = bt.laydate;
+
+        // 设置可选的日期
+        function maxDate() {
+            var now = new Date();
+            return now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+        }
+
+        laydate.render({
+            elem: '#enrolDate'
+            , max: maxDate()
+            , type: 'month'
+        });
+        /** 月份 end*/
+        itemCodeBeforeInit = function (data) {
+            for (var i = 0; i < data.length; i++) {
+                data[i].itemName = "("+data[i].itemCode+")" + data[i].itemName;
+            }
+            return data;
+        }
+        var mulselect = bt.mulselect.init();
+        bt.corpCallback = function (id) {
+            selectType.get("templateId").attr({"data-value": "",
+                "data-url": basePath + "/foreign/fexCorpExposureTemplate/json?corpId=" + id});
+            selectType.render();
+        }
+        var corp = bt.corp.init();
+        var dicts = bt.dicts.init();
+        var dateType = bt.dateType.init();
+        //单位模板回调函数
+        bt.templateIdCallback = function (data) {
+            var corpId = corp.get("corpId").val();
+            var templateId = selectType.get("templateId").val();
+            mulselect.get("curId").attr({"data-value": "",
+                "data-url": basePath + "/foreign/fexCorpExposureTemplate/listCurByCorpExposureId?corpId=" + corpId + "&templateId=" + templateId});
+            mulselect.get("itemCode").attr({"data-value": "",
+                "data-url": basePath + "/foreign/fexCorpExposureTemplate/listTemplateItemById?id=" + templateId});
+            mulselect.render();
+        }
+        templateBeforeInit = function (data,arguments) {
+            var show = "("+arguments.templateCode+")" + arguments.templateName;
+            return show;
+        }
+        var selectType = bt.selectType.init();
+
+        form.on('submit(search)', function (data) {
+            var corpId = corp.get("corpId").val();
+            var templateId = selectType.get("templateId").val();
+            var enrolDate = $('#enrolDate').val();
+            //获取单位敞口信息
+            $.ajax({
+                url: basePath + "/foreign/fexExposure?getCorpExposure",
+                method: 'POST',
+                data: {corpId: corpId,templateId:templateId,enrolDate:enrolDate},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.obj) {
+                        if (data.obj.id) {
+                            //币种
+                            var cur = bt.mulselect.get("curId").val();
+                            var curId = "";
+                            for(var i=0;i<cur.length;i++){
+                                if(cur[i] && cur[i].id) {
+                                    curId = curId + cur[i].id + ',';
+                                }
+                            }
+                            if (curId == "") {
+                                curId = data.obj.curId;
+                            }
+                            //科目
+                            var item = bt.mulselect.get("itemCode").val();
+                            var itemCode = "";
+                            for(var i=0;i<item.length;i++){
+                                if(item[i] && item[i].itemcode) {
+                                    itemCode = itemCode + item[i].itemcode + ',';
+                                }
+                            }
+                            var beginDate = dateType.get("beginDate").val();
+                            var endDate = dateType.get("endDate").val();
+                            var sumUnit = dicts.get("sumUnit").val();
+                            $genExposureHtml(data.obj.id, curId, itemCode, beginDate, endDate, sumUnit);
+                        }
+                    } else {
+                        $("#tagExposure").html("");
+                        layer.alert(bt.lang("foreign.message.exposure.notinput"), {icon: 7});
+                    }
+                    form.render();
+                }
+            });
+        });
+
+        /**
+         * 生成敞口上报信息
+         * @return
+         */
+        $genExposureHtml = function (id, curId, itemCode, beginDate, endDate, sumUnit) {
+            $.ajax({
+                url: basePath + "/foreign/fexExposure/viewQuery",
+                method: 'POST',
+                data: {id: id,curId:curId,itemCode:itemCode,beginDate:beginDate,endDate:endDate,sumUnit:sumUnit},
+                async: true,
+                success: function (json) {
+                    $("#tagExposure").html("");
+                    $("#tagExposure").html(json);
+                    form.render();
+                    form.renderIcon();
+                }
+            });
+        }
+    });
+</script>
+</html>

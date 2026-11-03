@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form" method="post">
+		<table class="layui-table">
+		<tbody>
+			<tr>
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.raceCode")</td>
+				<td width="35%">
+					<input type="text" id="raceCode" name="raceCode" lay-verify="required"
+						 		 class="layui-input" placeholder="#springMessage('finacial.paramconfig.fcbusrace.raceCode')">
+				</td>
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.raceName")</td>
+				<td width="35%">
+					<input type="text" id="raceName" name="raceName"
+						  lay-verify="required" class="layui-input" placeholder="#springMessage('finacial.paramconfig.fcbusrace.raceName')">
+				</td>
+			</tr>
+			<tr>
+           		<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.netId")</td>
+				<td width="35%">
+					<div class="bt-biz-corp"  data-biz-type="net" data-type="select" data-name="netIds" data-tree-type="check"
+   																					  data-required="true"	 data-scope="all"></div>
+				</td>
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.sysRaceCode")</td>
+				<td width="35%">
+					<div  data-required="true">
+			         <div class="layui-inline">
+	                	<div class=bt-biz-selectType data-name="sysRaceCode" data-biz-name="sysRaceCode" data-width="280px"
+	                		data-search="true" data-textField="sysRaceName" data-valueField="sysRaceCode" data-url="${basePath}/paramconfig/fcbusinessruledefine/json" >
+                		</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4" style="text-align: center;">
+                 	<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage("common.button.submit")</button>
+                	<button type="reset" class="layui-btn layui-btn-primary">#springMessage("common.button.reset")</button>
+          		</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','layedit','corp','selectType'], function(){
+		$ = bt.jquery,form = bt.form();
+		bt.corp.init();
+		bt.selectType.init();
+		//监听提交
+        form.on('submit(submit)', function(data){
+        	bt.loading.show();//显示加载中
+        	var codeLen =data.field['raceCode'];
+        	var nameLen =data.field['raceName'];
+        	if(strLen(codeLen) > 10){//业务种类代码
+        		layer.msg(bt.lang('table.fcBusRace.raceCodeLengthBeyond'));
+        		bt.loading.hide(); //关闭加载中
+        		return false;
+        	}
+        	if(strLen(nameLen) > 60){
+        		layer.msg(bt.lang('table.fcBusRace.raceNameLengthBeyond'));
+        		bt.loading.hide(); //关闭加载中
+        		return false;
+        	}
+        	//判断长度
+            var action = "/paramconfig/fcbusrace/save/";
+            $.post(basePath + action,data.field,function(result){
+                if(result.success){
+                    parent.layer?parent.layer.closeAll():layer.closeAll();
+					window.top.refreshParentFlag = true
+                }
+                bt.loading.hide(); //关闭加载中
+                parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+            return false;
+        });
+
+	});
+
+  	//获取字符串长度
+    function strLen(str) {
+    	var len = 0;
+    	for (var i=0; i<str.length; i++) {
+    		if (str.charCodeAt(i)>127 || str.charCodeAt(i)==94) {
+    			len += 2;
+    		} else {
+    			len ++;
+    		}
+    	}
+    	return len;
+    }
+</script>

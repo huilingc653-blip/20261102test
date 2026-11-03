@@ -1,0 +1,172 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>测试H5-JS桥接通信</title>
+
+</head>
+#set($resourceVersion=$resourceVersion.get())
+#set($basePath=$springMacroRequestContext.contextPath)
+<link rel="stylesheet" href="${basePath}/static/plugins/frozen/css/frozenui.css?_btv=${resourceVersion}"">
+<style>
+    html {
+        width: 100%
+    }
+
+    body {
+        -webkit-user-select: initial;
+        background-color: #FFFFFF;
+        width: 100%;
+        margin: 0;
+    }
+
+    p {
+        margin: 0;
+    }
+
+
+    .index-wrap .header {
+        text-align: center;
+        padding-top: 0;
+        height: 245px;
+        line-height: 245px;
+        -webkit-background-size: 100% auto;
+        background-image: url("${basePath}/static/images/bg/bg_report@3x.png?v=165623");
+        background-size: 100% 100%;
+        margin-top: -1px;
+    }
+
+    .index-wrap {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    a.nav-box {
+        height: 124px;
+        width: 50%;
+        float: left;
+        position: relative;
+        color: #686868;
+        font-size: .6875rem;
+        display: block;
+        padding-bottom: 10px;
+        text-align: center;
+        font-family: PingFang-Medium, PingFangSC-Regular, Helvetica;
+        background-color: #FFFFFF;
+        box-sizing: border-box;
+    }
+
+    .nav-box > span {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+
+    .nav-box > div {
+        height: 40%;
+        margin-bottom: 18px;
+    }
+
+    .nav-box > p {
+        color: #656565;
+        font-size: 14px;
+        margin-top: 30px;
+    }
+
+    .nav-box > div > img {
+        margin-top: 30px;
+    }
+
+    .nav-boder {
+        border-left: 1px solid #E4E4E4;
+        border-right: 1px solid #E4E4E4;
+        border-bottom: 1px solid #E4E4E4;
+    }
+
+    .boderBottom {
+        border-bottom: 1px solid #E4E4E4;
+    }
+
+    .header > h1 {
+        margin: 0;
+        color: #FFFFFF;
+        font-size: 32px;
+    }
+</style>
+
+<body>
+
+<button onclick="testRequestData()" class="ui-btn">测试请求数据方法</button>
+
+</body>
+
+<script src="${basePath}/static/plugins/frozen/js/zepto.min.js?_btv=${resourceVersion}"></script>
+<script type="text/javascript">
+    window.BTAppBridge = {
+        post: function(url,params,callback){
+            var obj = {
+                type:'requestData',
+                method:'post',
+                params:params||{},
+                callback:callback
+            };
+            obj.params.forwardURL=url;
+            top.postMessage(JSON.stringify(obj),'*');
+        },
+        get: function(url,params,callback){
+            alert("get");
+            var obj = {
+                type:'requestData',
+                method:'get',
+                params:params||{},
+                callback:callback
+            };
+            obj.params.forwardURL=url;
+            top.postMessage(JSON.stringify(obj),'*');
+        },
+    };
+    window.document.addEventListener('message', function (event) {
+        var data = JSON.parse(event.data);
+        console.log("currentPage.message",data);
+        switch(data.type){
+            case 'requestData':
+                if(data.callback){
+                    var Fn = Function;
+                    var func = new Fn('return ' + data.callback)();
+                    func && func(data.result);
+                }
+                break;
+        }
+    },false);
+</script>
+
+<script type="text/javascript">
+
+    // 用于记录页面的查询参数
+    const searchParams = {
+        corpIds: [],
+        corpNames: [],
+        datePickData: {
+            startDate: null,
+            endDate: null,
+        },
+    };
+
+    $(document).ready(function () {
+
+    });
+
+    window.testCallback = function(data){
+        alert(data);
+        //data为回调数据
+    }
+
+    function testRequestData() {
+        // alert("testRequestData")
+        setTimeout(function () {
+            BTAppBridge.post("/api/chart/testPage1",{aaa:"aaaa"},"testCallback");
+        }, 100);
+    }
+
+
+</script>

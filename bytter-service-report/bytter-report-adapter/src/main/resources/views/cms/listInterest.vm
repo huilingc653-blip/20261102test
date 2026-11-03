@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form" method="post">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##单位
+            <td class="textRight">#springMessage('table.cmsLoanInfo.corp')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-corp"
+                         data-type="selectTree"
+                         data-name="ins_corpId"
+                         data-resource="bi:cms:interest:query"
+                         data-scope="all"
+                         data-tree-type="check">
+                    </div>
+                </div>
+            </td>
+            ##借款银行
+            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.bankId')</td>
+            <td>
+                <div class="layui-inline">
+                    <input name="likes_bankName" id="bankName" class="layui-input" type="text">
+                </div>
+            </td>
+            ##还款日
+            <td class="textRight">#springMessage('table.cmsProvideLoanRepay.repayDate')</td>
+            <td>
+                <div class="layui-inline">
+                    <input name="ged_repayDate" data-biz-name="startRepayDate" data-name="startRepayDate" data-endid="endRepayDate" class="layui-input bt-biz-dateType" type="text">
+                </div>
+                <div class="layui-inline">
+                    <span class="date-mid">~</span>
+                </div>
+                <div class="layui-inline">
+                    <input name="led_repayDate" id="endRepayDate" data-name="endRepayDate" data-biz-name="endRepayDate" class="layui-input bt-biz-dateType" type="text">
+                </div>
+            </td>
+        </tr>
+        <tr>
+##            币种
+            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.curId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-name="eqs_curId"
+                     data-url="${basePath}/basic/business/btcurrency/json" data-valuefield="id" data-textfield="curName"
+                     data-defaultvalue=""></div>
+            </td>
+            ##发放单号
+            <td class="textRight" style="width: 10%">#springMessage('table.cmsProvideLoanSend.billCode')</td>
+            <td style="width: 25%">
+                <input type="text" class="layui-input" name="likes_sendBillNo" placeholder="#springMessage('table.cmsProvideLoanSend.billCode')"/>
+            </td>
+            ##借款种类
+            <td class="textRight" style="width: 15%">#springMessage('table.cmsProvideLoanInfo.plClass')</td>
+            <td >
+                <div class="layui-inline">
+                    <div class="bt-biz-selectType" data-name="ins_plClass"
+                         data-biz-name="ins_plClass"
+                         data-url="${basePath}/cms/provide/loaninfo/queryLoanTypeList"
+                         data-valuefield="code"  data-textfield="name" ></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            ## 借款单号
+            <td class="textRight" style="width: 15%">#springMessage('借款单号')</td>
+            <td >
+                <input type="text" class="layui-input" name="likes_infoBillNo"  placeholder="#springMessage('借款单号')"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cmsLoanInfo.corp')</th><!-- 申请单位 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.bankId')</th><!-- 借款银行 -->
+        <th>#springMessage('借款单号')</th><!-- 申请单号 -->
+        <th>#springMessage('table.cmsProvideLoanInfo.curId')</th><!-- 币种 -->
+        <th>#springMessage('到期日期')</th><!-- 到期日 -->
+        <th>#springMessage('借款种类')</th><!-- 借款种类 -->
+        <th>#springMessage('利率')</th><!-- 利率 -->
+        <th>#springMessage('年限')</th><!-- 年限 -->
+        <th>#springMessage('借款用途')</th><!-- 借款用途 -->
+        <th>#springMessage('table.cmsProvideLoanSend.billCode')</th><!-- 发放单号 -->
+        <th>#springMessage('table.cmsProvideLoanSend.money')</th><!-- 发放金额 -->
+        <th>#springMessage('cms.report.loan.FinancingBalance')</th><!-- 融资余额-->
+        <th>#springMessage('table.cmsProvideLoanSend.sendDate')</th><!-- 发放日期-->
+        <th>#springMessage('table.cmsProvideLoanRepay.repayDate')</th><!-- 还款日期-->
+        <th>#springMessage('bi.interest.report.repayMoney')</th><!-- 应还本金-->
+        <th>#springMessage('table.cms.loan.interest.payable')</th><!-- 应付利息-->
+        <th>#springMessage('bi.interest.report.repayTotal')</th><!-- 应付合计 -->
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    var dateType;
+    bt.use(['form', 'datatable', 'corp', 'moneyType', 'dateType', 'selectType'], function () {
+        $ = bt.jquery, form = bt.form(), moneyFun = bt.moneyType.getFun();
+        bt.corp.init();//单位
+        bt.moneyType.init();//金额
+        dateType = bt.dateType.init();//日期
+        bt.selectType.init();//日期
+        var dateFun = bt.dateType.getFun();
+
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = now.getMonth();
+        var date1 = new Date(year + "-" + (month) + "-" + "01");
+        date1 = bt.date.addMonth(date1, 2);
+        date1 = bt.date.addDay(date1, -1);
+
+        var endRepayDate = bt.date.format(date1);
+        dateType.get("endRepayDate").val(endRepayDate);
+        dateType.get("startRepayDate").val(bt.date.format(now));
+        //生成列表
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            //colReorder: true,
+            checkbox: true,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            order: [[2, 'asc'],[13, 'asc']],
+            fixedColumns: {
+                leftColumns: 1,//代表冻结左边两列
+            },
+            ajax: {
+                'url': basePath + "/bi/cms/interestReport/datatable"
+            },
+            buttons: [
+                {
+                    extend: "colvis",
+                    text: bt.lang('common.button.theadHide'),
+                    columns: ':not(:first):not(:last)'
+                }
+            ],
+            columns: [
+                {
+                    data: "corpId",
+                    bSortable: true,
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        return full.corpName;
+                    }
+                },
+                {
+                    data: "bankName",
+                    bSortable:false,
+                    className: "center"
+                },
+                {
+                    data: "infoBillNo",
+                    bSortable: true,
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        if (data == null) {
+                            return "";
+                        }
+                        return "<a onclick=\"view('" + full.id + "')\">" + full.infoBillNo + "</a>";
+                    }
+                },
+                {
+                    data: "curName",
+                    bSortable:false,
+                    className: "center"
+                },
+                {
+                    data: "endDate",
+                    bSortable:false,
+                    className: "center",
+                    render: function (data, type, full, meta) {
+                        if (data == null) {
+                            return "";
+                        }
+                        return bt.date.format(data);
+                    }
+                },
+                {
+                    data: "plClassName",
+                    bSortable:false,
+                    className: "center"
+                },
+                {
+                    data: "plRate",
+                    bSortable:false,
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return data + " %";
+                    }
+                },
+                {
+                    data: "plTerm",
+                    bSortable:false,
+                    className: "textRight"
+                },
+                {
+                    data: "plPurpose",
+                    bSortable:false,
+                    className: "center"
+                },
+                {
+                    data: "sendBillNo",
+                    bSortable:true,
+                    className: "center"
+                },
+                {
+                    data: "sendMoney",
+                    bSortable:false,
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(data);
+                    }
+                },
+                {
+                    data: "financeBalance",
+                    bSortable:false,
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(data);
+                    }
+                },
+                {
+                    data: "sendDate",
+                    bSortable:false,
+                    className: "center"
+                },
+                {
+                    data: "repayDate",
+                    bSortable:true,
+                    className: "center"
+                },
+                {
+                    data: "repayMoney",
+                    bSortable:false,
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(data);
+                    }
+                },
+                {
+                    data: "repayInterest",
+                    bSortable:false,
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(data);
+                    }
+                },
+                {
+                    data: "repayTotal",
+                    bSortable:false,
+                    className: "textRight",
+                    render: function (data, type, full, meta) {
+                        return moneyFun.format(data);
+                    }
+                }
+            ],
+            summary: {
+                pageSum: false,
+                allSum:
+                        true,
+                selectSum:
+                        true,
+                format:
+                        {
+                            decimal: 2
+                        }
+                ,
+                sumList: [
+                    {
+                        colNum: '14',
+                        dataName: 'repayMoney'
+                    },
+                    {
+                        colNum: '15',
+                        dataName: 'repayInterest'
+                    },
+                    {
+                        colNum: '16',
+                        dataName: 'repayTotal'
+                    }
+                ]
+            }
+        });
+
+        /**判断字符串是否为空*/
+        bt.empty = function (ms) {
+            if (typeof (ms) == "undefined" || ms == null || ms == "" || ms == "null") {
+                return true;
+            }
+            return false;
+        }
+    });
+
+    function view(id) {
+        parent.layer.open({
+            type: 2,
+            area: ['900px', '400px'],
+            content: basePath + "/bi/cms/interestReport/view?id=" + id
+        });
+    }
+
+</script>
+</html>

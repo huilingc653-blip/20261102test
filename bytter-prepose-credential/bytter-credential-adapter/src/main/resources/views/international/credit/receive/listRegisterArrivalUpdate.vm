@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+</head>
+<!-- 交单登记列表 -->
+<body>
+	<form action="" id="searchForm" class=layui-form>
+		<table class="layui-table ">
+		<input type="hidden" id="pageType" value="$!{pageType}">
+			<tbody>
+				<tr>
+					<td class="textRight" width="25%">
+						##信用证类型
+						#springMessage('international.credit.lcInter'):
+					</td>
+					<td width="25%">
+						<div class="layui-inline">
+							<div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                                     data-name="eqs_lcInter" data-biz-name="lcInter" >
+							</div>
+						</div>
+					</td>
+					
+					##信用证号
+					<td  class="textRight" width="25%">#springMessage('international.credit.creditNo')：</td>
+					<td width="25%"><input type="text" class="layui-input" name="likes_creditNo" /></td>
+				<tr>
+				
+				<tr>
+					<td colspan="6" style="text-align: center;">
+						<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+	<table id="appTable" class="layui-table layui-form"
+		style="width: 100%;">
+		<thead>
+			<tr>
+                <th>#springMessage('table.nisPersonnelDetail.corpId')</th>##单位名称
+				<th>#springMessage('table.fcPredrawDtlTemp.orderNo')</th>##流水号
+				<th>#springMessage('international.credit.lcInter')</th>##信用证类型
+				<th>#springMessage('table.internation.arrival.no')</th>##交单号
+				<th>#springMessage('international.credit.creditNo')</th>##信用证号
+                <th>#springMessage('international.credit.issuingBank')</th>##开证银行
+				<th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>##到期日期
+				<th>#springMessage('table.internation.com.arrival.money')</th>##来单金额
+				<th>#springMessage('table.internation.proceeds.money')</th>##收款金额
+                <th>#springMessage('table.ratBkrationRelief.curCode')</th>##币种
+				<th>#springMessage('table.internation.arrival.bank')</th>##交单银行
+                <th>#springMessage('table.fbsBudget.status')</th>##状态
+				<th>#springMessage('common.table.thead.operation')</th>##操作
+			</tr>
+		</thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+	bt.use(['form','datatable','dateType','moneyType','corp','dicts'], function(){
+	    $ = bt.jquery,form = bt.form();
+	    //时间
+	    bt.dateType.init();
+	    bt.corp.init();
+        bt.dicts.init();
+
+
+        //生成列表
+	    datatable = bt.datatable.init({
+	        elem: "#appTable",
+	        dom: 'Brtlip',
+	        colReorder: true,
+	        ordering:false,
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+           
+	        ajax: {
+	            'url': basePath+"/international/credit/arrivalletter/updateDataTable"
+	        },
+	        searchForm:{
+	            formFilter:"search",
+	            formElem:"#searchForm"
+	        }
+	        ,columns: [
+                {data:"corpName",bSortable:true,className:"center"},
+	            {data:"arrivalCode",bSortable:true,className:"center"},
+	            {data:"lcInter",bSortable:true,className:"center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter",full.lcInter);
+                    }},
+	            {data:"arrivalNo",bSortable:true,className:"center"},
+	            {data:"creditNo",bSortable:true,className:"center"},
+                {data: "openingBankName", bSortable: true, className: "center"},
+                {data:"paymentDate",bSortable:true,className:"center"},
+	            {data:"billMoney",bSortable:true,className:"textRight",
+				render: function(data,type,full,mate){
+                    var billMoney = bt.money.format(full.billMoney);
+                    return billMoney;
+                }},
+                {data:"payMoney",bSortable:true,className:"textRight",
+                    render: function(data,type,full,mate){
+                        var payMoney = bt.money.format(full.payMoney);
+                        return payMoney;
+                    }},
+	            {data:"curName",bSortable:true,className:"center"},
+	            {data:"handDocBank",bSortable:true,className:"center"},
+                {data:"status",bSortable:true,className:"center",
+                    render: function (data, type, full, meta) {
+                        return bt.dict("international.status",full.status);
+                    }},
+	            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+	            	var html ='';
+                        html += '<a class="" href="#" data-row="'+meta.row+'" onclick="edit(this)">'+bt.lang("common.button.update")+'</a> ';
+                        html += ' \<span class="text-explode">|</span>\ <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+                        html += ' \<span class="text-explode">|</span>\ <a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+                        html += ' \<span class="text-explode">|</span>\ <a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("common.button.logInfo")+'</a>';
+	            	return html;
+	            }}
+	        ],
+            summary:{
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                // selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '7',//汇总列序号
+                        dataName: 'billMoney',//汇总列数据
+                    },
+                    {
+                        colNum: '8',//汇总列序号
+                        dataName: 'payMoney',//汇总列数据
+                    }
+                ]
+            }
+	    });
+	 
+	});
+	
+	
+    function edit(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('table.internation.arrival.update'),basePath + "/international/credit/arrivalletter/update/" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/arrivalletter/update/" + data.id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function del(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            bt.loading.show();
+            $.post(basePath + "/international/credit/arrivalletter/delete/" + data.id, function(result){
+                bt.loading.hide();
+                bt.navtab.refreshCurrentTable();
+                parent.layer.msg(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/international/credit/arrivalletter/viewArrovalInfo?id=" + data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/arrivalletter/viewArrovalInfo?id=" + data.id,
+        });
+    }
+
+    //日志列表
+    function listMsg(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.button.logInfo'), basePath + "/international/credit/lcprocessmsg/list?billCode=" + data.arrivalCode);
+                return;
+            }
+        }
+    }
+	
+	</script>
+</html>

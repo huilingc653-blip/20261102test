@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form">
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+            <tr>
+                <td align="center">#springMessage('table.guaContractUse.No')</td>##序号
+                <td align="center">#springMessage('table.guaContractUse.bizType')</td>##业务品种
+                <td align="center">#springMessage('table.guaContractUse.bizCode')</td>##业务编号
+                <td align="center">#springMessage('table.guaContractUse.bizCur')</td>##业务币种
+                <td align="center">#springMessage('table.guaContractUse.bizMoney')</td>##业务金额
+                <td align="center">#springMessage('table.guaContractUse.bizStartDate')</td>##开始日期
+                <td align="center">#springMessage('table.guaContractUse.bizEndDate')</td>##预计结束日期
+                <td align="center">#springMessage('table.guaContractUse.bizConCode')</td>##合同编号
+                <th align="center">#springMessage('common.table.status')</th>##状态
+				<th align="center">#springMessage('common.table.thead.operation')</th>##操作
+            </tr>
+        </thead>
+        <tbody>
+         #foreach($useDtl in $!{useList})
+             #set($vcount = $velocityCount)
+         <tr id="${vcount}Row">
+             <td align="center">$!{vcount}</td>
+             <td align="center">$!{useDtl.businessName}</td>
+             <td align="center">$!{useDtl.itemNo}</td>
+             <td align="center">$!{useDtl.itemCurName}</td>
+             <td align="center">$!number.formatNumeric($!{useDtl.itemMoney})</td>
+             <td align="center">$!{useDtl.startDate}</td>
+             <td align="center">$!{useDtl.endDate}</td>
+             <td align="center">$!{useDtl.itemConCode}</td>
+             <td align="center">$!dictTag.get("guaConUse.status",$!{useDtl.status})</td>
+             <td align="center">
+                 <a href="#" onclick="view('$!{useDtl.id}')">#springMessage("common.button.view")</a>##查看
+                 #if(${useDtl.status}=="0")
+                     <a href="#" onclick="deleteData('$!{useDtl.id}','${vcount}')">#springMessage("common.button.delete")</a>##删除
+                     <a href="#" onclick="submitData('$!{useDtl.id}','${vcount}')">#springMessage("common.button.submit")</a>##提交
+                 #end
+             </td>
+         </tr>
+         #end
+        </tbody>
+    </table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['form','corp','moneyType','btUpload','jquery' ,'selectType','date'], function(){
+        $ = bt.jquery,form = bt.form();
+    });
+    function deleteData(id,rowIndex) {
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            $.post(basePath + "/cms/guarantee/guaContractUse/delete/" + id, function(result){
+                $("#"+rowIndex+"Row").remove();//删除成功后删除所在行
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+
+
+    function submitData(id,rowIndex) {
+        parent.layer.confirm(bt.lang('common.message.confirm.submit'),function(){
+            $.post(basePath + "/cms/guarantee/guaContractUse/submit/" + id, function(result){
+                // $("#"+rowIndex+"Opration").html("");//提交成功后所在行操作列清空
+                bt.navtab.refreshCurrent();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+
+    function view(id) {
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '500px'],
+            maxmin: true,
+            content: basePath + "/cms/guarantee/guaContractUse/view/" +id
+        });
+    }
+
+</script>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" id="searchForm" method="post">
+	<input id="payeeCorpId" name="eqs_payeeCorpId" type="hidden" value="$!{payeeCorpId}">
+</form>
+<table id="accInFoByCorpTable" class="layui-table">
+    <thead>
+    <tr>
+        <th>#springMessage('table.fcAcc.account')</th>
+        <th>#springMessage('fcAccDetail.accName')</th>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+
+    bt.use(['datatable', 'jquery'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+         var table = bt.datatable.init({
+            elem: "#accInFoByCorpTable",
+            selectCss:false,
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                url: basePath + "/netbank/cgsbill/selectPayeeAcc.json",
+            },
+            columns: [
+                {data: "blnctrAcc", orderable: false},
+                {data: "accName", orderable: false},
+                {
+                    data: null, bSortable: false, className: 'center', render: function (data, type, full, meta) {
+                    return '<a href="javascript:void(0);" class="acc-bank-select" data-row="'+meta.row+'">' + bt.lang("common.button.select") + '</a>';
+                }}
+            ]
+        }); 
+
+        table.on('click','.acc-bank-select',function(event){
+//            var func = top.btSelectCallBack['bt-biz-accInFoByCorp']['callback'];
+            var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-accInFoByCorp']['callback'];
+            if(func){
+                var data = table.row($(this).data('row')).data();
+                func(data);
+            }
+        });
+    });
+</script>
+</body>
+</html>

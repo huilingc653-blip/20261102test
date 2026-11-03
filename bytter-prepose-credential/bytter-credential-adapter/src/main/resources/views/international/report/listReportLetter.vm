@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        //这里填写新的样式代码
+    </style>
+</head>
+<body>
+<!-- 这里填写新HTML的代码 -->
+<form class="layui-form" method="post" id="searchForm">
+    <table class="layui-table">
+        <tr>
+##            单位
+            <td class="textRight">#springMessage('table.cmsProvideLoanInfo.corpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="ins_corpId"
+                         data-tree-type="check"
+                         data-resource="international:credit:receivecredit:report:query">
+                    </div>
+                </div>
+            </td>
+##          信用证类型
+            <td class="textRight">#springMessage('international.credit.lcInter')</td>
+            <td>
+                <div class="layui-inline">
+                    <div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                         data-name="eqs_lcInter" data-biz-name="lcInter" >
+                    </div>
+                </div>
+            </td>
+##          信用证号
+            <td class="textRight">
+                #springMessage('international.credit.creditNo')
+            </td>
+            <td>
+                <input type="text" class="layui-input" name="likes_creditNo" />
+            </td>
+
+        </tr>
+        <tr>
+##            币种
+            <td class="textRight">#springMessage('international.payment.curName')</td>
+            <td>
+                <div class="bt-biz-selectType" data-name="eqs_issuingCurId" data-url="${basePath}/basic/business/btcurrency/json" data-valuefield = "id"
+                      data-textfield="curName" data-biz-name="issuingCurId" ></div>
+            </td>
+##            登记日期
+            <td class="textRight">
+                #springMessage('international.credit.createDate')
+            </td>
+            <td>
+                <div>
+                    <input style="display: inline-block;width: 30%" data-biz-name="ged_createDate" type="text" class="layui-input bt-biz-dateType" name="ged_createDate" data-endid="led_createDate"/>
+                    <span class=date-mid>~</span>
+                    <input style="display: inline-block;width: 30%" data-biz-name="led_createDate" type="text" class="layui-input bt-biz-dateType" name="led_createDate" id="led_createDate"/>
+                </div>
+            </td>
+##            到期日期
+            <td class="textRight">#springMessage('international.credit.expiryDate')</td>
+            <td>
+                <input style="display: inline-block;width: 30%" data-biz-name="ged_expiryDate" type="text" class="layui-input bt-biz-dateType" name="ged_expiryDate" data-endid="led_expiryDate"/>
+                <span class=date-mid>~</span>
+                <input style="display: inline-block;width: 30%" data-biz-name="led_expiryDate" type="text" class="layui-input bt-biz-dateType" name="led_expiryDate" id="led_expiryDate"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center">
+                <button class="layui-btn" type="button" lay-submit="" lay-filter="search">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+
+<table id="datatable" class="layui-table" style="width:100%">
+    <thead>
+    <tr>
+        <th>#springMessage('table.cmsProvideLoanInfo.corpId')</th>##单位
+        <th>#springMessage('international.credit.lcInter')</th>##信用证类型
+        <th>#springMessage('international.credit.creditNo')</th>##信用证号
+        <th>#springMessage('international.credit.contractNo')</th>##合同号
+        <th>#springMessage('international.credit.applicant')</th>##开证人
+        <th>#springMessage('international.credit.issuingBank')</th>##开证银行
+        <th>#springMessage('international.credit.creditMoney')</th>##开证金额
+        <th>#springMessage('international.payment.curName')</th>##开证币种
+        <th>#springMessage('international.credit.createDate')</th>##登记日期
+        <th>#springMessage('international.credit.expiryDate')</th>##信用证有效期
+        <th>#springMessage('table.internation.arrival.money.ok')</th>##已交单金额
+        <th>#springMessage('table.internation.proceeds.money')</th>##收款金额
+        <th>#springMessage('international.report.status')</th>##信用证登记状态
+
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['jquery','dicts','datatable','moneyType','dateType','corp',"selectType"], function(){
+        $ = bt.jquery;
+        bt.dicts.init();//字典
+        bt.dateType.init();//时间
+        bt.corp.init();//单位
+        bt.selectType.init();//下拉款
+
+
+        var datatable = bt.datatable.init({
+            elem : "#datatable",
+            checkbox : false,
+            ajax : {
+                url : basePath+"/international/credit/receiveletter/queryReportDataTable",
+                dataSrc : "data"
+            },
+            fixedColumns: {
+                rightColumns: 1//代表冻结右边一列
+            },
+            colReorder : true,
+            columns: [
+                {
+                    data: "corpName",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "lcInter",
+                    className: "center",
+                    bSortable: true,
+                    render: function (data, type, full, meta) {
+                        return bt.dict("letter_of_credit_inter", full.lcInter);
+                    }
+                }, {
+                    data: "creditNo",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "contractNo",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "createName",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "openingBankName",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "creditMoney",
+                    className: "textRight",
+                    bSortable: false,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(data);
+                    }
+                }, {
+                    data: "issuingCurName",
+                    className: "center",
+                    bSortable: false
+                }, {
+                    data: "createDate",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "expiryDate",
+                    className: "center",
+                    bSortable: true
+                }, {
+                    data: "sumBillMoney",
+                    className: "textRight",
+                    bSortable: false,
+                    render : function (data, type, full, meta) {
+                        var html = "";
+                        if (Number(data) == 0) {
+                            html = bt.money.format(data);
+                        } else {
+                            html = "<a href=\"#\" onclick=\"view('" + full.id + "')\">" + bt.money.format(data) + "</a>";
+                        }
+                        return html;
+                    }
+                }, {
+                    data: "sumIncomingMoney",
+                    className: "textRight",
+                    bSortable: true,
+                    render : function (data, type, full, meta) {
+                        return bt.money.format(data);
+                    }
+                }, {
+                    data: "status",
+                    className: "center",
+                    bSortable: false,
+                    render: function (data, type, full, meta) {
+                        return bt.dict("international.status", full.status);
+                    }
+                }
+            ],
+            searchForm : {
+                formElem : "#searchForm",
+                formFilter : "search"
+            }
+        });
+        //这里填写新的js代码，请参考前端文档
+    });
+
+    // 查看明细数据
+    function view(id){
+/*        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.button.view'),basePath + "/international/credit/createCredit/viewReportArrival?id=" +id);
+            return;
+        }*/
+        parent.layer.open({
+            type: 2,
+            btnAlign: 'c',
+            btn: [bt.lang("common.button.close")],
+            area: ['1000px', '560px'],
+            content: [basePath + "/international/credit/receiveletter/viewReportArrival?id=" + id, "no"],
+            yes: function(index, layero){
+                parent.layer.close(index);
+            }
+        });
+    }
+</script>
+</body>
+</html>

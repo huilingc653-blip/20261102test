@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body id="budgetBody" style="display: none">
+<form id="searchForm" class="layui-form" method="post">
+	<input id="layId" name="layId" type="hidden" value="$!{layId}">
+	<input id="timeType" name="timeType" type="hidden" value="$!{timeType}">
+	<table class="layui-table">
+		<tbody>
+		<tr>
+			<td align="center">
+				<div class="layui-input-inline">
+					<select id="showType" name="showType" lay-search="" lay-filter="showType">
+						#foreach($dict in $dictTag.list("fbsBudget.showType"))
+							#if("$dict.code" == $!{showType})
+								<option value="$dict.code" selected>$dict.name</option>
+							#else
+								<option value="$dict.code">$dict.name</option>
+							#end
+						#end
+					</select>
+				</div>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+</form>
+<div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+    <ul class="layui-tab-title">
+		#foreach($info in $map.entrySet())
+			<li #if($!{layId} == $!{velocityCount}) class="layui-this" #end ">$info.key</li>
+		#end
+    </ul>
+	<div class="layui-tab-content">
+		#foreach($info in $map.entrySet())
+			<div class="layui-tab-item  #if($!{layId} == $!{velocityCount}) layui-show #end ">
+			<table class="layui-table layui-form treeTable" style="width:100%;">
+                <thead>
+                <tr>
+                    <th width="20%">#springMessage('table.fbsBudget.corpId')</th>
+            		<th width="15%">#springMessage('table.fbsBudget.enrolDate')</th>
+                    <th width="15%">#springMessage('table.fbsBudget.beginDate')</th>
+                    <th width="15%">#springMessage('table.fbsBudget.endDate')</th>
+                    <th width="9%">#springMessage('table.fbsBudgetDetail.curId')</th>
+                    <th width="7%">#springMessage('table.fbsBudget.status')</th>
+                    <th width="8%">#springMessage('common.table.thead.operation')</th>
+                </tr>
+                </thead>
+            	<tbody>
+                	#foreach($date in $info.value)
+                		<tr data-tt-id="$!{date.corpId}" data-tt-parent-id="$!{date.parentCorpId}" data-tt-subject-sort="$!{date.id}" >
+                			<td>
+        						(${date.corpCode})&nbsp;&nbsp;${date.corpName}
+                                #if($!{date.corpType} == "0")<font color="red">(#springMessage('table.fbsBudget.net'))</font>#end
+        					</td>
+                			<td style="text-align:center">$!{date.enrolDateStr}</td>
+            				<td style="text-align:center">$!{date.beginDateStr}</td>
+            				<td style="text-align:center">$!{date.endDateStr}</td>
+                            <td style="text-align:center">$!{currencyTag.getCurName($!{date.curId})}</td>
+            				<td>
+            					#if($!{date.status} == "-2")
+                                    <font color="red">$dictTag.get("fbsBudget.status",$!{date.status})</font>
+            					#else
+            						$dictTag.get("fbsBudget.status",$!{date.status})
+            					#end
+            				</td>
+                			<td>
+                                #if($!{date.view})
+                                    #if($!{date.id} != "")
+                                        <a class="" href="#" onclick="view('$!{date.id}')">#springMessage('common.button.view')</a>
+                                    #end
+                                #elseif($!{date.id} == "")
+            						<a class="" href="#" onclick="input('$!{date.corpId}','$!{date.timeType}','$!{date.id}','$!{date.beginDateStr}','$!{date.endDateStr}','$!{velocityCount}')">#springMessage('common.button.create')</a>
+            					#else
+            						#if($!{date.status} == "0" || $!{date.status} == "-1")
+									<a class="" href="#" onclick="input('$!{date.corpId}','$!{date.timeType}','$!{date.id}','$!{date.beginDateStr}','$!{date.endDateStr}','$!{velocityCount}')">#springMessage('common.button.edit')</a>
+									<span class="text-explode">|</span>
+            						<a class="" href="#" onclick="del('$!{date.id}','$!{date.timeType}','$!{velocityCount}')">#springMessage('common.button.delete')</a>
+									<span class="text-explode">|</span>
+            						#end
+            						<a class="" href="#" onclick="view('$!{date.id}')">#springMessage('common.button.view')</a>
+								#end
+								#if($!{date.collectFlag} == "1" && !$!{date.view})<span class="text-explode">|</span><a class="" href="#" onclick="curView('$!{date.corpId}','$!{date.timeType}','$!{date.beginDateStr}','$!{date.endDateStr}')">#springMessage('common.button.curView')</a>#end
+                			</td>
+                		</tr>
+                	#end
+                </tbody>
+            </table>
+        </div>
+		#end
+	</div>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/budget/fbsBudget.inputPre.js?_btv=${resourceVersion}"></script>
+</html>

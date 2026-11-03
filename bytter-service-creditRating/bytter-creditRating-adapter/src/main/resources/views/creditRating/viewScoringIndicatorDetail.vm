@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .scoringExample table {
+            border-collapse: collapse;
+        }
+
+        .scoringExample table tr td {
+            border: 1px solid black;
+            align-content: center;
+        }
+
+        .scoring-table-sample .layui-input {
+            width: 100%;
+        }
+
+        .scoring-table-sample td {
+            text-align: center;
+            height: 28px !important;
+            line-height: 28px !important;
+
+        }
+
+        .input-50 > input,
+        .input-50 > div {
+            width: calc(50% - 10px);
+        }
+
+        .input-50 > div .layui-input {
+            width: 100%;
+        }
+
+        .checkbox-disabled {
+            pointer-events: none;
+            opacity: 0.6; /* 可选：使得checkbox看起来是不可用的 */
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" method="post" id="searchForm">
+    <input type="hidden" name="indexProperty" id="indexProperty" value="$!{crScoringIndicatorVo.indexProperty}"/>
+    <input type="hidden" name="isAutoScoring" id="isAutoScoring" value="$!{crScoringIndicatorVo.isAutoScoring}"/>
+    <input type="hidden" name="scoringMethod" id="scoringMethod" value="$!{scoringMethod}"/>
+    <div class="layui-collapse" style="margin-bottom: 60px;">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('credit.indicator.type.message')</h2>
+            <div class="layui-colla-content layui-show">
+                <table class="layui-table  breakRow">
+                    <tbody>
+                    <tr>
+                        ##指标类别编号
+                        <td class="textRight" width="10%">#springMessage('credit.indicator.type.code')</td>
+                        <td width="20%">
+                            <div class="layui-inline">
+                                $!{crScoringIndicatorVo.scoringIndicatorCode}
+                            </div>
+                        </td>
+                        ##指标类别名称
+                        <td class="textRight" width="10%">#springMessage('credit.indicator.type.name')</td>
+                        <td width="20%">
+                            <div class="layui-inline">
+                                $!{crScoringIndicatorVo.scoringIndicatorName}
+                            </div>
+                        </td>
+                        ##有校标志
+                        <td class="textRight" width="10%">#springMessage('credit.indicator.is.effective')</td>
+                        <td width="20%">
+                            $!dictTag.get("valid_sign",${crScoringIndicatorVo.status})
+                        </td>
+                    </tr>
+                    <tr>
+                        ##指标性质
+                        <td class="textRight indexProperty" width="10%">#springMessage(
+                            'credit.indicator.type.nature')</td>
+                        <td width="20%" class="indexProperty">
+                            $!dictTag.get("credit_scoring_property",${indexProperty})
+                        </td>
+                        ##是否自动评分
+                        <td class="textRight isAutoScoring" width="10%">#springMessage(
+                            'credit.indicator.is.autoScoring')</td>
+                        <td width="20%" class="isAutoScoring">
+                            $!dictTag.get("sf_yn",${isAutoScoring})
+                        </td>
+                        ##评分方法
+                        <td class="textRight scoringMethod" width="10%">#springMessage(
+                            'credit.indicator.scoring.method')</td>
+                        <td width="20%" class="scoringMethod">
+                            $!dictTag.get("credit_scoring_method",${scoringMethod})
+                        </td>
+                    </tr>
+                    <tr>
+                        ##额外加/减分项
+                        <td width="10%" class="textRight"><span>#springMessage('credit.indicator.addOrSub')</span></td>
+                        <td width="20%">
+                            $!dictTag.get("sf_yn",${isAddOrSubGrade})
+                        </td>
+                        ##数据源
+                        <td class="textRight dataSource" width="10%">#springMessage('credit.indicator.dataSource')</td>
+                        <td width="20%" class="dataSource">
+                            $!{crScoringIndicatorVo.dataSourceName}
+                        </td>
+                    </tr>
+                    <tr>
+                        ##评分细则
+                        <td class="textRight" width="10%">#springMessage('credit.indicator.scoringRubric')</td>
+                        <td colspan="3">
+                            $!{crScoringIndicatorVo.scoringRubric}
+                        </td>
+                    </tr>
+                    <tr>
+                        ##备注
+                        <td class="textRight" width="10%">#springMessage('credit.indicator.rmk')</td>
+                        <td colspan="3">
+                            $!{crScoringIndicatorVo.scoringIndicatorDescription}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="layui-collapse" style="margin-bottom: 60px;" id="scoringR">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">#springMessage('credit.indicator.standard.setting')</h2>
+            <div class="layui-colla-content layui-show" style="width: 60%;  margin: 0 auto;">
+                <div id="description">
+                    说明：定性指标无需设置评分标准，机构评价时手动输入分值即可。
+                </div>
+                <div class="layui-collapse" lay-filter="collapse" id="example">
+
+                    <div class="layui-colla-item">
+                        <h2 class="layui-colla-title">示例</h2>
+                        <div class="layui-colla-content layui-show">
+                            <!--评分方法对应的评分细则填写说明-->
+                            <div style="text-align: left" id="remind">
+                                评分方法说明：以授信额度为例，获取评价任务中评价机构的最高授信额度、最低授信额度，机构得分=“(该组织的<br>
+                                授信额度-最低授信额度)/(最高授信额度-最低授信额度)*满分分值
+                            </div>
+                            <!--评分方法对应的评分细则样例-->
+                            <div id="scoringExample">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!--评分方法不为归一法的评分细则列表-->
+                <!--评分方法不为归一法的评分细则列表-->
+                <table class="layui-table layui-table-border scoring-table-sample"
+                       style="width:600px;table-layout: fixed;margin-left: 10px;" id="scoringRubricTable1" >
+                    <thead>
+                    <tr>
+                        <th align="center" colspan="2">#springMessage(
+                            'credit.indicator.scoringCondition')</th><!--评分条件  -->
+                        <th align="center">#springMessage('credit.indicator.grade')</th><!--分值  -->
+                    </tr>
+                    </thead>
+                    <tbody>
+                        #foreach($standardVo in $!{crScoringIndicatorVo.crScoringStandardVoList})
+                        <tr>
+                            <td style="max-width: 60px;">
+                                <div class="layui-input">
+                                    $!dictTag.get("credit_scoring_direciton",$!{standardVo.valueDirection})
+                                </div>
+                            </td>
+                            <td width="200px">
+                                <div class="layui-input">
+                                    $!number.formatNumeric($!{standardVo.value})
+                                </div>
+                            </td>
+
+                            <td width="200px;">
+                                <div class="layui-input">
+                                    $!number.formatNumeric($!{standardVo.grade})
+                                </div>
+                            </td>
+                        </tr>
+                        #end
+                    </tbody>
+                </table>
+                <!--评分方法为归一法展示的评分细则-->
+                <table class="layui-table layui-table-border scoring-table-sample"
+                       style="width: 600px;table-layout: fixed" id="scoringRubricTable2">
+                    <thead>
+                    <tr>
+                        <th colspan="2">
+                            #springMessage('credit.indicator.scoringCondition')
+                        </th>
+                        <th>
+                            #springMessage('credit.indicator.grade')
+                        </th>
+                    </tr>
+                    </thead>
+                    #foreach($standardVo in $!{crScoringIndicatorVo.crScoringStandardVoList})
+                    <tr>
+                        <td width="100px" colspan="2">
+                            <div class="layui-input"> 满分</div>
+                        </td>
+                        <td width="200px;">
+                            <div class="layui-input">
+                                $!number.formatNumeric($!{standardVo.grade})
+                            </div>
+                        </td>
+                    </tr>
+                    #end
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/creditRating/scoringIndicator.view.js?_btv=${resourceVersion}"></script>
+</html>

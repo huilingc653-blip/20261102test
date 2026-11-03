@@ -1,0 +1,90 @@
+#parse("views/common/head.vm")
+<link rel="stylesheet" href="${basePath}/static/css/worldMap.css"  media="all" />
+<style>
+    #main {
+        height: 600px;
+    }
+
+</style>
+<input type="hidden" id="moneyUnit" name="moneyUnit" value="$!{moneyMapQueryVO.moneyUnit}">
+<div>
+    <div class="carousel-item-header is-world" id="map-header">
+        <span class="item-header-text" data-name="world">#springMessage('bi.money.map.mapOfTheWorld')</span>
+        <div class="item-header-china hide" id="map-china" >
+            <span class="item-header-icon">〉</span>
+            <span class="item-header-text" style="padding-left:0px;" data-name="china">#springMessage('bi.money.map.mapOfChina')</span>
+        </div>
+        <div class="item-header-china hide" id="map-continent" >
+            <span class="item-header-icon">〉</span>
+            <span class="item-header-text" style="padding-left:0px;" data-id="continent"></span>
+        </div>
+        <div class="item-header-china hide" id="map-province" >
+            <span class="item-header-icon">〉</span>
+            <span class="item-header-text" style="padding-left:0px;"><span id="province"></span>#springMessage('bi.money.map.provincialCapitalDistributionMap')</span>
+        </div>
+
+        <span class="item-header-date">
+                                    <label>#springMessage('bi.money.map.collectionTime')：</label>
+                                    <span class="data-date" id="mapDate">
+                                        Fri, 08 Nov 2002 UTC+0800 09:42:22
+                                    </span>
+                                </span>
+        <span class="font_family icon-shuaxin1" id="refreshMap"></span>
+        <span class="font_family icon-changyongcaidan_shanchu1" id="closeMap"></span>
+    </div>
+    <div class="carousel-item-body">
+        <ul class="layui-nav layui-bg-white" lay-filter="currencies" id="currencies" data-group="common.moneyMap.unit">
+            <li class="layui-nav-item ">
+                <a href="javascript:;" class="bg-box">
+                    <span class="t2-header-text" id="currencies-selected"></span>
+                    <span class="layui-nav-more"></span>
+                </a>
+                <dl class="layui-nav-child" id="currencies-child">
+                </dl>
+            </li>
+        </ul>
+        <div class="layui-form hide" id="map-select-moneyType">
+        </div>
+        <div id="main" style="height:600px;overflow-x:auto;" class="map-container"></div>
+        <div id="draw-province" style="height:600px;overflow-x:auto;" class="hide">
+            <div id="province1" style="height:600px;overflow-x:auto;"></div>
+            <div id="province2" style="height:600px;overflow-x:auto;" class="hide"></div>
+        </div>
+    </div>
+    </div>
+    #parse("views/common/footer.vm")
+<script type="text/javascript" src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}" charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/world.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+<script type="text/javascript"
+        src="${basePath}/static/v3.2/modules/index/china.js?_btv=${resourceVersion}"
+        charset="utf-8"></script>
+##<script type="text/javascript"
+##        src="${basePath}/static/v3.2/modules/index/map.js?_btv=${resourceVersion}"
+##        charset="utf-8"></script>
+    <script>
+        layui.use(['capitalMap','jquery'], function(){
+            var $ = bt.jquery;
+            bt.capitalMap.init({
+                clickChinaMapCallback:function (param,myChart,moneyUnit) {
+                    var provinceData;
+                    $.ajax({
+                        type: "post",
+                        url: basePath + "/bi/synthesize/moneyMap/getProvinceMapData",
+                        async: false, //同步执行
+                        data: {
+                            "provName": param.name,
+                            "moneyUnit": moneyUnit
+                        },
+                        dataType: "json", //返回数据形式为json
+                        success: function (result) {
+                            provinceData = result;
+                        }
+                    });
+                    return provinceData
+                }
+            })
+        })
+    </script>
+</div>

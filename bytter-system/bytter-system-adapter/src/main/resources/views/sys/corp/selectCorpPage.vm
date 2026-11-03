@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding: 0 0 5px 0
+
+        }
+        div.dt-buttons {
+            padding-top: 0px!important;
+            padding-bottom: 0px!important;
+        }
+    </style>
+</head>
+<body style="padding: 0 0 5px 0">
+<form class="layui-form " id="searchForm">
+<input type="hidden" name="corpId" value="$!{corpId}">
+<table class="layui-table">
+            <tbody>
+                <tr>
+                    <td class="textRight">#springMessage('table.sysCorp.code')</td>
+                    <td>
+						<input type="text" name="code" autocomplete="off" class="layui-input" placeholder="#springMessage('table.sysCorp.code')">
+                    </td>
+                    <td class="textRight">#springMessage('table.sysCorp.name')</td>
+                    <td>
+                        <input type="text" name="name" autocomplete="off" class="layui-input" placeholder="#springMessage('table.sysCorp.name')">
+                    </td>
+
+                </tr>
+                <tr>
+                    <td class="textRight">#springMessage('table.btBankAccApp.bankAcc')</td>
+                    <td>
+                        <input type="text" name="bankAcc" autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAccApp.bankAcc')">
+                    </td>
+                    <td class="textRight">#springMessage('table.nisAllocationReq.curId')</td>
+                    <td>
+                        <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btcurrency/json"
+                             data-name ="eqs_curId"  data-valueField="id" data-textField="curName"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+			</tbody>
+        </table>
+</form>
+<div>
+    <table id="corpTable" class="layui-table">
+        <thead>
+        <tr>
+            <th width="30">#springMessage('common.table.thead.operation')</th>
+            #*<th>#springMessage('table.sysCorp.code')</th>*#
+            <th>#springMessage('table.sysCorp.name')</th>
+            <th>#springMessage('table.sysCorp.type')</th>
+            <th>#springMessage('table.sysCorp.netName')</th>
+            <th>#springMessage('table.btBankAccApp.accName')</th>
+            <th>#springMessage('table.btBankAccApp.bankAcc')</th>
+            <th>#springMessage('table.btBankAccApp.bankName')</th>
+            <th>#springMessage('table.btBankAccApp.curId')</th>
+            <th>#springMessage('table.btBankAccApp.prov')</th>
+            <th>#springMessage('table.btBankAccApp.city')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery', 'selectType'], function () {
+        bt.selectType.init();
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        var table = bt.datatable.init({
+            elem: "#corpTable",
+            selectCss: false,
+            colReorder:true,
+            ajax: {
+                url: basePath + "/sys/corp/selectCorp.json?corpBank="+'$!{corpBank}',
+            },
+            searchForm: {
+                formElem: "#searchForm",
+            	formFilter: "search"
+            },
+            ignoreButtons:['colvis','output','print','state'],// 忽略的表单默认按钮 state取消状态保存按钮
+            columns: [
+					{
+					    data: null, bSortable: false, className: 'center',
+					    render: function (data, type, full, meta) {
+					        return '<a href="javascript:void(0);" class="corp-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+					    }
+					},
+					/*{data: "code",className: 'center', orderable: false},*/
+					{data: "name", orderable: false,
+						render: function (data, type, full, meta) {
+							return "("+full.code+")"+full.name;
+						}
+					},
+					{data: "type",className: 'center', orderable: false,
+						render: function (data, type, full, meta) {
+							if(full.type==0){
+								return '<span style="color:red;">'+bt.lang("common.button.center")+'</span>';
+							}else{
+								return bt.lang("common.button.resetAcceptor");
+							}
+	                    }
+					},
+					{data: "netName", orderable: false},
+                    {data: "accName", orderable: false},
+                    {data: "bankAcc", orderable: false},
+                    {data: "bankName", orderable: false},
+                    {data: "curName", orderable: false},
+                    {data: "provName", orderable: false},
+                    {data: "cityName", orderable: false}
+					]
+        });
+
+        table.on('click', '.corp-select', function (event) {
+//            var func = top.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            var parentsIndex = parent.$('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            //var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+				data.isExternal=false;
+				data.externalAcc=data.bankAcc;
+				data.bankSourceCode=data.bankCode;
+				data.bank=data.bankName;
+				data.accCity=data.city;
+				data.accProvince=data.prov;
+				data.accCityName=data.cityName;
+				data.accProvinceName=data.provName;
+                data.blRcvpymtpsUnnIdNo=data.socCode;
+				if(data.accName){
+					data.name=data.accName;
+				}else{
+					data.name=data.name;
+				}
+                func(data);
+            }
+        });
+
+    });
+</script>
+</body>
+</html>

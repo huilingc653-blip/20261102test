@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        .layui-input {
+            width: 148px;
+        }
+
+        body {
+            padding: 0 10px;
+        }
+
+        div.dt-buttons {
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+        }
+    </style>
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="joinBankType" name="joinBankType" value="$!{joinBankType}">
+    <table class="layui-table">
+        <tr>
+            <td class="textRight">#springMessage('table.btInputBankInfo.bankCode')</td>
+            <td>
+                <input type="text" name="bankCode" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btInputBankInfo.bankCode')">
+            </td>
+            <td class="textRight">#springMessage('table.btInputBankInfo.bankName')</td>
+            <td>
+                <input type="text" name="bankName" autocomplete="off" class="layui-input"
+                       placeholder="#springMessage('table.btInputBankInfo.bankName')">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.btInputBankInfo.bankPrefix')</td>
+            <td>
+                <div class="bt-biz-bankType" data-name="bankType" data-biz-name="bankInfo-bankType"
+                     data-defaultValue="$!{bankTypeId}" data-initCallback="bt.initValue"></div>
+            </td>
+            <td class="textRight">#springMessage('table.btBankAcc.provcity')</td>
+            <td>
+                <div class="layui-input-block">
+                    <div class="layui-input-inline bt-biz-region" data-group="bankInfo" data-name="province"
+                         data-change="city" data-defaultValue="$!{corp.province}"></div>
+                    <div class="layui-input-inline bt-biz-region" data-group="bankInfo" data-name="city"
+                         data-defaultValue="$!{corp.city}"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage(
+                    'common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<div>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th width="30">#springMessage('common.table.thead.operation')</th>
+            <th width="80">#springMessage('table.btInputBankInfo.bankCode')</th>
+            <th>#springMessage('table.btInputBankInfo.bankName')</th>
+            <th>#springMessage('table.btInputBankInfo.prov')</th>
+            <th>#springMessage('table.btInputBankInfo.city')</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'region', 'bankType'], function () {
+        var $ = bt.jquery, table;
+        var region = bt.region.init();
+        bt.initValue = function () {
+            table = bt.datatable.init({
+                elem: "#appTable",
+                order: [[1, 'asc']],
+                searchForm: {
+                    formElem: "#searchForm",
+                    formFilter: "search"
+                },
+                ajax: {
+                    'url': basePath + "/basic/business/btinputbankinfo/datatablePrefixSelect"
+                },
+                selectCss: false,
+                ignoreButtons: ['colvis', 'output', 'print', 'state'],// 忽略的表单默认按钮 state取消状态保存按钮
+                columns: [
+                    {
+                        data: null, bSortable: false, className: 'center',
+                        render: function (data, type, full, meta) {
+                            return '<a href="javascript:void(0);" class="bankInfo-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                        }
+                    },
+                    {data: "bankCode", sortable: true},
+                    {data: "bankName", sortable: false},
+                    {data: "provName", sortable: false},
+                    {data: "cityName", sortable: false},
+                ]
+            });
+
+            //生成列表
+            table.on('click', '.bankInfo-select', function (event) {
+                var parentsIndex = $('body').attr('layerindex'), currentParentIframe;
+                if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                    currentParentIframe = 'layui-layer-iframe' + parentsIndex
+                } else {
+                    currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                }
+                var isMultiIframes = top.layer.getChildFrame('body').data('multiiframes'); //判断是否嵌套三层iframe
+                if (isMultiIframes) {
+                    var endIframeName = top.frames[currentParentIframe].window.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+                    var func = top.frames[currentParentIframe].window.frames[endIframeName].btSelectCallBack['bt-biz-bankInfo']['callback'];
+                } else {
+                    var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-bankInfo']['callback'];
+                }
+
+                if (func) {
+                    var data = table.row($(this).data('row')).data();
+                    func(data);
+                }
+            });
+        }
+        bt.bankType.init();
+    });
+</script>
+</body>
+</html>

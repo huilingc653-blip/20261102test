@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+        <input id="corpId" name="corpId" type="hidden" value="$!{params.corpId}">
+        <input id="eqi_status" name="eqi_status" type="hidden" value="1">
+        <input id="eqi_auditStatus" name="eqi_auditStatus" type="hidden" value="95">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                <td class="textRight">#springMessage('table.externalCorp.code')</td>
+                <td>
+                    <input type="text" id="likes_code" name="likes_code"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalCorp.code')"/>
+                </td>
+                <td class="textRight">#springMessage('table.externalCorp.name')</td>
+                <td>
+                    <input type="text" id="likes_name" name="likes_name"
+                           autocomplete="off" class="layui-input" placeholder="#springMessage('table.externalCorp.name')"/>
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">#springMessage("sys.externalCorp.bwType")</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-group="SYS_BUS_ENTITY_TYPE"
+                         data-defaultvalue="" data-name="eqs_bwTypeName"></div>
+                </td>
+                <td class="textRight"></td>
+                <td>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">
+                    <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <table id="appTable" class="layui-table layui-form" style="width:100%;" data-btns="colvis" >
+        <thead>
+        <tr>
+            <th>#springMessage('table.externalCorp.code')</th>
+            <th>#springMessage('table.externalCorp.name')</th>
+            <th>#springMessage('table.externalCorp.corpStatus')</th>
+            <th>#springMessage('table.externalCorp.isCommon')</th>
+            <th>#springMessage('table.externalCorp.source')</th>
+            <th>#springMessage("table.externalCorp.externalType")</th>
+            <th>#springMessage("table.externalCorp.supplier")</th>
+            <th>#springMessage("sys.externalCorp.bwType")</th>
+        </tr>
+        </thead>
+    </table>
+    <br />
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+    	<div class="layui-input-block">
+    	<button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+        </div>
+    </div>
+#parse("views/common/footer.vm")
+<script type="text/javascript">
+var dataTable={};
+bt.use(['form','jquery','select','datatable','dicts'], function(){
+    $ = bt.jquery,form = bt.form();
+    bt.dicts.init();
+	//生成列表
+    dataTable = bt.datatable.init({
+        elem: "#appTable",
+        dom: 'Brtlip',
+        colReorder: true,
+        checkbox:true,
+        order: [3,'desc'],
+        searchForm: {
+            formElem: "#searchForm",
+            formFilter: "search"
+        },
+        ajax: {
+            'url': basePath+"/sys/externalCorp/dataTableForSelect"
+        },
+        buttons: [
+            {
+                text:bt.lang('common.button.select'),
+                action: function ( e, dt, node, config ) {
+                    var datas = dt.rows('.selected').data();
+                    bt.selectOp(datas);
+                }
+            }
+        ]
+        ,columns: [
+            {data: "code",bSortable:true},
+            {data: "name",bSortable:true},
+            {data: "isNative", orderable: false, className: 'center',
+                render: function (data, type, full, meta) {
+                    return bt.dict("sf_yn", full.isNative);
+                }
+            },
+            {data:"isCommonStr",bSorttable:true, className: 'center'},
+            {data: "sourceSystem",bSortable:true, className: 'center'},
+            {
+                data: "externalType",bSortable:true, className: 'center',
+                render: function (data, type, full, meta) {
+                    return bt.dict("external.type", full.externalType);
+                }
+            },
+            {data: "supplierName",bSortable:true,
+                render:function (data,type,full,meta) {
+                    if (full.externalType == 1 || full.externalType == 2){
+                        return full.supplierName;
+                    }else{
+                        return "";
+                    }
+                }
+            },
+            {data: "bwTypeName",bSortable:true, className: 'center'}
+        ]
+    });
+	bt.selectOp = function(datas){
+		var len = datas.length;
+        if(!len){
+            layer.alert(bt.lang('common.message.confirm.selectData'), {icon: 7});
+        	return;
+        }
+		var rowDatas = datas.splice(0,len);
+        var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+        var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-externalCorpInfo']['callback'];
+        if(func){
+			var data={"data":rowDatas};
+            func(data);
+        }
+	}
+});
+var closeForms=function(){
+	parent.layer?parent.layer.closeAll():layer.closeAll();
+}
+</script>
+</body>
+</html>

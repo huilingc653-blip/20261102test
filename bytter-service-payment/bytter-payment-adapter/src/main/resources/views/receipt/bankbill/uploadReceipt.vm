@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<input type="hidden" id="id" name="id" value="$!{id}">
+    #parse("views/bankacc/viewBisAccDtl.vm")
+<!-- 附件上传 -->
+<input id="attachmentId" name="attachmentId" type="hidden">
+<div id="uploader" class="layui-input-inline" style="width:100%"></div>
+
+<div style="text-align: center; padding-top: 10px;" id="fileDiv">
+    <button class="layui-btn" lay-submit="" lay-filter="submit" value="" >#springMessage('common.button.save')</button>
+</div>
+
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script>
+    bt.use(['form','jquery','btUpload','moneyType'], function(){
+        var $ = bt.jquery,form = bt.form();
+        var up = bt.btUpload.init({
+            elem: "#uploader",
+            auto: false,
+            gid: '',
+            success:function () {
+                console.log(arguments)
+            }
+        });
+
+        //提交
+        form.on('submit(submit)', function (data) {
+            submitForm(data);
+        });
+
+        function submitForm(data) {
+            bt.loading.show();
+            $("#attachmentId").val(up.getGroupId());
+            if (!$("#attachmentId").val()) {
+                bt.loading.hide();
+                layer.alert(bt.lang("请上传文件"), {icon: 2});
+                return false;
+            }
+            bt.loading.hide();
+            parent.layer.confirm(bt.lang('common.message.confirm.submit'), function (index) {
+                var groupId ="empty"
+                bt.loading.show();
+                if(up.getGroupId()){
+                    groupId = up.getGroupId()
+                }
+                $.ajax({
+                    // url: basePath + "/bankacc/bisaccdtl/exportReceipt",
+                    url: basePath + "/bankacc/bisaccdtl.do?exportReceipt",
+                    method: 'POST',
+                    data:{attachmentId: groupId, dtlId: $("#id").val()},
+                    dataType: 'json',
+                    // contentType: 'application/json',
+                    success: function (result) {
+                        bt.loading.hide();
+                        parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                        bt.navtab.closeCurrent();
+                    }
+                });
+
+            });
+        }
+
+
+    });
+
+</script>
+</html>

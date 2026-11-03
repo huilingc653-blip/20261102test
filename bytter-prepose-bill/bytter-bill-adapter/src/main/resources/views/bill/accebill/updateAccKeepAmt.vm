@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+    <input type="hidden" name="id" value="$!{pageVO.id}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.btBankAcc.corpId')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp"
+                         data-biz-type="corp"
+                         data-type="selectTree"
+                         data-name="corpId"
+                         data-required="true"
+                         data-defaultvalue="$!{pageVO.corpId}"
+                         data-scope="all" data-resource="bill:accebill:accKeepAmt:controls"
+                         data-callback="corpCall"></div>
+                </div>
+            </td>
+            ## 银行账号
+            <td class="textRight">#springMessage('银行账号')</td>
+            <td>
+                <input type="text" id="bankAcc" name="bankAcc" lay-verify="tableData|required" data-biz-name="bankAcc"
+                       autocomplete="off" class="layui-input text" placeholder="#springMessage('银行账号')" value="$!{pageVO.bankAcc}">
+                <table id="bankAccTable" class="hide">
+                    <thead>
+                    <tr>
+                        <th>#springMessage('table.nisBillhead.payerAcc')</th>
+                        <th>#springMessage('table.nisBillhead.payerAccName')</th>
+                        <th>#springMessage('table.nisBillhead.payerBank')</th>
+                        <th>#springMessage('table.nisBillhead.curId')</th>
+                    </tr>
+                    </thead>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            ## 留底金额
+            <td class="textRight">#springMessage('留底金额')</td>
+            <td >
+                <div class="layui-inline">
+                    <input type="text" data-name="keepAmt"  lay-verify="required" value="$!{pageVO.keepAmt}"
+                           autocomplete="off" class="layui-input bt-biz-moneyType" style="text-align:right"
+                           data-moneyendid="t20" placeholder="#springMessage('留底金额')" >
+                </div>
+            </td>
+            ## 状态
+            <td class="textRight">#springMessage('状态')</td>
+            <td >
+                <div class="bt-biz-dict" data-type="radio" data-group="status_yn" data-defaultvalue="$!{pageVO.status}" data-name="status" ></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="4" style="text-align: center;">
+                <button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+    #parse("views/common/footer.vm")
+</body>
+<script>
+    var bankAccInit;
+    bt.use(['form', 'layedit', 'dateType', 'selectTree', 'moneyType', 'corp', 'selectType', 'dicts','selectTable'], function () {
+        var $ = bt.jquery, form = bt.form();
+        var moneyType = bt.moneyType.init();
+        var moneyFun = bt.moneyType.getFun();
+        bt.dicts.init();
+        bt.corp.init();
+
+        //付款账号
+        var bankAccCol = [
+            {data: "bankAcc",},
+            {data: "accName",},
+            {data: "bankName",},
+            {data: "curName",}
+        ];
+        bankAccInit = bt.selectTable.init({
+            elem: "#bankAccTable",
+            url: basePath + "/bill/accebill/accKeepAmt/getPayerAccQuery",
+            urldata: {resource:'bill:accebill:accKeepAmt:controls',corpId:'$!{pageVO.corpId}'},
+            scrollX: true,
+            scrollY: "200px",
+            searchInput: "#bankAcc",
+            paging: true,
+            columns: bankAccCol,
+            clickCallback: function (data) {
+                if (data) {
+                    $('#bankAcc').val(data.bankAcc);
+                } else {
+                    $('input.text').val('');
+                }
+            }
+        });
+
+        //监听提交
+        form.on('submit(submit)', function (data) {
+            var action = "/bill/accebill/accKeepAmt/modify";
+            $.post(basePath + action,data.field,function(result){
+                parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+                if (result.success){
+                    parent.layer.closeAll();
+                }
+            },'JSON');
+            return false;
+        });
+
+
+    });
+
+    function corpCall(data){
+        $("#bankAcc").val('');
+        bankAccInit.get("bankAcc").reload({resource:'bill:accebill:accKeepAmt:controls',corpId:data});
+    }
+</script>
+</html>

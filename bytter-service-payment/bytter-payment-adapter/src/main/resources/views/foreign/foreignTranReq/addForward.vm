@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+	#parse("views/common/head.vm")
+	#parse("views/common/caData.vm")
+	<style>
+		.layui-tab-content {
+			padding:0!important; ;
+		}
+	</style>
+</head>
+<body>
+<form class="layui-form" method="post" id="inputForm">
+	<div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+		<ul class="layui-tab-title">
+			<li class="layui-this">#springMessage('table.rasBackQuery.msg')</li>
+			<li>#springMessage('table.fexTranReq.cashFlow')</li>
+			<li>#springMessage('fex.cotp.customInformation')</li>
+		</ul>
+		<div class="layui-tab-content">
+			<div class="layui-tab-item layui-show">
+				<input id="createBy" name="createBy" type="hidden" value="$!{fexTranReqPage.createBy}">
+				<input id="createDate" name="createDate" type="hidden" value="$!{fexTranReqPage.createDate}">
+				<input id="updateBy" name="updateBy" type="hidden" value="$!{fexTranReqPage.updateBy}">
+				<input id="updateDate" name="updateDate" type="hidden" value="$!{fexTranReqPage.updateDate}">
+				<input id="id" name="id" type="hidden" value="$!{fexTranReqPage.id}">
+				<input id="tranType" name="tranType" type="hidden" value="1">
+				<input id="status" name="status" type="hidden" value="0">
+				<input id="billNo" name="billNo" type="hidden" value="$!{fexTranReqPage.billNo}">
+				<!-- 系统参数 -->
+				<input id="budgetSel" name="budgetSel" type="hidden" value="$!{budgetSel}">
+				<input id="payItem" name="payItem" type="hidden" value="$!{payItem}">
+				<input type="hidden" class="layui-input" id="rateTypeId" value="$!{rateTypeId}">
+				<input type="hidden" class="layui-input" id="defProfitAndLossCur" value="$!{defProfitAndLossCur}">
+				<input type="hidden" class="layui-input" id="corpBaseCur">
+				<!-- 资金计划参数 明细项控制模式-->
+				<input id="dtlColSel" name="dtlColSel" type="hidden" value="$!{fbsBudgetTag.getDtlColSel()}">
+				<input id="settlType" name="settlType" type="hidden" value="0">
+				<input id="isSwapTran" name="isSwapTran" type="hidden" value="0">
+				<input id="type" name="type" type="hidden" value="forward">
+				<input id="isProfitAndLoss" name="isProfitAndLoss" type="hidden" value="$!{isProfitAndLoss}">
+				<input id="isSpotAutoDelivery" name="isSpotAutoDelivery" type="hidden">
+				<input id="bankTypeId" type="hidden">
+				<br>
+				<div class="layui-collapse">
+					<div class="layui-colla-item">
+						<h2 class="layui-colla-title">#springMessage('table.fexTranReq.tranMainInfo')</h2>
+						<div class="layui-colla-content layui-show">
+							<table class="layui-table">
+								<tbody>
+								<tr>
+									##单位
+									<td class="textRight" width="20%">#springMessage('table.fexTranReq.corpId')</td>
+									<td width="30%">
+										<div class="layui-input-inline">
+											<div class="bt-biz-corp"
+												 data-biz-type="corp"
+												 data-type="selectTree"
+												 data-name="corpId"
+												 data-biz-name="corpId"
+												 data-scope="all"
+												 data-resource="foreign:fextranreq:foreign:forward:apply"
+												 data-required="true"
+												 data-callback="bt.corpCallback"></div>
+										</div>
+									</td>
+									##产品
+									<td class="textRight" width="20%">#springMessage('table.foreign.product')</td>
+									<td width="30%">
+										<div class="bt-biz-selectType" data-url="${basePath}/foreign/fexproduct/json?tranType=8" data-name ="proId" data-biz-name ="proId"
+											 data-valueField="id" data-textField="proName" data-required = "true" data-callback="bt.proCallback" data-method="post"></div>
+									</td>
+								</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+					<ul class="layui-tab-title" id="tranTb" style="display: none">
+						<li class="layui-this">#springMessage('fex.tranApp.near')</li>
+						<li>#springMessage('fex.tranApp.remote')</li>
+					</ul>
+					<div class="layui-tab-content">
+						<div class="layui-tab-item layui-show" id="nearTab">
+							<div id="nearMsg"></div>
+						</div>
+						<div class="layui-tab-item" id="remoteTab">
+							<div id="remoteMsg" class="ignore-verify"></div>
+						</div>
+					</div>
+				</div>
+				<div style="text-align: center; padding-top: 10px;">
+					<button class="layui-btn" lay-submit="" lay-filter="submit" value="11" >#springMessage('common.button.submit')</button>
+					<button class="layui-btn" lay-submit="" lay-filter="submit" value="0" >#springMessage('common.button.temp')</button>
+					<button type="reset" class="layui-btn layui-btn-primary" data-callback="resetCallBack">#springMessage('common.button.reset')</button>
+				</div>
+			</div>
+			<div class="layui-tab-item">
+				<table id="appTable" class="layui-table layui-form" style="width:100%;">
+					<thead>
+					<tr>
+						<th>#springMessage('table.fexTranReq.cashFlowDate')</th>
+						<th>#springMessage('table.fcSubjectDay.optDate')</th>
+						<th>#springMessage('table.fexBankAcc.cashFlowType')</th>
+						<th>#springMessage('table.bisAccDtl.curName')</th>
+						<th>#springMessage('table.choBankFinance.payMoney')</th>
+						<th>#springMessage('table.nisBillhead.corpId')</th>
+						<th>#springMessage('common.button.bank')</th>
+						<th>#springMessage('table.btBankAccApp.accName')</th>
+						<th>#springMessage('table.foreign.bankAcc')</th>
+						<th>#springMessage('fex.cotp')</th>
+						<th>#springMessage('table.fexTranReq.cotpBank')</th>
+						<th>#springMessage('table.fexTranReq.cotpAccName')</th>
+						<th>#springMessage('table.fexForeign.cotpAcc')</th>
+						<th>#springMessage('table.foreign.voucherType')</th>
+					</tr>
+					</thead>
+					<tr id="srcNearTr" style="display: none">
+						##现金流日期
+						<td align="center">$!{sysDate}</td>
+						##结算日期
+						<td align="center"><div id="srcSettleDateNearTd">$!{sysDate}</div></td>
+						##现金流类型
+						<td align="center"><div id="srcCashFlowTypeNearTd">$dictTag.get("fexCorp.cashFlowType","0")</div></td>
+						##币种
+						<td align="center"><div id="srcCurNearTd"></div></td>
+						##金额
+						<td align="center"><div id="srcPayMoneyNearTd"></div></td>
+						##单位
+						<td align="center"><div id="srcCorpNearTd"></div></td>
+						##银行
+						<td align="center"><div id="srcBankNearTd"></div></td>
+						##账户名称
+						<td align="center"><div id="srcAccNameNearTd"></div></td>
+						##银行账户
+						<td align="center"><div id="srcBankAccNearTd"></div></td>
+						##交易对手
+						<td align="center"><div id="srcCotpNearTd"></div></td>
+						##交易对手银行
+						<td align="center"><div id="srcCotpBankNearTd"></div></td>
+						##交易对手账户名称
+						<td align="center"><div id="srcCotpAccNameNearTd"></div></td>
+						##交易对手银行账户
+						<td align="center"><div id="srcCotpBankAccNearTd"></div></td>
+						##支付方式
+						<td align="center"><div id="srcPayTypeNearTd"></div></td>
+					</tr>
+					<tr id="targetNearTr" style="display: none">
+						<td align="center">$!{sysDate}</td>
+						<td align="center"><div id="targetSettleDateNearTd">$!{sysDate}</div></td>
+						<td align="center"><div id="targetCashFlowTypeNearTd">$dictTag.get("fexCorp.cashFlowType","0")</div></td>
+						<td align="center"><div id="targetCurNearTd"></div></td>
+						<td align="center"><div id="targetPayMoneyNearTd"></div></td>
+						<td align="center"><div id="targetCorpNearTd"></div></td>
+						<td align="center"><div id="targetBankNearTd"></div></td>
+						<td align="center"><div id="targetAccNameNearTd"></div></td>
+						<td align="center"><div id="targetBankAccNearTd"></div></td>
+						<td align="center"><div id="targetCotpNearTd"></div></td>
+						<td align="center"><div id="targetCotpBankNearTd"></div></td>
+						<td align="center"><div id="targetCotpAccNameNearTd"></div></td>
+						<td align="center"><div id="targetCotpBankAccNearTd"></div></td>
+						<td align="center"><div id="targetPayTypeNearTd"></div></td>
+					</tr>
+					<tr id="srcRemoteTr" style="display: none">
+						##现金流日期
+						<td align="center">$!{sysDate}</td>
+						##结算日期
+						<td align="center"><div id="srcSettleDateRemoteTd">$!{sysDate}</div></td>
+						##现金流类型
+						<td align="center"><div id="srcCashFlowTypeRemoteTd">$dictTag.get("fexCorp.cashFlowType","0")</div></td>
+						##币种
+						<td align="center"><div id="srcCurRemoteTd"></div></td>
+						##金额
+						<td align="center"><div id="srcPayMoneyRemoteTd"></div></td>
+						##单位
+						<td align="center"><div id="srcCorpRemoteTd"></div></td>
+						##银行
+						<td align="center"><div id="srcBankRemoteTd"></div></td>
+						##账户名称
+						<td align="center"><div id="srcAccNameRemoteTd"></div></td>
+						##银行账户
+						<td align="center"><div id="srcBankAccRemoteTd"></div></td>
+						##交易对手
+						<td align="center"><div id="srcCotpRemoteTd"></div></td>
+						##交易对手银行
+						<td align="center"><div id="srcCotpBankRemoteTd"></div></td>
+						##交易对手账户名称
+						<td align="center"><div id="srcCotpAccNameRemoteTd"></div></td>
+						##交易对手银行账户
+						<td align="center"><div id="srcCotpBankAccRemoteTd"></div></td>
+						##支付方式
+						<td align="center"><div id="srcPayTypeRemoteTd"></div></td>
+					</tr>
+					<tr id="targetRemoteTr" style="display: none">
+						<td align="center">$!{sysDate}</td>
+						<td align="center"><div id="targetSettleDateRemoteTd">$!{sysDate}</div></td>
+						<td align="center"><div id="targetCashFlowTypeRemoteTd">$dictTag.get("fexCorp.cashFlowType","0")</div></td>
+						<td align="center"><div id="targetCurRemoteTd"></div></td>
+						<td align="center"><div id="targetPayMoneyRemoteTd"></div></td>
+						<td align="center"><div id="targetCorpRemoteTd"></div></td>
+						<td align="center"><div id="targetBankRemoteTd"></div></td>
+						<td align="center"><div id="targetAccNameRemoteTd"></div></td>
+						<td align="center"><div id="targetBankAccRemoteTd"></div></td>
+						<td align="center"><div id="targetCotpRemoteTd"></div></td>
+						<td align="center"><div id="targetCotpBankRemoteTd"></div></td>
+						<td align="center"><div id="targetCotpAccNameRemoteTd"></div></td>
+						<td align="center"><div id="targetCotpBankAccRemoteTd"></div></td>
+						<td align="center"><div id="targetPayTypeRemoteTd"></div></td>
+					</tr>
+				</table>
+			</div>
+			<div class="layui-tab-item">
+				<!-- 自定义信息 -->
+				<div id="custMsg"></div>
+			</div>
+		</div>
+	</div>
+	#caDataHidden()
+</form>
+	#parse("views/common/footer.vm")
+	#caDataScript()
+</body>
+</html>
+<script>
+	var selectTableObj={
+		srcBankAccTable1:{},
+		srcBankAccTable2:{},
+		corpBankAccTable1:{},
+		corpBankAccTable2:{},
+		boodAccTable1:{},
+		boodAccTable2:{},
+		corpContactTable1:{},
+		corpContactTable2:{},
+		tranCodeTable1:{},
+		tranCodeTable2:{},
+		tranAddrTable1:{},
+		tranAddrTable2:{},
+		up1:{},
+		up2:{},
+	};
+</script>
+<script src="${basePath}/static/modules/foreign/foreignTranReq/commonForeign.add.js?_btv=${resourceVersion}"></script>

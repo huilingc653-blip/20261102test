@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            font-size:14px;
+            padding-bottom: 60px;
+        }
+        .layui-form-label{
+            width: 180px;
+        }
+        .layui-input-block{
+            margin-left: 220px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" action="" id="inputForm">
+    <input  type="hidden" id="guaId" name="guaId" value="$!{guaId}">
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+                <th>#springMessage('table.guaPledge.AlterTime')</th>
+                <th>#springMessage('table.guaPledge.pledgeNo')</th>
+                <th>#springMessage('table.guaPledge.corpId')</th>
+                <th>#springMessage('table.guaPledge.createby')</th>
+                <th>#springMessage('table.guaPledge.updateby')</th>
+                <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+	</thead>
+</table>
+    <div align="center">
+            <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.close')</button>
+    </div>
+</form>
+  #parse("views/common/footer.vm")
+</body>
+</html>
+<script type="text/javascript">
+    bt.use(['form','date','datatable','dicts'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.dicts.init();
+        datatable = bt.datatable.init({
+            elem: "#appTable",
+            ajax: {
+                url:basePath+"/cms/guarantee/pledgeChange/listguadata?guaId="+$('#guaId').val()
+            }
+            ,columns: [
+                {data:"createDate",bSortable:true,className:'center',
+                    render: function (data, type, full, meta) {
+                        return bt.date.format(full.createDate,"yyyy-MM-dd hh:mm:ss");
+                    }
+                },
+                {data:"pledgeNo",bSortable:true,className:'center'},
+                {data:"corpName",bSortable:true,className:'center'},
+                {data:"createBy",bSortable:true,className:'center'},
+                {data:"updateBy",bSortable:true,className:'center'},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html ='';
+                        if(bt.isResource('gua:pledge:change:query',full.corpId)){//查看和日志权限权限
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("table.guaPledge.viewupdate")+'</a><span class="text-explode"></span>';
+                        }
+                        return html;
+                    }}
+                ]
+        });
+    });
+    //查看信息
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('table.guaPledge.viewupdate'),basePath + "/cms/guarantee/pledgeChange/viewHischanged/"+data.id);
+            return;
+        }
+    }
+</script>
+

@@ -1,0 +1,147 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        #page a, #page span {
+            height: 30px;
+            line-height: 30px;
+        }
+
+        #page .layui-laypage-total {
+            padding-right: 0px;
+        }
+    </style>
+</head>
+<body>
+    <form id="searchForm" class="layui-form">
+    <input type="hidden" id="total" value="${model.total}">
+	<input type="hidden" id="curr" value="${model.curr}">
+        <table class="layui-table">
+            <tbody>
+                <tr>
+                    ##授信合同号
+                    <td class="textRight">#springMessage('table.ratBkration.contractNo')</td>
+                    <td class="rCode">
+                        <div class="layui-input-inline">
+                            <input type="text" name="contractNo" id="contractNo" value="$!{contractNo}"
+                                    autocomplete="off" class="layui-input" placeholder="#springMessage('table.ratBkration.contractNo')">
+                        </div>
+                    </td>
+                    ##授信结束时间
+                    <td class="textRight">#springMessage('table.ratBkration.ratDate')</td>
+                    <td width="40%" class="rCode">
+                    	<input type="text" name="ratDate" id="ratDate" class="layui-input bt-biz-dateType" 
+                    		data-type="date" data-biz-name="ratDate" value="$!{ratDate}">
+                    </td>
+                <tr>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                        <button type="button" class="layui-btn layui-btn-primary" onClick="resetCode()">#springMessage('common.button.reset')</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+<div>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.ratBkration.ratCode')</th>
+        <th>#springMessage('table.ratBkration.contractNo')</th>
+        <th>#springMessage('table.ratBkration.corpId')</th>
+        <th>#springMessage('table.ratBkration.curCode')</th>
+        <th>#springMessage('table.ratBkrationDetail.itemCodeFlag')</th>
+        <th>#springMessage('table.ratBkrationDetail.itemCode')</th>
+        <th>#springMessage('table.ratBkration.money')</th>
+        <th>#springMessage('table.ratBkration.begindate')</th>
+        <th>#springMessage('table.ratBkration.enddate')</th>
+        <th>#springMessage('table.ratBkration.status')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+    <tbody>
+    #foreach($ration in $!{model.rations})
+  		<tr>
+  			<td align="center" rowspan="$!{ration.itemSize}">$!{ration.ratCode}</td>
+  			<td align="center" rowspan="$!{ration.itemSize}">$!{ration.contractNo}</td>
+  			<td align="center" rowspan="$!{ration.itemSize}">$!{ration.corpName}</td>
+  			<td align="center" rowspan="$!{ration.itemSize}">$!{ration.curName}</td>
+		#foreach($rationDtl in $!{ration.rationDtls})
+  			#if(${rationDtl.itemOrder} == 1)
+		  		#if($!{rationDtl.itemFlag} == "0")
+		  	<td align="center">
+		  		#else
+		  	<td align="center" rowspan="$!{ration.compItemSize}">
+		  		#end
+  				$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})
+  			</td>	
+	  		<td align="center">
+  				$!{rationDtl.itemName}
+  			</td>
+  				#if($!{rationDtl.itemFlag} == "0")
+		  	<td align="right">
+		  		#else
+		  	<td align="right" rowspan="$!{ration.compItemSize}">	
+		  		#end
+  				$number.formatNumeric($!{rationDtl.money})
+  			</td>
+		  	<td align="center" rowspan="$!{ration.itemSize}">$!date.format('yyyy-MM-dd',$!ration.beginDate)</td>
+  			<td align="center" rowspan="$!{ration.itemSize}">$!date.format('yyyy-MM-dd',$!ration.endDate)</td>
+  			<td align="center" rowspan="$!{ration.itemSize}">
+  				$dictTag.get("common.status", $!{ration.status})
+  			</td>
+  			<td align="center" rowspan="$!{ration.itemSize}">
+  				##操作链接
+  				#if($!{ration.overdueSign} == "1")
+  					<font color="red">#springMessage('common.ration.overdue')</font>&nbsp;|
+  				#else
+  				<a class="" href="#" onclick="viewAdd('$!{ration.id}')">#springMessage("ration.bkrationadd.list")</a>&nbsp;|
+                <a class="" href="#" onclick="add('$!{ration.id}')">#springMessage("ration.bkrationadd.add")</a>&nbsp;|
+  				#end
+  				<a class="" href="#" onclick="view('$!{ration.id}')">#springMessage("common.button.view")</a>
+  			</td>
+			#else
+  		</tr>
+		<tr>
+				#if($!{rationDtl.itemFlag} == "0")
+	  		<td align="center">
+  				$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})
+  			</td>
+	  		<td align="center">
+  				$!{rationDtl.itemName}
+  			</td>
+  			<td align="right">
+  				$number.formatNumeric($!{rationDtl.money})
+  			</td>
+				#else
+					#if($!{rationDtl.firstComp} == "1")
+			<td align="center" rowspan="$!{ration.compItemSize}">
+  				$dictTag.get("RatModel.ItemFlag", $!{rationDtl.itemFlag})
+  			</td>
+	  		<td align="center">
+  				$!{rationDtl.itemName}
+  			</td>
+			<td align="right" rowspan="$!{ration.compItemSize}">
+  				$number.formatNumeric($!{rationDtl.money})
+  			</td>
+  					#else
+	  		<td align="center">
+  				$!{rationDtl.itemName}
+  			</td>
+  					#end
+				#end
+		  	#end
+  		#end
+  		</tr>
+	#end
+    </tbody>
+</table>
+</div>
+    <div id="page" style="position:fixed ; bottom:0px;width:100%;" ></div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/cms/rat/cpration/ratCprationAdd.list.js?_btv=${resourceVersion}"></script>
+</html>

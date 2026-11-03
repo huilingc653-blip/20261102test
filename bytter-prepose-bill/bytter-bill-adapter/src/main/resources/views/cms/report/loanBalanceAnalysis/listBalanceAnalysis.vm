@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form input150-container">
+    <input type="hidden" id="natureIdHidden" value=""/>
+    <input type="hidden" id="selectCycle" value=""/>
+    <table class="layui-table">
+        <tbody>
+        <tr>
+        ##单位
+            <td class="textRight">#springMessage("table.btBankAcc.corpId")</td>
+            <td>
+                <div class="layui-input-inline">
+                    <div class="bt-biz-corp" data-name="corpId" data-biz-type="corp" data-type="selectTree" data-biz-name="corpId"
+                         data-tree-type="check"
+                         data-checkkboxtype='{"Y":"s","N":"s"}'
+                         data-resource="cms:report:loan:analysis:query"
+                         data-afterInit="bt.initValue"
+                         data-required="true"
+                    ></div>
+                </div>
+            </td>
+            
+            ##是否折合币种
+            <td class="textRight">#springMessage("common.isConvert.currency")</td>
+            <td>
+                <div class="layui-form">
+                    <div class="bt-biz-dict" data-type="radio" data-defaultvalue="0" data-callback="callToCurr" data-biz-name="isToCurr"  data-name="isToCurr" data-group="sf_yn" ></div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+        ##币别
+            <td class="textRight">#springMessage("table.btBankAccCur.cur")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-biz-name="curId"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="curId"
+                     data-search="true"
+                     data-defaultvalue="$!{curId}"
+                     data-required="true"
+                     data-callback="checkConvertCurCallBack"
+                ></div>
+            </td>
+
+        ##折合币种
+            <td class="textRight">#springMessage("commom.converted.into.currency")</td>
+            <td>
+                <div class="bt-biz-selectType"
+                     data-biz-name="convertCurId"
+                     data-url="${basePath}/basic/business/btcurrency/json"
+                     data-valuefield="id"
+                     data-textfield="curName"
+                     data-name="convertCurId"
+                     data-search="true"
+                     data-defaultvalue="$!{convertCurId}"
+                     data-disabled = "true"
+                     data-callback="checkConvertCurCallBack"
+                ></div>
+            </td>
+        </tr>
+
+        <tr>
+        ##对比周期
+            <td class="textRight">#springMessage("statisticsReport.IntegratedQuery.comparedCycle")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="mulselect" data-biz-name="cycle" data-name="cycle" data-group="Compare.the.cycle"></div>
+                </div>
+            </td>
+
+        ##金额单位
+            <td class="textRight">#springMessage("common.moneyType")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="select" data-biz-name="moneyType" data-name="moneyType" data-group="cms.MoneyType" data-defaultvalue="1"></div>
+                </div>
+            </td>
+            
+        </tr>
+        
+        <tr>
+        ##统计月份
+            <td class="textRight">#springMessage("common.statistical.time")</td>
+            <td>
+                <input type="text" class="layui-input bt-biz-dateType" data-max="maxDate" data-type="month" data-today="true" id="statDate" name="monthDate" data-biz-name="statDate" data-callback="checkConvertCurCallBack" lay-verify="required">
+            </td>
+            
+
+            <td class="textRight">#springMessage("common.display.mode")</td>
+            <td>
+                <div class="layui-form" autocomplete="off">
+                    <div class="bt-biz-dict" data-type="radio" data-biz-name="displayMode" data-name="displayMode" data-group="display.mode" data-defaultvalue="1"></div>
+                </div>
+            </td>
+        </tr>
+        
+        <tr>
+            ##是否包含在途金额
+            <td class="textRight">#springMessage("common.is.included")</td>
+            <td>
+                <div class="layui-form">
+                    <div class="bt-biz-dict" data-type="radio" data-defaultvalue="0" data-biz-name="isContain"  data-name="isContain" data-group="sf_yn" ></div>
+                </div>
+            </td>
+
+            ##统计维护
+                <td class="textRight">#springMessage("balance.query.Statistical.dimension")</td>
+                <td>
+                    <div class="layui-form" autocomplete="off">
+                        <div class="bt-biz-dict" data-type="select" data-biz-name="typesOfStatistics"  data-required="true" data-name="typesOfStatistics" data-group="Types.of.statistics" required="true"></div>
+                    </div>
+                </td>
+        </tr>
+        
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search1" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary" >#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+</form>
+
+<div id="chartSum" style="width:100%;height:500px;display: none;"></div>
+
+<div id="typeTable">
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+        <tr>
+            <th rowspan="2">#springMessage("table.fbsBudget.corpId")</th>##单位
+            <th rowspan="2">#springMessage("common.Types.of.financing")</th>##融资种类
+            <th rowspan="2">#springMessage("common.current.balance")</th>##本期余额
+            <th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befMonthEnd")</th>##较上月末
+            <th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befQuarterEnd")</th>##较上季度末
+            <th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>##较去年同期
+            <th colspan="3">#springMessage("statisticsReport.IntegratedQuery.yearEarly")</th>##较年初
+        </tr>
+    
+        <tr>
+            <th>#springMessage("table.accountDTO.balance")</th>##余额
+            <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th>#springMessage("table.bisGatherPolicy.scale")</th>##比例
+            
+            <th>#springMessage("table.accountDTO.balance")</th>##余额
+            <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th>#springMessage("table.bisGatherPolicy.scale")</th>##比例
+            
+            <th>#springMessage("table.accountDTO.balance")</th>##余额
+            <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th>#springMessage("table.bisGatherPolicy.scale")</th>##比例
+           
+            <th>#springMessage("table.accountDTO.balance")</th>##余额
+            <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th>#springMessage("table.bisGatherPolicy.scale")</th>##比例
+        </tr>
+    </thead>
+</table>
+</div>
+
+<div id="timeTable" style="display: none;">
+    <table id="appTable2" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th rowspan="2">#springMessage("table.fbsBudget.corpId")</th>##单位
+            <th rowspan="2">#springMessage("common.Types.of.financing")</th>##融资种类
+            <th rowspan="2">#springMessage("table.cms.financing.period")</th>##融资期限
+            <th rowspan="2">#springMessage("common.current.balance")</th>##本期余额
+            <th colspan="3" class="M">#springMessage("statisticsReport.IntegratedQuery.befMonthEnd")</th>##较上月末
+            <th colspan="3" class="S">#springMessage("statisticsReport.IntegratedQuery.befQuarterEnd")</th>##较上季度末
+            <th colspan="3" class="L">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>##较去年同期
+            <th colspan="3" class="Y">#springMessage("statisticsReport.IntegratedQuery.yearEarly")</th>##较年初
+        </tr>
+
+        <tr>
+            <th class="M">#springMessage("table.accountDTO.balance")</th>##余额
+            <th class="M">#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th class="M">#springMessage("table.bisGatherPolicy.scale")</th>##比例
+
+            <th class="S">#springMessage("table.accountDTO.balance")</th>##余额
+            <th class="S">#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th class="S">#springMessage("table.bisGatherPolicy.scale")</th>##比例
+
+            <th class="L">#springMessage("table.accountDTO.balance")</th>##余额
+            <th class="L">#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th class="L">#springMessage("table.bisGatherPolicy.scale")</th>##比例
+
+            <th class="Y">#springMessage("table.accountDTO.balance")</th>##余额
+            <th class="Y">#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>##差额
+            <th class="Y">#springMessage("table.bisGatherPolicy.scale")</th>##比例
+        </tr>
+        </thead>
+    </table>
+</div>
+
+<div id="typeChart" style="display: none;">     
+    <table id="appTable1" class="layui-table layui-form" style="width:100%;">
+        <thead>
+            <tr class="draw">
+                <th>#springMessage("table.fbsBudget.corpId")</th>##单位
+                <th>#springMessage("common.Types.of.financing")</th>##融资种类
+                <th>#springMessage("table.btBankAccCur.cur")</th>##币别
+                <th>#springMessage("common.current.balance")</th>##本期余额
+                <th>#springMessage("table.last.month.balance")</th>##上月末余额
+                <th>#springMessage("table.last.season.balance")</th>##上季末余额
+                <th>#springMessage("table.last.year.balance")</th>##去年同期余额
+                <th>#springMessage("table.fcInitAcc.yearBalance")</th>##年初余额
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<div id="timeChart" style="display: none;">
+    <table id="appTable3" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr class="draw">
+            <th>#springMessage("table.fbsBudget.corpId")</th>##单位
+            <th>#springMessage("common.Types.of.financing")</th>##融资种类
+            <th>#springMessage("table.cms.financing.period")</th>##融资期限
+            <th>#springMessage("table.btBankAccCur.cur")</th>##币别
+            <th>#springMessage("common.current.balance")</th>##本期余额
+            <th>#springMessage("table.last.month.balance")</th>##上月末余额
+            <th>#springMessage("table.last.season.balance")</th>##上季末余额
+            <th>#springMessage("table.last.year.balance")</th>##去年同期余额
+            <th>#springMessage("table.fcInitAcc.yearBalance")</th>##年初余额
+        </tr>
+        </thead>
+    </table>
+</div>
+
+#parse("views/common/footer.vm")
+</body>
+
+<script src="${basePath}/static/plugins/echarts/echarts.common.min.js?_btv=${resourceVersion}"></script>
+<script>
+    var corp;
+    var selectType;
+    var appTable = {"isInit": true}; 
+    var appTable1 = {"isInit": false};
+    var appTable2 = {"isInit": false};
+    var appTable3 = {"isInit": false};
+    var moneyFun;
+    var dicts;
+    var dateType;
+    var selectCycle=new Array();//用于存放之前选择的对比周期
+    cycles = "";
+    bt.use(['form', 'datatable', 'dateType', 'selectType',  'dicts', 'corp','mulselect','moneyType','date'], function () {
+        $ = bt.jquery, form = bt.form();
+        bt.mulselect.init();
+        dicts = bt.dicts.init();
+        dateType = bt.dateType.init();
+        var moneyType = bt.moneyType.init();
+        moneyFun = moneyType.getFun();
+
+        initTable("#appTable", appTable.columns,appTable.summary,appTable.html1);
+        
+        appTable.isInit = true;
+        
+        selectType = bt.selectType.init();
+        corp = bt.corp.init();
+        
+    });
+
+
+    // 设置可选的日期
+    function maxDate() {
+        var now = new Date();
+        return now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+    }
+//------------------------------------------------------------------------------------------
+    function initTable(id,columns,summary,html){
+        bt.datatable.init({
+            elem: id,
+            colReorder: true,
+            //order: [2, 'desc'],
+            ajax: {
+                'url': basePath + "/cms/report/loanBalanceAnalysis/datatable"
+            },
+            exportFile:{
+                customPrint:{
+                    header:function(visible,dt){
+                        var printHtml ;
+                        if(visible.length == 16){
+                            printHtml = thml2(visible); 
+                        }else {
+                            printHtml = thml1(visible);
+                        }
+                        
+                        return printHtml;
+                    },
+                },
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search1",
+                customizeFormSearchFunction:function (data) {
+                    cycles = data.field.cycle.toString();
+                    $.each(data,function(i){
+                        selectCycle[i]=data[i].cycle;
+                    });
+                    
+                    var mode = data.field.displayMode;
+                    if (mode == "1") { 
+                        if(dicts.get("typesOfStatistics").val() == "2"){//融资期限
+                            $("#typeChart").hide();
+                            $("#typeTable").hide();
+                            $("#chartSum").hide();
+                            $("#timeChart").hide();
+                            $("#timeTable").show();
+                            id = "appTable2";
+                        }else {
+                            $("#typeChart").hide();
+                            $("#timeChart").hide();
+                            $("#chartSum").hide();
+                            $("#timeTable").hide();
+                            $("#typeTable").show();
+                            id = "appTable";
+                        }
+                        
+                    } else {
+                        if(dicts.get("typesOfStatistics").val() == "2") {//融资期限
+                            $("#typeTable").hide();
+                            $("#timeTable").hide();
+                            $("#typeChart").hide();
+                            $("#chartSum").show();
+                            $("#timeChart").show();//期限
+                            id = "appTable3";
+                        }else {
+                            $("#typeTable").hide();
+                            $("#timeTable").hide();
+                            $("#timeChart").hide();//期限
+                            $("#typeChart").show();
+                            $("#chartSum").show();
+                            id = "appTable1";
+                        }
+                    }
+                    initTableSet(id);
+                    
+                    return false;
+                }
+            },
+            columns: columns,
+            summary:summary,
+            btInitComplete: function (settings, data) {
+                //$(".count").removeAttr("data-money");
+                //initBar();
+            },
+            btDrawCallback:function(setting){
+                if(dicts.get("displayMode").val() == "2"){//图表
+                    var api = new $.fn.dataTable.Api(setting);
+                    var list = api.rows( {page:'current'} ).data();
+                    var data = list.splice(0,list.length);
+                    var types = dicts.get("typesOfStatistics").val();
+                    if(types == "3"){
+                        var corpIds = corp.get("corpId").val();
+                        data[0].corpIds = corpIds;
+                    }
+                    data[0].typesOfStatistics = types;
+                    initBar(data);
+                }
+            }
+        });
+    }
+
+    /**
+     * 初始化设置
+     * @param layId
+     */
+    function initTableSet(layId){
+        var  tableId = "#" + layId;
+        var columns = null;
+        var obj = null;
+        var summary = null;
+        var printHtml = '';
+        var file = {}
+        var colShow = null;
+        if ("appTable" == layId) {
+            obj = appTable;
+            colShow = setColShow(selectCycle,1);
+            columns = appTable.columns;
+            summary = appTable.summary;
+            printHtml = appTable.html1;
+        }else if("appTable1" == layId){
+            obj = appTable1;
+            colShow = setColShow(selectCycle,2);
+            columns = appTable1.columns;
+            summary = appTable1.summary;
+        }else if("appTable2" == layId){
+            obj = appTable2;
+            colShow = setColShow(selectCycle,3);
+            columns = appTable2.columns;
+            summary = appTable2.summary;
+            printHtml = appTable2.html2;
+        }else{
+            obj = appTable3;
+            colShow = setColShow(selectCycle,4);
+            columns = appTable3.columns;
+            summary = appTable3.summary;
+        }
+
+        if ( !obj.isInit ) {
+            bt.each(colShow.hide,function (i,col) {
+                columns[col].visible = false
+            })
+            initTable(tableId, columns,summary,printHtml);
+            obj.isInit = true;
+        } else {
+            bt.each(colShow.visible,function (index,col) {
+                setColumnShow($.fn.dataTable.Api(tableId),col,true)
+            })
+            bt.each(colShow.hide,function (index,col) {
+                setColumnShow($.fn.dataTable.Api(tableId),col,false)
+            })
+            $.fn.dataTable.Api(tableId).draw();
+        }
+    }
+
+  function setColShow(cycle,sign) {
+        var obj = {
+            visible:[],
+            hide:[]
+        }
+        if(1== sign) {
+            if (cycle.field.indexOf("M") != -1 || cycle.field == "") {//较上月
+                obj.visible.push([3,4,5]);
+            } else {
+                obj.hide.push([3,4,5]);
+            }
+
+            if (cycle.field.indexOf("S") != -1 || cycle.field == "") {//较上季末
+                obj.visible.push([6,7,8]);
+            } else {
+                obj.hide.push([6,7,8]);
+            }
+
+            if (cycle.field.indexOf("L") != -1 || cycle.field == "") {//较去年同期
+                obj.visible.push([9,10,11]);
+            } else {
+                obj.hide.push([9,10,11]);
+            }
+
+            if (cycle.field.indexOf("Y") != -1 || cycle.field == "") {//较去年同期
+                obj.visible.push([12,13,14]);
+            } else {
+                obj.hide.push([12,13,14]);
+            }
+        }
+        
+        if(2 == sign || 4 ==sign){
+            
+            if (cycle.field.indexOf("M") != -1 || cycle.field == "") {//较上月
+                if(2 == sign) {
+                    obj.visible.push(4);
+                }else {
+                    obj.visible.push(5);
+                }
+            } else {
+                if(2 == sign) {
+                    obj.hide.push(4);
+                }else {
+                    obj.hide.push(5);
+                }
+            }
+            
+            
+            if (cycle.field.indexOf("S") != -1 || cycle.field == "") {//较上季末
+                if(2 == sign) {
+                    obj.visible.push(5);
+                }else {
+                    obj.visible.push(6);
+                }
+            } else {
+                if(2 == sign) {
+                    obj.hide.push(5);
+                }else {
+                    obj.hide.push(6);
+                }
+            }
+
+            if (cycle.field.indexOf("L") != -1 || cycle.field == "") {//较去年同期
+                if(2 == sign) {
+                    obj.visible.push(6);
+                }else {
+                    obj.visible.push(7);
+                }
+            } else {
+                if(2 == sign) {
+                    obj.hide.push(6);
+                }else {
+                    obj.hide.push(7);
+                }
+            }
+
+            if (cycle.field.indexOf("Y") != -1 || cycle.field == "") {//较去年同期
+                if(2 == sign) {
+                    obj.visible.push(7);
+                }else {
+                    obj.visible.push(8);
+                }
+            } else {
+                if(2 == sign) {
+                    obj.hide.push(7);
+                }else {
+                    obj.hide.push(8);
+                }
+            }
+        }
+
+      if(3 == sign) {
+          if (cycle.field.indexOf("M") != -1 || cycle.field == "") {//较上月
+              obj.visible.push([4,5,6]);
+          } else {
+              obj.hide.push([4,5,6]);
+          }
+
+          if (cycle.field.indexOf("S") != -1 || cycle.field == "") {//较上季末
+              obj.visible.push([7,8,9]);
+          } else {
+              obj.hide.push([7,8,9]);
+          }
+
+          if (cycle.field.indexOf("L") != -1 || cycle.field == "") {//较去年同期
+              obj.visible.push([10,11,12]);
+          } else {
+              obj.hide.push([10,11,12]);
+          }
+
+          if (cycle.field.indexOf("Y") != -1 || cycle.field == "") {//较去年同期
+              obj.visible.push([13,14,15]);
+          } else {
+              obj.hide.push([13,14,15]);
+          }
+      }
+        
+        return obj;
+    }
+
+
+    function setColumnShow(table,index,flag) {
+        var column = table.columns( index );
+        column.visible( flag );
+    }
+    
+    appTable.columns = [
+        {data: "corpName", bSortable: false,className:"center"},
+        {data: "loanSignName", bSortable: false,className:"center"},
+        {data: "currentBalance", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                var corpId = full.corpId;
+                var loanSign = full.loanSign;
+                var curId =  full.curId;
+                return '<a class="" href="#" data-row="'+meta.row+'" onclick="view(\''+corpId+'\',\''+loanSign+'\',\''+curId+'\')">'+moneyFun.format(full.currentBalance,{separator: ","})+'</a> ';
+            }
+        },
+        {data: "balanceM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceM, {separator: ","});
+            }
+        },
+        {data: "differenceM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceM,{separator: ","});
+            }
+        },
+        {data: "scaleM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0.00 || full.currentBalance == null) {
+                    return "-";
+                }else {
+                    return moneyFun.format(full.scaleM, {separator: ",", decimal: 2}) + "%";
+                }
+            }
+        },
+        {data: "balanceS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceS, {separator: ","});
+            }
+        },
+        {data: "differenceS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceS, {separator: ","});
+            }
+        },
+        {data: "scaleS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else{
+                    return moneyFun.format(full.scaleS, {separator: ",", decimal: 2}) + "%";
+                }
+            }
+        },
+        {data: "balanceL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceL, {separator: ","});
+            }
+        },
+        {data: "differenceL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceL, {separator: ","});
+            }
+        },
+        {data: "scaleL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else{
+                    return moneyFun.format(full.scaleL, {separator: ","}) + "%";
+                }
+            }
+        },
+        {data: "balanceY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceY, {separator: ","});
+            }
+        },
+        {data: "differenceY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceY, {separator: ","});
+            }
+        },
+        {data: "scaleY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else{
+                    return moneyFun.format(full.scaleY, {separator: ","}) + "%";
+                }
+            }
+        }
+    ];
+
+    appTable2.columns = [
+        {data: "corpName", bSortable: false,className:"center"},
+        {data: "loanSignName", bSortable: false,className:"center"},
+        {data: "periodName", bSortable: false,className:"center"},
+        {data: "currentBalance", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+               // return moneyFun.format(full.currentBalance,{separator: ","});
+                var corpId = full.corpId;
+                var loanSign = full.loanSign;
+                var curId =  full.curId;
+                var repayCycle = full.repayCycle;
+                return '<a class="" href="#" data-row="'+meta.row+'" onclick="view(\''+corpId+'\',\''+loanSign+'\',\''+curId+'\',\''+repayCycle+'\')">'+moneyFun.format(full.currentBalance,{separator: ","})+'</a> ';
+            }
+        },
+        {data: "balanceM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceM, {separator: ","});
+            }
+        },
+        {data: "differenceM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceM,{separator: ","});
+            }
+        },
+        {data: "scaleM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else {
+                    return moneyFun.format(full.scaleM, {separator: ",", decimal: 2}) + "%";
+                }
+            }
+        },
+        {data: "balanceS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceS, {separator: ","});
+            }
+        },
+        {data: "differenceS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceS, {separator: ","});
+            }
+        },
+        {data: "scaleS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else{
+                    return moneyFun.format(full.scaleS, {separator: ",", decimal: 2}) + "%";
+                }
+            }
+        },
+        {data: "balanceL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceL, {separator: ","});
+            }
+        },
+        {data: "differenceL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceL, {separator: ","});
+            }
+        },
+        {data: "scaleL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else{
+                    return moneyFun.format(full.scaleL, {separator: ","}) + "%";
+                }
+            }
+        },
+        {data: "balanceY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceY, {separator: ","});
+            }
+        },
+        {data: "differenceY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.differenceY, {separator: ","});
+            }
+        },
+        {data: "scaleY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                if(full.currentBalance == 0 || full.currentBalance == null) {
+                    return "-";
+                }else{
+                    return moneyFun.format(full.scaleY, {separator: ","}) + "%";
+                }
+            }
+        }
+    ];
+
+    appTable1.columns = [
+        //另一个表
+        {data: "corpName", bSortable: false,className:"center"},
+        {data: "loanSignName", bSortable: false,className:"center"},
+        {data: "curName", bSortable: false,className:"center"},
+        {data: "currentBalance", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.currentBalance,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceM,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceS,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceL,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceY,{separator: ",",decimal: 2});
+            }
+        }
+    ];
+
+    appTable3.columns = [
+        //另一个表
+        {data: "corpName", bSortable: false,className:"center"},
+        {data: "loanSignName", bSortable: false,className:"center"},
+        {data: "periodName", bSortable: false,className:"center"},
+        {data: "curName", bSortable: false,className:"center"},
+        {data: "currentBalance", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.currentBalance,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceM", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceM,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceS", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceS,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceL", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceL,{separator: ",",decimal: 2});
+            }
+        },
+        {data: "balanceY", bSortable: false,className:"textRight",
+            render: function (data, type, full, meta) {
+                return moneyFun.format(full.balanceY,{separator: ",",decimal: 2});
+            }
+        }
+    ];
+
+    appTable.summary = {
+        pageSum: false,
+                allSum: true,
+                selectSum: false,
+                format: {
+            decimal: 2
+        },
+        sumList: [
+            {
+                colNum: '3',
+                dataName: 'currentBalance'
+            },
+            {
+                colNum: '4',
+                dataName: 'balanceM'
+            },
+            {
+                colNum: '7',
+                dataName: 'balanceS'
+            },
+            {
+                colNum: '10',
+                dataName: 'balanceL'
+            },
+            {
+                colNum: '13',
+                dataName: 'balanceY'
+            }
+        ]
+    };
+
+    appTable1.summary = {
+        pageSum: false,
+        allSum: true,
+        selectSum: false,
+        format: {
+            decimal: 2
+        },
+        sumList: [
+            {
+                colNum: '4',
+                dataName: 'currentBalance'
+            },
+            {
+                colNum: '5',
+                dataName: 'balanceM'
+            },
+            {
+                colNum: '6',
+                dataName: 'balanceS'
+            },
+            {
+                colNum: '7',
+                dataName: 'balanceL'
+            },
+            {
+                colNum: '8',
+                dataName: 'balanceY'
+            }
+        ]
+    };
+
+    appTable2.summary = {
+        pageSum: false,
+        allSum: true,
+        selectSum: false,
+        format: {
+            decimal: 2
+        },
+        sumList: [
+            {
+                colNum: '5',
+                dataName: 'currentBalance'
+            },
+            {
+                colNum: '6',
+                dataName: 'balanceM'
+            },
+            {
+                colNum: '8',
+                dataName: 'balanceS'
+            },
+            {
+                colNum: '11',
+                dataName: 'balanceL'
+            },
+            {
+                colNum: '14',
+                dataName: 'balanceY'
+            }
+        ]
+    };
+
+    appTable3.summary = {
+        pageSum: false,
+        allSum: true,
+        selectSum: false,
+        format: {
+            decimal: 2
+        },
+        sumList: [
+            {
+                colNum: '5',
+                dataName: 'currentBalance'
+            },
+            {
+                colNum: '6',
+                dataName: 'balanceM'
+            },
+            {
+                colNum: '7',
+                dataName: 'balanceS'
+            },
+            {
+                colNum: '8',
+                dataName: 'balanceL'
+            },
+            {
+                colNum: '9',
+                dataName: 'balanceY'
+            }
+        ]
+    };
+   
+    var html1 = '' +
+            '            <th rowspan="2">#springMessage("table.fbsBudget.corpId")</th>\n'+
+            '            <th rowspan="2">#springMessage("common.Types.of.financing")</th>\n'+
+            '            <th rowspan="2">#springMessage("common.current.balance")</th>\n';
+            
+    var html2 = '' +
+            '            <th rowspan="2">#springMessage("table.fbsBudget.corpId")</th>\n'+
+            '            <th rowspan="2">#springMessage("common.Types.of.financing")</th>\n'+
+            '            <th rowspan="2">#springMessage("table.cms.financing.period")</th>\n'+
+            '            <th rowspan="2">#springMessage("common.current.balance")</th>\n' ;
+            
+    var html3 =  '<th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befMonthEnd")</th>\n';
+    var html4 =  '<th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befQuarterEnd")</th>\n';
+    var html5 =  '<th colspan="3">#springMessage("statisticsReport.IntegratedQuery.befYear")</th>\n';
+    var html6 =  '<th colspan="3">#springMessage("statisticsReport.IntegratedQuery.yearEarly")</th>\n';
+   
+    var html7= '<th>#springMessage("table.accountDTO.balance")</th>\n'+
+            '            <th>#springMessage("statisticsReport.IntegratedQuery.differenceBal")</th>\n'+
+            '            <th>#springMessage("table.bisGatherPolicy.scale")</th>\n';
+    
+    function thml1(data){
+        var htmls = html1;
+        var htmlh = '';
+        if(data[3]){ //月
+          htmls += html3;
+          htmlh += html7;
+        }
+        if(data[6]){//季
+            htmls += html4;
+            htmlh += html7;
+        }
+        if(data[9]){//上
+            htmls += html5;
+            htmlh += html7;
+        }
+        if(data[12]){//年
+            htmls += html6;
+            htmlh += html7;
+        }
+        
+        var html =  '<tr>' +htmls+ '</tr>'+ '<tr>'+htmlh+'</tr>'
+        return html;
+    }
+    
+
+    function thml2(data){
+        var htmls = html2;
+        var htmlh = '';
+        if(data[4]){ //月
+            htmls += html3;
+            htmlh += html7;
+        }
+        if(data[7]){//季
+            htmls += html4;
+            htmlh += html7;
+        }
+        if(data[10]){//上
+            htmls += html5;
+            htmlh += html7;
+        }
+        if(data[13]){//年
+            htmls += html6;
+            htmlh += html7;
+        }
+
+        var html =  '<tr>' +htmls+ '</tr>'+ '<tr>'+htmlh+'</tr>'
+        return html;
+    }
+    
+   var flag = false,myChartSum;
+    function initBar(data){
+        data[0].cycle = cycles;
+        var url = basePath + "/cms/report/loanBalanceAnalysis/getBal";
+        if(!flag){
+            myChartSum= echarts.init(document.getElementById('chartSum'));
+            flag = true;
+        }
+        var displayMode = displayMode = dicts.get("displayMode").val();
+        $.ajax({
+            type: "post",
+            async: false, //同步执行
+            url: url,
+            contentType:"application/json",
+            data:JSON.stringify(data),
+            dataType: "json", //返回数据形式为json
+            success: function (result) {
+                result = $.parseJSON(result);
+                var option = initChartSum(result);
+                myChartSum.hideLoading();
+                myChartSum.setOption(option, true);
+                window.onresize = myChartSum.resize;
+            }
+        });
+    }
+
+    function initChartSum(result) {
+        var option = result;
+        return option;
+    }
+    
+    function callToCurr(data){
+        if(data.value =="1"){
+            selectType.get("convertCurId").attr({'data-disabled':false,'data-required':true});
+            selectType.get("curId").attr({'data-disabled':true,'data-required':false});
+        }else {
+            selectType.get("convertCurId").val("");
+            selectType.get("convertCurId").attr({'data-disabled':true,'data-required':false});
+            selectType.get("curId").attr({'data-disabled':false,'data-required':true});
+        }
+        form.renderIcon();
+        checkConvertCurCallBack();
+    }
+    
+function view(corpId,loanSign,curId,repayCycle) {
+    var monthDate = $("#statDate").val();
+    var isContain = dicts.get("isContain").val();
+    if(bt.navtab){
+        bt.navtab.addNavtab(bt.lang('common.view.data'), 
+                basePath + "/cms/report/loanBalanceAnalysis/viewLoanInfo?corpId="+corpId+"&curId="+curId+"&loanSign="+loanSign+"&monthDate="+monthDate+"&isContain="+isContain+"&repayCycle="+repayCycle);
+        return;
+    }
+    parent.layer.open({
+        type: 2,
+        area: ['850px', '530px'],
+        maxmin: true,
+        content: basePath + "/cms/report/loanBalanceAnalysis/viewLoanInfo?corpId="+corpId+"&curId="+curId+"&loanSign="+loanSign+"&monthDate="+monthDate+"&isContain="+isContain
+    });
+}
+
+
+    /**
+     * 币种转换校验
+     */
+    function checkConvertCurCallBack() {
+        var origCur = selectType.get("curId").val();
+        var convertCurId = selectType.get("convertCurId").val();
+        var date = dateType.get("statDate").val();
+        if (isNotEmpty(convertCurId)) {
+            $.ajax({
+                url: basePath + "/cms/report/loanBalanceAnalysis/checkConvertCurId",
+                type:"post",
+                data:{
+                    "origCurId": origCur,
+                    "convertCurId": convertCurId,
+                    "date": date + "-01"
+                },
+                dataType: "json",
+                success:function (data) {
+                    if (!data.success) {
+                        parent.layer ? parent.layer.alert(data.msg, {icon: data.success ? 1 : 2}) : layer.alert(data.msg, {icon: data.success ? 1 : 2});
+                        selectType.get("convertCurId").val("");
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 为空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isEmpty(stringData) {
+        if (null == stringData || stringData == "" || stringData == undefined || stringData == " " || stringData == "null") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 非空判断
+     * @param stringData
+     * @returns {boolean}
+     */
+    function isNotEmpty(stringData) {
+        return !isEmpty(stringData)
+    }
+
+</script>
+</html>

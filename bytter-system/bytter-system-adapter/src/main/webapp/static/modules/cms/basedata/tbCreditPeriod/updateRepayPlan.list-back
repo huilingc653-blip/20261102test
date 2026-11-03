@@ -1,0 +1,797 @@
+var rowNum = 0;
+var moneyType = "";
+var dicts;
+var dateFun;
+var surplusMoney = "";//剩余本金(用于每次计算使用)
+var surplusMoneyFixed = "";//固定的剩余金额（即除去已还金额，剩余的金额）
+var loanDate = "";//发放日期
+var repayDate = "";//还款日期
+var loanMoney = "";//发放金额
+var loanRate = "";//利率
+var isRepay = "0";//初始化时，若为1：已还，则设置不可编辑
+var repayTypeOld = "";
+var repayType = "";//还款方式
+var rateBase = 360;//利息测算基数
+var repayCycel;//还款周期
+var principal = 1;//在等额本金下，当本金除不尽时，控制本金合计 0:合计不做处理 1：合计需要做处理
+var isInit = true;//判断是不是第一次进页面，初始化标识
+bt.use(['form', 'element', 'moneyType', 'dateType', 'bttable', 'dicts', 'btImport', 'selectType'], function () {
+    $ = bt.jquery, form = bt.form(), moneyFun = bt.moneyType.getFun();
+    dicts = bt.dicts.init();
+    moneyType = bt.moneyType.init();
+    dateType = bt.dateType.init();
+    selectType = bt.selectType.init();
+    dateFun = dateType.getFun();
+    var dateDis = "disabled";
+    if (repayType == "03" || repayType == "06") {
+        dateDis = "";
+    }
+    initVariable();
+    var orig_repayType = $("#orig_repayType").val();
+    //生成列表
+    bt.bttable.init({
+        elem: "#repayPlanTB",
+        url: basePath + "/cms/basedata/updaterepaymentschedule/listUpdateRepayPlan?id=" + $("#id").val(),
+        buttons: [
+            {
+                text: '<i class="layui-icon">&#xe654;</i>' + bt.lang('common.button.add'),
+                action: function (e, dt, node, config) {
+                    add();
+                }
+            }, {
+                text: bt.lang('common.button.imports'),
+                action: function (e, dt, node, config) {
+                    importExcel();
+                }
+            }, {
+                text: bt.lang('common.button.exports'),
+                action: function (e, dt, node, config) {
+                    exportExcel();
+                }
+            },
+        ],
+        columns: [
+            {
+                data: "prediceRepayDate",
+                render: function (data, row) {
+                    rowNum = row;
+                    isRepay = data.isRepay == "1" ? "disabled" : "";
+                    if (isNull(data.prediceRepayDate)) {
+                        if (data.isRepay == "1") {
+                            return '<input disabled data-biz-name="prediceRepayDate_' + rowNum + '" name="repayMents[' + rowNum + '].prediceRepayDate" id="prediceRepayDate_' + rowNum + '" type="text"  class="layui-input bt-biz-dateType" data-min="' + loanDate + '" data-max="' + repayDate + '" data-type="date" data-callback="clickEvent"/>';
+                        } else {
+                            return '<input ' + dateDis + ' data-biz-name="prediceRepayDate_' + rowNum + '" name="repayMents[' + rowNum + '].prediceRepayDate" id="prediceRepayDate_' + rowNum + '" type="text"  class="layui-input bt-biz-dateType" data-min="' + loanDate + '" data-max="' + repayDate + '" data-type="date" data-callback="clickEvent"/>';
+                        }
+                    } else {
+                        if (data.isRepay == "1") {
+                            return '<input disabled data-biz-name="prediceRepayDate_' + rowNum + '"name="repayMents[' + rowNum + '].prediceRepayDate" id="prediceRepayDate_' + rowNum + '" type="text" value="' + data.prediceRepayDate + '" class="layui-input bt-biz-dateType" data-min="' + loanDate + '" data-max="' + repayDate + '" data-type="date" data-callback="clickEvent"/>';
+                        } else {
+                            if ("07" == repayType) {
+                                return '<input divName="prediceRepayDate" data-biz-name="prediceRepayDate_' + rowNum + '" name="repayMents[' + rowNum + '].prediceRepayDate" id="prediceRepayDate_' + rowNum + '" type="text" value="' + data.prediceRepayDate + '" class="layui-input bt-biz-dateType" data-min="' + loanDate + '" data-max="' + repayDate + '" data-type="date" data-callback="clickEvent"/>';
+                            } else {
+                                return '<input ' + dateDis + ' data-biz-name="prediceRepayDate_' + rowNum + '"name="repayMents[' + rowNum + '].prediceRepayDate" id="prediceRepayDate_' + rowNum + '" type="text" value="' + data.prediceRepayDate + '" class="layui-input bt-biz-dateType" data-min="' + loanDate + '" data-max="' + repayDate + '" data-type="date" data-callback="clickEvent"/>';
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                data: "repaymentMoney",
+                render: function (data, row) {
+                    if (data.isRepay != "1" && (orig_repayType == "03" || orig_repayType == "07")) {
+                        return '<input divName="repaymentMoney" class="layui-input bt-input-inline  bt-biz-moneyType" value="' + (data.repaymentMoney == null ? "" : moneyFun.format(data.repaymentMoney)) + '" data-callback="bt.calMoney"  type="text" data-decimal="2" id="repaymentMoney_' + rowNum + '" data-min="0" data-max="' + loanMoney + '" id="repaymentMoney_' + rowNum + '" data-biz-name="repaymentMoney_' + rowNum + '" data-name="repayMents[' + rowNum + '].repaymentMoney"/>';
+                    } else {
+                        return '<input disabled divName="repaymentMoney" class="layui-input bt-input-inline  bt-biz-moneyType" value="' + (data.repaymentMoney == null ? "" : moneyFun.format(data.repaymentMoney)) + '" data-callback="bt.calMoney"  type="text" data-decimal="2" id="repaymentMoney_' + rowNum + '" data-min="0" data-max="' + loanMoney + '" id="repaymentMoney_' + rowNum + '" data-biz-name="repaymentMoney_' + rowNum + '" data-name="repayMents[' + rowNum + '].repaymentMoney"/>';
+                    }
+                }
+            },
+            {
+                data: "repaymentIst",
+                render: function (data, row) {
+                    if (data.isRepay != "1" && orig_repayType == "03") {
+                        return '<input divName="repaymentIst"  data-callback="bt.calMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="repaymentIst_' + rowNum + '"  type="text" value="' + (data.repaymentIst == null ? "" : moneyFun.format(data.repaymentIst)) + '" data-decimal="2" id="repaymentIst_' + rowNum + '" data-min="0"  data-name="repayMents[' + rowNum + '].repaymentIst"/>';
+                    } else if (data.isRepay != "1" && orig_repayType == "07") {
+                        return '<input divName="repaymentIst"  data-callback="bt.calMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="repaymentIst_' + rowNum + '"  type="text" value="' + (data.repaymentIst == null ? "" : moneyFun.format(data.repaymentIst)) + '" data-decimal="2" id="repaymentIst_' + rowNum + '" data-min="0"  data-name="repayMents[' + rowNum + '].repaymentIst"/>';
+                    } else {
+                        return '<input disabled divName="repaymentIst" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="repaymentIst_' + rowNum + '"  type="text" value="' + (data.repaymentIst == null ? "" : moneyFun.format(data.repaymentIst)) + '" data-decimal="2" id="repaymentIst_' + rowNum + '" data-min="0"  data-name="repayMents[' + rowNum + '].repaymentIst"/>';
+                    }
+                }
+            },
+            {
+                data: "currentRepayMoney",
+                render: function (data, row) {
+                    if (orig_repayType == "03" || orig_repayType == "07") {
+                        return '<input readonly="readonly" divName="currentRepayMoney" divName="currentRepayMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="currentRepayMoney_' + rowNum + '" type="text" value="' + (data.currentRepayMoney == null ? "" : moneyFun.format(data.currentRepayMoney)) + '" data-decimal="2" id="currentRepayMoney_' + rowNum + '" data-min="0" data-name="repayMents[' + rowNum + '].currentRepayMoney"/>';
+                    } else {
+                        return '<input disabled divName="currentRepayMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="currentRepayMoney_' + rowNum + '" type="text" value="' + (data.currentRepayMoney == null ? "" : moneyFun.format(data.currentRepayMoney)) + '" data-decimal="2" id="currentRepayMoney_' + rowNum + '" data-min="0" data-name="repayMents[' + rowNum + '].currentRepayMoney"/>';
+                    }
+                }
+            },
+            {
+                data: "surplusMoney",
+                render: function (data, row) {
+                    if (orig_repayType == "03" || orig_repayType == "07") {
+                        return '<input readonly="readonly"  value="' + (data.surplusMoney == null ? "" : moneyFun.format(data.surplusMoney)) + '" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="surplusMoney_' + rowNum + '" type="text" data-decimal="2" id="surplusMoney_' + rowNum + '" data-min="0" data-name="repayMents[' + rowNum + '].surplusMoney"/>';
+                    } else {
+                        return '<input disabled  value="' + (data.surplusMoney == null ? "" : moneyFun.format(data.surplusMoney)) + '" class="layui-input bt-input-inline  bt-biz-moneyType" data-biz-name="surplusMoney_' + rowNum + '" type="text" data-decimal="2" id="surplusMoney_' + rowNum + '" data-min="0" data-name="repayMents[' + rowNum + '].surplusMoney"/>';
+                    }
+                }
+            },
+            {
+                data: "isRepay",
+                render: function (data, row) {
+                    return bt.dict('yn_state', data.isRepay) + '<input name="repayMents[' + rowNum + '].isRepay" value="' + data.isRepay + '"  type="hidden"/>';
+                }
+            },
+            {
+                data: "remark",
+                render: function (data, type, full, meta) {
+                    return '<input ' + isRepay + ' name="repayMents[' + rowNum + '].remark" id="remark" value="' + (data.remark == null ? "" : data.remark) + '" class="layui-input" type="text"/>';
+                }
+            },
+            {
+                data: "itemOrder",
+                render: function (data, row) {
+                    var html = ""
+                    if (data.isRepay == "0") {
+                        if (orig_repayType == "03" || orig_repayType == "07") {
+                            html += '<button id="del" data-type="del" type="button" name="itemOrder" value="' + rowNum + '" class="layui-btn layui-btn-mini" ><i class="layui-icon">&#xe640;</i>' + bt.lang("common.button.delete") + '</button>';
+                        } else {
+                            html += '<button style="display:none" id="del" data-type="del" type="button" name="itemOrder" value="' + rowNum + '" class="layui-btn layui-btn-mini" ><i class="layui-icon">&#xe640;</i>' + bt.lang("common.button.delete") + '</button>';
+                        }
+                    }
+                    return html;
+                }
+            }
+        ],
+        delRowCallback: function (data, $tr) {
+            $tr.remove();
+            MoneyCalculation();
+        },
+        tableInitCallback: function (data) {
+            rowNum = data.length;
+            setBeginDate();
+            addFun();
+        }
+    });
+
+    /**
+     * 保存
+     */
+    form.on('submit(save)', function (data) {
+        bt.loading.show();
+        if (verification() == false) {
+            bt.loading.hide();
+            return false;
+        }
+
+        var action = "/cms/basedata/updaterepaymentschedule/updateRepayPlan";
+        $.post(basePath + action, data.field, function (result) {
+            bt.loading.hide();
+            parent.layer.alert(result.msg, {icon: result.success ? 1 : 2});
+            if (result.success) {
+                //parent.layer?parent.layer.closeAll():layer.closeAll();
+                var webObj = bt.navtab.getParentDom();
+                //给父级选项卡页面中id为planId的input赋值;
+                webObj.bt.jquery("#planId").val(result.obj);
+                bt.navtab.closeCurrent();
+            }
+        }, 'JSON');
+
+
+        return false;
+    });
+    repayTypeChanges($("#orig_repayType").val());
+});
+//导出
+exportExcel = function () {
+    var url = basePath + "/cms/basedata/repaymentschedule/exportBudget?id=" + $("#id").val();
+    window.location.href = url;
+}
+
+//导入初始化
+importExcel = function () {
+    if (repayType != "07") {
+        return;
+    }
+    var surplusMoney = $("#loanMoney").val();
+    console.log()
+    up = bt.btImport.init({
+        code: "70000003",
+        titleRows: 0,
+        headRows: 1,
+        success: function (head, data, select) {
+            for (let i = 0; i < select.length; i++) {
+                surplusMoney = surplusMoney - select[i].repaymentMoney
+                addImport(select[i], surplusMoney);
+            }
+        }
+    });
+};
+
+//重新渲染日期、金额控件
+function addFun() {
+    //重新渲染datatype和moneyType
+    dateType.render();
+    moneyType.render();
+    sumMoney();
+    //+1为了以防id重复
+    rowNum++;
+}
+
+/**
+ * 预计还款日改变事件（其他：重新计算金额）
+ * @param value
+ */
+function clickEvent(value) {
+    if (repayType === "07") {
+        checkDateByCustomRepay();
+    } else {
+        MoneyCalculation();
+    }
+}
+
+/**
+ * 还款开始日改变事件
+ */
+function beginDateChange() {
+    if (isNull(dicts.get('repayCycel').val())) {
+        return;
+    }
+    loadData();
+}
+
+/**
+ * 还款周期改变事件
+ * @param data
+ */
+function cycleChange(data) {
+    //还款方式为一次性还款就返回
+    repayCycel = data.value;
+    if (data.value == "3") {
+        var payDate;
+        if (isNull(zqDate)) {
+            payDate = repayDate;
+        } else {
+            payDate = zqDate;
+        }
+        var payMoney = surplusMoneyFixed;
+        clearData();//清空未还数据(还款方式除了其他的时候)
+        addOneOffPayment(payDate, payMoney);
+        return;
+    }
+    //若没有选择还款开始日则提示选择日期
+    if (isNull($('#repayBeginDate').val())) {
+        parent.layer.alert(bt.lang("cms.RepaymentSchedule.noSelectBeginDate"));
+        return;
+    }
+    loadData();
+}
+
+/**
+ * 设置还款开始日期的范围
+ */
+function setBeginDate() {
+    var beginDate = null;
+    // var prediceRepayDateId;
+    //var trs = $("#repayPlanTB").children("tbody").children("tr");
+    // 遍历行数据
+    // trs.each(function (index, tr) {
+    //     var isRepay = $(tr).find("td[name^='isRepay']").find("input").val();
+    //     if (isRepay == "1") {
+    //         // prediceRepayDateId=$(tr).find("td[name^='prediceRepayDate']").find("input").attr("id");
+    //         beginDate = $(tr).find("td[name^='prediceRepayDate']").find("input").val();
+    //         // beginDate=$("#"+prediceRepayDateId).val();
+    //     }
+    // });
+    var getCurrentDate = dateType.get("repayBeginDate");
+    //if (!isNull(beginDate)) {
+    //设置时间
+    remainDate = dateFun.format(getCurrentDate.val());
+    //getCurrentDate.attr("data-min", remainDate);
+    //getCurrentDate.val(remainDate)
+    //}
+    if (!isNull(zqDate)) {
+        getCurrentDate.attr("data-max", zqDate);
+    }
+
+    //dateType.render();
+
+
+}
+
+/**
+ * 清空未还数据
+ */
+function clearData() {
+    surplusMoneyFixed = Number(loanMoney);
+    var trs = $("#repayPlanTB").children("tbody").children("tr");
+    // 遍历行数据
+    trs.each(function (index, tr) {
+        var isRepay = $(tr).find("td[name^='isRepay']").find("input").val();
+        if (isRepay == "0") {
+            $(tr).remove();
+        } else {
+            var repaymentMoney_id = $(tr).find("td[name^='repaymentMoney']").find("input").attr("data-id");
+            var money = moneyType.get(repaymentMoney_id).val();
+            surplusMoneyFixed = (Number(surplusMoneyFixed) - Number(money)).toFixed(2);
+            surplusMoney = (Number(surplusMoney) - Number(money)).toFixed(2);
+        }
+    })
+}
+
+/**
+ * 选择还款方式为其他的时候设置数据
+ */
+function setOther() {
+    var prediceRepayDateId
+    //若上一次为请选择
+    if (isNull(repayTypeOld)) {
+        //设置剩余本金
+        surplusMoneyFixed = Number(loanMoney);
+        var trs = $("#repayPlanTB").children("tbody").children("tr");
+        //遍历行数据
+        trs.each(function (index, tr) {
+            var isRepay = $(tr).find("td[name^='isRepay']").find("input").val();
+            if (isRepay != "0") {
+                var repaymentMoney_id = $(tr).find("td[name^='repaymentMoney']").find("input").attr("data-id");
+                var money = moneyType.get(repaymentMoney_id).val();
+                surplusMoneyFixed = (Number(surplusMoneyFixed) - Number(money)).toFixed(2);
+            } else {
+                $(tr).find("td[name^='prediceRepayDate']").find("input").removeAttr("disabled");
+                $(tr).find("td[name^='repaymentMoney']").find("input").removeAttr("disabled");
+                $(tr).find("td[name^='itemOrder']").find("#del").show();
+
+                prediceRepayDateId = $(tr).find("td[name^='prediceRepayDate']").find("input").attr("id");
+                if (!isNull(remainDate)) {
+                    dateType.get(prediceRepayDateId).attr("data-min", remainDate);
+                }
+                if (!isNull(zqDate)) {
+                    dateType.get(prediceRepayDateId).attr("data-max", zqDate);
+                }
+                //$(tr).find("td[name^='itemOrder']").find("button").removeAttr("disabled");
+            }
+        })
+    } else {
+        clearData();
+    }
+    addFun();
+}
+
+/**
+ * 还款方式为02,04时，加载的数据(通过点击还款周期加载数据)
+ */
+function loadData() {
+    repayCycel = dicts.get("repayCycel").val();
+    var payMoney = new Array();//还款本金数组
+    var payDate = getDates();//还款日期数组
+
+    //删除之前的table数据
+    clearData();
+    if (isNull($('#repayBeginDate').val())) {
+        return;
+    }
+
+    //分期等额本金
+    if (repayType == "02" || repayType == "05") {
+        var money = (surplusMoneyFixed / (payDate.length)).toFixed(2);//还款本金
+        for (var i = 0; i < payDate.length; i++) {
+            payMoney.push(money);
+        }
+        var payInterest = true;
+        if (repayType == "05") {
+            payInterest = false;
+        }
+        addEqualPrincipal(payDate, payMoney, payInterest);
+    }
+    //分期等额本息
+    if (repayType == "04") {
+        addEqualPrincipalInterest(payDate);
+    }
+
+
+}
+
+/**
+ * 还款方式回调函数
+ * @param data
+ */
+function repayTypeChange(data) {
+    repayTypeChanges(data.value);
+    //若没有选择还款开始日则提示选择日期
+    if (isNull($('#repayBeginDate').val())) {
+        parent.layer.alert(bt.lang("cms.RepaymentSchedule.noSelectBeginDate"));
+        return;
+    }
+    loadData();
+}
+
+/**
+ * 还款方式改变事件
+ * @param data
+ */
+function repayTypeChanges(data) {
+    if (isInit) {
+        repayTypeOld = $("#repayType").data("defaultvalue");
+    } else {
+        repayTypeOld = repayType;
+    }
+    isInit = false;
+    repayType = data;//为repayType赋值
+    //等额本金
+    if (repayType == "02" || repayType == "05") {
+        principal = 1;
+    } else {
+        principal = 0;
+    }
+    //其它及自定义
+    if (repayType == "03" || repayType == "06" || repayType == "07" || isNull(repayType)) {
+        dateType.get("repayBeginDate").val("");
+        $("#repayBeginDate").attr("disabled", "true");
+        dicts.get('repayCycel').attr({
+            'data-value': '',
+            'data-disabledValue': '0,1,2,3'
+        });
+        setOther();//设置数据
+        return;
+    }
+    //还本付息
+    if (repayType == "01") {
+        $("#repayBeginDate").attr("disabled", "true");
+        var payDate;
+        if (isNull(zqDate)) {
+            payDate = repayDate;
+        } else {
+            payDate = zqDate;
+        }
+        if (isNull($("#orig_repayCycel").val())) {
+            dicts.get('repayCycel').attr({
+                'data-value': '',
+                'data-disabledValue': '0,1,2'
+            });
+            clearData();//清空未还数据(还款方式除了其他的时候)
+            return;
+        } else {
+            dicts.get('repayCycel').attr({
+                'data-value': 3,
+                'data-disabledValue': '0,1,2'
+            });
+            repayCycel = '3';
+        }
+        clearData();//清空未还数据(还款方式除了其他的时候)
+        var payMoney = surplusMoneyFixed;
+        $("#disposable").attr("checked", true);
+        addOneOffPayment(payDate, payMoney);
+        return;
+    }
+
+    //等额本金和等额本息
+    $("#repayBeginDate").removeAttr("disabled");
+    if (isNull($("#orig_repayCycel").val())) {
+        dicts.get('repayCycel').attr({
+            'data-value': '0',
+            'data-disabledValue': '3'
+        });
+        clearData();//清空未还数据(还款方式除了其他的时候)
+        return;
+    } else {
+        if (repayType != $("#orig_repayType").val()) {
+            dicts.get('repayCycel').attr({
+                'data-value': '0',
+                'data-disabledValue': '3'
+            });
+        } else {
+            dicts.get('repayCycel').attr({
+                'data-value': $("#orig_repayCycel").val(),
+                'data-disabledValue': '3'
+            });
+        }
+        clearData();//清空未还数据(还款方式除了其他的时候)
+    }
+    //repayCycel="0";
+    repayCycel = dicts.get('repayCycel').val();
+    dicts.render();
+    loadData();
+}
+
+
+/**
+ * 还款方式改变事件
+ * @param data
+ */
+// function repayTypeChange(data){
+//     if(isInit){
+//         repayTypeOld = $("#repayType").data("defaultvalue");
+//     }else{
+//         repayTypeOld=repayType;
+//  }
+//     isInit = false;
+//     repayType=data.value;//为repayType赋值
+//  //等额本金
+//  if(repayType=="02"){
+// 	 principal=1;
+//  }else{
+// 	 principal=0;
+//  }
+//    //其它
+//    if(repayType=="03"||isNull(repayType)){
+//
+//    	$("#repayBeginDate").attr("disabled","true");
+//    	 dicts.get('repayCycel').attr({
+//    		 'data-value':'',
+//    		 'data-disabledValue':'0,1,2,3'
+//    	 });
+//    	 setOther();//设置数据
+//    	return;
+//    }
+//    clearData();//清空未还数据(还款方式除了其他的时候)
+//    //还本付息
+// if(repayType=="01"){
+// 	$("#repayBeginDate").attr("disabled","true");
+// 	var payDate;
+// 	if(isNull(zqDate)){
+// 		payDate = repayDate;
+// 	}else{
+// 		payDate = zqDate;
+// 	}
+// 	var payMoney= surplusMoneyFixed;
+// 	dicts.get('repayCycel').attr({
+//   		 'data-value':3,
+//   		 'data-disabledValue':'0,1,2'
+//   	 });
+// 	$("#disposable").attr("checked",true);
+// 	addOneOffPayment(payDate,payMoney);
+// 	return;
+// }
+//
+// //等额本金和等额本息
+// $("#repayBeginDate").removeAttr("disabled");
+// dicts.get('repayCycel').attr({
+// 	'data-value':'0',
+// 	'data-disabledValue':'3'
+//  });
+// repayCycel="0";
+// dicts.render();
+// loadData();
+// }
+
+/**
+ * 加载数据
+ */
+function initVariable() {
+    loanDate = $("#loanDate").val();//发放日期
+    if ("" != $("#deferredRepayDate").val()) {
+        repayDate = $("#deferredRepayDate").val();//还款日期
+    } else {
+
+    }
+    repayDate = $("#repayDate").val();//还款日期
+
+    loanMoney = $("#loanMoney").val();//发放金额
+    loanRate = Number($("#loanRate").val());//利率
+    zqRate = $("#zqRate").val();//展期利率
+    zqDate = $("#zqDate").val();//展期日期
+    //alert("展期---"+zqDate+",还款日期--");
+    if (!isNull($("#rateBase").val())) {
+        rateBase = Number($("#rateBase").val());
+    }
+    var billCode = $("#billCode").val();
+    var id = $("#id").val();
+    var type = $("#type").val();
+    //设在ifram的src
+    if (type == "0") {
+        $("#loanRepayIframe").attr("src", basePath + "/cms/provide/loansend/viewSend/" + billCode);
+    } else if (type == "1") {
+        $("#loanRepayIframe").attr("src", basePath + "/cms/loan/cmsloansend/view/" + id + "?param=1");
+    } else if (type == "2") {
+        $("#loanRepayIframe").attr("src", basePath + "/cms/precative/loanrepay/view?sendCode=" + billCode + "&type=type");
+    } else if (type == "0") {
+        $("#loanRepayIframe").attr("src", basePath + "/cms/precative/loanrepay/view?sendCode=" + billCode + "&type=type");
+    }
+    surplusMoneyFixed = Number(loanMoney);//剩余本金（初始化为发放金额）
+    surplusMoney = Number(loanMoney);//剩余本金（初始化为发放金额）
+
+}
+
+/**
+ * 合计
+ */
+function sumMoney() {
+    //计算还款本金
+    var repaymentMoneySum = 0;
+    $("input[divName^='repaymentMoney']").each(function (i) {
+        repaymentMoneySum = bt.money.add(repaymentMoneySum, $(this).val());
+    });
+    if (principal == 1) {
+        moneyType.get("repaymentMoneySum").val(loanMoney);
+    } else {
+        moneyType.get("repaymentMoneySum").val(repaymentMoneySum);
+    }
+
+    //计算利息
+    var repaymentIstSum = 0;
+    $("input[divName^='repaymentIst']").each(function (i) {
+        repaymentIstSum = bt.money.add(repaymentIstSum, $(this).val());
+    });
+    moneyType.get("repaymentIstSum").val(repaymentIstSum);
+
+    //计算还款金额
+    var currentRepayMoneySum = 0;
+    $("input[divName^='currentRepayMoney']").each(function (i) {
+        currentRepayMoneySum = bt.money.add(currentRepayMoneySum, $(this).val());
+    });
+    moneyType.get("currentRepayMoneySum").val(currentRepayMoneySum);
+
+}
+
+/**
+ * 关闭窗口
+ */
+doClose = function () {
+    if (bt.navtab) {
+        bt.navtab.closeCurrent();
+    }
+}
+
+
+/**
+ * 提交时验证
+ */
+function verification() {
+    var repayType = dicts.get("repayType").val();
+    if (repayType == "02" || repayType == "05" || repayType == "04") {
+        var startDate = dateType.get("repayBeginDate").val();
+        if (isNull(startDate)) {
+            parent.layer.alert(bt.lang("cms.RepaymentSchedule.noSelectBeginDate"), {icon: 2});//未选择还款开始日期
+            return false;
+        }
+    } else if (repayType == "03" || repayType == "06" || repayType == "07") {
+        // 还款方式未其他，则校验金额
+        //统计还款本金
+        var sumMoney = 0;
+        var flag = false;////本金利息同时为0标识
+        $.each($("input[id*='repaymentMoney_']"), function (i, item) {
+            if ($(item).val() <= 0) {
+                var dataId = $(item).attr("id");
+                if (-1 != dataId.indexOf("repaymentMoney_")) {
+                    var moneyInd = dataId.substr(dataId.indexOf("_") + 1);
+                    if (moneyType.get("repaymentIst_" + moneyInd).val() <= 0) {
+                        flag = true;//本金利息同时为0
+                    }
+                }
+            }
+
+            sumMoney = bt.money.add(sumMoney, $(item).val());
+        });
+        if (flag) {
+            parent.layer.alert(bt.lang("cms.message.repaymentMoney.zero"));//还款本金和还款利息不能同时为零
+            return false;
+        }
+        if (Number(sumMoney) != Number(loanMoney)) {
+            parent.layer.alert(bt.lang("common.message.repayment_Principal"), {icon: 2});//还款金额与发放金额不等
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * 判断是否null
+ * @param data
+ */
+function isNull(data) {
+    return (data == " " || data == "" || data == undefined || data == null) ? true : false;
+}
+
+/**
+ * 金额改变事件
+ */
+var divName = null
+bt.calMoney = function (data, el) {
+    if (repayType === "07") {
+        calCustomMoney(el.parents("tr"));
+    } else if (repayType === "03") {
+        var rowNum = el.parents("tr").find("input[divName^='repaymentMoney']").data("id").split("_")[1];
+        divName = $(el).attr("divName") + rowNum;
+        if (divName === 'repaymentIst' + rowNum && Number(moneyType.get("repaymentMoney_" + rowNum).val()) < Number(moneyType.get("repaymentIst_" + rowNum).val())) {
+            var minmoney = moneyType.get("repaymentMoney_" + rowNum).val();
+            moneyType.get("repaymentIst_" + rowNum).val(minmoney);
+        }
+        MoneyCalculation();
+    } else {
+        MoneyCalculation();
+    }
+}
+
+/**
+ * 自定义金额计算
+ * @param trEle
+ */
+function calCustomMoney(trEle) {
+    // 行下标
+    var rowNum = trEle.find("input[divName^='repaymentMoney']").data("id").split("_")[1];
+    if (!isNull(rowNum)) {
+        var repaymentMoney = moneyType.get("repaymentMoney_" + rowNum).val();
+        var repaymentIst = moneyType.get("repaymentIst_" + rowNum).val();
+        if (!isNull(repaymentMoney) && !isNull(repaymentIst)) {
+            moneyType.get("currentRepayMoney_" + rowNum).val(moneyFun.add(repaymentMoney, repaymentIst));
+            var allRepayMoney = 0;
+            // 遍历本金
+            // trEle.prevAll().each(function (index, item) {
+            //     //重新计算剩余本金
+            //     var repaymentMoney = $(this).find("input[divName^='repaymentMoney']").val();
+            //     var surplusMoney_ = moneyFun.sub(initLoanMoney, repaymentMoney);
+            //     initLoanMoney = surplusMoney_;
+            //     moneyType.get("surplusMoney_" + index).val(surplusMoney_);
+            //
+            //     allRepayMoney = moneyFun.add(allRepayMoney, $(this).find("input[divName^='repaymentMoney']").val());
+            // });
+            //遍历表格，重新计算剩余本金
+            var trs = $("#repayPlanTB").children("tbody").children("tr");
+            // 遍历行数据
+            var initLoanMoney = $("#loanMoney").val();
+            trs.each(function (index, tr) {
+                var rowIndex = $(this).find("input[divName^='repaymentMoney']").data("id").split("_")[1];
+                var repaymentMoney = $(this).find("input[divName^='repaymentMoney']").val();
+                var surplusMoney_ = moneyFun.sub(initLoanMoney, repaymentMoney);
+                initLoanMoney = surplusMoney_;
+                moneyType.get("surplusMoney_" + rowIndex).val(surplusMoney_);
+            });
+
+            //moneyType.get("surplusMoney_"+rowNum).val(moneyFun.sub(surplusMoney, moneyFun.add(allRepayMoney, repaymentMoney)));
+            sumMoney();
+        }
+    }
+}
+
+
+/**
+ *日期检查，即下一个还款日期不能小于上一个还款日期
+ */
+function checkDateByCustomRepay() {
+    var trs = $("#repayPlanTB").children("tbody").children("tr");
+    var lastPrediceRepayDateId = "";//上一笔还款日期id
+    // 遍历行数据
+    trs.each(function (index, tr) {
+        var prediceRepayDate_id = "";//预计还款日期
+        var tds = $(tr).find("td");
+        tds.each(function (i, td) {
+                var $input = $(td).find("input");
+                if ($input.length) {
+                    if (!isNull($input.attr("id")) && $input.attr("id").indexOf("prediceRepayDate") >= 0) {
+                        prediceRepayDate_id = $input.attr("id");
+                    }
+                }
+            }
+        )
+        var isRepay = $(tr).find("td[name^='isRepay']").find("input").val();
+        if (isRepay != "0") {
+            lastPrediceRepayDateId = prediceRepayDate_id;
+        } else {
+            var id = prediceRepayDate_id.split("_")[1];
+            var prediceRepayDate = $("#prediceRepayDate_" + id).val();//预计还款日
+            //上一笔日期
+            var lastDate;
+            if (isNull(lastPrediceRepayDateId)) {
+                lastDate = loanDate;
+            } else {
+                lastDate = dateType.get(lastPrediceRepayDateId).val()
+            }
+            if (dateFun.compare(dateFun.get(lastDate), dateFun.get(prediceRepayDate)) > 0) {
+                parent.layer.alert(bt.lang("common.message.prediceRepayDate"));//预计还款日期不能小于上一笔日期
+                dateType.get("prediceRepayDate_" + id).val("");
+            }
+            lastPrediceRepayDateId = prediceRepayDate_id;
+        }
+    })
+}
+
+// 弹出银团明细页面
+function editSyndicated(elem) {
+    var scheduleDetailedId = $(elem).data('scheduledetailedid')
+    var billCode = $("#billcode").val();
+    var rowNum = $(elem).val()
+    if (bt.navtab) {
+        bt.navtab.addNavtab(bt.lang('common.button.syndicated'), basePath + "/cms/provide/providesyndicated/toProvideSyndicatedDtl?scheduleDetailedId=" + scheduleDetailedId + "&taskId=" + billCode + "&rowNum=" + rowNum);
+    }
+}

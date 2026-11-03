@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body style="padding: 0 10px">
+    <input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+    <input id="superaddId" name="superaddId" type="hidden" value="$!{superaddPage.id}">
+    <input id="createBy" name="createBy" type="hidden" value="$!{fbsBudgetPage.createBy}">
+    <input id="createDate" name="createDate" type="hidden" value="$!{fbsBudgetPage.createDate}">
+    <input id="updateBy" name="updateBy" type="hidden" value="$!{fbsBudgetPage.updateBy}">
+    <input id="updateDate" name="updateDate" type="hidden" value="$!{fbsBudgetPage.updateDate}">
+    <input id="status" name="status" type="hidden" value="$!{fbsBudgetPage.status}">
+    <input id="corpId" name="corpId" type="hidden" value="$!{fbsBudgetPage.corpId}">
+    <input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetPage.timeType}">
+    <input id="beginDate" name="beginDate" type="hidden" value="$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})">
+    <input id="endDate" name="endDate" type="hidden" value="$!{fbsBudgetPage.endDate}">
+    <input id="busName" name="busName" type="hidden" value="$!{busName}">
+    <!--周数-->
+    <input id="weekNum" name="weekNum" type="hidden" value="$!{weekNum}">
+    <!-- 追加 -->
+    <input id="superaddId" name="superaddId" type="hidden" value="$!{fbsBudgetPage.superaddId}">
+    <input id="target" name="target" type="hidden" value="$!{target}">
+    <input id="busName" name="busName" type="hidden" value="$!{busName}">
+    <input id="minWeek" name="minWeek" type="hidden" value="$!{minWeek}">
+    <div id="print">
+        <form id="searchForm" class="layui-form">
+        <div class="layui-collapse" lay-filter="collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title"></h2>
+                <div class="layui-colla-content layui-show">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+            ##单位
+                <td class="textRight">#springMessage('table.fbsBudget.corpId')</td>
+                <td>$!{fbsBudgetPage.corpName}</td>
+            ##周期类型
+                <td class="textRight">#springMessage('table.fbsBudget.timeType')</td>
+                <td>$dictTag.get("fbs.timeType",$!{fbsBudgetPage.timeType})</td>
+            </tr>
+            <tr>
+            ##开始日期
+                <td class="textRight">#springMessage('table.fbsBudget.beginDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})</td>
+            ##结束日期
+                <td class="textRight">#springMessage('table.fbsBudget.endDate')</td>
+                <td>$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})</td>
+            </tr>
+            <tr>
+            ##币种
+                <td class="textRight">#springMessage('table.fbsBudgetDetail.curId')</td>
+                <td>$!{fbsBudgetPage.curName}</td>
+            ##科目显示级别
+                <td class="textRight"><div class="noprint">#springMessage('fbs.item.level.show')</div></td>
+                <td>
+                    <div class="noprint">
+                        <div class="bt-biz-dict" data-type="select" data-group="fbs.item.level"
+                             data-defaultvalue="$!{level}" data-name="level" data-biz-name="level"
+                             data-callback="chooseLevel"></div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+                </div>
+            </div>
+        </div>
+        </form>
+        <div style="display:inline-block;width:100%;">
+            <div id="maingrid1" data-biz-name="chooseLevel"></div>
+        </div>
+        <div style="width: 100%;overflow-x: scroll;margin-bottom: 10px;display: none">
+            <table id="appTable" class="layui-table" style="width:100%;">
+                <thead>
+                <tr>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.number')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.itemCode')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.itemName')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.bMoney')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.bsuperMoney')(#springMessage('table.fbsBudgetYear.pass'))</th>
+                    <!-- 可上报金额 -->
+                    #if($!{fbsBudgetPage.parentTimeType} != "")
+                        <th rowspan="2">#springMessage('table.fbsBudgetYear.canBMoney')</th>
+                    #end
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.btempMoney')</th>
+                    #foreach($week in $weeks.entrySet())
+                        <th colspan="2">#springMessage('table.fbsBudgetYear.the')$!{week.key}#springMessage('table.fbsBudgetYear.weekShow')</th>
+                    #end
+                    <th rowspan="2">#springMessage('table.fbsBudgetPeriod.rmk')</th>
+                    <th rowspan="2">#springMessage('table.fbsBudgetYear.dtl')</th>
+                </tr>
+                <tr>
+                    #foreach($week in $weeks.entrySet())
+                        <th>#springMessage('table.fbsBudgetYear.remainBMoney')</th>
+                        <th>#springMessage('table.fbsBudgetYear.btempMoney')</th>
+                    #end
+                </tr>
+                </thead>
+                <tbody>
+                    #foreach($date in $resolveList)
+                    <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}"
+                        data-tt-subject-sort="$!{date.itemCode}">
+                        <td>$!{velocityCount}</td>
+                        <td data-name="itemCode">
+                            $!{date.itemCode}
+                            <input type="hidden" id="detailId_$!{date.itemCode}" name="detailId" value="$!{date.detailId}">
+                            <input type="hidden" id="itemCode_$!{date.itemCode}" name="itemCode" value="$!{date.itemCode}">
+                            <input type="hidden" id="itemRelation_$!{date.itemCode}" name="itemRelation"
+                                   data-curItemCode="$!{date.itemCode}" value="$!{date.item.itemRelation}">
+                            <input type="hidden" id="sign_$!{date.itemCode}" name="sign" value="$!{date.item.sign}">
+                            <input type="hidden" id="isBeginPeriod_$!{date.itemCode}" name="isBeginPeriod"
+                                   value="$!{date.item.isBeginPeriod}">
+                            <input type="hidden" id="isEndPeriod_$!{date.itemCode}" name="isEndPeriod"
+                                   value="$!{date.item.isEndPeriod}">
+                            <input type="hidden" id="resolveId_$!{date.itemCode}" name="resolveId" value="$!{date.id}">
+                            <input type="hidden" id="superaddDtlId_$!{date.itemCode}" name="superaddDtlId" value="$!{date.superaddDtlId}">
+                        </td>
+                        <td data-name="itemName">$!{date.itemName}</td>
+                        <td align="right" data-name="bMoney">
+                            <input type="hidden" id="bMoney_$!{date.itemCode}" name="bMoney" data-name="bMoney"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{date.bMoney}" data-key=""
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}"
+                                   data-biz-name="bMoney_$!{date.itemCode}"
+                                   data-isBeginPeriod="$!{date.item.isBeginPeriod}"
+                                   data-isEndPeriod="$!{date.item.isEndPeriod}">
+                            <div id="bMoneyDiv_$!{date.itemCode}" name="bMoneyDiv" class="clearDiv">$!number.formatNumeric($!{date.bMoney})</div>
+                        </td>
+                        <!-- 计划追加 -->
+                        <td align="right" data-name="bsuperMoney">$!number.formatNumeric($!{date.bsuperMoney})</td>
+                        <!-- 可上报金额 -->
+                        #if($!{fbsBudgetPage.parentTimeType} != "")
+                            <td align="right" data-name="canBMoney">
+                                <input type="hidden" id="canBMoney_$!{date.itemCode}" data-name="canBMoney"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{date.canBMoney}"
+                                       data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}" data-biz-name="canBMoney_$!{date.itemCode}">
+                                <div id="canBMoneyDiv_$!{date.itemCode}" name="canBMoneyDiv">$!number.formatNumeric($!{date.canBMoney})</div>
+                            </td>
+                        #end
+                        <td align="right" data-name="btempMoney">
+                            <input type="hidden" id="btempMoney_$!{date.itemCode}" name="btempMoney"
+                                   data-name="btempMoney"
+                                   autocomplete="off" class="layui-input bt-biz-moneyType" value="$!{date.btempMoney}"
+                                   data-key=""
+                                   data-itemCode="$!{date.itemCode}" data-superItemCode="$!{date.item.superItemCode}"
+                                   data-biz-name="btempMoney_$!{date.itemCode}"
+                                   data-isBeginPeriod="$!{date.item.isBeginPeriod}"
+                                   data-isEndPeriod="$!{date.item.isEndPeriod}">
+                            <div id="btempMoneyDiv_$!{date.itemCode}" name="btempMoneyDiv"
+                                 class="clearDiv">$!number.formatNumeric($!{date.btempMoney})</div>
+                        </td>
+                        #foreach($money in $date.btempMoneyMap.entrySet())
+                            <td align="right" data-name="remainBMoneyDiv$!{money.key}_$!{date.itemCode}">
+                                <input type="hidden" id="remainBMoney$!{money.key}_$!{date.itemCode}"
+                                       name="remainBMoney$!{money.key}"
+                                       data-name="remainBMoney$!{money.key}"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType"
+                                       value="$!{date.remainBMoneyMap.get($!{money.key})}" data-key="$!{money.key}"
+                                       data-itemCode="$!{date.itemCode}"
+                                       data-superItemCode="$!{date.item.superItemCode}"
+                                       data-biz-name="remainBMoney$!{money.key}_$!{date.itemCode}"
+                                       data-isBeginPeriod="$!{date.item.isBeginPeriod}"
+                                       data-isEndPeriod="$!{date.item.isEndPeriod}">
+                                <div id="remainBMoneyDiv$!{money.key}_$!{date.itemCode}" name="remainBMoneyDiv"
+                                     class="clearDiv">$!number.formatNumeric($!{date.remainBMoneyMap.get($!{money.key})})</div>
+                            </td>
+                            <td align="right" data-name="btempMoney$!{money.key}_$!{date.itemCode}">
+                                <input type="hidden" id="btempMoney$!{money.key}_$!{date.itemCode}"
+                                       name="btempMoney$!{money.key}"
+                                       data-name="btempMoney$!{money.key}"
+                                       autocomplete="off" class="layui-input bt-biz-moneyType"
+                                       value="$!{money.value}" data-key="$!{money.key}"
+                                       data-itemCode="$!{date.itemCode}"
+                                       data-superItemCode="$!{date.item.superItemCode}"
+                                       data-biz-name="btempMoney$!{money.key}_$!{date.itemCode}"
+                                       data-isBeginPeriod="$!{date.item.isBeginPeriod}"
+                                       data-isEndPeriod="$!{date.item.isEndPeriod}">
+                                <div id="btempMoneyDiv$!{money.key}_$!{date.itemCode}" name="btempMoneyDiv"
+                                     class="clearDiv">$!number.formatNumeric($!{money.value})</div>
+                            </td>
+                        #end
+                        <td data-name="rmk">$!{date.rmk}</td>
+                        <td data-name="dtl" align="center">
+                            #if($!{date.item.isWrite} == "1" && $!{date.item.isBeginPeriod} != "1" && $!{date.item.isEndPeriod} != "1")
+                                <a class="" href="#" onclick="view('$!{fbsBudgetPage.id}','$!{date.detailId}')">#springMessage('common.button.dtl.view')</a>
+                            #end
+                        </td>
+                    </tr>
+                    #end
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 附件上传 -->
+    <input id="attachmentId" name="attachmentId" type="hidden" value="$!{fbsBudgetPage.attachmentId}">
+    <div id="uploader" class="layui-input-inline" style="width:100%"></div>
+    <!-- 日志 -->
+    <div id="tagMsg"></div>
+    <p>
+    <div class="layui-form-item layui-form-submit" id="buttonDiv">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn"
+                    onclick="bt.trackFlowByBusinessId('$!{fbsBudgetPage.id}')">#springMessage(
+                'common.button.trackFlow')</button>
+            <button type="button" class="layui-btn bt-biz-printType" data-printareaid="print">#springMessage(
+                'common.button.print')</button>
+            #*<button type="button" class="layui-btn" onclick="exports()">#springMessage('common.button.exports')</button>*#
+        </div>
+    </div>
+    #parse("views/common/footer.vm")
+</body>
+
+<script>
+    var dicts,tree;
+    bt.use(['form', 'layedit', 'moneyType', 'toLigerTree', 'btUpload', 'printType','dicts'], function () {
+        var $ = bt.jquery, form = bt.form();
+        dicts = bt.dicts.init();
+        tree = bt.toLigerTree.init2({
+            elem: '#appTable',
+            newElem: '#maingrid1',
+            rownumbers: true,//序号列数，默为无， 1代表左边第一列为序号列
+            isDoubleHeader: true,//是否有双表头
+            allowHideColumn: true,
+            resize:false,
+            height: "80%",
+            fixedLeftColumns: 3,
+            columnName:'itemCode',
+            onAfterShowData:function(currentData){
+                var level = dicts.get('level').val();
+                for(var i=0;i<currentData.Rows.length;i++){
+                    var row=currentData.Rows[i];
+                    if(row.children && row.children.length>0){
+                        if(level == 0 || level == ""){
+
+                        }else if(level == 1){
+                            this.collapse(row);
+                            collapseChild(row.children,this);
+                        }else if(level == 2 || level == 3){
+                            var row2 = row.children;
+                            for(var j = 0,len2 = row2.length;j< len2;j++){
+                                if(row2[j].children && row2[j].children.length){
+                                    if(level == 2){
+                                        this.collapse(row2[j]);
+                                        collapseChild(row2[j].children,this);
+                                    }else if(level == 3){
+                                        var row3 = row2[j].children;
+                                        for(var k = 0,len3 = row3.length;k< len3;k++){
+                                            if(row3[k].children && row3[k].children.length){
+                                                this.collapse(row3[k]);
+                                                collapseChild(row3[k].children,this);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        function collapseChild(node,treeObj){
+            for(var j = 0,len2 = node.length;j< len2;j++){
+                if(node[j].children && node[j].children.length){
+                    treeObj.collapse(node[j]);
+                    var child = node[j].children;
+                    collapseChild(node[j].children,treeObj);
+                }
+            }
+        }
+        var moneyType = bt.moneyType.init();
+        var moneyFun = bt.moneyType.getFun();
+        bt.printType.init();
+        var up = bt.btUpload.init({
+            elem: "#uploader",
+            auto: false,
+            hasDelete: false,
+            hasUpload: false,
+            isExpand: true,
+            gid: $("#attachmentId").val()
+        });
+
+        /**
+         * 生成日志列表
+         * @return
+         */
+            $genMsgHtml= function () {
+            var url = basePath + "/budget/fbsmessage/list/" + $('#superaddId').val() + "/" + $("#busName").val() + "?timestamp=" + new Date().getTime();
+            $.ajax({
+                url: url,
+                method: 'GET',
+                async: false,
+                success: function (json) {
+                    $("#tagMsg").html("");
+                    $("#tagMsg").html(json);
+                    form.render();
+                }
+            });
+        }
+
+            $genMsgHtml();
+
+        /**
+         * 导出功能
+         */
+        exports = function () {
+            var url = basePath + "/budget/fbsBudgetDownloadAndImport/exportBudgetResolve?id=" + $('#id').val() + "&timeType=" + $("#timeType").val() + "&target=" + $("#target").val();
+            window.location.href = url;
+        };
+
+    });
+
+    /**
+     * 查看明细
+     * @param id
+     * @param detailId
+     */
+    function view (id, detailId) {
+        if (bt.navtab) {
+            bt.navtab.addNavtab(bt.lang('common.view.data'), basePath + "/budget/fbsbudgetdetail/view?budgetId=" + id + "&detailId=" + detailId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/budget/fbsbudgetdetail/view?budgetId=" + id + "&detailId=" + detailId
+        });
+    };
+    var data;
+    chooseLevel = function () {
+        var level = dicts.get('level').val();
+        if(data == null) {
+            data = tree.get('chooseLevel').getData();//获取数据的方法；
+        }
+        tree.get('chooseLevel').loadData();
+    }
+</script>
+</html>

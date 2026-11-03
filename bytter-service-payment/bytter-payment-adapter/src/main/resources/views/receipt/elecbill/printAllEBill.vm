@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    <style type="text/css">
+        .voucher-title {
+            /*font-weight: bold;*/
+            /*font-size: 22px;*/
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form layui-form-pane">
+    ##打印类型
+    <input type="hidden" name="printType" id="printType" value="$!{printType}">
+    #foreach($eAccrualBillPage in $eAccrualBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).fileName}"
+               alt="$!{eAccrualBillPage.id}">
+        <input type="hidden" name="corpId" value="$!{eAccrualBillPage.corpId}">
+        <input type="hidden" name="billNo" value="$!{eAccrualBillPage.billNo}">
+        #if($!{eAccrualBillPage.billType} eq "04" || $!{eAccrualBillPage.billType} eq "05")
+            <div name="print_doc1" align="center" class="print-list">
+                ##凭证头部
+                <div class="print-header">
+                ##记账凭证
+                    <div style="text-align:center;">
+                        <div class="print-header-name">$!{eAccrualBillPage.netName}</div>
+                        <div class="print-header-title">
+                            #if($!{eAccrualBillPage.billType} eq "04")
+                                #springMessage('table.eTransBill.fixedDepositIst')##定期存款利息单
+                            #end
+                    #if($!{eAccrualBillPage.billType} eq "05")
+                            #springMessage('table.eTransBill.noticeDepositIst')##通知存款利息单
+                        #end
+                        </div>
+                    </div>
+                </div>
+                ##凭证内容
+                <div class="print-body">
+                    <table style="width: 100%; " class="print-body-header">
+                        <tr>
+                            <td width="50%">#springMessage('table.eTransBill.date')：$!date.format('yyyy-MM-dd',$!{eAccrualBillPage.tallyDate})</td>
+                            <td width="50%">#springMessage('table.eTransBill.billNo')：$!{eAccrualBillPage.billNo}</td>
+                        </tr>
+                    </table>
+                    <table id="dataTable" style="width: 100%; " class="layui-table">
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eTransBill.corp')</td>##单位名称
+                            <td>&nbsp;$!{eAccrualBillPage.corpName}</td>
+                            <td>&nbsp;#springMessage('table.eTransBill.depositType')</td>##存款类型
+                            <td>&nbsp;$!{eAccrualBillPage.depositName}</td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eAccrualBill.accNo')</td>##账号
+                            <td>&nbsp;$!{eAccrualBillPage.accNo}</td>
+                            <td>&nbsp;#springMessage('table.eAccrualBill.accName')</td>##账号名称
+                            <td>&nbsp;$!{eAccrualBillPage.accName}</td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eAcceptBill.accrualDate')</td>##起息日期
+                            <td>&nbsp;$!date.format('yyyy-MM-dd',$!{eAccrualBillPage.startDate})</td>
+                            ##if($!{eAccrualBillPage.billType} eq "05")##通知没有止息日期
+                            ##    <td></td>
+                            ##   <td></td>
+                            ##else
+                            <td>&nbsp;#springMessage('table.interet.blnInstDate')</td>##止息日期
+                            <td>&nbsp;$!date.format('yyyy-MM-dd',$!{eAccrualBillPage.endDate})</td>
+                            ##end
+
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eTransBill.days')</td>##天数
+                            <td>&nbsp;$!{eAccrualBillPage.days}</td>
+                            <td></td>
+                            <td></td>
+                            ##                <td>&nbsp;#springMessage('table.eTransBill.cumu')</td>##积数
+                            ##                <td align="right">$!number.formatDoubles($!{eAccrualBillPage.cumu},2)</td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eTransBill.moneyUpper')</td>##大写金额
+                            <td>
+                                <span id="moneyUpper$foreach.count"></span>
+                                ##                    <div id="moneyUpper" name="moneyUpper" readonly="true" data-name="moneyUpper" autocomplete="off" class="layui-input"></div>
+                            </td>
+                            <td>&nbsp;#springMessage('table.eTransBill.moneyLower')</td>##小写金额
+                            <td align="right">
+                                ￥$!number.formatNumeric($!{eAccrualBillPage.accrual},2)
+                                <input type="hidden" class="layui-input bt-biz-moneyType" data-name="money"
+                                       value="$!{eAccrualBillPage.accrual}"
+                                       data-toup="moneyUpper$foreach.count" data-biz-name="money" data-decimal="2"
+                                       type="text">
+                            </td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eTransBill.voucherNo')</td>##凭证号
+                            <td>&nbsp;$!{eAccrualBillPage.voucherNo}</td>
+                            <td>&nbsp;#springMessage('table.eAccrualBill.rate')(%)</td>##利率
+                            #set($rate=$!{eAccrualBillPage.interest}*100)
+                            <td align="right">$!number.formatDoubles($!rate,4)</td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eTransBill.content')</td>##摘要
+                            <td>&nbsp;$!{eAccrualBillPage.summaryContent}</td>
+                            <td valign="middle">&nbsp;#springMessage('table.eTransBill.verificationCode')</td>
+                            <td>
+                            <span id="validateCode1">
+                                $!{eAccrualBillPage.validateCode}</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td style="height: 100px">&nbsp;#springMessage('table.eVisaType.fileName')</td>##签章
+                            <td colspan="3" style="height: 100px" nowrap align="center" valign="bottom">
+                                                    <span id="encryImg1">
+                                                        <img id="imger$!{eAccrualBillPage.id}"
+                                                             src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).fileName}"
+                                                             width="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picWidth}px"
+                                                             ;height="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picHeight}px"/>
+                                                    </span>
+                            </td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td>&nbsp;#springMessage('table.eTransBill.tallierName')</td>##记账员
+                            <td>&nbsp;$!{eAccrualBillPage.tallierName}</td>
+                            <td>&nbsp;#springMessage('table.eTransBill.checkerName')</td>##复核员
+                            <td>&nbsp;$!{eAccrualBillPage.checkerName}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        #end
+        #if($!{eAccrualBillPage.billType} eq "02" || $!{eAccrualBillPage.billType} eq
+            "03" || $!{eAccrualBillPage.billType} eq "19" || $!{eAccrualBillPage.billType} eq "20")
+            #if(!${fcinterestDtlMap.get($!{eAccrualBillPage.id})})
+                ##凭证头部
+                <div class="print-header">
+                    ##记账凭证
+                    <div style="text-align:center;">
+                        <div class="print-header-name">$!{eAccrualBillPage.netName}</div>
+                        <div class="print-header-title">$!{eAccrualBillPage.billTypeName}</div>
+                    </div>
+                </div>
+                ##凭证内容
+                <div class="print-body">
+                    <table style="width: 100%; " class="print-body-header">
+                        <tr>
+                            <td width="33%">#springMessage('table.eAccrualBill.accNo')：$!{eAccrualBillPage.accNo}</td>
+                            <td width="33%">#springMessage('table.eAccrualBill.accName')：$!{eAccrualBillPage.accName}</td>
+                            <td width="33%">#springMessage('table.eAccrualBill.curId')：$!{eAccrualBillPage.curName}</td>
+                        </tr>
+                    </table>
+                    <table id="dataTable" style="width: 100%; " class="layui-table">
+                        <tr class="bodytext">
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                起息日期&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                终止日期&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                天数&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                积数&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                利率&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                利息&nbsp;
+                            </td>
+                        </tr>
+                        #foreach($element in $!{fcinterestDtlMap.get($!{eAccrualBillPage.id})})
+                            <tr class="bodytext">
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="startDate1">
+                                $!date.format('yyyy-MM-dd',$!{element.interestStartDate})</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="endDate1">
+                                $!date.format('yyyy-MM-dd',$!{element.blnInstDate})</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="days1">
+                                $!{element.days}</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="right" valign="middle">
+							<span id="cumu1">
+                                $number.formatNumeric($!{element.cumulation})</span>
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="interest1">
+                                $rateTag.show($!element.interestRate)
+                            </span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="right" valign="middle">
+							<span id="accrual1">
+                                $number.formatNumeric($!{element.interest})</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                            </tr>
+                        #end
+
+                        <tr class="bodytext">
+                            <td colspan="6" align="center" valign="middle">
+
+                                本金&nbsp;￥0.00&nbsp;
+                            </td>
+                            <td colspan="2" align="center" valign="middle">
+                                利息总计&nbsp;
+                            </td>
+                            <td colspan="2" align="right" valign="middle">
+									<span id="accrual11">￥
+									<b>
+									636,525.00</span>
+                                &nbsp;
+                                </b>
+                            </td>
+                            <td colspan="4" align="right" valign="middle">
+                                &nbsp;
+                            </td>
+                        </tr>
+
+                        <tr class="bodytext">
+                            <td colspan="6" align="center" valign="middle">$!{eAccrualBillPage.money}&nbsp;</td>
+                            <td colspan="2" align="center" valign="middle">
+                                利息总计&nbsp;
+                            </td>
+                            <td colspan="4" align="right" valign="middle">
+                                <span id="accrual11">￥$!{eAccrualBillPage.nummoney}</span>
+                                <input type="hidden" class="layui-input bt-biz-moneyType" data-minus="true"
+                                       data-toUp="A_nummoneyUp$foreach.count"
+                                       autocomplete="off" value="$!{eAccrualBillPage.nummoney}"/>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="center" valign="middle">
+							<span id="moneyStr1">
+								本金 (大写)
+								</span>
+                            </td>
+                            <td colspan="10" align="center" valign="middle">
+                                <div id="A_moneyUp$foreach.count" name="moneyUp" readonly="true" data-name="moneyUp"
+                                     autocomplete="off">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="center" valign="middle">
+                                利息总计(大写)&nbsp;
+                            </td>
+                            <td colspan="10" align="center" valign="middle">
+                                <div id="A_nummoneyUp$foreach.count" name="nummoneyUp" readonly="true" data-name="moneyUp"
+                                     autocomplete="off">
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="bodytext">
+                            <td colspan="8" align="center" valign="middle">
+                                <span id="rmk1">$!{eAccrualBillPage.rmk}</span>
+                                &nbsp;&nbsp;
+                            </td>
+                            <td colspan="1" align="center" valign="middle">会<br>计<br>分<br>录</td>
+                            <td colspan="3" align="left" valign="middle">
+                                <span id="homeSubject1">$!{eAccrualBillPage.homeSubject}</span>
+                                <br>
+                                <br>
+                                #springMessage('table.eAccrualBill.otherSubject')：
+                                <span id="otherSubject1">$!{eAccrualBillPage.otherSubject}</span>
+                                &nbsp;
+                            </td>
+
+                            <span id="voucherNo1" style="display :none">$!{eAccrualBillPage.voucherNo}</span>
+                            <span id="checker1" style="display :none">$!{eAccrualBillPage.checkerCode}</span>
+                        </tr>
+
+                        <tr class="bodytext">
+                            <td colspan="5" rowspan="2" align="center" valign="middle">
+                                <table border="0" cellspacing="0" cellpadding="0" width='106'>
+                                    <tr>
+                                        <td nowrap align="center" valign="bottom">
+										<span id="encryImg1">
+										    <img id="imger$!{eAccrualBillPage.id}"
+                                                 src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).fileName}"
+                                                 width="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picWidth}px" ;
+                                                 height="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picHeight}px"/>
+                                        </span>
+                                        </td>
+                                    </tr>
+                                    <TR sytle="margin-top: -15px;">
+                                        <td nowrap align="center"><font size="2">签章时间:
+                                            <span id="encryDate1">
+                                                $!date.format('yyyy-MM-dd',$!{eAccrualBillPage.encryDate})</span></font>
+                                        </td>
+                                    </TR>
+                                </table>
+                            </td>
+                            <td colspan="7" align="left" valign="middle">
+                                #springMessage('table.eAccrualBill.billNo')：
+                                <span id="billNo1">$!{eAccrualBillPage.billNo} </span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td colspan="7" align="left" valign="middle">
+                                签章人：
+                                <span id="subscriber1">
+                                    $!{eAccrualBillPage.subscriber}</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr align="left" class="bodytext">
+                            <td colspan="12" valign="middle">
+                                验证码：
+                                <span id="validateCode1">
+                                    $!{eAccrualBillPage.validateCode}</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr align="left" class="bodytext">
+                            <td colspan="12" valign="middle">
+                                本次打印时间：
+                                <span id="printdate1">
+                                    $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())</span>
+                                &nbsp; 打印人：
+                                <span id="username1">
+                                    $shiro.getPrincipal().username</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            #else
+                <div name="print_doc1" class="print-list">
+                ##凭证头部
+                <div class="print-header">
+                ##记账凭证
+                    <div style="text-align:center;">
+                        <div class="print-header-name">$!{eAccrualBillPage.netName}</div>
+                        <div class="print-header-title">$!{eAccrualBillPage.billTypeName}</div>
+                    </div>
+                </div>
+                ##凭证内容
+                <div class="print-body">
+                    <table style="width: 100%; " class="print-body-header">
+                        <tr>
+                            <td width="33%">#springMessage('table.eAccrualBill.accNo')：$!{eAccrualBillPage.accNo}</td>
+                            <td width="33%">#springMessage('table.eAccrualBill.accName')：$!{eAccrualBillPage.accName}</td>
+                            <td width="33%">#springMessage('table.eAccrualBill.curId')：$!{eAccrualBillPage.curName}</td>
+                        </tr>
+                    </table>
+                    <table id="dataTable" style="width: 100%; " class="layui-table">
+                        <tr class="bodytext">
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                起息日期&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                终止日期&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                天数&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                积数&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                利率&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+                                利息&nbsp;
+                            </td>
+                        </tr>
+                        #foreach($element in $!{fcinterestDtlMap.get($!{eAccrualBillPage.id})})
+                            <tr class="bodytext">
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="startDate1">
+                                $!date.format('yyyy-MM-dd',$!{element.interestStartDate})</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="endDate1">
+                                $!date.format('yyyy-MM-dd',$!{element.blnInstDate})</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="days1">
+                                $!{element.days}</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="right" valign="middle">
+							<span id="cumu1">
+                                $!number.formatNumeric($!{element.cumulation})</span>
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="interest1">
+                                $rateTag.show($!element.interestRate)</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                                <td nowrap colspan="2" align="center" valign="middle">
+							<span id="accrual1">
+                                $!number.formatNumeric($!{element.interest})</span>
+                                    &nbsp;&nbsp;
+                                </td>
+                            </tr>
+                        #end
+                        <tr class="bodytext">
+                            <td colspan="6" align="center" valign="middle">
+                                #if($!{eAccrualBillPage.billType}=='03' || $!{eAccrualBillPage.billType}=='02')
+                                    本金&nbsp;￥ $!number.formatNumeric($!{eAccrualBillPage.money})
+                                        <input type="hidden" class="layui-input bt-biz-moneyType" data-minus="true"
+                                               data-toUp="A_moneyUp$foreach.count"
+                                               autocomplete="off" value="$!{eAccrualBillPage.money}"
+                                               &nbsp;
+                                #end
+                                               &nbsp;</td>
+                            <td colspan="2" align="center" valign="middle">
+                                利息总计&nbsp;
+                            </td>
+                            <td colspan="4" align="center" valign="middle">
+                                <span id="accrual11">￥$!number.formatNumeric($!{eAccrualBillPage.nummoney})</span>
+                                <input type="hidden" class="layui-input bt-biz-moneyType" data-minus="true"
+                                       data-toUp="A_nummoneyUp$foreach.count"
+                                       autocomplete="off" value="$!{eAccrualBillPage.nummoney}"/>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="center" valign="middle">
+							<span id="moneyStr1">
+								本金 (大写)
+								</span>
+                            </td>
+                            <td colspan="10" align="center" valign="middle">
+                                <div id="A_moneyUp$foreach.count" name="moneyUp" readonly="true" data-name="moneyUp"
+                                     autocomplete="off">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="center" valign="middle">
+                                利息总计(大写)&nbsp;
+                            </td>
+                            <td colspan="10" align="center" valign="middle">
+                                <div id="A_nummoneyUp$foreach.count" name="nummoneyUp" readonly="true" data-name="moneyUp"
+                                     autocomplete="off">
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="bodytext">
+                            <td colspan="8" align="center" valign="middle">
+                                <span id="rmk1">$!{eAccrualBillPage.rmk}</span>
+                                &nbsp;&nbsp;
+                            </td>
+                            <td colspan="1" align="center" valign="middle">会<br>计<br>分<br>录</td>
+                            <td colspan="3" align="left" valign="middle">
+                                <span id="homeSubject1">$!{eAccrualBillPage.homeSubject}</span>
+                                <br>
+                                <br>
+                                #springMessage('table.eAccrualBill.otherSubject')：
+                                <span id="otherSubject1">$!{eAccrualBillPage.otherSubject}</span>
+                                &nbsp;
+                            </td>
+
+                            <span id="voucherNo1" style="display :none">$!{eAccrualBillPage.voucherNo}</span>
+                            <span id="checker1" style="display :none">$!{eAccrualBillPage.checkerCode}</span>
+                        </tr>
+
+                        <tr class="bodytext">
+                            <td colspan="5" rowspan="2" align="center" valign="middle">
+                                <table border="0" cellspacing="0" cellpadding="0" width='106'>
+                                    <tr>
+                                        <td nowrap align="center" valign="bottom">
+										<span id="encryImg1">
+                                            <img id="imger$!{eAccrualBillPage.id}"
+                                                 src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).fileName}"
+                                                 width="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picWidth}px" ;
+                                                 height="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picHeight}px"/>
+                                        </span>
+                                        </td>
+                                    </tr>
+                                    <TR sytle="margin-top: -15px;">
+                                        <td nowrap align="center"><font size="2">签章时间:
+                                            <span id="encryDate1">
+                                                $!date.format('yyyy-MM-dd',$!{eAccrualBillPage.encryDate})</span></font>
+                                        </td>
+                                    </TR>
+                                </table>
+                            </td>
+                            <td colspan="7" align="left" valign="middle">
+                                #springMessage('table.eAccrualBill.billNo')：
+                                <span id="billNo1">$!{eAccrualBillPage.billNo} </span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td colspan="7" align="left" valign="middle">
+                                签章人：
+                                <span id="subscriber1">
+                                    $!{eAccrualBillPage.subscriber}</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr class="bodytext">
+                            <td colspan="12" align="left" valign="middle">
+                                验证码：
+                                <span id="validateCode1">
+                                    $!{eAccrualBillPage.validateCode}</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr align="left" class="bodytext">
+                            <td colspan="12" valign="middle">
+                                本次打印时间：
+                                <span id="printdate1">
+                                    $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())</span>
+                                &nbsp; 打印人：
+                                <span id="username1">
+                                    $shiro.getPrincipal().username</span>
+                                &nbsp;
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                </div>
+            #end
+        #end
+        #if($!{eAccrualBillPage.billType} eq "01")
+            <div name="print_doc1" class="print-list">
+            ##凭证头部
+            <div class="print-header">
+                ##记账凭证
+                <div style="text-align:center;">
+                    <div class="print-header-name">$!{eAccrualBillPage.netName}</div>
+                    <div class="print-header-title">$!{eAccrualBillPage.billTypeName}</div>
+                </div>
+            </div>
+            ##凭证内容
+            <div class="print-body">
+                <table style="width: 100%; " class="print-body-header">
+                    <tr>
+                        <td width="33%">#springMessage('table.eAccrualBill.accNo')：$!{eAccrualBillPage.accNo}</td>
+                        <td width="33%">#springMessage('table.eAccrualBill.accName')：$!{eAccrualBillPage.accName}</td>
+                        <td width="33%">#springMessage('table.eAccrualBill.curId')：$!{eAccrualBillPage.curName}</td>
+                    </tr>
+                </table>
+                <table id="dataTable" style="width: 100%; " class="layui-table">
+                    <tr class="bodytext">
+                        <td nowrap colspan="2" align="center" valign="middle">
+                            起息日期&nbsp;
+                        </td>
+                        <td nowrap colspan="2" align="center" valign="middle">
+                            终止日期&nbsp;
+                        </td>
+                        <td nowrap colspan="2" align="center" valign="middle">
+                            天数&nbsp;
+                        </td>
+                        <td nowrap colspan="2" align="center" valign="middle">
+                            积数&nbsp;
+                        </td>
+                        <td nowrap colspan="2" align="center" valign="middle">
+                            利率&nbsp;
+                        </td>
+                        <td nowrap colspan="2" align="center" valign="middle">
+                            利息&nbsp;
+                        </td>
+                    </tr>
+                    #foreach($element in $!{fcinterestDtlMap.get($!{eAccrualBillPage.id})})
+                        <tr class="bodytext">
+                            <td nowrap colspan="2" align="center" valign="middle">
+							<span id="startDate1">
+                                $!date.format('yyyy-MM-dd',$!{element.interestStartDate})</span>
+                                &nbsp;&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+							<span id="endDate1">
+                                $!date.format('yyyy-MM-dd',$!{element.blnInstDate})</span>
+                                &nbsp;&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+							<span id="days1">
+                                $!{element.days}</span>
+                                &nbsp;&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="right" valign="middle">
+							<span id="cumu1">
+                                $!number.formatNumeric($!{element.cumulation})</span>
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+							<span id="interest1">
+                                $rateTag.show($!element.interestRate)</span>
+                                &nbsp;&nbsp;
+                            </td>
+                            <td nowrap colspan="2" align="center" valign="middle">
+							<span id="accrual1">
+                                $!number.formatNumeric($!{element.interest})</span>
+                                &nbsp;&nbsp;
+                            </td>
+                        </tr>
+                    #end
+                    <tr class="bodytext">
+                        <td colspan="2"></td>
+                        <td colspan="6"></td>
+                        <td colspan="2" align="center" valign="middle">
+                            利息总计&nbsp;
+                        </td>
+                        <td colspan="2" align="center" valign="middle">
+                            <span id="accrual11">￥$!number.formatNumeric($!{eAccrualBillPage.nummoney})</span>
+                            <input type="hidden" class="layui-input bt-biz-moneyType" data-minus="true"
+                                   data-toUp="A_nummoneyUp$foreach.count"
+                                   autocomplete="off" value="$!{eAccrualBillPage.nummoney}"/>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center" valign="middle">
+                            利息总计(大写)&nbsp;
+                        </td>
+                        <td colspan="10" align="center" valign="middle">
+                            <div id="A_nummoneyUp$foreach.count" name="nummoneyUp" readonly="true" data-name="moneyUp"
+                                 autocomplete="off">
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="bodytext">
+                        <td colspan="8" align="center" valign="middle">
+                            <span id="rmk1">$!{eAccrualBillPage.rmk}</span>
+                            &nbsp;&nbsp;
+                        </td>
+                        <td colspan="1" align="center" valign="middle">会<br>计<br>分<br>录</td>
+                        <td colspan="3" align="left" valign="middle">
+                            <span id="homeSubject1">$!{eAccrualBillPage.homeSubject}</span>
+                            <br>
+                            <br>
+                            #springMessage('table.eAccrualBill.otherSubject')：
+                            <span id="otherSubject1">$!{eAccrualBillPage.otherSubject}</span>
+                            &nbsp;
+                        </td>
+
+                        <span id="voucherNo1" style="display :none">$!{eAccrualBillPage.voucherNo}</span>
+                        <span id="checker1" style="display :none">$!{eAccrualBillPage.checkerCode}</span>
+                    </tr>
+
+                    <tr class="bodytext">
+                        <td colspan="5" rowspan="2" align="center" valign="middle">
+                            <table border="0" cellspacing="0" cellpadding="0" width='106'>
+                                <tr>
+                                    <td nowrap align="center" valign="bottom">
+										<span id="encryImg1">
+                                            <img id="imger$!{eAccrualBillPage.id}"
+                                                 src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).fileName}"
+                                                 width="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picWidth}px" ;
+                                                 height="$!{eVisaTypeVOMap.get($!{eAccrualBillPage.id}).picHeight}px"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <TR sytle="margin-top: -15px;">
+                                    <td nowrap align="center"><font size="2">签章时间:
+                                        <span id="encryDate1">
+                                            $!date.format('yyyy-MM-dd',$!{eAccrualBillPage.encryDate})</span></font>
+                                    </td>
+                                </TR>
+                            </table>
+                        </td>
+                        <td colspan="7" align="left" valign="middle">
+                            #springMessage('table.eAccrualBill.billNo')：
+                            <span id="billNo1">$!{eAccrualBillPage.billNo} </span>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr class="bodytext">
+                        <td colspan="7" align="left" valign="middle">
+                            签章人：
+                            <span id="subscriber1">
+                                $!{eAccrualBillPage.subscriber}</span>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr class="bodytext">
+                        <td colspan="12" align="left" valign="middle">
+                            验证码：
+                            <span id="validateCode1">
+                                $!{eAccrualBillPage.validateCode}</span>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr align="left" class="bodytext">
+                        <td colspan="12" valign="middle">
+                            本次打印时间：
+                            <span id="printdate1">
+                                $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())</span>
+                            &nbsp; 打印人：
+                            <span id="username1">
+                                $shiro.getPrincipal().username</span>
+                            &nbsp;
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        #end
+
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($eLoanBillPage in $eLoanBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{eLoanBillPage.id}).fileName}"
+               alt="$!{eLoanBillPage.id}">
+        <input type="hidden" name="corpId" value="$!{eLoanBillPage.corpId}">
+        <input type="hidden" name="billNo" value="$!{eLoanBillPage.billNo}">
+        <div name="print_doc1" class="print-list">
+         ##凭证头部
+        <div class="print-header">
+        ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{eLoanBillPage.netName}</div>
+                #if(${eLoanBillPage.loanType} == "2")
+                    <div class="print-header-title">还款通知单</div>
+                #else
+                    <div class="print-header-title">$!{eLoanBillPage.billTypeName}</div>
+                #end
+            </div>
+        </div>
+         ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                ##记账日期
+                    <td width="33%">记账日期：$!date.format('yyyy-MM-dd',$!{eLoanBillPage.tallyDate})</td>
+                ##起息日期
+                    <td width="33%">起息日期：$!date.format('yyyy-MM-dd',$!{eLoanBillPage.accrualDate})</td>
+                ##凭证号
+                    <td width="33%">凭证号：$!{eLoanBillPage.voucherNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table">
+                <tr>
+                    <td height="18" colspan="2" align="center" valign="middle">
+                        贷款单位
+                    </td>
+                    <td height="18" colspan="4" align="center" valign="middle">
+                        <span id="loanCorp1">
+                            $!{eLoanBillPage.loanCorp}
+                        </span>
+                        &nbsp;
+                    </td>
+                    <td height="18" colspan="2" align="center" valign="middle">
+                        贷款账号&nbsp;
+                    </td>
+                    <td height="18" colspan="4" align="center" valign="middle">
+                        <span id="depositAcc1">
+                            $!{eLoanBillPage.depositAcc}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+
+                <tr>
+                    <td height="18" colspan="2" align="center" valign="middle">
+                        利率&nbsp;
+                    </td>
+                    <td height="18" colspan="4" align="center" valign="middle">
+                        <span id="loanRate1">
+##                                $!{eLoanBillPage.loanRate}
+                             $rateTag.show($!eLoanBillPage.loanRate)
+                        </span>
+                        &nbsp;
+                    </td>
+                    <td height="18" colspan="2" align="center" valign="middle">
+                        合同号&nbsp;
+                    </td>
+                    <td height="18" colspan="4" align="center" valign="middle">
+                        <span id="contractCode1">
+                            $!{eLoanBillPage.contractCode}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                <tr>
+                    #if(${eLoanBillPage.loanType} == "2")
+                        <td height="18" colspan="2" align="center" valign="middle">
+                            还款日期&nbsp;
+                        </td>
+                        <td height="18" colspan="4" align="center" valign="middle">
+                                <span id="loanDate1">
+                                    $!date.format('yyyy-MM-dd',$!{eLoanBillPage.returnDate})
+                                </span>
+                            &nbsp;
+                        </td>
+                    #else
+                        <td height="18" colspan="2" align="center" valign="middle">
+                            贷款日期&nbsp;
+                        </td>
+                        <td height="18" colspan="4" align="center" valign="middle">
+                                <span id="loanDate1">
+                                    $!date.format('yyyy-MM-dd',$!{eLoanBillPage.loanDate})
+                                </span>
+                            &nbsp;
+                        </td>
+                    #end
+                    <td height="18" colspan="2" align="center" valign="middle">
+                    </td>
+                    <td height="18" colspan="4" align="center" valign="middle">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td height="18" colspan="2" align="center" valign="middle">
+                        金额 (大写)&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                       <span id="payMoneyBig1">
+                      <div id="B_moneyUp$foreach.count" style="width: 350px;display: inline-block;min-height: 0px;" name="moneyUp"
+                           readonly="true" data-name="moneyUp"></div>
+                    </span>
+                    #if(${eLoanBillPage.loanType} == "2")
+                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                               data-toUp="B_moneyUp$foreach.count"
+                               value="$!{eLoanBillPage.returnMoney}"/>
+                     #else
+                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                               data-toUp="B_moneyUp$foreach.count"
+                               value="$!{eLoanBillPage.loanMoney}"/>
+                    #end
+                    </td>
+                </tr>
+
+                <tr>
+                    <td height="18" colspan="2" align="center" valign="middle">
+                        金额(小写)&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        &nbsp;
+                        <span id="currency1">$!{eLoanBillPage.curName}</span>
+                        &nbsp;
+                        <span id="payMoney1">
+                        #if(${eLoanBillPage.loanType} == "2")
+                         ￥ $!number.formatNumeric($!{eLoanBillPage.returnMoney})
+                        #else
+                        ￥ $!number.formatNumeric($!{eLoanBillPage.loanMoney})
+                        #end
+                    </span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="5" rowspan="2" align="center" valign="middle" style="padding:1px;">
+
+                        ##                        <img src="visa/1398044393210.png" width="95.0px" height="95.0px" />
+                        <img id="imger$!{eLoanBillPage.id}"
+                             src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eLoanBillPage.id}).fileName}"
+                             width="$!{eVisaTypeVOMap.get($!{eLoanBillPage.id}).picWidth}px"
+                             ;height="$!{eVisaTypeVOMap.get($!{eLoanBillPage.id}).picHeight}px"/>
+                        </br>
+                        <font size="2">签章时间:$!date.format('yyyy-MM-dd',$!{eLoanBillPage.encryDate})
+                        </font>
+                    </td>
+                    <td colspan="7" align="left" valign="middle">
+                        电子回单编号：
+                        <span id="billNo1">
+                            $!{eLoanBillPage.billNo}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td colspan="7" align="left" valign="middle">
+                        签章人:
+                        <span id="subscriber1">
+                            $!{eLoanBillPage.subscriber}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+                    <td height="21" colspan="12" valign="middle">
+                        备注:
+                        <span id="reverse51">
+                        备注
+                            </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+                    <td height="21" colspan="12" valign="middle">
+                        验证码:
+                        <span id="validateCode1">
+                            $!{eLoanBillPage.validateCode}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+
+                    <td height="21" colspan="12" valign="middle">
+                        本次打印时间:
+                        $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())
+                        &nbsp; 打印人:
+                        $shiro.getPrincipal().username
+                        &nbsp;
+                    </td>
+                </tr>
+            </table>
+        </div>
+        </div>
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($eNoticeBillPage in $eNoticeBillVOList)
+        <div name="print_doc1">
+            <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{eNoticeBillPage.id}).fileName}"
+                   alt="$!{eNoticeBillPage.id}">
+            <input type="hidden" name="corpId" value="$!{eNoticeBillPage.corpId}">
+            <input type="hidden" name="billNo" value="$!{eNoticeBillPage.billNo}">
+        <div class="print-list">
+        ##凭证头部
+        <div class="print-header">
+        ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{eNoticeBillPage.netName}</div>
+                <div class="print-header-title">$!{eNoticeBillPage.billTypeName}</div>
+            </div>
+        </div>
+        ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                ##记账日期
+                    <td width="33%">记账日期：$!date.format('yyyy-MM-dd',$!{eNoticeBillPage.tallyDate})</td>
+                ##起息日期
+                    <td width="33%">起息日期：$!date.format('yyyy-MM-dd',$!{eNoticeBillPage.accrualDate})</td>
+                ##凭证号
+                    <td width="33%">凭证号：$!{eNoticeBillPage.voucherNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table breakRow">
+
+                <tr>
+                    <td width="8%" rowspan="3" align="center" valign="middle">收<br/>款<br/>单<br/>位</td>
+                    <td colspan="1" width="10%" valign="middle" align="right">
+                        全&nbsp;&nbsp;称：
+                    </td>
+                    <td colspan="4" width="32%" align="left" valign="middle">
+						<span id="payeeName1">
+                            $!{eNoticeBillPage.payeeName}
+                        </span>
+                    </td>
+                    <td width="8%" rowspan="3" align="center" valign="middle">付<br/>款<br/>单<br/>位</td>
+                    <td colspan="1" width="10%" align="right" valign="middle">
+                        全&nbsp;&nbsp;称：
+                    </td>
+                    <td colspan="4" width="32%" align="left" valign="middle">
+						<span id="payerName1">
+                            $!{eNoticeBillPage.payerName}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td height="18" colspan="1" valign="middle" align="right">
+                        账&nbsp;&nbsp;号：
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+						<span id="payeeAcc1">
+                            $!{eNoticeBillPage.payeeAcc}
+                        </span>
+                    </td>
+                    <td colspan="1" align="right" valign="middle">
+                        账&nbsp;&nbsp;号：
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+						<span id="payerAcc1">
+                            $!{eNoticeBillPage.payerAcc}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td nowrap height="18" colspan="1" align="right" valign="middle">
+                        开户行：
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+						<span id="payeeBank1">
+                            $!{eNoticeBillPage.payeeBank}
+                        </span>
+                    </td>
+                    <td nowrap colspan="1" align="right" valign="middle">
+                        开户行：
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+						<span id="payerBank1">
+                            $!{eNoticeBillPage.payerBank}
+                        </span>
+                    </td>
+                </tr>
+
+                ##                <tr class="bodytext">
+                ##                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                ##                        金额：&nbsp;
+                ##                    </td>
+                ##                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                ##                        <span id="currency1">$!{eNoticeBillPage.curName}</span>
+                ##                        (大写)：<span id="payMoneyBig1">
+                ##						  <div id="moneyUp$foreach.count" style="width: 300px;display: inline-block;" name="moneyUp"
+                ##                               readonly="true"
+                ##                               data-name="moneyUp"></div>
+                ##						</span>
+                ##                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                ##                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                ##                               data-toUp="moneyUp$foreach.count"
+                ##                               value="$!{eNoticeBillPage.payMoney}"/>
+                ##                        小写：
+                ##                        <span id="payMoney1">
+                ##							￥$!number.formatNumeric($!{eNoticeBillPage.payMoney})
+                ##						</span>
+                ##                        &nbsp;
+                ##                    </td>
+                ##                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(大写)：
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        <span id="payMoneyBig1">
+						  <div id="C_moneyUp$foreach.count" style="width: 350px;display: inline-block;min-height: 0px;" name="moneyUp"
+                               readonly="true"
+                               data-name="moneyUp"></div>
+						</span>
+                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                               data-toUp="C_moneyUp$foreach.count"
+                               value="$!{eNoticeBillPage.payMoney}"/>
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(小写)：
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        &nbsp;
+                        <span id="currency1">$!{eNoticeBillPage.curName}</span>
+                        &nbsp;
+                        <span id="payMoney1">
+							￥$!number.formatNumeric($!{eNoticeBillPage.payMoney})
+						</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        原凭证号码：
+                    </td>
+                    <td nowrap height="18" colspan="4" align="left" valign="middle">
+						<span id="oldVoucherNo1">
+                            $!{eNoticeBillPage.oldVoucher}
+                        </span>
+                    </td>
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        原凭证金额：
+                    </td>
+                    <td nowrap height="18" align="left" colspan="5" valign="middle">
+						<span id="oldVoucherMoney1">
+                            $!number.formatNumeric($!{eNoticeBillPage.oldVoucherMoney})
+                        </span>
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        结算方式：
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+						<span id="payType1" style="color: #ff0000;">
+                            $!{eNoticeBillPage.payTypeName}
+                        </span>
+                    </td>
+                    <td nowrap colspan="6" rowspan="3" height="90" align="left" valign="top">
+                        <p style="height:5px; margin:1px;">
+                            借：
+                            <span id="debitacc1">
+                                $!{eNoticeBillPage.debit}
+                            </span>
+                        </p>
+                        <br/>
+                        <p style="height:5px; margin:1px;">
+                            贷：
+                            <span id="creditacc1">
+                                $!{eNoticeBillPage.credit}
+                            </span>
+                        </p>
+                        <br/>
+                        <p></p>
+                        <p style="height:5px; margin:1px;">
+                            记账 ：
+                            <span id="tallyName1">
+                                $!{eNoticeBillPage.tallierName}
+                            </span>
+                            复核：
+                            <span id="checkers1">
+                                $!{eNoticeBillPage.checkerName}
+                            </span>
+                            主管：
+                            <span id="supervisor">
+                                $!{eNoticeBillPage.dayOverOperatorUsername}
+                            </span>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        备注：
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+						<span id="remark1">
+                            $!{eNoticeBillPage.purpose}
+                        </span>
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        用途：
+                    </td>
+                    <td colspan="4" align="left" valign="middle" style="word-break:break-all">
+						<span id="purpose1">
+                            $!{eNoticeBillPage.purpose}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td nowrap colspan="5" rowspan="2" align="center" valign="middle"
+                        height="100">
+                        <div id="encryImg1">
+                            <img id="imger$!{eNoticeBillPage.id}"
+                                 src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eNoticeBillPage.id}).fileName}"
+                                 width="$!{eVisaTypeVOMap.get($!{eNoticeBillPage.id}).picWidth}px"
+                                 ;height="$!{eVisaTypeVOMap.get($!{eNoticeBillPage.id}).picHeight}px"/>
+                        </div>
+                        <div>
+                            <font size="2">签章时间:
+                                <span id="encryDate1">
+                                    $!date.format('yyyy-MM-dd',$!{eNoticeBillPage.encryDate})
+                                </span>
+                            </font>
+                        </div>
+                    </td>
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        电子回单编号：
+                        <span id="billNo1">
+                            $!{eNoticeBillPage.billNo}
+                        </span>
+
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        签章人：
+                        <span id="subscriber1">
+                            $!{eNoticeBillPage.subscriber}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left">
+                    <td nowrap height="18" colspan="12" valign="middle">
+                        验证码：
+                        <span id="validateCode1">
+                            $!{eNoticeBillPage.validateCode}
+                        </span>
+                    </td>
+                </tr>
+                <tr align="left">
+                    <td nowrap height="18" colspan="12" valign="middle">
+                        本次打印时间：
+                        <span id="printTime1">
+                            $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())
+                        </span>
+                        &nbsp; 打印人：
+                        <span id="userName1">
+                            $shiro.getPrincipal().username
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+        </div>
+        </div>
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($ePoundageBillPage in $ePoundageBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{ePoundageBillPage.id}).fileName}"
+               alt="$!{ePoundageBillPage.id}">
+        <input type="hidden" name="corpId" value="$!{ePoundageBillPage.corpId}">
+        <input type="hidden" name="billNo" value="$!{ePoundageBillPage.billNo}">
+        <div name="print_doc1" class="print-list">
+        ##凭证头部
+        <div class="print-header">
+            ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{ePoundageBillPage.netName}</div>
+                <div class="print-header-title">$!{ePoundageBillPage.billTypeName}</div>
+            </div>
+        </div>
+        ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                ##记账日期
+                    <td width="50%">记账日期：$!date.format('yyyy-MM-dd',$!{ePoundageBillPage.tallyDate})</td>
+                ##凭证号
+                    <td width="50%">凭证号：$!{ePoundageBillPage.voucherNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table">
+                <tr class="bodytext">
+                    <td width="19" rowspan="3" align="center" valign="middle">
+                        收款单位
+                    </td>
+                    <td height="24" colspan="1" align="center" valign="middle">
+                        全&nbsp;&nbsp;称&nbsp;
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+                        <font size="2">
+								<SPAN id="payeeName1">
+                                    $!{ePoundageBillPage.payeeName}
+                                </SPAN>
+                            &nbsp;</font>
+                    </td>
+                    <td width="19" rowspan="3" align="center" valign="middle">
+                        付款单位
+                    </td>
+                    <td colspan="1" align="center" valign="middle">
+                        全&nbsp;&nbsp;称&nbsp;
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+							<SPAN id="payerName1">
+                                $!{ePoundageBillPage.payerName}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td height="21" colspan="1" align="center" valign="middle">
+                        账&nbsp;&nbsp;号&nbsp;
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+							<SPAN id="payeeAcc1">
+                                $!{ePoundageBillPage.payeeAcc}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                    <td colspan="1" align="center" valign="middle">
+                        账&nbsp;&nbsp;号&nbsp;
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+							<SPAN id="payerAcc1">
+                                $!{ePoundageBillPage.payerAcc}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td height="22" colspan="1" align="center" valign="middle">
+                        单位名称&nbsp;
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+							<SPAN id="payeeBank1">
+                                $!{ePoundageBillPage.payeeBank}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                    <td colspan="1" align="center" valign="middle">
+                        单位名称&nbsp;
+                    </td>
+                    <td colspan="4" align="left" valign="middle">
+							<SPAN id="payerBank1">
+                                $!{ePoundageBillPage.payerBank}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                </tr>
+                ##                <tr class="bodytext">
+                ##                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                ##                        金额：&nbsp;
+                ##                    </td>
+                ##                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                ##                        <span id="currency1">$!{ePoundageBillPage.curName}</span>
+                ##                        (大写)：<span id="payMoneyBig1">
+                ##						  <div id="moneyUp" style="width: 300px;display: inline-block;" name="moneyUp" readonly="true"
+                ##                               data-name="moneyUp$foreach.count"></div>
+                ##						</span>
+                ##                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                ##                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                ##                               data-toUp="moneyUp$foreach.count"
+                ##                               value="$!{ePoundageBillPage.payMoney}"/>
+                ##                        小写：
+                ##                        <span id="payMoney1">
+                ##							￥$!number.formatNumeric($!{ePoundageBillPage.payMoney})
+                ##						</span>
+                ##                        &nbsp;
+                ##                    </td>
+                ##                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(大写)：&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        <span id="payMoneyBig1">
+						  <div id="D_moneyUp$foreach.count" style="width: 350px;display: inline-block;min-height: 0px;" name="moneyUp" readonly="true"
+                               data-name="moneyUp$foreach.count"></div>
+						</span>
+                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                               data-toUp="D_moneyUp$foreach.count"
+                               value="$!{ePoundageBillPage.payMoney}"/>
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(小写)：&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        &nbsp;
+                        <span id="currency1">$!{ePoundageBillPage.curName}</span>
+                        &nbsp;
+                        <span id="payMoney1">
+							￥$!number.formatNumeric($!{ePoundageBillPage.payMoney})
+						</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td height="25" colspan="2" align="center" valign="middle">
+                        原凭证号码&nbsp;
+                    </td>
+                    <td height="25" colspan="4" align="center" valign="middle">
+							<SPAN id="oldVoucherNo1">
+                                $!{ePoundageBillPage.oldVoucher}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+
+                    <td height="25" colspan="2" align="center" valign="middle">
+                        原凭证金额&nbsp;
+                    </td>
+                    <td height="25" colspan="2" align="right" valign="middle">
+							<SPAN id="oldVoucherMoney1">
+                                $!number.formatNumeric($!{ePoundageBillPage.oldVoucherMoney})
+                            </SPAN>
+                        &nbsp;
+                    </td>
+
+                </tr>
+
+                <tr class="bodytext">
+                    <td height="25" colspan="2" align="center" valign="middle">
+                        结算方式&nbsp;
+                    </td>
+                    <td height="25" colspan="4" align="center" valign="middle">
+							<SPAN id="payType1">
+                                $!{ePoundageBillPage.payType}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                    <td colspan="6" rowspan="3" align="left" height="90" valign="top">
+                        借:
+                        $!{ePoundageBillPage.debit}
+                        <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;贷:
+                        $!{ePoundageBillPage.credit}
+                        <br>
+                        <p></p>
+                        &nbsp;&nbsp;记账 :
+                        <SPAN id="tallyName1">
+                            $!{ePoundageBillPage.tallierName}
+                        </SPAN>
+                        &nbsp;&nbsp;主管：
+                        #*<span id="supervisor">
+                            $!{ePoundageBillPage.dayOverOperatorUsername}
+                        </span>*#
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td colspan="2" align="center" valign="middle">
+                        备注&nbsp;
+                    </td>
+                    <td colspan="4" align="center" valign="middle">
+                        &nbsp;    $!{ePoundageBillPage.purpose}
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td colspan="2" align="center" valign="middle">
+                        转账原因&nbsp;
+                    </td>
+                    <td colspan="4" align="center" valign="middle">
+							<SPAN id="purpose1">
+                                $!{ePoundageBillPage.purpose}
+                            </SPAN>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td nowrap colspan="5" rowspan="2" align="center" valign="middle"
+                        height="100">
+                        <table border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td nowrap valign="bottom" align="center">
+										<span id="encryImg1">
+									   <img id="imger$!{ePoundageBillPage.id}"
+                                            src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{ePoundageBillPage.id}).fileName}"
+                                            width="$!{eVisaTypeVOMap.get($!{ePoundageBillPage.id}).picWidth}px"
+                                            ;height="$!{eVisaTypeVOMap.get($!{ePoundageBillPage.id}).picHeight}px"/>
+										</span>
+                                </td>
+                            </tr>
+                            <TR>
+                                <td nowrap align="center" valign="top"><font size="2">签章时间:
+                                    <span id="encryDate1">
+                                        $!date.format('yyyy-MM-dd',$!{ePoundageBillPage.encryDate})
+                                    </span>
+                                </font></td>
+                            </TR>
+                        </table>
+                    </td>
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        电子回单编号：
+                        <span id="billNo1">
+                            $!{ePoundageBillPage.billNo}
+                        </span>
+
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        签章人：
+                        <span id="subscriber1">
+                            $!{ePoundageBillPage.subscriber}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left">
+                    <td nowrap height="18" colspan="12" valign="middle">
+                        验证码：
+                        <span id="validateCode1">
+                            $!{ePoundageBillPage.validateCode}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left">
+
+                    <td nowrap height="18" colspan="12" valign="middle">
+                        本次打印时间：
+                        <span id="printTime1">
+                            $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())
+                        </span>
+                        &nbsp; 打印人：
+                        <span id="userName1">
+                            $shiro.getPrincipal().username
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+            </table>
+        </div>
+        </div>
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($eTransBillPage in $eTransBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{eTransBillPage.id}).fileName}"
+               alt="$!{eTransBillPage.id}">
+        <input type="hidden" name="corpId" value="$!{eTransBillPage.corpId}">
+        <input type="hidden" name="billNo" value="$!{eTransBillPage.billNo}">
+        <div name="print_doc1" class="print-list">
+        ##凭证头部
+        <div class="print-header">
+            ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{eTransBillPage.netName}</div>
+                <div class="print-header-title">
+                    #if($!{eTransBillPage.billType} eq 12)
+                        ##通知存单
+                        #springMessage('table.eTransBill.noticeDeposit')
+                    #end
+                    #if($!{eTransBillPage.billType} eq 13)
+                        ##定期存单
+                        #springMessage('table.eTransBill.fixedDeposit')
+                    #end
+                        #if($!{eTransBillPage.billType} eq 14)
+                        ##定期取款单
+                        #springMessage('table.eTransBill.fixedDrawMoney')
+                    #end
+                        #if($!{eTransBillPage.billType} eq 15)
+                        ##通知取款单
+                        #springMessage('table.eTransBill.noticeDrawMoney')
+                    #end
+                </div>
+            </div>
+        </div>
+        ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                    <td width="50%">#springMessage('table.eTransBill.date')：$!date.format('yyyy-MM-dd',$!{eTransBillPage.tallyDate})</td>
+                    <td width="50%">#springMessage('table.eTransBill.billNo')：$!{eTransBillPage.billNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table">
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.corp')</td>##单位名称
+                    <td>&nbsp;$!{eTransBillPage.corpName}</td>
+                    <td>&nbsp;#springMessage('table.eTransBill.currentAcc')</td>##活期账号
+                    #if($!{eTransBillPage.billType} eq 12||$!{eTransBillPage.billType} eq 13)
+                        <td>&nbsp;$!{eTransBillPage.currentAcc}</td>
+                    #end
+                    #if($!{eTransBillPage.billType} eq 14||$!{eTransBillPage.billType} eq 15)
+                        <td>&nbsp;$!{eTransBillPage.accNo}</td>
+                    #end
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eLoanBill.depositAcc')</td>##存款账号
+                    #if($!{eTransBillPage.billType} eq 12||$!{eTransBillPage.billType} eq 13)
+                        <td>&nbsp;$!{eTransBillPage.accNo}</td>
+                    #end
+                    #if($!{eTransBillPage.billType} eq 14||$!{eTransBillPage.billType} eq 15)
+                        <td>&nbsp;$!{eTransBillPage.currentAcc}</td>
+                    #end
+                    <td>&nbsp;#springMessage('table.eAccrualBill.rate')(%)</td>##利率
+                    #set($rate=$!{eTransBillPage.rate}*100)
+                    <td align="right">
+                        $!number.formatDoubles($!rate,4)
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.billsNo')</td>##单据编号
+                    <td>&nbsp;$!{eTransBillPage.origVoucherNo}</td>
+                    #if($!{eTransBillPage.billType} eq 13||$!{eTransBillPage.billType} eq 14)
+                        <td>&nbsp;#springMessage('table.eTransBill.limit')</td>##期限
+                        <td>&nbsp;$!{eTransBillPage.period}$dictTag.get(
+                            "pricing.fixedTerm",$!{eTransBillPage.periodCycle})</td>
+                        ##                        $!{eTransBillPage.dayLimit}#springMessage('common.unit.day')
+                    #end
+                    #if($!{eTransBillPage.billType} eq 12||$!{eTransBillPage.billType} eq 15)
+                        <td>&nbsp;#springMessage('table.eTransBill.notifyType')</td>##通知类型
+                        <td>&nbsp;$dictTag.get("pricing.noticeType",$!{eTransBillPage.period})</td>
+                        ##                    <td>$!{eTransBillPage.depositRateName}</td>
+                    #end
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eAcceptBill.accrualDate')</td>##起息日期
+                    <td>&nbsp;$!date.format('yyyy-MM-dd',$!{eTransBillPage.startDate})</td>
+                    #if($!{eTransBillPage.billType} eq 12||$!{eTransBillPage.billType} eq 15)##通知存单和通知取款单没有到期日期
+                        <td></td>
+                        <td></td>
+                    #else
+                        <td>&nbsp;#springMessage('table.eTransBill.endDate')</td>##到期日期
+                        <td>&nbsp;$!date.format('yyyy-MM-dd',$!{eTransBillPage.endDate})</td>
+                    #end
+
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.moneyUpper')</td>##大写金额
+                    <td>
+                        <span id="moneyUpper$foreach.count"></span>
+                        ##                    <div id="moneyUpper" name="moneyUpper" readonly="true" data-name="moneyUpper" autocomplete="off" class="layui-input"></div>
+                    </td>
+                    <td>&nbsp;#springMessage('table.eTransBill.moneyLower')</td>##小写金额
+                    <td align="right">
+                        ￥$!number.formatNumeric($!{eTransBillPage.money},2)
+                        <input type="hidden" class="layui-input bt-biz-moneyType" data-name="money"
+                               value="$!{eTransBillPage.money}" readonly="readonly"
+                               data-toup="moneyUpper$foreach.count" data-biz-name="money" data-decimal="2" type="text">
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.voucherNo')</td>##凭证号
+                    <td>&nbsp;$!{eTransBillPage.voucherNo}</td>
+                    <td align="left" valign="middle">#springMessage('table.eTransBill.verificationCode')</td>
+                    <td>
+                        <span id="validateCode1">
+                            $!{eTransBillPage.validateCode}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.content')</td>##摘要
+                    <td colspan="3">&nbsp;$!{eTransBillPage.summaryContent}</td>
+                </tr>
+                <tr class="bodytext">
+                    <td style="height: 100px">&nbsp;#springMessage('table.eVisaType.fileName')</td>##签章图片
+                    <td colspan="3" style="height: 100px" nowrap align="center" valign="bottom">
+        										<span id="encryImg1">
+        										    <img id="imger$!{eTransBillPage.id}"
+                                                         src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eTransBillPage.id}).fileName}"
+                                                         width="$!{eVisaTypeVOMap.get($!{eTransBillPage.id}).picWidth}px"
+                                                         height="$!{eVisaTypeVOMap.get($!{eTransBillPage.id}).picHeight}px"/>
+                                                </span>
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;#springMessage('table.eTransBill.tallierName')</td>##记账员
+                    <td>&nbsp;$!{eTransBillPage.tallierName}</td>
+                    <td>&nbsp;#springMessage('table.eTransBill.checkerName')</td>##复核员
+                    <td>&nbsp;$!{eTransBillPage.checkerName}</td>
+                </tr>
+                <tr class="bodytext">
+                    <td>&nbsp;主管</td>##主管
+                    <td>&nbsp;$!{eTransBillPage.dayOverOperatorUsername}</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+        </div>
+
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($eAcceptBillPage in $eAcceptBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{eAcceptBillPage.id}).fileName}"
+               alt="$!{eAcceptBillPage.id}">
+        <input type="hidden" name="corpId" value="$!{eAcceptBillPage.corpId}">
+        <input type="hidden" name="billNo" value="$!{eAcceptBillPage.billNo}">
+        <div name="print_doc1" class="print-list">
+        ##凭证头部
+        <div class="print-header">
+            ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{eAcceptBillPage.netName}</div>
+                <div class="print-header-title">$!{eAcceptBillPage.billTypeName}</div>
+            </div>
+        </div>
+        ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                    ##记账日期
+                    <td width="33%">记账日期：$!date.format('yyyy-MM-dd',$!{eAcceptBillPage.tallyDate})</td>
+                    ##起息日期
+                    <td width="33%">起息日期：$!date.format('yyyy-MM-dd',$!{eAcceptBillPage.accrualDate})</td>
+                    ##凭证号
+                    <td width="33%">凭证号：$!{eAcceptBillPage.voucherNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table">
+                <tr class="bodytext">
+                    <td nowrap width="3%" rowspan="3" align="center" valign="middle">
+                        借
+                        <br>
+                        <br>
+                        <br>
+                        方
+                    </td>
+                    <td nowrap colspan="1" valign="middle" align="right" width="6%">
+                        户&nbsp;&nbsp;名：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" width="27%" align="left" valign="middle" nowrap>
+					<span id="payeeName1">
+                        $!{eAcceptBillPage.payeeName}</span>
+                        &nbsp;
+                    </td>
+                    <td nowrap width="3%" rowspan="3" align="center" valign="middle">
+                        贷
+                        <br>
+                        <br>
+                        <br>
+                        方
+                    </td>
+                    <td nowrap colspan="1" width="6%" align="right" valign="middle">
+                        户&nbsp;&nbsp;名：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" width="27%" align="left" valign="middle" nowrap>
+					<span id="payerName1">
+                        $!{eAcceptBillPage.payerName}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="1" valign="middle" align="right">
+                        账&nbsp;&nbsp;号：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payeeAcc1">
+                        $!{eAcceptBillPage.payeeAcc}</span>
+                        &nbsp;
+                    </td>
+                    <td nowrap colspan="1" align="right" valign="middle">
+                        账&nbsp;&nbsp;号：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payerAcc1">
+                        $!{eAcceptBillPage.payerAcc}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="1" align="right" valign="middle">
+                        开户行：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payeeBank1">
+                        $!{eAcceptBillPage.payeeBank}</span>
+                        &nbsp;
+                    </td>
+                    <td nowrap colspan="1" align="right" valign="middle">
+                        开户行：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payerBank1">
+                        $!{eAcceptBillPage.payerBank}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+                ##                <tr class="bodytext">
+                ##                    <td nowrap colspan="2" align="right" valign="middle">
+                ##                        金额：&nbsp;
+                ##                    </td>
+                ##                    <td nowrap colspan="10" align="left" valign="middle" nowrap>
+                ##					<span id="currency1">
+                ##                        $!{eAcceptBillPage.curName}       </span>
+                ##                        (大写)：
+                ##                        <span id="payMoneyBig1">
+                ##						    <div id="moneyUp" name="moneyUp" readonly="true" data-name="moneyUp" autocomplete="off" class="layui-input">
+                ##                                </div>
+                ##                        </span>
+                ##                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                ##                        小写：
+                ##                        <span id="payMoney1">
+                ##                         <input type="hidden" class="layui-input bt-biz-moneyType" data-minus="true" data-toUp="moneyUp"
+                ##                                autocomplete="off" value="$!{eAcceptBillPage.payMoney}"
+                ##						￥$!{eAcceptBillPage.payMoney}</span>
+                ##                        &nbsp;
+                ##                    </td>
+                ##
+                ##                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额 (大写)：&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        <span id="payMoneyBig1">
+						  <div id="E_moneyUp$foreach.count" style="width: 350px;display: inline-block;min-height: 0px;" name="moneyUp" readonly="true"
+                               data-name="moneyUp"></div>
+						</span>
+                        <input type="hidden" class="bt-biz-moneyType" data-minus="true" data-toUp="E_moneyUp$foreach.count"
+                               value="$!{eAcceptBillPage.payMoney}"/>
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(小写)：&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        &nbsp;
+                        <span id="currency1">$!{eAcceptBillPage.curName}</span>
+                        &nbsp;
+                        <span id="payMoney1">
+							￥$!number.formatNumeric($!{eAcceptBillPage.payMoney})
+						</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        原凭证号码：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="center" valign="middle">
+					<span id="oldVoucherNo1">
+                        $!{eAcceptBillPage.oldVoucher}</span>
+                        &nbsp;&nbsp;
+                    </td>
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        贴息：&nbsp;
+                    </td>
+                    <td nowrap colspan="2" align="right" valign="middle">
+					  <span id="oldVoucherMoney1">
+                          $!number.formatNumeric($!{eAcceptBillPage.accessory})</span>
+                        &nbsp;&nbsp;
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        结算方式：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payType1">
+                        $!{eAcceptBillPage.payTypeName}</span>
+                        &nbsp;&nbsp;
+                    </td>
+                    <td nowrap colspan="6" rowspan="3" align="left" valign="top">
+                        <p style=" margin:0px; ">借：
+                            <span id="debitacc1"> $!{eAcceptBillPage.debit}
+                            </span>
+                        </p>
+                        <p style=" margin:0px;">
+                            $!{eAcceptBillPage.debit1}
+                        </p>
+                        <p style=" margin:0px;">
+                            &nbsp; &nbsp; &nbsp; &nbsp;贷：
+                            <span id="creditacc1">
+                                $!{eAcceptBillPage.credit}</span>
+                        </p>
+                        <p style=" margin:0px;">
+                            $!{eAcceptBillPage.credit1}
+                        </p>
+                        <p style=" margin:0px;">
+                            记账 ：
+                            <span id="tallyName1">
+                                $!{eAcceptBillPage.tallierName}</span>
+                            &nbsp; &nbsp;复核：
+                            <span id="checkers1">
+                                $!{eAcceptBillPage.checkerName}</span>
+                            &nbsp; &nbsp;主管：
+                            <span id="checkers1">
+                                $!{eAcceptBillPage.dayOverOperatorUsername}</span>
+                        </p>
+                    </td>
+                </tr>
+
+
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        备注：
+                    </td>
+                    <td nowrap colspan="4" align="center" valign="middle">
+					 <span id="remark1">$!{eAcceptBillPage.remark}
+                     </span>&nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        用途：
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="purpose1">
+                        $!{eAcceptBillPage.purpose}</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td nowrap colspan="5" rowspan="4" align="center" valign="middle">
+                        <table border="0" cellspacing="0" cellpadding="0" width='106'>
+                            <tr>
+                                <td nowrap valign="bottom" align="center">
+                                    <br/>
+                                    <div style="font-size:12px;">
+                                        <span id="encryImg1">
+										    <img id="imger$!{eAcceptBillPage.id}"
+                                                 src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{eAcceptBillPage.id}).fileName}"
+                                                 width="$!{eVisaTypeVOMap.get($!{eAcceptBillPage.id}).picWidth}px"
+                                                 ;height="$!{eVisaTypeVOMap.get($!{eAcceptBillPage.id}).picHeight}px"/>
+                                         </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <TR>
+                                <td nowrap align="center" valign="top"><br/><font size="2">签章时间:
+                                    <span id="encryDate1">
+                                        $!date.format('yyyy-MM-dd',$!{eAcceptBillPage.encryDate})</span></font><br/>
+                                </td>
+                            </TR>
+                        </table>
+                    </td>
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        电子回单编号：
+                        <span id="billNo1">$!{eAcceptBillPage.billNo}</span>
+
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        签章人：
+                        <span id="subscriber1">$!{eAcceptBillPage.subscriber}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+                    <td nowrap colspan="12" valign="middle">
+                        验证码：
+                        <span id="validateCode1">$!{eAcceptBillPage.validateCode}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+                    <td nowrap colspan="12" valign="middle">
+                        本次打印时间：
+                        <span id="printdate1">
+                            $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())</span>
+                        &nbsp; 打印人：
+                        <span id="username1">
+                            $shiro.getPrincipal().username</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+        </div>
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($entity in $eCompareBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{entity.eCompareBillVO.billNo}).fileName}"
+               alt="$!{entity.eCompareBillVO.billNo}">
+        <input type="hidden" name="corpId" value="$!{entity.eCompareBillVO.corpId}">
+        <input type="hidden" name="billNo" value="$!{entity.eCompareBillVO.billNo}">
+        <div name="print_doc1" class="print-list">
+            ##凭证头部
+            <div class="print-header">
+                ##记账凭证
+                <div style="text-align:center;">
+                    <div class="print-header-name">$!{ECompareBillVO.netName}</div>
+                    <div class="print-header-title">$!{ECompareBillVO.billTypeName}</div>
+                </div>
+            </div>
+            ##凭证内容
+            <div class="print-body">
+                <table style="width: 100%; " class="print-body-header">
+                    <tr>
+                    ##账号
+                        <td width="33%">账号：$!{entity.eCompareBillVO.accNo}</td>
+                    ##户名
+                        <td width="33%">户名：$!{entity.eCompareBillVO.accName}</td>
+                    ##币别
+                        <td width="33%">币别：$!{entity.eCompareBillVO.curName}</td>
+                    </tr>
+                </table>
+                <table id="dataTable" style="width: 100%; " class="layui-table breakRow">
+                    <tr bgcolor="#ffffff">
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            记账日期
+                        </td>
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            起息日期
+                        </td>
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            凭证号
+                        </td>
+                        <td colspan="1" align="center" valign="middle">
+                            摘要
+                        </td>
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            借方发生额
+                        </td>
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            贷方发生额
+                        </td>
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            余额
+                        </td>
+                    </tr>
+                    <tr bgcolor="#ffffff" class="bodytext">
+                        <td colspan="2" align="center" valign="middle" nowrap>
+                            期初余额
+                        </td>
+                        <td colspan="12" align="right" valign="middle" nowrap>
+			        <span id="beginbalance1">
+                        $!number.formatNumeric($!{entity.eCompareBillVO.beginBalanceWay})
+                    </span>
+                        </td>
+                    </tr>
+                    #foreach($eCompareBillPage in $entity.list)
+                        <tr bgcolor="#ffffff" class="bodytext">
+                            <td colspan="2" align="center" valign="middle" nowrap>
+                                <span id="tallydate10">    $!date.format(
+                                    'yyyy-MM-dd',$!{eCompareBillPage.tallyDate})</span>
+                            </td>
+                            <td colspan="2" align="center" valign="middle" nowrap>
+                                <span id="stardate10">$!date.format(
+                                    'yyyy-MM-dd',$!{eCompareBillPage.interestStartDate})</span>
+                            </td>
+                            <td colspan="2" align="center" valign="middle" nowrap>
+                                <span id="voucherno10">$!{eCompareBillPage.voucherNo}</span>
+                            </td>
+                            <td colspan="1" align="left" valign="middle" style="word-break:break-all" width="120px;">
+                                <span id="summarycomment10">$!{eCompareBillPage.summaryComment}</span>
+                            </td>
+                            <td colspan="2" align="right" valign="middle" nowrap>
+                        <span id="debitmoney10">
+                            $!number.formatNumeric($!{eCompareBillPage.debitMoney})
+                        </span>
+                            </td>
+                            <td colspan="2" align="right" valign="middle" nowrap>
+                        <span id="creditmoney10">
+                            $!number.formatNumeric($!{eCompareBillPage.creditMoney})
+                        </span>
+                            </td>
+                            <td colspan="2" height="30" align="right" valign="middle" nowrap>
+                        <span id="bal10">
+                            $!number.formatNumeric($!{eCompareBillPage.balance})
+                        </span>
+                            </td>
+                        </tr>
+                    #end
+
+                    <tr bgcolor="#ffffff" class="bodytext" height="30">
+                        <td colspan="7" align="center">
+                            合计：
+                        </td>
+                        <td colspan="2" align="right" valign="middle">
+			<span id="listSum11">
+                $!number.formatNumeric($!{entity.eCompareBillVO.sumDebitMoney})
+            </span></td>
+                        <td colspan="2" align="right" valign="middle">
+			<span id="listSum21">
+                $!number.formatNumeric($!{entity.eCompareBillVO.sumCreditMoney})
+            </span></td>
+                        <td colspan="3" align="right" valign="middle">
+                            ##			<span id="listSum31">
+##                $!number.formatNumeric($!{entity.eCompareBillVO.sumBalance})
+##            </span>
+                        </td>
+                        <span id="vSize1" style="display: none;">
+				1</span>
+
+                    </tr>
+                    <tr class="bodytext">
+                        <td nowrap colspan="5" rowspan="3" align="center" valign="middle"
+                            height="100">
+                            <table border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td nowrap valign="bottom" align="center">
+                                    <span id="encryImg1">
+                                           <img id="imger$!{entity.eCompareBillVO.billNo}"
+                                                src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{entity.eCompareBillVO.billNo}).fileName}"
+                                                width="$!{eVisaTypeVOMap.get($!{entity.eCompareBillVO.billNo}).picWidth}px"
+                                                ;height="$!{eVisaTypeVOMap.get($!{entity.eCompareBillVO.billNo}).picHeight}px"/>
+                                    </span>
+                                    </td>
+                                </tr>
+                                <TR>
+                                    <td nowrap align="center" valign="top"><font size="2">签章时间:
+                                        <span id="encryDate1">
+                                            $!date.format('yyyy-MM-dd',$!{entity.eCompareBillVO.encryDate})
+                                        </span>
+                                    </font></td>
+                                </TR>
+                            </table>
+                        </td>
+                        <td height="15" colspan="8" align="left" valign="middle">
+                            电子回单编号:
+                            $!{entity.eCompareBillVO.billNo}
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr class="bodytext">
+                        <td height="15" colspan="8" align="left" valign="middle">
+                            签章人:
+                            $!{entity.eCompareBillVO.subscriber}
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr align="left" class="bodytext">
+                        <td height="21" colspan="8" valign="middle">
+                            验证码:
+                            $!{entity.eCompareBillVO.validateCode}
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr align="left" class="bodytext">
+
+                        <td height="21" colspan="13" valign="middle">
+                            本次打印时间:
+                            $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())
+                            &nbsp; 打印人:
+                            $shiro.getPrincipal().username
+                            &nbsp;
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        </div>
+        </br>
+        </br>
+        </br>
+    #end
+    #foreach($ePrecativeLoanBillPage in $ePrecativeLoanBillVOList)
+        <input type="hidden" name="fileName" value="$!{eVisaTypeVOMap.get($!{ePrecativeLoanBillPage.id}).fileName}"
+               alt="$!{ePrecativeLoanBillPage.id}">
+        <input type="hidden" name="corpId" value="$!{ePrecativeLoanBillPage.corpId}">
+        <input type="hidden" name="billNo" value="$!{ePrecativeLoanBillPage.billNo}">
+        <div name="print_doc1" class="print-list">
+        ##凭证头部
+        <div class="print-header">
+            ##记账凭证
+            <div style="text-align:center;">
+                <div class="print-header-name">$!{ePrecativeLoanBillPage.netName}</div>
+                <div class="print-header-title">$!{ePrecativeLoanBillPage.billTypeName}</div>
+            </div>
+        </div>
+        ##凭证内容
+        <div class="print-body">
+            <table style="width: 100%; " class="print-body-header">
+                <tr>
+                ##记账日期
+                    <td width="33%">记账日期：$!date.format('yyyy-MM-dd',$!{ePrecativeLoanBillPage.tallyDate})</td>
+                ##起息日期
+                    <td width="33%">起息日期：$!date.format('yyyy-MM-dd',$!{ePrecativeLoanBillPage.accrualDate})</td>
+                ##凭证号
+                    <td width="33%">凭证号：$!{ePrecativeLoanBillPage.voucherNo}</td>
+                </tr>
+            </table>
+            <table id="dataTable" style="width: 100%; " class="layui-table">
+                <tr class="bodytext">
+                    <td nowrap width="3%" rowspan="2" align="center" valign="middle">
+                        委
+                        <br>
+                        托
+                        <br>
+                        方
+                    </td>
+                    <td nowrap colspan="1" valign="middle" align="right" width="6%">
+                        委托人：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" width="27%" align="left" valign="middle" nowrap>
+					<span id="payeeName1">
+                        $!{ePrecativeLoanBillPage.precativeCorp}</span>
+                        &nbsp;
+                    </td>
+                    <td nowrap width="3%" rowspan="2" align="center" valign="middle">
+                        借
+                        <br>
+                        款
+                        <br>
+                        方
+                    </td>
+                    <td nowrap colspan="1" width="6%" align="right" valign="middle">
+                        借款人：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" width="27%" align="left" valign="middle" nowrap>
+					<span id="payerName1">
+                        $!{ePrecativeLoanBillPage.loanCorp}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap colspan="1" valign="middle" align="right">
+                        账&nbsp;&nbsp;号：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payeeAcc1">
+                        $!{ePrecativeLoanBillPage.precativeAcc}</span>
+                        &nbsp;
+                    </td>
+                    <td nowrap colspan="1" align="right" valign="middle">
+                        账&nbsp;&nbsp;号：&nbsp;
+                    </td>
+                    <td nowrap colspan="4" align="left" valign="middle">
+					<span id="payerAcc1">
+                        $!{ePrecativeLoanBillPage.loanAcc}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+                ##                <tr class="bodytext">
+                ##                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                ##                        金额：&nbsp;
+                ##                    </td>
+                ##                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                ##                        <span id="currency1">$!{ePrecativeLoanBillPage.curName}</span>
+                ##                        (大写)：<span id="payMoneyBig1">
+                ##						  <div id="moneyUp$foreach.count" style="width: 300px;display: inline-block;" name="moneyUp"
+                ##                               readonly="true" data-name="moneyUp"></div>
+                ##						</span>
+                ##                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                ##                        <input type="hidden" class="bt-biz-moneyType" data-minus="true"
+                ##                               data-toUp="moneyUp$foreach.count"
+                ##                               value="$!{ePrecativeLoanBillPage.loanMoney}"/>
+                ##                        小写：
+                ##                        <span id="payMoney1">
+                ##							￥$!number.formatNumeric($!{ePrecativeLoanBillPage.loanMoney})
+                ##						</span>
+                ##                        &nbsp;
+                ##                    </td>
+                ##                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(大写)：&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        <span id="payMoneyBig1">
+						  <div id="F_moneyUp$foreach.count" style="width: 350px;display: inline-block;min-height: 0px;" name="moneyUp"
+                               readonly="true" data-name="moneyUp"></div>
+						</span>
+                        <input type="hidden" class="bt-biz-moneyType" data-minus="true" data-toUp="F_moneyUp$foreach.count"
+                               value="$!{ePrecativeLoanBillPage.loanMoney}"/>
+                    </td>
+                </tr>
+
+                <tr class="bodytext">
+                    <td nowrap height="18" colspan="2" align="right" valign="middle">
+                        金额(小写)：&nbsp;
+                    </td>
+                    <td nowrap colspan="10" align="left" valign="middle" colspan="10">
+                        &nbsp;
+                        <span id="currency1">$!{ePrecativeLoanBillPage.curName}</span>
+                        &nbsp;
+                        <span id="payMoney1">
+							￥$!number.formatNumeric($!{ePrecativeLoanBillPage.loanMoney})
+						</span>
+                        &nbsp;
+                    </td>
+                </tr>
+
+
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        受托人：&nbsp;
+                    </td>
+                    <td nowrap colspan="2" align="left" valign="middle">
+					<span id="payType1">
+                        $!{ePrecativeLoanBillPage.corpName}</span>
+                        &nbsp;&nbsp;
+                    </td>
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        合同号：&nbsp;
+                    </td>
+                    <td nowrap colspan="2" align="center" valign="middle">
+					<span id="contractCode1">
+                        $!{ePrecativeLoanBillPage.contractCode}
+                    </span>
+
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        利率：&nbsp;
+                    </td>
+                    <td nowrap colspan="2" align="right" valign="middle">
+					<span id="loanRate1">
+                        $rateTag.show($!ePrecativeLoanBillPage.loanRate)
+                    </span>
+                        &nbsp;&nbsp;
+                    </td>
+
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        贷款日期：
+                    </td>
+                    <td nowrap colspan="4" align="center" valign="middle">
+					<span id="loanDate1">
+                        $!date.format('yyyy-MM-dd',$!{ePrecativeLoanBillPage.loanDate})
+                    </span>
+                    </td>
+
+                    <td nowrap colspan="6" rowspan="2" align="left" valign="top">
+                        #if($!{ePrecativeLoanBillPage.debitAcc} && $ePrecativeLoanBillPage.debitAcc)
+                            #set($debitAcc = $ePrecativeLoanBillPage.debitAcc.split(";"))
+                            #set($creditAcc = $ePrecativeLoanBillPage.creditAcc.split(";"))
+                            #set($debit = $debitAcc[0])
+                            &nbsp;借: $debit
+                            <br>
+                            #set($credit = $creditAcc[0])
+                            &nbsp;&nbsp;&nbsp;&nbsp;贷: $credit
+                            <br>
+                            #set($debit = $debitAcc[1])
+                            &nbsp;借: $debit
+                            <br>
+                            #set($credit = $creditAcc[1])
+                            &nbsp;&nbsp;&nbsp;&nbsp;贷: $credit
+                            <br>
+                            ##					    #if($debitAcc[2])
+                            ##                            #set($debitInterest = $debitAcc[2])
+                            ##                            &nbsp;借: $debitInterest
+                            ##                            <br>
+                            ##                        #end
+                            ##                        #if($creditAcc[2])
+                            ##                            #set($creditInterest = $creditAcc[2])
+                            ##                            &nbsp;贷: $creditInterest
+                            ##                        #end
+                            ##                        &nbsp;
+
+                        #end
+                        <p></p>
+                        <p style=" margin:0px;">
+                            记账 ：
+                            <span id="tallyName1">
+                                $!{ePrecativeLoanBillPage.tallyerCode}</span>
+                            &nbsp;&nbsp;复核：
+                            <span id="checkers1">
+                                $!{ePrecativeLoanBillPage.checkerCode}</span>
+                            &nbsp;&nbsp;主管：
+                            <span id="supervisor">
+                                $!{ePrecativeLoanBillPage.dayOverOperatorUsername}</span>
+                        </p>
+                    </td>
+
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="2" align="right" valign="middle">
+                        到期日期：
+                    </td>
+                    <td nowrap colspan="4" align="center" valign="middle">
+					<span id="deadline_date1">
+                        $!date.format('yyyy-MM-dd',$!{ePrecativeLoanBillPage.deadlineDate})
+                    </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td nowrap colspan="5" rowspan="2" align="center" valign="middle">
+                        <table border="0" cellspacing="0" cellpadding="0" width='106'>
+                            <tr>
+                                <td nowrap valign="bottom" align="center">
+                                    <br/>
+                                    <div style="font-size:12px;">
+                                        <span id="encryImg1">
+										    <img id="imger$!{ePrecativeLoanBillPage.id}"
+                                                 src="${basePath}/download/attachment?id=$!{eVisaTypeVOMap.get($!{ePrecativeLoanBillPage.id}).fileName}"
+                                                 width="$!{eVisaTypeVOMap.get($!{ePrecativeLoanBillPage.id}).picWidth}px"
+                                                 ;height="$!{eVisaTypeVOMap.get($!{ePrecativeLoanBillPage.id}).picHeight}px"/>
+                                         </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <TR>
+                                <td nowrap align="center" valign="top"><br/><font size="2">签章时间:
+                                    <span id="encryDate1">
+                                        $!date.format(
+                                            'yyyy-MM-dd',$!{ePrecativeLoanBillPage.encryDate})</span></font><br/></td>
+                            </TR>
+                        </table>
+                    </td>
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        电子回单编号：
+                        <span id="billNo1">$!{ePrecativeLoanBillPage.billNo}</span>
+
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr class="bodytext">
+                    <td nowrap colspan="7" align="left" valign="middle">
+                        签章人：
+                        <span id="subscriber1">$!{ePrecativeLoanBillPage.subscriber}</span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+                    <td nowrap colspan="12" valign="middle">
+                        验证码：
+                        <span id="validateCode1">$!{ePrecativeLoanBillPage.validateCode}
+                        </span>
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr align="left" class="bodytext">
+                    <td nowrap colspan="12" valign="middle">
+                        本次打印时间：
+                        <span id="printdate1">
+                            $!date.format('yyyy-MM-dd HH:mm:ss',$!date.getSystemTime())</span>
+                        &nbsp; 打印人：
+                        <span id="username1">
+                            $shiro.getPrincipal().username</span>
+                        &nbsp;
+                    </td>
+                </tr>
+            </table>
+        </div>
+        </div>
+        </br>
+        </br>
+        </br>
+    #end
+</form>
+<object id="LODOP_OB" classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0>
+    <embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0></embed>
+</object>
+<br/>
+<br/>
+<div class="layui-form-item layui-form-submit" id="buttonDiv">
+    <div class="layui-input-block">
+        <button type="button" class="layui-btn" onclick="prints()">#springMessage('common.button.print')</button>
+        <button type="button" class="layui-btn" onclick="closeForms()">#springMessage('common.button.revert')</button>
+    </div>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/plugins/Lodop/LodopFuncs.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/receipt/elecbill/eImagerAllPrint.js?_btv=${resourceVersion}"></script>
+</html>

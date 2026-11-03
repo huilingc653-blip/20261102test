@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bytter.job.admin.dao.XxlJobInfoSortDao">
+
+	<resultMap id="XxlJobInfo" type="com.bytter.job.admin.core.model.XxlJobInfo" >
+		<result column="id" property="id" />
+
+		<result column="job_group" property="jobGroup" />
+	    <result column="job_desc" property="jobDesc" />
+
+	    <result column="add_time" property="addTime" />
+	    <result column="update_time" property="updateTime" />
+
+	    <result column="author" property="author" />
+	    <result column="alarm_email" property="alarmEmail" />
+
+		<result column="schedule_type" property="scheduleType" />
+		<result column="schedule_conf" property="scheduleConf" />
+		<result column="misfire_strategy" property="misfireStrategy" />
+
+		<result column="executor_route_strategy" property="executorRouteStrategy" />
+		<result column="executor_handler" property="executorHandler" />
+	    <result column="executor_param" property="executorParam" />
+		<result column="executor_block_strategy" property="executorBlockStrategy" />
+		<result column="executor_timeout" property="executorTimeout" />
+		<result column="executor_fail_retry_count" property="executorFailRetryCount" />
+
+	    <result column="glue_type" property="glueType" />
+	    <result column="glue_source" property="glueSource" />
+	    <result column="glue_remark" property="glueRemark" />
+		<result column="glue_updatetime" property="glueUpdatetime" />
+
+		<result column="child_jobid" property="childJobId" />
+
+		<result column="trigger_status" property="triggerStatus" />
+		<result column="trigger_last_time" property="triggerLastTime" />
+		<result column="trigger_next_time" property="triggerNextTime" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		t.id,
+		t.job_group,
+		t.job_desc,
+		t.add_time,
+		t.update_time,
+		t.author,
+		t.alarm_email,
+		t.schedule_type,
+		t.schedule_conf,
+		t.misfire_strategy,
+		t.executor_route_strategy,
+		t.executor_handler,
+		t.executor_param,
+		t.executor_block_strategy,
+		t.executor_timeout,
+		t.executor_fail_retry_count,
+		t.glue_type,
+		t.glue_source,
+		t.glue_remark,
+		t.glue_updatetime,
+		t.child_jobid,
+		t.trigger_status,
+		t.trigger_last_time,
+		t.trigger_next_time
+	</sql>
+
+	<select id="pageList" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
+		SELECT <include refid="Base_Column_List" /> , p.permission_type permissionType
+		FROM xxl_job_info AS t left join xxl_job_permission p on t.id = p.job_id
+		<trim prefix="WHERE" prefixOverrides="AND | OR" >
+			<if test="userId != null and userId > 0 ">
+				AND p.user_id = #{userId}
+			</if>
+			AND (t.TENANT_ID = '1000' OR t.TENANT_ID IS NULL OR t.TENANT_ID = #{tenantId})
+			<if test="jobGroup gt 0">
+				AND t.job_group = #{jobGroup}
+			</if>
+            <if test="triggerStatus gte 0">
+                AND t.trigger_status = #{triggerStatus}
+            </if>
+			<if test="jobId != null and jobId gt 0">
+				AND t.id = #{jobId}
+			</if>
+			<if test="jobDesc != null and jobDesc != ''">
+				AND t.job_desc like CONCAT(CONCAT('%', #{jobDesc}), '%')
+			</if>
+			<if test="executorHandler != null and executorHandler != ''">
+				AND t.executor_handler like CONCAT(CONCAT('%', #{executorHandler}), '%')
+			</if>
+			<if test="author != null and author != ''">
+				AND t.author like CONCAT(CONCAT('%', #{author}), '%')
+			</if>
+		</trim>
+		<choose>
+			<when test="orderBy == 'job_desc'">ORDER BY t.job_desc</when>
+			<when test="orderBy == 'schedule_type'">ORDER BY t.schedule_type</when>
+			<when test="orderBy == 'schedule_conf'">ORDER BY t.schedule_conf</when>
+			<when test="orderBy == 'glue_type'">ORDER BY t.glue_type</when>
+			<when test="orderBy == 'trigger_status'">ORDER BY t.trigger_status</when>
+			<otherwise>ORDER BY t.id</otherwise>
+		</choose>
+		<choose>
+			<when test="orderDir == 'asc'">ASC</when>
+			<otherwise>DESC</otherwise>
+		</choose>
+		LIMIT #{offset}, #{pagesize}
+	</select>
+
+	<select id="pageListCount" parameterType="java.util.HashMap" resultType="int">
+		SELECT count(1)
+		FROM xxl_job_info AS t left join xxl_job_permission p on t.id = p.job_id
+		<trim prefix="WHERE" prefixOverrides="AND | OR" >
+			<if test="userId != null and userId > 0 ">
+				AND p.user_id = #{userId}
+			</if>
+			AND (t.TENANT_ID = '1000' OR t.TENANT_ID IS NULL OR t.TENANT_ID = #{tenantId})
+			<if test="jobGroup gt 0">
+				AND t.job_group = #{jobGroup}
+			</if>
+            <if test="triggerStatus gte 0">
+                AND t.trigger_status = #{triggerStatus}
+            </if>
+			<if test="jobId != null and jobId gt 0">
+				AND t.id = #{jobId}
+			</if>
+			<if test="jobDesc != null and jobDesc != ''">
+				AND t.job_desc like CONCAT(CONCAT('%', #{jobDesc}), '%')
+			</if>
+			<if test="executorHandler != null and executorHandler != ''">
+				AND t.executor_handler like CONCAT(CONCAT('%', #{executorHandler}), '%')
+			</if>
+			<if test="author != null and author != ''">
+				AND t.author like CONCAT(CONCAT('%', #{author}), '%')
+			</if>
+		</trim>
+	</select>
+
+</mapper>

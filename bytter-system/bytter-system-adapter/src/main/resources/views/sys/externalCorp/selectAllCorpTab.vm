@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    #parse("views/common/head.vm")
+    <style>
+        body{
+            padding-bottom:0;
+            padding-top:5px;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form " id="searchForm">
+    <input type="hidden" name="corpId" value="$!{corpId}">
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            ##机构代码
+            <td class="textRight">#springMessage('table.sysCorp.code')</td>
+            <td>
+                <input type="text" name="likes_code" autocomplete="off" class="layui-input" placeholder="#springMessage('table.sysCorp.code')">
+            </td>
+            ##组织类型
+            <td class="textRight">#springMessage('table.sysCorp.type')</td>
+            <td>
+                <div class="bt-biz-dict" data-group="SYS_ORGANTYPE_CORP_TYPE" data-name="eqg_type" data-type="select"></div>
+            </td>
+
+        </tr>
+        <tr>
+            ##组织名称
+            <td class="textRight">#springMessage('table.sysCorp.name')</td>
+            <td>
+                <input type="text" name="likes_name" autocomplete="off" class="layui-input" placeholder="#springMessage('table.sysCorp.name')">
+            </td>
+            ##单位属性
+            <td class="text-right">#springMessage('sys.sysCorp.unitAttribute')</td>
+            <td>
+                <div class="bt-biz-dict" data-group="sys_corp_attribute_type" data-name="eqs_unitAttribute" data-type="select"></div>
+            </td>
+        </tr>
+        <tr>
+            ##组织名称（英文）
+            <td class="text-right">#springMessage('sys.sysCorp.nameEn')</td>
+            <td>
+                <input type="text" name="likes_nameEn" autocomplete="off" placeholder="#springMessage('sys.sysCorp.nameEn')" class="layui-input"/>
+            </td>
+            ##国家地区
+            <td class="text-right">#springMessage('table.foreign.countryOrArea')</td>
+            <td>
+                <div class="layui-input-inline">
+                    <input type="text" id="countryName" name="countryName" lay-verify="tableData" data-biz-name="countryName"
+                           autocomplete="off" class="layui-input text" placeholder="#springMessage('table.foreign.countryOrArea')">
+                    <table id="countryTable" class="hide">
+                        <thead>
+                        <tr>
+                            <th>#springMessage('table.tbCreditPeriod.code')</th>
+                            <th>#springMessage('table.btswiftinfo.namezh')</th>
+                            <th>#springMessage('table.btswiftinfo.nameen')</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="text-align: center;">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<table id="corpTable" class="layui-table">
+    <thead>
+    <tr>
+        <th width="30">#springMessage('common.table.thead.operation')</th>
+        #*<th>#springMessage('table.sysCorp.code')</th>*#
+        <th>#springMessage('table.sysCorp.name')</th>
+        <th>#springMessage('sys.sysCorp.nameEn')</th>
+        <th>#springMessage('table.sysCorp.type')</th>
+        <th>#springMessage('table.sysCorp.netName')</th>
+        <th>#springMessage('sys.sysCorp.unitAttribute')</th>
+        <th>#springMessage('table.foreign.countryOrArea')</th>
+    </tr>
+    </thead>
+</table>
+    #parse("views/common/footer.vm")
+<script>
+    bt.use(['datatable', 'jquery', 'selectType','dicts','selectTable'], function () {
+        var layer = parent ? parent.bt.layer : bt.layer;
+        var dataform = bt.dataform;
+        var $ = bt.jquery;
+        bt.selectType.init();
+        bt.dicts.init();
+
+        //国家地区下拉表格
+        var countryInit = bt.selectTable.init({
+            elem: "#countryTable",
+            url: basePath + "/basic/business/syscountrycust/listSysCountryCust",
+            searchInput: "#countryName",
+            scrollX: "600px",
+            scrollY: "300px",
+            columns: [
+                {data: "code",},
+                {data: "nameZh",},
+                {data: "nameEn",},
+            ],
+            clickCallback: function (data, $tr) {
+                $("input[name='countryName']").val(data.nameZh);
+                selectType.render();
+            },
+        });
+
+        var table = bt.datatable.init({
+            elem: "#corpTable",
+            selectCss: false,
+            colReorder:true,
+            ajax: {
+                url: basePath + "/sys/corp/getAllCorpData",
+            },
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            columns: [
+                {
+                    data: null, bSortable: false, className: 'center',
+                    render: function (data, type, full, meta) {
+                        return '<a href="javascript:void(0);" class="corp-select" data-row="' + meta.row + '">' + bt.lang("common.button.select") + '</a>';
+                    }
+                },
+                /*{data: "code",className: 'center', orderable: false},*/
+                {data: "name", orderable: false,
+                    render: function (data, type, full, meta) {
+                        return "("+full.code+")"+full.name;
+                    }
+                },
+                {data: "nameEn", orderable: false},
+                {data: "type",className: 'center', orderable: false,
+                    render: function (data, type, full, meta) {
+                        if(full.type==0){
+                            return '<span style="color:red;">'+bt.lang("common.button.center")+'</span>';
+                        }else{
+                            return bt.lang("common.button.resetAcceptor");
+                        }
+                    }
+                },
+                {data: "netName", orderable: false},
+                {data: "unitAttributeName", orderable: false},
+                {data: "countryName", orderable: false}
+            ]
+        });
+
+        table.on('click', '.corp-select', function (event) {
+//            var func = top.btSelectCallBack['bt-biz-externalCorpBankAcc']['callback'];
+            var parentsIndex = parent.$('body').attr('layerindex'), currentParentIframe;
+            if (parentsIndex != undefined) { //如果是弹框中再弹框中，将会有这个参数
+                currentParentIframe = 'layui-layer-iframe'+parentsIndex
+            }else {
+                currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            }
+            //var currentParentIframe = top.$('.layui-tab-content > .layui-show').find('iframe')[0]['name'];
+            var func = top.frames[currentParentIframe].window.btSelectCallBack['bt-biz-allExternalCorp']['callback'];
+            if (func) {
+                var data = table.row($(this).data('row')).data();
+                data.type="corp";
+                func(data);
+            }
+        });
+
+    });
+</script>
+</body>
+</html>

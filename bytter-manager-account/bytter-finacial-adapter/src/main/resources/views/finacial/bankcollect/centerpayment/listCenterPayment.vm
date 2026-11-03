@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+<style type="text/css">
+.voucher-title {
+	font-weight: bold;
+	font-size: 22px; 
+	text-decoration: underline;
+	text-align: center;
+	/*color: blue;*/
+	/*color: #00CC33;*/
+}
+.sign{
+    color: red;
+}
+</style>    
+</head>
+<body>
+ <form class="layui-form">
+	<input type="hidden" id="key" name="key">
+	<input type="hidden" name="accbook.rmk" id="accbookRmk" >
+	<input type="hidden" id="opType" name="opType" value="$!{opType}">
+	<input type="hidden" name="accbook.id" id="accbookId" >
+	<input type="hidden" name="accbook.busGlobalId" id="busGlobalId" >
+	<input name="accbook.orderNo" id="accbookOrderNo" type="hidden">
+	<input id="curCode" type="hidden">
+	<input id="corpId" type="hidden">
+	<div class="input150-container">
+		<div class="voucher-title">
+			##记账凭证
+			<label >#springMessage('table.fcAccbook.tallyTitle')</label>
+		</div>
+		<table class="layui-table self-adaption">	
+			<tbody>
+				<tr>
+					##凭证种类
+					<td class="textRight">#springMessage('table.fcAccbook.voucherType')</td>
+		        	<td width="20%">
+		        	#if( $!{type}== "listTallyCheck")
+		        		<input type="text" id="voucherTypeView" readonly="readonly" class="layui-input" lay-verify="required">
+		        		<input type="hidden" id="voucherType" name="accbook.voucherType">
+		        	#else
+		        		<div class="bt-biz-selectType" data-biz-name="voucherType" data-url="${basePath}/netbank/fcvouchertype/specialVoucherType" 
+		        				data-valuefield="id" data-textfield="voucherName" data-name="accbook.voucherType" data-search="true" data-required="true"></div>
+		        	#end			
+					</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					##附件张数
+					<td class="textRight">#springMessage('table.fcAccbook.affixAmount')</td>
+					<td width="20%">
+						<input type="text" id="affixAmount" data-name="accbook.affixAmount" data-type="int" maxlength="2" name="accbook.affixAmount"
+								decimal="0" autocomplete="off" class="layui-input" placeholder="#springMessage('table.fcAccbook.affixAmount')">
+					</td>
+				</tr>
+				<tr>
+					<td class="textRight">#springMessage('table.fcAccbook.busRaceId')</td>
+		        	<td width="20%">
+		        		<input type="text" id="busRaceIdView" readonly="readonly"  class="layui-input" lay-verify="required">
+		        		<input type="hidden" id="busRaceId" name="accbook.busRaceId">
+					</td>
+					##起息日期
+					<td class="textRight">#springMessage('table.fcAccbook.interestStartDate')</td>
+		        	<td width="20%">
+		        		#if( $!{type}== "listTallyCheck")
+							<input type="text" id="interestStartDate" data-biz-name="interestStartDate" name="accbook.interestStartDate" data-type="date" readonly="readonly" class="layui-input bt-biz-dateType" lay-verify="required">
+						#else
+							<input type="text" data-biz-name="interestStartDate" data-callback="checkInterestStartDate" data-today="true" name="accbook.interestStartDate" class="layui-input bt-biz-dateType" data-type="date" lay-verify="required">
+						#end
+					</td>
+					##记账日期
+					<td class="textRight">#springMessage('table.fcAccbook.tallyDate')</td>
+					<td width="20%">
+						#if( $!{type}== "listTallyCheck")
+							<input type="text" id="tallyDate" data-biz-name="tallyDate" name="accbook.tallyDate" readonly="readonly" data-type="date" class="layui-input bt-biz-dateType" lay-verify="required">
+						#else
+							<input type="text" data-biz-name="tallyDate" data-today="true" data-callback="checkInterestStartDate" name="accbook.tallyDate" class="layui-input bt-biz-dateType" data-type="date" lay-verify="required">
+						#end
+					</td>
+					##流水号
+					<td class="textRight">#springMessage('table.fcAccbook.orderNo')</td>
+					<td width="20%">
+						<div id="orderNo"></div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		## 凭证表格数据
+		<table id="printMRTable" class="layui-table">
+			<thead>
+				<tr>
+					<th style="text-align: center;"><span class="sign">*</span>#springMessage('table.fcAccbookDtl.summaryContent')</th>
+					<th style="text-align: center;"><span class="sign">*</span>#springMessage('table.fcAccbookDtl.account')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.accName')</th>
+					<th style="text-align: center;">#springMessage('table.fcAccbookDtl.origVoucherNo')</th>
+					<th style="text-align: center;"><span class="sign">*</span>#springMessage('table.fcAccbookDtl.debitMoney')</th>
+					<th style="text-align: center;"><span class="sign">*</span>#springMessage('table.fcAccbookDtl.creditMoney')</th>
+					<th style="text-align: center;">#springMessage('finacial.common.cashFlow.item')</th>#*现金流项目*#
+					##<th style="text-align: center;">#springMessage('table.fcAccbookDtl.cashFlux')</th>
+				</tr>
+			</thead>
+			<tbody></tbody>
+			<tfoot>
+				<tr>
+					<td style="text-align: right">#springMessage('table.interet.sum')</td>
+					<td >&nbsp;</td>
+					<td >&nbsp;</td>
+					<td >&nbsp;</td>
+					<td style="text-align: right;" ><span id='debitTot' val="0" >0.00</span></td>
+					<td style="text-align: right;" ><span id='creditTot' val="0" class=" bt-biz-moneyType">0.00</span></td>
+					<td></td>
+				</tr>
+			</tfoot>
+		</table>
+		#parse("views/finacial/common/uploader.vm")
+		<div style="text-align: center; margin-top: 10px; margin-bottom: 5px;">
+		#if( $!{type}== "listTally")
+			<button class="layui-btn layui-btn-disabled" lay-submit="" lay-filter="temp" disabled="disabled">#springMessage('common.button.temp')</button>
+			<button class="layui-btn layui-btn-disabled" lay-submit="" lay-filter="submit" disabled="disabled">#springMessage('common.button.submit')</button>
+		#elseif( $!{type} == "listTallyChange" )
+			<button class="layui-btn layui-btn-disabled" lay-submit="" lay-filter="submit" disabled="disabled">#springMessage('common.button.submit')</button>
+			<button class="layui-btn layui-btn-disabled" lay-submit="" lay-filter="back" disabled="disabled">#springMessage('common.button.back')</button>
+		#elseif( $!{type} == "listTallyCheck" )
+			<button class="layui-btn layui-btn-disabled" lay-submit="" id="back" lay-filter="back" disabled="disabled">#springMessage('common.button.back')</button>
+			<button class="layui-btn layui-btn-disabled" lay-submit="" lay-filter="pass" disabled="disabled">#springMessage('common.button.pass')</button>
+		#end
+		</div>
+	</div>
+	<div class="input150-container">
+		<div class="layui-collapse">
+			<div class="layui-colla-item">
+				<h2 class="layui-colla-title">#springMessage('table.btNetChalk.hide')</h2>
+				<div class="layui-colla-content">
+					<table class="layui-table">
+						<tbody>
+							<tr>
+								<td>#springMessage('table.btNetChalk.oppAccNo')</td>
+								<td width="30%">
+                                    <input type="text" name="bookExt.externalAcc" id="externalAcc" autocomplete="off" class="layui-input" readonly="readonly" style="width: 100%" >
+								</td>
+								<td>#springMessage('table.btNetChalk.oppAccName')</td>
+								<td width="30%">
+                                    <input type="text" name="bookExt.externalCorp" id="externalCorp" autocomplete="off" class="layui-input" readonly="readonly" style="width: 100%">
+								</td>
+								<td>#springMessage('table.btNetChalk.oppBankName')</td>
+								<td width="30%">
+									<input type="text" name="bookExt.externalBank" id="externalBank" autocomplete="off" class="layui-input" readonly="readonly" style="width: 100%">
+								</td>
+                                <input type="hidden" name="bookExt.startBank" id="startBank">
+                                <input type="hidden" name="bookExt.startCorp" id="startCorp">
+                                <input type="hidden" name="bookExt.startCorpAcc" id="startCorpAcc">
+							</tr>	
+							<tr>
+								<td>#springMessage('table.fcAccbook.prov')</td>
+								<td width="30%">
+									<div class="bt-biz-region" data-group="test1" data-name="bookExt.prov" data-change="bookExt.city" data-label="#springMessage('table.fcAccbookExt.prov')"  style="float: left" ></div>
+									<div  style="float: left" class="date-mid"> ~ </div>
+									<div class="bt-biz-region" data-group="test1" data-name="bookExt.city" data-label="#springMessage('table.sysCorp.city')"  style="float: left"></div>
+								</td>
+								<td>#springMessage('table.fcAccbookHis.emergencySign')</td>
+								<td width="30%">
+									<div class="layui-input-inline">
+										<div class="bt-biz-dict" data-biz-name="ExtEmergencySign" data-name="accbook.emergencySign" data-type="radio" data-group="Accbook.EmergencySign" data-defaultvalue="G"  data-disabled="true"></div>
+									</div>
+								</td>
+								<td>#springMessage('table.btNetChalk.purpose')</td>
+								<td width="30%" colspan="3">
+									<input type="text" name="accbook.rmk" id="ExtRmk"	autocomplete="off" class="layui-input" style="width: 100%">
+								</td>
+							</tr>
+						</tbody>
+					</table>	
+				</div>
+			</div>
+		</div>
+	</div>
+</form> 
+<div class="input150-container">
+	<div class="layui-collapse">
+		<div class="layui-colla-item">
+	    <h2 class="layui-colla-title">#springMessage('common.button.search')</h2>
+	   	<div class="layui-colla-content  layui-show">
+			<form id="searchForm" class="layui-form">
+				<input type="hidden" id="opType" name="opType" value="$!{opType}">
+				<table class="layui-table">
+					<tbody>
+			        	<tr>
+			        		##申请日期
+							<td class="textRight">#springMessage('table.bisExc.reqDate')</td>
+							<td width="40%">
+								<input type="text" name="ged_reqDate" class="layui-input bt-input-inline bt-biz-dateType" data-endid="reqDate">
+		    					<span class="date-mid">~</span>
+		    					<input type="text"  class="layui-input bt-input-inline bt-biz-dateType" name="led_reqDate" id="reqDate">
+		    					##<input id="date" type="hidden" name="led_reqDate">
+							</td>
+							##收款单位CORP_ID
+						 	<td class="textRight">#springMessage('table.bisExc.corpId')</td>
+						 	<td width="40%">
+								##<div class="bt-biz-corp"  data-biz-type="net" data-type="selectTree" data-name="eqs_corpId" data-tree-type="check" data-scope="all" data-callback="corpCallback"></div>
+								<div class="bt-biz-corp" 
+									 data-name="ins_corpId" 
+									 data-biz-type="net" 
+									 data-type="selectTree"
+									 data-callback="bt.corpCallback" 
+									 data-tree-type="check" 
+									 data-resource="netbank:bdLink:bisExc:salePaymentQuery" data-scope="all"></div>
+							</td> 
+						</tr>
+						<tr>
+							##指令编号
+							<td class="textRight">#springMessage('table.bisExc.voucherNo')</td>
+							<td>
+								<input type="text" name="likes_voucherNo" class="layui-input" >
+							</td>
+							<!-- ##付款账号
+							<td class="textRight">#springMessage('table.bisExc.payerAcc')</td>
+							<td >
+		                     	##<input type="text" name="eqs_payerAcc" class="layui-input bank">  
+		                     	<div class="layui-input-inline">
+		                            <input type="text" id="payerAcc" name="eqs_payerAcc" data-biz-name="payerAcc"
+		        						    autocomplete="off" class="layui-input" placeholder="#springMessage('table.bisExc.payerAcc')">
+		        					<table id="payerAccTable" class="hide">
+		            			        <thead>
+		            			            <tr>
+		            			                <th>#springMessage('table.bisExc.payerAcc')</th>
+		            			                <th>#springMessage('table.bisExc.payerAccName')</th>
+		            			                <th>#springMessage('table.bisExc.payerBank')</th>
+		    									<th>#springMessage('table.bisExc.curId')</th>
+		            			            </tr>
+		            			        </thead>
+		            			    </table>
+		    					</div>
+							</td> -->
+							##币别代码
+							<td class="textRight">#springMessage('table.btNetChalk.curId')</td>
+							<td>
+					         	<div class="layui-input-inline">
+					         		<div class="bt-biz-selectType" data-biz-name="curId" data-url="${basePath}/basic/business/btcurrency/json" 
+					         				data-valuefield="id" data-textfield="curName" data-name="eqs_curId" data-search="true"></div>
+		                    	</div>
+							</td>	
+						</tr>
+		       			<tr>
+							##付款方式
+							<td class="textRight">#springMessage('table.bisExc.voucherTypeId')</td>
+							<td>
+								<div type="list" data-name ="eqs_voucherTypeId" class="bt-biz-selectType" data-url="${basePath}/netbank/fcvouchertype/specialVoucherType"
+										data-valueField="id" data-textField="voucherName" data-search="true"></div>
+							</td>
+		        		 	##付款金额
+							<td class="textRight">#springMessage('table.bisExc.payMoney')</td>
+							<td >
+								<input type="text" data-name="geg_payMoney" class="layui-input bt-input-inline  bt-biz-moneyType" data-moneyendid="t2" >
+		   						<span class="date-mid">~</span>
+		       					<input type="text" data-name="leg_payMoney" class="layui-input bt-input-inline  bt-biz-moneyType" id="t2" >
+							</td> 
+						</tr>	
+						<!-- <tr>
+							##指令编号
+							<td class="textRight">#springMessage('table.bisExc.voucherNo')</td>
+							<td>
+								<input type="text" name="eqs_voucherNo" class="layui-input" >
+							</td>
+						</tr> -->
+						<tr>
+							<td colspan="6" style="text-align: center;">
+								<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+								<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+			<table id="appTable" class="layui-table layui-form" style="width:100%;">
+				<thead>
+					<tr>
+				        <th>#springMessage('table.bisExc.voucherNo')</th>
+				        <th>#springMessage('table.bisExc.voucherStat')</th>
+				        <th>#springMessage('table.bisExc.corpId')</th>
+						<th>#springMessage('table.bisExc.voucherTypeId')</th>
+				        <th>#springMessage('table.bisExc.payerAcc')</th>
+				        <th>#springMessage('table.bisExc.payerAccName')</th>
+				        <th>#springMessage('table.bisExc.payerBank')</th>
+						<th>#springMessage('table.bisExc.payMoney')</th>
+				        <th>#springMessage('table.bisExc.payeeAccName')</th>
+				        <th>#springMessage('table.bisExc.payeeAcc')</th>
+				        <th>#springMessage('table.bisExc.payeeBank')</th>
+				        <th>#springMessage('table.bisExc.reqDate')</th>
+				        <th>#springMessage('table.bisExc.curId')</th>
+				        <th>#springMessage('table.bisExc.purpose')</th>
+	        			<th>#springMessage('table.bisExc.addWord')</th>
+						<th>#springMessage('table.btNetChalk.transTime')</th>#*交易时间*#
+	        			<th>#springMessage('table.cmsPrecativeLoanInfo.tallySign')</th> 
+	    			</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+</div>
+#parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/finacial/common/uploader.js?_btv=${resourceVersion}"></script>
+<script src="${basePath}/static/modules/finacial/common/common.setCashFlowItem.js?_btv=${resourceVersion}"></script>
+<script>
+function submitData(data,action){
+	data.field["accbook.attachmentId"] = uploader.getGroupId();
+	bt.loading.show();//显示加载中
+	if($("#opType").val() == 'listTallyChange'){
+		data.field['opType'] = "MODIFY";
+	}else if($("#opType").val() == 'listTally'){
+		data.field['opType'] = "SUBMIT";
+	}
+	$.post(basePath + action,data.field,function(result){
+		if(result.success){
+			location.reload();
+			parent.layer?parent.layer.closeAll():layer.closeAll();
+		}
+		bt.loading.hide(); //关闭加载中
+		parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+	},'JSON');
+	return false;
+}
+bt.use(['form','layedit','selectTable','btdate','bank','select','moneyType','dicts','bttable','element','datatable','mulselect','corp','dateType','selectType','region'], function(){
+	var tableData ;
+	element = layui.element();
+    $ = bt.jquery,form = bt.form();
+    tt = bt.mulselect.init();
+    bt.bank.init({ elem:'.bank',})
+    region = bt.region.init();
+    moneyType = bt.moneyType.init();
+    moneyFun = bt.moneyType.getFun();
+    dataType = bt.dateType.init();
+    bt.corp.init();
+    selectType = bt.selectType.init();
+    dicts = bt.dicts.init();
+  	//监听暂存
+    form.on('submit(temp)', function(data){
+		var action = "/finacial/bankCollect/centerPayment/save";
+    	return submitData(data,action);
+    });
+	
+    //监听提交
+    form.on('submit(submit)', function(data){
+        var action = "/finacial/bankCollect/centerPayment/submit";
+        return submitData(data,action);
+    });
+    
+    //监听打回
+    form.on('submit(back)', function(data){
+    	bt.loading.show();//显示加载中
+        var action = "/finacial/bankCollect/centerPayment/back";
+        parent.layer.prompt({
+	        	title: bt.lang('table.cmsLoanInfo.refuseWhy'),
+	        	formType: 2,
+	        	cancel: function(index, layero){
+	        		bt.loading.hide(); //关闭加载中
+	        	},
+	        	end:function(){
+	        		bt.loading.hide(); //关闭加载中
+	        	}
+        	},function(pass){
+				data.field['bookExt.invalidReason'] = pass;
+				//内部参数配置不一致,转换为枚举参数
+				if($("#opType").val() == 'listTallyChange'){
+					data.field['opType'] = "MODIFY";
+				}else if($("#opType").val() == 'listTallyCheck'){
+					data.field['opType'] = "CHECK";
+				}
+				$.post(basePath + action,data.field,function(result){
+				   if(result.success){
+				   	location.reload();
+				       parent.layer?parent.layer.closeAll():layer.closeAll();
+				   }
+				   bt.loading.hide(); //关闭加载中
+				   parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+				},'JSON');
+        	});
+        return false;
+    }); 
+  
+    //监听通过
+    form.on('submit(pass)', function(data){
+    	bt.loading.show();//显示加载中
+        var action = "/finacial/bankCollect/centerPayment/pass";
+        data.field['opType'] = "CHECK";
+        $.post(basePath + action,data.field,function(result){
+            if(result.success){
+            	location.reload();
+                parent.layer?parent.layer.closeAll():layer.closeAll();
+            }
+            bt.loading.hide(); //关闭加载中
+            parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+        },'JSON');
+        return false;
+    });
+    
+    var rowMR=0;
+    var rowFmtDtl=0;
+    var initPrintMRTable=function(){
+	    //生成列表
+	    bt.bttable.init({
+	    	elem: "#printMRTable",
+	    	url: basePath+"/finacial/accbook/fcaccbook/getFcAccBookDtls",
+	    	scrollX : false,
+	    	scrollY : false,
+	    	buttons: [],   
+		      columns:[],            
+		       tableInitCallback:function(){  
+		    	   bt.dicts.init();
+	          }
+	    });
+    }
+
+    //初始化账号
+    var initSelectAccount = function(row){
+    	var selectTab = bt.selectTable.init({
+			elem: "#example"+row,
+			url: basePath+"/finacial/bankCollect/centerPayment/findFcAcc?voucherNo="+$("#key").val(),
+			scrollX: true,
+			scrollY:"200px",
+			paging:true,
+			searchInput:"#account"+row,
+			columns: [
+			    {data:"blnctrAcc",},
+			    {data:"accName",},
+			    {data:"subjectName",},
+			],
+			clickCallback:function(data){
+				$("#account"+row).val(data.blnctrAcc);
+				$("#accName"+row).text(data.accName);
+				$("#baccName"+row).val(data.accName);
+				// 加载现金流项目
+				loadCashFlowItem(row, data.blnctrAcc, null, null);
+			}
+    	
+       	});
+    }
+    
+    //添加行
+    var  add = function(bookDtl , rowMR){
+    	var controlVo = bookDtl.controlVo;
+    	var account = "";
+    	if(controlVo.accountEditable){
+    		account = '<td><div class="layui-inline"><input type="text" name="bookDtls[' + rowMR + '].account" id="account' + rowMR + '" class="layui-input text"  style="width: 100%" >'
+      		 + '<table id="example' + rowMR + '">'
+      		 + '	<thead>'
+      		 + '    	<tr>'
+      		 + '        	<th>' + bt.lang("table.fcAccbookDtl.account")+ '</th>'
+      		 + '            <th>' + bt.lang("table.fcAccbookDtl.accName")+ '</th>'
+      		 + '            <th>' + bt.lang("table.fcAccbookDtl.subjectCode")+ '</th>'
+      		 + '    	</tr>'
+      		 + '    </thead>'
+      		 + '</table>'
+      		 + '</div></td>';
+    	}else{
+    		account = '<td><div class="layui-inline"><input type="text" name="bookDtls[' + rowMR + '].account" id="account' + rowMR + '" value = "'+ ( bookDtl.account == null ? "" : bookDtl.account ) +'" class="layui-input text" readonly="readonly" style="width: 100%">'
+   		 + '</div></td>';
+    	} 
+  		 + '</div></td>';
+		var html='<tr row="'+rowMR+'">';
+		if(controlVo.summaryEditable){
+			html+='<td><input type="text" name="bookDtls[' + rowMR + '].summaryContent" id="summaryContent' + rowMR + '"  class="layui-input" maxlength="32" style="width: 100%" value = "'+ ( bookDtl.summaryContent == null ? "" : bookDtl.summaryContent ) +'"/></td>';
+		}else{
+			html+='<td><input type="text" name="bookDtls[' + rowMR + '].summaryContent" id="summaryContent' + rowMR + '"  class="layui-input" maxlength="32" style="width: 100%" value = "'+ ( bookDtl.summaryContent == null ? "" : bookDtl.summaryContent ) +'" readonly="readonly"/></td>';
+		}
+		html+= account;   
+		html+='<td><div id="accName' + rowMR + '">&nbsp;'+ ( bookDtl.accName == null ? "" : bookDtl.accName ) +'&nbsp;</div>'
+		+ '<input id="baccName' + rowMR + '" name="bookDtls[' + rowMR + '].accName" type="hidden" value = "'+ ( bookDtl.accName == null ? "" : bookDtl.accName ) +'" ></td>';
+		html+='<td><input type="text" class="layui-input" maxlength="32" name="bookDtls[' + rowMR + '].origVoucherNo" value = "'+ (bookDtl.origVoucherNo == null ? "" : bookDtl.origVoucherNo) +'" id="origVoucherNo' + rowMR + '"  style="width: 100%" readonly="readonly" /></td>';
+		html+= '<td><input id="debitMoney' + rowMR + '"  class="layui-input bt-biz-moneyType"   value = "'+ ( bookDtl.debitMoney == null ? "" : bookDtl.debitMoney ) +'" name="bookDtls[' + rowMR + '].debitMoney" type="text" readonly="readonly"  style="width: 100%" /></td>';
+		html+='<td><input id="creditMoney' + rowMR + '"   class="layui-input bt-biz-moneyType"  value = "'+ ( bookDtl.creditMoney == null ? "" : bookDtl.creditMoney ) +'"  name="bookDtls[' + rowMR + '].creditMoney" type="text" readonly="readonly" style="width: 100%" /></td>';
+		html += '<td><span id="cashFlowItem' + rowMR + '"><input type="hidden" value="' + (isNotEmpty(bookDtl.cashFlux) ? bookDtl.cashFlux : "") + '" name="bookDtls[' + rowMR + '].cashFlux">' + (isNotEmpty(bookDtl.cashFluxName) ? bookDtl.cashFluxName : "") + '</span></td>';
+		html+='</tr>';
+		$("#printMRTable > tbody").append(html);
+		bt.dicts.init();
+		if(controlVo.accountEditable){
+			initSelectAccount(rowMR);
+			$("#account"+rowMR).val(bookDtl.account);
+		}
+		// 加载现金流项目
+		if (isEmpty(bookDtl.cashFlux)) {
+			loadCashFlowItem(rowMR, bookDtl.account, bookDtl.debitMoney, bookDtl.creditMoney);
+		}
+		rowMR++;
+	}
+   // initPrintMRTable(); 
+    
+    //生成列表
+	datatable = bt.datatable.init({
+		elem: "#appTable",
+		colReorder: true,
+		checkbox: false,
+		mulselect: false,
+		selectCss: true,
+		order: [0, 'desc'],
+		fixedColumns: {
+			leftColumns: 0
+		},
+		ajax: {
+			'url': basePath + "/finacial/bankCollect/centerPayment/datatable?type=" + $("#opType").val()
+		}, searchForm: {
+			formFilter: "search",
+			formElem: "#searchForm"
+		},
+		/*  buttons: [{
+             text: bt.lang("Finacial.accbook.common.button.add"),
+             action: function ( e, dt, node, config ) {
+                 var length = $("#printMRTable tbody>tr").length;
+                 var data = dt.rows('.selected').data();
+                 var len = data.length;
+                 if(len<1){
+                     layer.alert("#springMessage('table.fcBankBill.msg.chooseLeastOne')");
+                	return;
+                }
+                var rowData = data.splice(0,len);
+             	var voucherNo = rowData[0].voucherNo;
+             	var type = $("#opType").val();
+             	$("#key").val(voucherNo);
+             	$("#curCode").val(rowData[0].curId);
+             	$("#corpId").val(rowData[0].corpId);
+             	$.post(basePath + "/finacial/bankCollect/centerPayment/queryBisExc/",{voucherNo:voucherNo,type:type}, function(result){
+             		if(typeof result.success == "boolean" && result.success == false){
+             			layer.alert(result.msg);
+                    	return;
+             		}
+             		$("#printMRTable>tbody>tr").remove();
+             		add(result.bookDtls[0] , 0);
+             		add(result.bookDtls[1] , 1);
+                    $("#accbookId").val(result.accbook.id)
+                    $("#busGlobalId").val(result.accbook.busGlobalId);
+					$("#accbookRmk").val(result.accbook.rmk);  //摘要
+					$("#externalCorp").val(result.bookExt.externalCorp);//对方账号
+                    $("#externalAcc").val(result.bookExt.externalAcc);// 对方账户名
+                    $("#externalBank").val(result.bookExt.externalBank);  //对方账号开户行
+					$("#ExtRmk").val(result.bookExt.rmk);   //摘要
+					dicts.get("ExtEmergencySign").val(result.accbook.emergencySign);   //紧急标志
+					//设置省市
+					region.get('test1').set([{
+			            name:'bookExt.prov',
+			            defaultValue:result.bookExt.prov
+			        },{
+			            name:'bookExt.city',
+			            defaultValue:result.bookExt.city
+			        }]);
+					$(".bt-biz-region").find('select').attr('disabled','disabled');
+				    region.render();
+					$("#debitTot").text(moneyFun.format(result.bookDtls[0].debitMoney));
+					$("#creditTot").text(moneyFun.format(result.bookDtls[1].creditMoney));
+					$("#orderNo").text((result.accbook.orderNo == null ? "" : result.accbook.orderNo));
+					$("#accbookOrderNo").val(result.accbook.orderNo==null?"":result.accbook.orderNo);
+					$("#affixAmount").val(result.accbook.affixAmount==null?"":result.accbook.affixAmount);
+					bt.moneyType.init();
+					if($("#opType").val() == 'listTallyCheck'){
+						$('#affixAmount').attr("readonly","readonly");
+						$("#interestStartDate").val(result.accbook.interestStartDate);
+						$("#tallyDate").val(result.accbook.tallyDate);
+						$("#voucherTypeView").val(result.accbook.voucherName);
+						$("#voucherType").val(result.accbook.voucherType);
+					}else if($("#opType").val() == 'listTallyChange'){
+						dataType.get("interestStartDate").val(result.accbook.interestStartDate);
+						dataType.get("tallyDate").val(result.accbook.tallyDate);
+						selectType.get("voucherType").val(result.accbook.voucherType);
+						selectType.render();
+					}else{
+						selectType.get("voucherType").val(result.accbook.voucherType);
+						selectType.render();
+					}
+					$("#busRaceIdView").val(result.accbook.raceName);
+					$("#busRaceId").val(result.accbook.busRaceId);
+					//设置按钮可选
+					$("button[lay-filter='temp'] ").removeClass("layui-btn-disabled");
+					$("button[lay-filter='temp'] ").removeAttr("disabled");
+					$("button[lay-filter='submit'] ").removeClass("layui-btn-disabled");
+					$("button[lay-filter='submit'] ").removeAttr("disabled");
+					$("button[lay-filter='back'] ").removeClass("layui-btn-disabled");
+					$("button[lay-filter='back'] ").removeAttr("disabled");
+					$("button[lay-filter='pass'] ").removeClass("layui-btn-disabled");
+					$("button[lay-filter='pass'] ").removeAttr("disabled");
+             	},'JSON');
+            }
+        }], */
+		columns: [
+			{data: "voucherNo", bSortable: true, className: 'center'},
+			{
+				data: "voucherStat", bSortable: true, className: 'center',
+				render: function (data, type, full, meta) {
+					return bt.dict("bisExc.voucherStat", full.voucherStat);
+				}
+			},
+			{data: "corpName", bSortable: true, className: 'center'},
+			{data: "voucherTypeName", bSortable: true, className: 'center'},
+			{data: "payerAcc", bSortable: true, className: 'center'},
+			{data: "payerAccName", bSortable: true, className: 'center'},
+			{data: "payerBank", bSortable: true, className: 'center'},
+			{
+				data: "payMoney", bSortable: true, className: "textRight",
+				render: function (data, type, full, meta) {
+					return moneyFun.format(full.payMoney);
+				}
+
+			},
+			{data: "payeeAccName", bSortable: true, className: 'center'},
+			{data: "payeeAcc", bSortable: true, className: 'center'},
+			{data: "payeeBank", bSortable: true, className: 'center'},
+			{data: "reqDate", bSortable: true, className: 'center'},
+			{data: "curName", bSortable: false, className: 'center'},
+			{data: "purpose", bSortable: false, className: 'center'},
+			{data: "addWord", bSortable: false, className: 'center'},
+			{
+				data: "transTime", bSortable: true, className: 'center',
+				render: function (data, type, full, meta) {
+					return isNotNull(data) ? bt.date.format(data) : "";
+				}
+			},
+			{
+				data: "tallySign", bSortable: false, className: "center",
+				render: function (data, type, full, meta) {
+					return bt.dict("cms.tallySign", full.tallySign == null ? 0 : full.tallySign);
+				}
+			}
+		],
+		btInitComplete: function (setting, json) {
+			tableData = json.data;
+		},
+		btDrawCallback: function (setting) {
+			tableData = setting.json.data;
+		}
+		,
+		btInitComplete: function (setting, json) {
+			tableData = json.data;
+		},
+		btDrawCallback: function (setting) {
+			tableData = setting.json.data;
+		}
+	});
+    
+    $('#appTable tbody').on('dblclick','tr',function(data){  
+    	 var dataIndex = $(this).context.rowIndex - 1;
+        //var data = tableData.rows('.selected').data();
+        rowData = tableData[dataIndex];
+     	var voucherNo = rowData.voucherNo;
+     	var type = $("#opType").val();
+     	$("#key").val(voucherNo);
+     	$("#curCode").val(rowData.curId)
+     	$("#corpId").val(rowData.corpId)
+     	$.post(basePath + "/finacial/bankCollect/centerPayment/queryBisExc/",{voucherNo:voucherNo,type:type}, function(result){
+     		if(typeof result.success == "boolean" && result.success == false){
+     			layer.alert(result.msg);
+            	return;
+     		}
+			//增加背景色
+			var row = datatable.row(dataIndex).node();
+			$(".row_bg").removeClass("row_bg");
+			$(row).addClass("row_bg");
+     		$("#printMRTable>tbody>tr").remove();
+     		add(result.bookDtls[0] , 0);
+     		add(result.bookDtls[1] , 1);
+            $("#accbookId").val(result.accbook.id)
+            $("#busGlobalId").val(result.accbook.busGlobalId);
+			$("#accbookRmk").val(result.accbook.rmk);  //摘要
+			$("#externalCorp").val(result.bookExt.externalCorp);//对方账号
+            $("#externalAcc").val(result.bookExt.externalAcc);// 对方账户名
+            $("#externalBank").val(result.bookExt.externalBank);  //对方账号开户行
+            $("#startBank").val(result.bookExt.startBank);//委托收款的收款银行
+            $("#startCorp").val(result.bookExt.startCorp);//委托收款的收款单位
+            $("#startCorpAcc").val(result.bookExt.startCorpAcc); //第三方账号,子账号银行活期
+			$("#ExtRmk").val(result.bookExt.rmk);   //摘要
+			uploaderRender(type,result);//双击行上传控件渲染事件
+			dicts.get("ExtEmergencySign").val(result.accbook.emergencySign);   //紧急标志
+			//设置省市
+			region.get('test1').set([{
+	            name:'bookExt.prov',
+	            defaultValue:result.bookExt.prov
+	        },{
+	            name:'bookExt.city',
+	            defaultValue:result.bookExt.city
+	        }]);
+			$(".bt-biz-region").find('select').attr('disabled','disabled');
+		    region.render();
+			$("#debitTot").text(moneyFun.format(result.bookDtls[0].debitMoney));
+			$("#creditTot").text(moneyFun.format(result.bookDtls[1].creditMoney));
+			$("#orderNo").text((result.accbook.orderNo == null ? "" : result.accbook.orderNo));
+			$("#accbookOrderNo").val(result.accbook.orderNo==null?"":result.accbook.orderNo);
+			$("#affixAmount").val(result.accbook.affixAmount==null?"":result.accbook.affixAmount);
+			bt.moneyType.init();
+			if($("#opType").val() == 'listTallyCheck'){
+				$('#affixAmount').attr("readonly","readonly");
+				$("#interestStartDate").val(result.accbook.interestStartDate);
+				$("#tallyDate").val(result.accbook.tallyDate);
+				$("#voucherTypeView").val(result.accbook.voucherName);
+				$("#voucherType").val(result.accbook.voucherType);
+			}else if($("#opType").val() == 'listTallyChange'){
+				dataType.get("interestStartDate").val(result.accbook.interestStartDate);
+				dataType.get("tallyDate").val(result.accbook.tallyDate);
+				selectType.get("voucherType").val(result.accbook.voucherType);
+				selectType.render();
+			}else{
+				selectType.get("voucherType").val(result.accbook.voucherType);
+                if(result.dateRule) {
+                    dataType.get("interestStartDate").val(dataType.get("tallyDate").val());
+                } else {
+				    dataType.get("interestStartDate").val(bt.date.format(rowData.transTime));
+                }
+				selectType.render();
+			}
+			$("#busRaceIdView").val(result.accbook.raceName);
+			$("#busRaceId").val(result.accbook.busRaceId);
+			//设置按钮可选
+			$("button[lay-filter='temp'] ").removeClass("layui-btn-disabled");
+			$("button[lay-filter='temp'] ").removeAttr("disabled");
+			$("button[lay-filter='submit'] ").removeClass("layui-btn-disabled");
+			$("button[lay-filter='submit'] ").removeAttr("disabled");
+			$("button[lay-filter='back'] ").removeClass("layui-btn-disabled");
+			$("button[lay-filter='back'] ").removeAttr("disabled");
+			$("button[lay-filter='pass'] ").removeClass("layui-btn-disabled");
+			$("button[lay-filter='pass'] ").removeAttr("disabled");
+     	},'JSON');
+	});  
+    
+    
+  	//付款账号
+    var payerAccInit = bt.selectTable.init({
+        elem: "#payerAccTable",
+        url: basePath + "/bdlink/bisexc/findBankAcc",
+        urldata: {
+            corpId: $("input[name='corpId']").val(),
+            flag: 1
+        },
+        scrollX: true,
+        scrollY: "200px",
+        searchInput: "#payerAcc",
+        paging: true,
+        columns: [
+            {data: "bankAcc",},
+            {data: "accName",},
+            {data: "bankName",},
+            {data: "curName",}
+        ],
+        clickCallback: function (data) {
+            if (data) {
+                $('#payerAcc').val(data.bankAcc);
+            } else {
+                $('input.text').val('');
+            }
+        }
+    });
+	
+	function initAcc() {
+		//重新加载付款账号
+	    payerAccInit.get("payerAcc").reload({
+	        corpId: $("input[name='eqs_corpId']").val(),
+	        flag: 1
+	    });
+	}
+	
+	bt.corpCallback = function (id) {
+		initAcc();
+	}
+	
+});
+
+
+/**
+ * 日期校验
+ */
+function checkInterestStartDate() {
+	//记账日期
+	var tallyDate = dataType.get("tallyDate").val();
+	// 起息日期
+	var interestDate = dataType.get("interestStartDate").val();
+	if (isNotNull(tallyDate) && isNotNull(interestDate)) {
+		if (bt.date.compare(interestDate, tallyDate) > 0) {
+			layer.alert(bt.lang("fin.book.tally.intereststart.after"), {icon: false ? 1 : 2})
+			dataType.get("interestStartDate").val("");
+		}
+	}
+}
+
+
+/**
+ * 是否为空
+ * @param val
+ * @returns {boolean}
+ */
+function isNull(val) {
+	if (null == val || undefined == val || "" == val || " " == val) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+/**
+ * 是否为空
+ * @param val
+ * @returns {boolean}
+ */
+function isNotNull(val) {
+	return !isNull(val);
+}
+
+</script>
+</html>

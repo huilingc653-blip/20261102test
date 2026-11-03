@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.bytter</groupId>
+        <artifactId>bytter-system</artifactId>
+        <version>2.0.0.RELEASE</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>bytter-system-start</artifactId>
+    <version>2.0.0.RELEASE</version>
+    <packaging>jar</packaging>
+    <name>bytter-system-start</name>
+    <description>T6微服务 系统基础服务启动模块</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.bytter</groupId>
+            <artifactId>bytter-system-adapter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.bytter</groupId>
+            <artifactId>bytter-workflow-adapter</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <!-- 显式声明 Camunda 依赖，确保 Dubbo ReferenceAnnotationBeanPostProcessor
+             扫描 MobileApiController 时 TaskService 等类型在 classpath 上可用 -->
+        <dependency>
+            <groupId>org.camunda.bpm.springboot</groupId>
+            <artifactId>camunda-bpm-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+    </dependencies>
+    <build>
+    	<finalName>${artifactId}-${project.parent.version}</finalName>
+    	<plugins>
+	        <plugin>
+	            <groupId>org.springframework.boot</groupId>
+	            <artifactId>spring-boot-maven-plugin</artifactId>
+	        </plugin>
+	        <plugin>
+                <!--docker-maven-plugin start 通过maven的clean package docker:build docker:push 命令推送到镜像仓库-->
+                <groupId>com.spotify</groupId>
+                <!--文档参考 https://github.com/spotify/docker-maven-plugin -->
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>1.1.0</version>
+                <configuration>
+                    <!--============================================仓库相关配置================================================-->
+                    <!--私有仓库地址-->
+                    <registryUrl>harbor.t2.bytter.com</registryUrl>
+                    <!--
+                    docker api地址
+			                    构建镜像是通过调用在 http://192.168.126.99:2375 上的api构建image，以便后续推送到registryUrl上；
+			                    如果本地开启了docker api，这个地方也可以填本地的docker api地址
+                    -->
+                    <dockerHost>http://192.168.0.230:2375</dockerHost>
+                    <!--是否推送镜像-->
+                    <pushImage>true</pushImage>
+                    <!--推送后是否覆盖已存在的标签镜像-->
+                    <forceTags>true</forceTags>
+                    <!--=============================================构建相关配置===============================================-->
+                    <!--镜像名称 如果要用的话记得改成 大参林 /bytter-dsl  -->
+                    <imageName>harbor.t2.bytter.com/bytter/${project.artifactId}:v6.0</imageName>
+                    <!-- Dockerfile 在上一级目录-->
+                    <dockerDirectory>../</dockerDirectory>
+                    <!--插件会将需要的资源拷贝到 docker目录下，供Dockerfile里构建镜像使用-->
+                    <resources>
+                        <resource>
+                            <targetPath>/app</targetPath><!-- docker容器里的工作目录 -->
+                            <directory>${project.build.directory}</directory><!-- 工程构建目录 也就是target目录-->
+                            <include>${project.build.finalName}.jar</include>
+                        </resource>
+                    </resources>
+                </configuration>
+                <!--docker-maven-plugin end-->
+            </plugin>
+
+    	</plugins>
+ 		<resources>
+            <!-- 打包resource里的项目配置文件 -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>**/*.xls</exclude>
+                    <exclude>**/*.xlsx</exclude>
+                    <exclude>**/*.exe</exclude>
+                </excludes>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.xls</include>
+                    <include>**/*.xlsx</include>
+                    <include>**/*.exe</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/webapp</directory>
+                <targetPath>META-INF/resources</targetPath>
+                <includes>
+                    <include>**/**</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+
+</project>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bytter.job.admin.dao.XxlJobLoginLogDao">
+    <resultMap id="XxlJobLoginLog" type="com.bytter.job.admin.core.model.XxlJobLoginLog" >
+        <result column="id" property="id" />
+        <result column="login_time" property="loginTime" />
+        <result column="user_id" property="userId" />
+        <result column="username" property="username" />
+        <result column="ip" property="ip" />
+        <result column="status" property="status" />
+        <result column="reason" property="reason" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="is_deleted" property="isDeleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        t.id,
+        t.login_time,
+        t.user_id,
+        t.username,
+        t.ip,
+        t.status,
+        t.reason,
+        t.create_by,
+        t.create_time,
+        t.update_by,
+        t.update_time,
+        t.is_deleted
+    </sql>
+
+    <!--//oracle支持调整 取序列 -->
+    <sql id='XXL_JOB_LOGIN_LOG_ID'>XXL_JOB_LOGIN_LOG_ID.NEXTVAL</sql>
+    <insert id="save" parameterType="com.bytter.job.admin.core.model.XxlJobLoginLog" useGeneratedKeys="true" keyProperty="id">
+        <selectKey keyProperty="id" resultType="int" order="BEFORE">
+            select <include refid="XXL_JOB_LOGIN_LOG_ID" /> from dual
+        </selectKey>
+        INSERT INTO xxl_job_login_log (
+            id,
+            login_time,
+            user_id,
+            username,
+            ip,
+            status,
+            reason,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            is_deleted
+        ) VALUES (
+            #{id},
+            #{loginTime},
+            #{userId},
+            #{username},
+            #{ip},
+            #{status},
+            #{reason,jdbcType=VARCHAR},
+            #{createBy,jdbcType=VARCHAR},
+            #{createTime,jdbcType=DATE},
+            #{updateBy,jdbcType=VARCHAR},
+            #{updateTime,jdbcType=DATE},
+            #{isDeleted}
+        )
+    </insert>
+
+    <!-- oracle支持调整 分页修改为oracle三层分页 -->
+    <select id="pageList" resultMap="XxlJobLoginLog">
+        select *
+        from (select *
+        from (select A.*, rownum rn
+        from (SELECT <include refid="Base_Column_List" />
+            FROM xxl_job_login_log t
+        <trim prefix="WHERE" prefixOverrides="AND | OR" >
+            <if test="username != null and username != ''">
+                AND t.username like CONCAT(CONCAT('%', #{username}), '%')
+            </if>
+            <if test="status != null and status >= 0">
+                AND t.status = #{status}
+            </if>
+            <if test="loginTimeStart != null">
+                AND t.login_time <![CDATA[ >= ]]> #{loginTimeStart}
+            </if>
+            <if test="loginTimeEnd != null">
+                AND t.login_time <![CDATA[ <= ]]> #{loginTimeEnd}
+            </if>
+        </trim>
+        ORDER BY t.login_time DESC) A)
+        where rn > #{offset}) B
+        <![CDATA[   where rn < #{offset}+ #{pagesize} ]]>
+    </select>
+
+    <select id="pageListCount" resultType="java.lang.Integer">
+        SELECT count(1) FROM xxl_job_login_log t
+        <trim prefix="WHERE" prefixOverrides="AND | OR" >
+            <if test="username != null and username != ''">
+                AND t.username like CONCAT(CONCAT('%', #{username}), '%')
+            </if>
+            <if test="status != null and status >= 0">
+                AND t.status = #{status}
+            </if>
+            <if test="loginTimeStart != null">
+                AND t.login_time <![CDATA[ >= ]]> #{loginTimeStart}
+            </if>
+            <if test="loginTimeEnd != null">
+                AND t.login_time <![CDATA[ <= ]]> #{loginTimeEnd}
+            </if>
+        </trim>
+    </select>
+</mapper>

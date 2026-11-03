@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form ignore-required-icon" method="post" id="inputForm">
+        <input id="timeType" name="timeType" type="hidden" value="$!{fbsBudgetAnalyse.timeType}">
+        <input id="id" name="id" type="hidden" value="$!{fbsBudgetPage.id}">
+        <table class="layui-table">
+            <tbody>
+            <tr>
+				##单位
+                <td class="textRight" width="10%"><font color="red">*</font></font>#springMessage('table.fbsBudget.corpId')</td>
+                <td width="25%">
+                    <div class="layui-inline">
+                        <div class="bt-biz-corp"
+                             data-biz-type="corp"
+                             data-type="selectTree"
+                             data-name="corpId"
+                             data-defaultvalue="$!{fbsBudgetAnalyse.corpId}"
+                             data-scope="all"></div>
+                    </div>
+                </td>
+				##日期
+                <td class="textRight" width="10%"><font color="red">*</font></font>#springMessage('table.fcOutSubjectDay.optDate')</td>
+                <td width="25%">
+                    <input type="text" name="queryDate" class="layui-input bt-input-inline bt-biz-dateType" data-type="month" value="$!{fbsBudgetAnalyse.queryDate}" data-biz-name="queryDate">
+                </td>
+                ##状态
+                <td class="textRight" width="10%">#springMessage('table.fbsBudget.status')</td>
+                <td>
+                    <div class="bt-biz-dict" data-type="select" data-displayData="0,-1,11,95" data-defaultvalue="$!{fbsBudgetAnalyse.analyseStatus}"
+                         data-group="fbsBudget.analyseStatus" data-name="analyseStatus"></div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6" style="text-align: center;">
+                    <button class="layui-btn" id="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+                    #if($!{showFlag})
+                        <button class="layui-btn" lay-submit="" lay-filter="submit" type="button" value="0">#springMessage('common.button.batchadopt')</button>
+                        <button class="layui-btn" lay-submit="" lay-filter="submit" type="button" value="1">#springMessage('common.button.batchBack')</button>
+                        <button type="button" class="layui-btn" onclick="exports()">#springMessage('common.button.exports')</button>
+                    #end
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        #if($!{showFlag})
+            <div>
+        #else
+            <div style="display: none">
+        #end
+            <table class="layui-table">
+                <tr>
+                    ##单位名称
+                    <td class="textRight" width="20%">#springMessage('table.fbsBudget.corpId')</td>
+                    <td width="35%">$!{fbsBudgetPage.corpName}</td>
+                    ##日期
+                    <td class="textRight" width="20%">#springMessage('table.fcOutSubjectDay.optDate')</td>
+                    <td width="35%">
+                        $!date.format('yyyy-MM-dd',$!{fbsBudgetPage.beginDate})#springMessage('table.fcBond.rangeofdate')$!date.format('yyyy-MM-dd',$!{fbsBudgetPage.endDate})
+                    </td>
+                </tr>
+                <tr>
+                    ##计划收入总额
+                    <td class="textRight">#springMessage('table.fbsBudget.incomeTotal')</td>
+                    <td>$!number.formatNumeric($!{incomeTotal})</td>
+                    ##计划支出总额
+                    <td class="textRight">#springMessage('table.fbsBudget.payTotal')</td>
+                    <td>
+                        $!number.formatNumeric($!{payTotal})
+                    </td>
+                </tr>
+                <tr>
+                    ##实际收入总额
+                    <td class="textRight">#springMessage('table.fbsBudget.factIncomeTotal')</td>
+                    <td>$!number.formatNumeric($!{factIncomeTotal})</td>
+                    ##实际支出总额
+                    <td class="textRight">#springMessage('table.fbsBudget.factPayTotal')</td>
+                    <td>
+                        $!number.formatNumeric($!{factPayTotal})
+                    </td>
+                </tr>
+                <tr>
+                    ##币种
+                    <td class="textRight">#springMessage('table.fbsBudgetDetail.curId')</td>
+                    <td>$!{currencyTag.getCurName($!{fbsBudgetPage.curId})}</td>
+                    <td class="textRight"></td>
+                    <td></td>
+                </tr>
+            </table>
+            <table id="appTable" class="layui-table" style="width:100%;">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkAll" lay-skin="primary" lay-filter="checkAll" name="checkAll"> #springMessage('common.check.all')</th>
+                    <th>#springMessage('table.fbsBudgetYear.itemCode')</th>
+                    <th>#springMessage('table.fbsBudgetYear.itemName')</th>
+                    <th>#springMessage('table.fbsBudget.cdSign')</th>
+                    <th>#springMessage('table.fbsBudget.planMoney')</th>
+                    <th>#springMessage('table.fbsBudget.factMoney')</th>
+                    <th>#springMessage('table.fbsBudget.diffMoney')</th>
+                    <th>#springMessage('table.fbsBudget.diffRatio')</th>
+                    <th>#springMessage('table.fbsBudget.status')</th>
+                    <th>#springMessage('table.fbsBudget.diffReason')</th>
+                    <th>#springMessage('common.table.thead.operation')</th>
+                </tr>
+                </thead>
+                <tbody>
+                    #foreach($date in $dltList)
+                    <tr data-tt-id="$!{date.itemCode}" data-tt-parent-id="$!{date.item.superItemCode}" data-tt-subject-sort="$!{date.itemCode}">
+                        <td align="center">
+                            #if($!{date.analyseStatus} == 11)
+                                <input type="checkbox" class="check" id="detailId_$!{date.itemCode}" name="checkDetailId" value="${date.id}" lay-skin="primary" lay-filter="checkDetailId">
+                            #end
+                        </td>
+                        <td>$!{date.itemCode}</td>
+                        <td>$!{date.itemName}</td>
+                        <td align="center">$dictTag.get("fbsItem.cdSign",$!{date.item.sign})</td>
+                        <td class="textRight">
+                            $!number.formatNumeric($!{date.bMoney})
+                        </td>
+                        <td class="textRight">$!number.formatNumeric($!{date.factMoney})</td>
+                        <td class="textRight">
+                            <a class="" href="#" onclick="viewDiff('$!{fbsBudgetPage.id}','$!{fbsBudgetPage.timeType}','$!{date.id}')">$!number.formatNumeric($!{date.diffMoney})</a>
+                        </td>
+                        <td class="textRight">$!number.formatNumeric($!{date.diffRatio})</td>
+                        <td align="center">
+                            #if($!{date.showDiffReason})
+                                $dictTag.get("fbsBudget.analyseStatus",$!{date.analyseStatus})
+                            #end
+                        </td>
+                        <td class="textRight">$!{date.diffReason}</td>
+                        <td align="center">
+                            #if($!{date.analyseStatus} == 11)
+                                <a class="" href="#" onclick="checkSubmit('$!{fbsBudgetPage.id}','$!{fbsBudgetPage.timeType}','$!{date.id}','0')">#springMessage('common.button.pass')</a>
+                                <span class="text-explode">|</span>
+                                <a class="" href="#" onclick="checkSubmit('$!{fbsBudgetPage.id}','$!{fbsBudgetPage.timeType}','$!{date.id}','1')">#springMessage('common.button.back')</a>
+                            #end
+                        </td>
+                    </tr>
+                    #end
+                </tbody>
+            </table>
+        </div>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+<script src="${basePath}/static/modules/budget/fbsBudget.check.js?_btv=${resourceVersion}"></script>
+</html>

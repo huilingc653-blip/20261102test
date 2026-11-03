@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+
+<form id="searchForm" class="layui-form">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.netId")</td>
+				<td width="25%">
+					<div class="bt-biz-corp" data-name="eqs_netId" data-type="selectTree" data-scope="net"></div>
+				</td>
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.raceCode")</td>
+				<td width="25%">
+					<input type="text" name="likes_raceCode"
+						autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.fcbusrace.raceCode')">
+				</td>
+				<td class="textRight">#springMessage("finacial.paramconfig.fcbusrace.raceName")</td>
+				<td width="25%">
+					<input type="text" name="likes_raceName"
+						autocomplete="off" class="layui-input" placeholder="#springMessage('finacial.paramconfig.fcbusrace.raceName')">
+				</td>
+			<tr>
+				<td colspan="6" style="text-align: center;">
+					<button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+					<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('finacial.paramconfig.fcbusrace.netId')</th>
+        <th>#springMessage('finacial.paramconfig.fcbusrace.raceCode')</th>
+        <th>#springMessage('finacial.paramconfig.fcbusrace.raceName')</th>
+        <th>#springMessage('finacial.paramconfig.fcbusrace.sysRaceCode')</th>
+        <th>#springMessage('table.btCurrency.validSign')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+#parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    bt.use(['form','datatable','corp'], function(){
+        $ = bt.jquery,form = bt.form();
+        bt.corp.init();
+        //生成列表
+        bt.datatable.init({
+            elem: "#appTable",
+            dom: 'Brtlip',
+            colReorder: true,
+            checkbox:true,order: [2,'desc'],
+            ajax: {
+                'url': basePath+"/paramconfig/fcbusrace/datatable"
+            },searchForm:{
+                formFilter:"search",
+                formElem:"#searchForm"
+            },
+            buttons: [
+                {
+                    text: "#springMessage('common.button.add')",
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                },
+                {
+                    text: "#springMessage('common.button.init')",
+                    action: function ( e, dt, node, config ) {
+                        initData();
+                    }
+                },
+
+                {
+                	text: "#springMessage('common.button.clone')",
+                    action: function ( e, dt, node, config ) {
+                    	var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        if(len<1){
+                        	layer.msg(bt.lang('common.message.confirm.selectData'));
+                        	return;
+                        }
+                        var ids="";
+                        var netIds="";
+                     	var rowData = data.splice(0,len);
+                     	for(var i=0;i<rowData.length;i++){
+                     		if (ids == "") {
+        						ids += rowData[i].id;
+        					} else {
+        						ids += "," + rowData[i].id;
+        					}
+                     	}
+                     	 parent.layer.open({
+                             type: 2,
+                             area: ['850px', '530px'],
+                             maxmin: true,
+                             content: basePath + "/paramconfig/fcbusrace/toCopyFcBusRace?ids=" + ids,
+                             end:function(){
+                                 updateTable();
+                             }
+                         });
+                    }
+                },{
+                	text: "#springMessage('common.button.batchUpdate')",
+                    action: function ( e, dt, node, config ) {
+                    	var data = dt.rows('.selected').data();
+                        var len = data.length;
+                        if(len<1){
+                            layer.msg(bt.lang('common.message.confirm.selectData'));
+                            return;
+                        }
+                        var ids="";
+                        var netIds="";
+                        var rowData = data.splice(0,len);
+                        for(var i=0;i<rowData.length;i++){
+                            if (ids == "") {
+                                ids += rowData[i].id;
+                            } else {
+                                ids += "," + rowData[i].id;
+                            }
+                        }
+                        if(len<1){
+                        	layer.msg(bt.lang('common.message.confirm.selectData'));
+                        	return;
+                        }
+                     	 parent.layer.open({
+                             type: 2,
+                             area: ['850px', '530px'],
+                             maxmin: true,
+                             content: basePath + "/paramconfig/fcbusrace/toBatchUpdate?ids=" + ids,
+                             end:function(){
+                                 updateTable();
+                             }
+                         });
+                    }
+                }
+            ]
+            ,columns: [
+           		{data:"netName",bSortable:true,className:'center'},
+           		{data:"raceCode",bSortable:true,className:'center'},
+           		{data:"raceNameShow",bSortable:true,className:'center'},
+                {data:"sysRaceCode",bSortable:true,className:'center',
+           			render: function ( data, type, full, meta ) {
+                		var sysRaceCode = bt.dict("fcsysbusrace",full.sysRaceCode);
+                        return sysRaceCode;
+           			}
+                },
+                {data:"validSign",bSortable:true,className:'center',
+           			render: function ( data, type, full, meta ) {
+                		var validSign = bt.dict("sf_yn",full.validSign);
+                        return validSign;
+           			}
+                },
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                    var html = '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+                    if(full.validSign == "1"){
+	                    html += ' | <a class="" href="#" data-row="'+meta.row+'" onclick="update(this)">'+bt.lang("common.button.edit")+'</a>';
+	                    html += ' | <a class="" href="#" data-row="'+meta.row+'" onclick="del(this)">'+bt.lang("common.button.delete")+'</a>';
+                    }
+                    return html;
+                }}
+            ]
+        });
+    });
+    function add(){
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/paramconfig/fcbusrace/add",
+            end:function(){
+                updateTable()
+            }
+        });
+    }
+
+    function initData(){
+    	parent.layer.confirm(bt.lang('common.message.confirm.ruledefine'),function(){
+    		$.post(basePath + "/paramconfig/fcbusrace/initData",function(result){
+            	bt.navtab.refreshCurrentTable();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+    	});
+
+    }
+
+
+    function view(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/paramconfig/fcbusrace/view/" + data.id
+        });
+    }
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/paramconfig/fcbusrace/update?id=" + data.id,
+            end:function(){
+                updateTable()
+            }
+        });
+    }
+    function del(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(""+bt.lang('common.message.confirm.delete')+"",function(){
+            $.post(basePath + "/paramconfig/fcbusrace/delete/" + data.id, function(result){
+            	bt.navtab.refreshCurrentTable();
+                parent.layer.alert(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+
+    function getId(){
+        var data = layui.jquery("#appTable").DataTable().rows('.selected').data();
+        var len = data.length;
+        var ids="";
+        var rowData = data.splice(0,len);
+        for(var i=0;i<rowData.length;i++){
+            if (ids == "") {
+                ids += rowData[i].id;
+            } else {
+                ids += "," + rowData[i].id;
+            }
+        }
+        return ids
+    }
+
+    function updateTable(){
+        if(window.top.refreshParentFlag){
+            bt.navtab.refreshCurrentTable();
+        }
+        window.top.refreshParentFlag = false
+    }
+</script>

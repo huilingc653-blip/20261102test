@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	#parse("views/common/head.vm")
+</head>
+<body>
+<form class="layui-form" method="post">
+	<input id="id" name="id" type="hidden" value="$!{fcBankBillPage.id}">
+	<input id="compareSign" name="compareSign" type="hidden" value="$!{fcBankBillPage.compareSign}">
+	<input id="curId" name="curId" type="hidden" value="$!{fcBankBillPage.curId}">
+	<table class="layui-table">
+		<tbody>
+		<tr>
+		##银行账号
+			<td class="textRight">#springMessage('table.fcBankBill.bankAcc')</td>
+			<td width="35%">
+				<input type="text" id="bankAcc" name="bankAcc" readonly="readonly"
+					   class="layui-input" lay-verify="required" value="$!{fcBankBillPage.bankAcc}">
+			</td>
+		##内部账号/erp科目
+			#*<td class="textRight">#springMessage('table.account.or.erpSubject')</td>
+			<td><input class="layui-input"  name="account" value="$!{fcBankBillPage.account}" lay-verify="required"/></td>*#
+
+		##凭证号
+			<td class="textRight">#springMessage('table.fcBankBill.voucherNo')</td>
+			<td width="35%">
+				<input type="text" name="voucherNo"  class="layui-input" value="$!{fcBankBillPage.voucherNo}">
+			</td>
+		</tr>
+		<tr>
+		##借方发生额
+			<td class="textRight">#springMessage('table.fcBankBill.debitMoney')</td>
+			<td width="35%">
+				<input type="text" data-name="debitMoney" data-biz-name="debitMoney" id="debitMoney" class="layui-input bt-biz-moneyType" data-decimal="2" data-minus="true"
+					   lay-verify="required" value="$!{fcBankBillPage.debitMoney}"  data-callback="validateAcc">
+			</td>
+
+		##贷方发生额
+			<td class="textRight">#springMessage('table.fcBankBill.creditMoney')</td>
+			<td width="35%">
+				<input type="text" data-name="creditMoney" data-biz-name="creditMoney" class="layui-input bt-biz-moneyType" data-decimal="2" data-minus="true"  id="creditMoney"
+					   lay-verify="required" value="$!{fcBankBillPage.creditMoney}" data-callback="validateAcc">
+			</td>
+		</tr>
+		<tr>
+		##发生日期
+			<td class="textRight">#springMessage('table.fcBankBill.tallyDate')</td>
+			<td width="35%">
+				<input type="text" name="tallyDate" data-biz-name="tallyDate" id="tallyDate" class="layui-input bt-input-inline bt-biz-dateType"
+					   lay-verify="required" value="$!date.format('yyyy-MM-dd',$!{fcBankBillPage.tallyDate})">
+			</td>
+
+		##红蓝标志（R -红，B 蓝）
+			<td class="textRight">#springMessage('table.fcBankBill.redblueSign')</td>
+			<td width="35%">
+				<div class="bt-biz-dict" data-type="radio" data-group="Finacial.RedBlueSign" data-defaultvalue="$!{fcBankBillPage.redblueSign}"}" data-name="redblueSign"
+				data-biz-name="redblueSign" data-required="true"></div>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="8" style="text-align: center;">
+				<button class="layui-btn" lay-submit="" lay-filter="submit">#springMessage('common.button.submit')</button>
+				<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+</form>
+	#parse("views/common/footer.vm")
+</body>
+<script>
+	bt.use(['form','layedit','btdate','moneynum','datatable','moneyType','dateType','dicts'], function(){
+		$ = bt.jquery,form = bt.form();
+		moneyType = bt.moneyType.init();
+		dateType = bt.dateType.init();
+		dicts = bt.dicts.init();
+		/* 	//设置借方贷方发生额
+            $("[data-name='debitMoney']").blur(function(){
+                    var debitMoneyTemp =  $("#debitMoney").val();
+                    validateAccInit("debitMoney");
+                });
+            $("[data-name='creditMoney']").blur(function(){
+                    var creditMoneyTemp =  $("#creditMoney").val();
+                validateAccInit("creditMoney");
+                }); */
+		//监听提交
+		form.on('submit(submit)', function(data){
+			bt.loading.show();//显示加载中
+			var action = "/finacial/check/fcbankbill/modify";
+			$.post(basePath + action,data.field,function(result){
+				if(result.success){
+					parent.layer?parent.layer.closeAll():layer.closeAll();
+				}
+				bt.loading.hide(); //关闭加载中
+				parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+			},'JSON');
+			return false;
+		});
+	});
+
+	function validateAcc(data , obj){
+
+		//10-10 去掉前台页面金额校验
+
+		/* var dataName = $(obj).attr("data-name");
+        var otherName;
+        if(dataName == 'debitMoney'){
+            otherName = 'creditMoney';
+        }else{
+            otherName = 'debitMoney';
+        }
+        var temdebit = moneyType.get(otherName).val();
+        if( data == 0){
+            if(temdebit ==""){
+                return false;
+            }
+            if(temdebit == 0){
+                layer.msg("借贷方不能都为0");
+                return false;
+            }
+        }else if(data > 0){
+            if(temdebit ==""){
+                return false;
+            }
+            if(temdebit > 0){
+                layer.msg("借贷方不能都不为0");
+                return false;
+            }
+        } */
+	}
+</script>
+</html>

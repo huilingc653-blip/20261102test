@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+    #parse("views/flow/flow.vm")
+</head>
+<body>
+<form id="searchForm" class="layui-form">
+    <input type="hidden" id="flowStatus" name="flowStatus" value="$!{flowStatus}" />
+    <input type="hidden" id="cycleTime" name="cycleTime" value="$!{cycleTime}" />
+    <table class="layui-table">
+        <tbody>
+        <tr>
+            <td class="textRight">#springMessage('table.btBankAccApp.accNo')</td>
+            <td>
+                <input type="text" name="likes_accNo"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAccApp.accNo')">
+            </td>
+            <td class="textRight">#springMessage('table.btBankAccApp.bankAcc')</td>
+            <td>
+                <input type="text" name="likes_bankAcc"
+                       autocomplete="off" class="bank layui-input" placeholder="#springMessage('table.btBankAccApp.bankAcc')">
+            </td>
+            <td class="textRight">#springMessage('table.btBankAcc.accName')</td>
+            <td>
+                <input type="text" name="likes_accName"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.accName')">
+            </td>
+        </tr>
+        <tr>
+            <td class="textRight">#springMessage('table.btBankAccApp.bankTypeId')</td>
+            <td>
+                <div class="bt-biz-selectType" data-url="${basePath}/basic/business/btbanktype/listFilter"
+                     data-name ="eqs_bankTypeId" data-biz-name ="eqs_bankTypeId"  data-valueField="id" data-textField="typeName" data-defaultvalue="$!{btBankAccAppPage.bankTypeId}" ></div>
+            </td>
+            <td class="textRight">#springMessage('table.btBankAcc.bankName')</td>
+            <td >
+                <input type="text" name="likes_bankName"
+                       autocomplete="off" class="layui-input" placeholder="#springMessage('table.btBankAcc.bankName')">
+            </td>
+        ##境内/境外账号
+            <td class="textRight">#springMessage('table.btBankAccApp.isDomesticBank')</td>
+            <td>
+                <div class="bt-biz-dict" data-type="select" data-group="btBankAcc.isDomesticBank"
+                     data-name="eqs_isDomesticBankName" data-biz-name="isDomesticBank"></div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center" colspan="6">
+                <button class="layui-btn" lay-submit lay-filter="search" type="button">#springMessage('common.button.search')</button>
+                <button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<table id="appTable" class="layui-table layui-form" style="width:100%;">
+    <thead>
+    <tr>
+        <th>#springMessage('table.btBankAccApp.accNo')</th>
+        <th>#springMessage('table.btBankAccApp.bankAcc')</th>
+        <th>#springMessage('table.btBankAccApp.accName')</th>
+        <th>#springMessage('table.btBankAccApp.corpId')</th>
+        <th>#springMessage('table.btBankAccApp.curId')</th>
+        <th>#springMessage('table.btBankAccApp.isDomesticBank')</th>
+        <th>#springMessage('table.btBankAccApp.accType')</th>
+        <th>#springMessage('table.btBankAccApp.attributeId')</th>
+        <th>#springMessage('table.btBankAccApp.natureId')</th>
+        <th>#springMessage('table.btBankAccApp.bankTypeId')</th>
+        <th>#springMessage('table.btBankAccApp.bankName')</th>
+        <th>#springMessage('table.btBankAccApp.prov')</th>
+        <th>#springMessage('table.btBankAccApp.city')</th>
+        <th>#springMessage('table.btBankAccApp.electricBill')</th>
+        <th>#springMessage('table.btBankAccApp.opRession.forRev')</th>
+        <th>#springMessage('账号用途')</th>
+        <th>#springMessage('common.table.thead.operation')</th>
+    </tr>
+    </thead>
+</table>
+    #paymentWorkFlowHtml()
+    #parse("views/common/footer.vm")
+    #paymentWorkFlowScript()
+<script>
+    bt.use(['form','datatable','select'], function(){
+        bt.datatable.init({
+            elem: "#appTable",
+            colReorder: true,
+            checkbox:true,
+            order: [1,'desc'],
+            searchForm: {
+                formElem: "#searchForm",
+                formFilter: "search"
+            },
+            ajax: {
+                'url': basePath+"/bankacc/btbankaccrevhandle/dataTableApprove"
+            },
+            buttons: [
+
+            ],
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+            columns: [
+                {data: "accNo", bSortable: true},
+                {data: "bankAcc", bSortable: true},
+                {data: "accName", bSortable: true},
+                {data: "corpName", bSortable: true},
+                {data: "curName", bSortable: true},
+                {data: "isDomesticBankName",bSortable:true},
+                {data: "accTypeName", bSortable: true},
+                {data: "attributeName", bSortable: true},
+                {data: "natureName", bSortable: true},
+                {data: "bankTypeName", bSortable: true},
+                {data: "bankName", bSortable: true},
+                {data: "provName", bSortable: true},
+                {data: "cityName", bSortable: true},
+                {data: "electricBillName", bSortable: true},
+                {data: "opRession", bSortable: true},
+                {data: "accUseName", bSortable: false},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html='';
+                        if($("#flowStatus").val()=='todo'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="approve(this)">'+bt.lang("common.button.approve")+'</a>&nbsp;|&nbsp;';
+                        }
+                        if($("#flowStatus").val() == 'pass'){
+                            html += '<a class="" href="#" data-row="'+meta.row+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a><span class="text-explode">|</span>';
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.trackFlowByBusinessId(\'' + full.id + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }else {
+                            html += '<a class="" href="#" data-row="' + meta.row + '" onclick="bt.workFlow.trackFlow(\'' + full.processInstanceId + '\')">' + bt.lang("common.button.trackFlow") + '</a>';
+                        }
+                        return html;
+                    }}
+            ]
+        });
+    })
+</script>
+<script src="${basePath}/static/modules/bankacc/btBankAccHandleRevApprove.list.js?_btv=${resourceVersion}"></script>
+</body>
+</html>

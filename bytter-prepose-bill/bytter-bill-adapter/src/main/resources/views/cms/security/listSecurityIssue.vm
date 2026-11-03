@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+    #set ($sumMoney = 0 )  ##所选计划的还款日期
+<div>
+    <input type="hidden" id="infoId" value="$!{infoId}">
+    <table id="appTable" class="layui-table layui-form" style="width:100%;">
+        <thead>
+        <tr>
+            <th>#springMessage('cms.security.securityIssueCode')</th>##证券发行编号
+            <th>#springMessage('table.cmsBond.leadUnderwriter')</th>##主承销商
+            <th>#springMessage('table.cmsBond.batchNo')</th>##批次
+            <th>#springMessage('cms.security.level')</th>##层级
+            <th>#springMessage('cms.security.issueMoney')</th>##发行金额
+            <th>#springMessage('cms.security.issueDate')</th>##发行日期
+            <th>#springMessage('cms.security.expectEndDate')</th>##预计到期日期
+            <th>#springMessage('table.cmsProvideLoanInfo.rmk')</th>##备注
+            <th>#springMessage('table.fcFreeze.status')</th>##操作
+            <th>#springMessage('common.table.thead.operation')</th>
+        </tr>
+        </thead>
+    </table>
+
+</div>
+<div style="text-align: center;">
+    <button class="layui-btn" type="button" onClick="javascript:bt.navtab.closeCurrent();">#springMessage('common.button.close')</button>
+</div>
+    #parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+    bt.use(['jquery',"form",'bttable','moneyType','dateType'], function() {
+        var $ = bt.jquery;
+        moneyFun = bt.moneyType.getFun();
+
+        /**
+         * 生成列表
+         */
+        bttable = bt.bttable.init({
+            elem: "#appTable",
+            mulselect:false,
+            checkbox: false,
+            'url': basePath + "/cms/security/issue/issueDatatable?infoId="+$("#infoId").val(),
+            buttons: [
+                {
+                    text: bt.lang('common.button.add'),
+                    action: function ( e, dt, node, config ) {
+                        add();
+                    }
+                }
+            ],
+            fixedColumns: {
+                rightColumns: 2//代表冻结右边一列
+            },
+            columns: [
+                {data:"securityIssueCode",className:"center",render:function(data, row){
+                        return data.securityIssueCode;
+                    }},
+                {data:"underwriter",className:"center",render:function(data, row){
+                        return data.underwriter;
+                    }},
+                {data:"batchNo",className:"center",render:function(data, row){
+                        return data.batchNo;
+                    }},
+                {data:"levelName",className:"center",render:function(data, row){
+                        return data.levelName;
+                    }},
+                {data:"issueMoney",className:"textRight",render: function ( data ){
+                        return bt.money.format(data.issueMoney);
+                    }},
+                {data:"issueDate",className:"center",render:function(data, row){
+                        return bt.date.format(data.issueDate,'yyyy-mm-dd');
+                    }},
+                {data:"expectEndDate",className:"center",render:function(data, row){
+                        return bt.date.format(data.expectEndDate,'yyyy-mm-dd');
+                    }},
+                {data:"rmk",className:"center",render:function(data, row){
+                        return data.rmk;
+                    }},
+                {data:"status",className:"center",render:function(data, row){
+                        return bt.dict("nisExpenseDetail.status", data.status);
+                    }},
+                {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+                        var html='';
+                        if(data.status==0||data.status==-1) {
+                            if(bt.isResource('cms:security:issue:edit')) {
+                                html += '<a class="" href="#" infoId="'+data.id+'"  onclick="update(this)">' + bt.lang("common.button.edit") + '</a><span class="text-explode">|</span>';
+                            }
+                            if(bt.isResource('cms:security:issue:delete')) {
+                                html += '<a class="" href="#" infoId="'+data.id+'"  onclick="del(this)">' + bt.lang("common.button.delete") + '</a><span class="text-explode">|</span>';
+                            }
+                        }
+                        html += '<a class="" href="#" infoId="'+data.id+'" onclick="view(this)">'+bt.lang("common.button.view")+'</a>';
+                        return html;
+                    }}
+            ]
+        });
+    });
+    function add(){
+        var infoId=$("#infoId").val();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.add.data'),basePath + "/cms/security/issue/add?infoId="+infoId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/security/issue/add?infoId="+infoId,
+            end:function(){
+                location.reload();
+            }
+        });
+    }
+
+    function update(el){
+        var id=layui.jquery(el).attr("infoId");
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.update.data'),basePath + "/cms/security/issue/update/" + id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/security/issue/update/" + id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function del(el){
+        var id=layui.jquery(el).attr("infoId");
+        parent.layer.confirm(bt.lang('common.message.confirm.delete'),function(){
+            bt.loading.show();
+            $.post(basePath + "/cms/security/issue/delete/" + id, function(result){
+                bt.loading.hide();
+                bt.navtab.refreshCurrentTable();
+                parent.layer.msg(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+
+    function view(el){
+        var id=layui.jquery(el).attr("infoId");
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('common.view.data'),basePath + "/cms/security/issue/view/" + id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/cms/security/issue/view/" + id
+        });
+    }
+
+</script>
+</html>

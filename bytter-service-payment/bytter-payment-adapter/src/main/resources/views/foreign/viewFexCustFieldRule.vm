@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    #parse("views/common/head.vm")
+</head>
+<body>
+	<form class="layui-form ignore-required-icon" method="post">
+		<input id="id" name="id" type="hidden" value="$!{fexCustFieldRulePage.id}">
+        <input id="rule1" type="hidden" value="$!{fexCustFieldRulePage.rule1}">
+        <input id="fieldType" type="hidden" value="$!{fexCustFieldRulePage.fieldType}">
+        <input id="appRange1" type="hidden" value="$!{fexCustFieldRulePage.appRange1}">
+        
+		<table class="layui-table">
+            <tbody>
+            <tr>
+				<td class="textRight">#springMessage('table.field.name')</td>
+				<td style="width: 35%">
+                    $!{fexCustFieldRulePage.fieldName}
+				</td>
+				
+				<td class="textRight">#springMessage('table.fex.fieldDesc')</td>
+				 <td style="width: 35%">
+                     $!{fexCustFieldRulePage.fieldDesc}
+                 </td>
+			</tr>
+			
+			<tr>
+				<td class="textRight">#springMessage('table.fex.appRange1')</td>
+        		<td>
+        			<div class="layui-input-inline">
+                        $dictTag.get("application.scope",$!{fexCustFieldRulePage.appRange1})
+                        &nbsp;&nbsp;
+                        $dictTag.get("application.scope2",$!{fexCustFieldRulePage.appRange2})
+                        $!{cotpName}
+					</div>
+        		</td>
+				
+        		<td class="textRight">#springMessage('contract.field.type')</td>
+                <td>
+                    $dictTag.get("field.type",$!{fexCustFieldRulePage.fieldType})
+                </td>
+			</tr>
+
+            #if($!{fexCustFieldRulePage.appRange2}=='4')
+            <tr>
+                <td class="textRight">#springMessage('table.label.bank')</td>
+                <td style="width: 35%">
+                    $!{fexCustFieldRulePage.labelBank}
+                </td>
+                <td class="textRight">#springMessage('sys.dict.groupCode')</td>
+                <td style="width: 35%">
+                    $!{fexCustFieldRulePage.dictGroup}
+                </td>
+            </tr>
+
+            #end
+
+			
+			<tr>
+				<td class="textRight">#springMessage('table.fex.controlRule')</td>
+				<td colspan="3">
+                    #if("$!{fexCustFieldRulePage.rule1}" == "1")
+                        #springMessage("table.fex.Use.preset.values")
+                    #end
+                    &nbsp;&nbsp;
+                    #if("$!{fexCustFieldRulePage.rule2}" == "2")
+                        #springMessage('table.fex.Allow.to.enter.non.default.value')
+                    #end
+                    &nbsp;&nbsp;
+                     #if("$!{fexCustFieldRulePage.rule3}" == "3")
+                        #springMessage('table.fex.Withdraw.when.entering.non.default.value')
+                     #end
+                    &nbsp;&nbsp;
+                     #if("$!{fexCustFieldRulePage.rule4}" == "4")
+                        #springMessage('table.fex.This.field.is.comparative.entry')
+                     #end
+                </td>
+			</tr>
+			
+			<tr class="change1" style="display:none;">
+                <td class="textRight">#springMessage('table.fex.presetVal')</td>
+				<td colspan="3" width="86%">
+                    <textarea id="presetVal" style="min-height:70px" class="layui-textarea"  name="presetVal" readonly="readonly">$!{fexCustFieldRulePage.presetVal}</textarea>
+                    <div style="font-size: 12px; color: red;word-break: break-all;white-space: normal;">#springMessage('table.explain.note')</div>
+                </td>
+			</tr>
+            
+            <tr class="change" style="display:none;">
+                <td class="textRight">#springMessage('table.fex.decimalDigit')</td>
+                <td colspan="3">
+                    $!{fexCustFieldRulePage.decimalDigit}
+                </td>
+            </tr>
+            
+            <tr class="change" style="display:none;">
+                <td class="textRight">#springMessage('table.fex.Numerical.range')</td>
+                <td colspan="3">
+                    $!{fexCustFieldRulePage.minVal}
+                    <span class="date-mid">	#springMessage('table.depositRate.range')</span>
+                    $!{fexCustFieldRulePage.maxtVal}
+                </td>
+            </tr>
+
+            <tr class="change" style="display:none;">
+                <td class="textRight">#springMessage('table.ratBkrationRelief.curCode')</td>
+                <td colspan="3">
+                    $!{fexCustFieldRulePage.curEnglishCode}
+                </td>
+            </tr>
+            </div>
+
+            <tr>
+                <td class="textRight">#springMessage('table.fbsItem.validSign')</td>
+                <td colspan="3">
+                    $dictTag.get("valid_sign",$!{fexCustFieldRulePage.validSign})
+                </td>
+
+            </tr>
+            </tbody>
+			</table>
+	</form>
+    #parse("views/common/footer.vm")
+</body>
+</html>
+<script>
+    
+var dict;    
+bt.use(['form','layedit','selectTree','select','btdate','corp','moneyType','selectType','dicts'], function(){
+	var $ = bt.jquery, form = bt.form();
+    bt.corp.init();
+    bt.selectType.init();
+    dict = bt.dicts.init();
+    bt.moneyType.init({elem:$('[data-type="int"]'),decimal:0,minus:true});
+
+    editChange();
+    
+    //监听提交
+    form.on('submit(submit)', function(data){
+        var action = "/foreign/fexcustfieldrule/modify";
+        $.post(basePath + action,data.field,function(result){
+        	parent.layer?parent.layer.alert(result.msg, {icon: result.success?1:2}):layer.alert(result.msg, {icon: result.success?1:2});
+            if(result.success){
+            	if(!bt.navtab){
+                	parent.layer?parent.layer.closeAll():layer.closeAll();
+            	}else{            		
+                	bt.navtab.closeCurrent();
+            	}
+            }
+        },'JSON');
+        return false;
+    });
+
+    form.on('checkbox(test)', function(data){
+        if(data.elem.checked){
+            $(".change1").show();
+        }else {
+            $(".change1").hide();
+        }
+    });
+    
+});
+
+	
+function editScope(data){
+    var val = data.value;
+    if(val=="0"){
+       $("#appRange2").hide();
+       $("#cotpGroup").show();
+    }else {
+        $("#appRange2").show();
+        $("#cotpGroup").hide();
+    }
+}
+
+
+
+function editNum(data) {
+    var val = data.value;
+    if(val=="2") {
+        $(".change").show();
+    }else {
+        $(".change").hide();
+    }
+}
+
+function editChange() {
+    var rule1 = $("#rule1").val();
+    var fieldType = $("#fieldType").val();
+    var appRange1 = $("#appRange1").val();
+    
+    if(rule1 == "1"){
+        $(".change1").show();
+    }
+    
+    if(fieldType =="2"){
+        $(".change").show();
+    }
+    
+    if(appRange1 == "0"){
+        $("#cotpGroup").show();
+    }else {
+        $("#appRange2").show();
+    }
+}
+    
+</script>

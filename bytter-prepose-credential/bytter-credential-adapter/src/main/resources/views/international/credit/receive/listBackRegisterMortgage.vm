@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("views/common/head.vm")
+</head>
+<!-- 出口押汇列表 -->
+<body>
+	<form action="" id="searchForm" class=layui-form>
+		<table class="layui-table ">
+			<tbody>
+				<tr>
+					<td class="textRight" width="25%">
+						##信用证类型
+						#springMessage('international.credit.lcInter'):
+					</td>
+					<td width="25%">
+						<div class="layui-inline">
+							<div class="bt-biz-dict" id="lcInter" data-type="select" data-group="letter_of_credit_inter"  value="$!{lcEnrol.lcInter}"
+                                     data-name="eqs_lcInter" data-biz-name="lcInter" >
+							</div>
+						</div>
+					</td>
+					
+					##信用证号
+					<td  class="textRight" width="25%">#springMessage('international.credit.creditNo')：</td>
+					<td width="25%"><input type="text" class="layui-input" name="likes_creditNo" /></td>
+				<tr>
+				
+				<tr>
+					<td colspan="6" style="text-align: center;">
+						<button class="layui-btn" lay-submit="" lay-filter="search" type="button">#springMessage('common.button.search')</button>
+						<button type="reset" class="layui-btn layui-btn-primary">#springMessage('common.button.reset')</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+	<table id="appTable" class="layui-table layui-form"
+		style="width: 100%;">
+		<thead>
+			<tr>
+                <th>#springMessage('table.nisPersonnelDetail.corpId')</th>##单位名称
+				<th>#springMessage('table.fcPredrawDtlTemp.orderNo')</th>##流水号
+				<th>#springMessage('table.internation.arrival.com.no')</th>##到单号
+				<th>#springMessage('international.credit.creditNo')</th>##信用证号
+				<th>#springMessage('table.internation.payment.money')</th>##付汇金额
+				<th>#springMessage('table.ratBkrationRelief.curCode')</th>##币种
+				<th>#springMessage('international.credit.createDate')</th>##登记日期
+                <th>#springMessage('table.cmsProvideLoanSend.repayDate')</th>##到期日期
+                <th>#springMessage('table.fbsBudget.status')</th>##状态
+				<th>#springMessage('common.table.thead.operation')</th>##操作
+			</tr>
+		</thead>
+	</table>
+	#parse("views/common/footer.vm")
+</body>
+<script type="text/javascript">
+	bt.use(['form','datatable','dateType','moneyType','corp','dicts'], function(){
+	    $ = bt.jquery,form = bt.form();
+	    //时间
+	    bt.dateType.init();
+	    bt.corp.init();
+        bt.dicts.init();
+
+
+        //生成列表
+	    datatable = bt.datatable.init({
+	        elem: "#appTable",
+	        dom: 'Brtlip',
+	        colReorder: true,
+	        ordering:false,
+            fixedColumns: {
+                rightColumns:1//代表冻结右边一列
+            },
+	        ajax: {
+	            'url': basePath+"/international/credit/mortgageletter/backDatatable"
+	        },
+	        searchForm:{
+	            formFilter:"search",
+	            formElem:"#searchForm"
+	        }
+	        ,columns: [
+                {data:"corpName",bSortable:true,className:"center"},
+	            {data:"arrivalCode",bSortable:true,className:"center"},
+	            {data:"arrivalNo",bSortable:true,className:"center"},
+	            {data:"creditNo",bSortable:true,className:"center"},
+	            {data:"payMoney",bSortable:true,className:"textRight",
+				render: function(data,type,full,mate){
+                    var payMoney = bt.money.format(full.payMoney);
+                    return payMoney;
+                }},
+	            {data:"curName",bSortable:true,className:"center"},
+	            {data:"createDate",bSortable:true,className:"center"},
+                {data:"paymentDate",bSortable:true,className:"center"},
+                {data:"status",bSortable:true,className:"center",
+                    render: function (data, type, full, meta) {
+                        if (full.status == 99) {
+                            // return "待到期收款";
+                            return bt.dict("international.lcBillArrival.status", full.status);
+                        } else if (full.lmStatus == 99) {
+                            // return "抵押成功";
+                            return bt.dict("international.lcMortgage.status", full.lmStatus);
+                        } else if(full.lmStatus == 11){
+                            // return "抵押待审批";
+                            return bt.dict("international.lcMortgage.status", full.lmStatus);
+                        } else if(full.lmStatus == -1){
+                            // return "审批打回";
+                            return bt.dict("international.lcMortgage.status", full.lmStatus);
+                        }
+                    }},
+	            {data:null,bSortable:false,className:'center',render: function (data, type, full, meta) {
+	            	var html ='';
+                   // if(bt.isResource('cms:provide:info:edit')){
+                    if(full.status == 99 ) {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="add(this)">' + bt.lang("table.internation.mortgage.add") + '</a> ';
+                    }
+                    if(full.lmStatus == -1 ) {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="update(this)">' + bt.lang("table.internation.mortgage.update") + '</a> ';
+                    }
+                    if(full.lmStatus == 11 ) {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="dele(this)">' + bt.lang("table.internation.mortgage.cancel") + '</a> ';
+                    }
+                    if(full.lmStatus == 99 ) {
+                        html += '<a class="" href="#" data-row="' + meta.row + '" onclick="cancel(this)">' + bt.lang("table.internation.mortgage.write.off") + '</a> ';
+                    }
+                    	// }
+                  //  html += '<a class="" href="#" data-row="'+meta.row+'" onclick="listMsg(this)">'+bt.lang("日志")+'</a> ';
+	            	return html;
+	            }}
+	        ],
+            summary:{
+                pageSum: false,//小计功能关闭
+                allSum: true,//汇总功能开启
+                // selectSum: true,//已选汇总功能开启
+                // groupColumn: 'curName',//分类汇总列参数
+                format: {
+                    decimal: 2
+                },
+                sumList: [
+                    {
+                        colNum: '5',//汇总列序号
+                        dataName: 'payMoney',//汇总列数据
+                    }
+                ]
+            }
+	    });
+	 
+	});
+	
+	
+    function add(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('table.internation.mortgage.add'),basePath + "/international/credit/mortgageletter/add/" +data.id);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/mortgageletter/add/"+data.id,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function update(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if(bt.navtab){
+            bt.navtab.addNavtab(bt.lang('table.internation.mortgage.update'),basePath + "/international/credit/mortgageletter/update/" +data.lmId);
+            return;
+        }
+        parent.layer.open({
+            type: 2,
+            area: ['850px', '530px'],
+            maxmin: true,
+            content: basePath + "/international/credit/mortgageletter/update/"+data.lmId,
+            end:function(){
+                datatable && datatable.draw();
+            }
+        });
+    }
+
+    function cancel(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        parent.layer.confirm(bt.lang('table.internation.mortgage.write.off.isok'),function(){
+            bt.loading.show();
+            $.post(basePath + "/international/credit/mortgageletter/cancel/" + data.lmId, function(result){
+                bt.loading.hide();
+                bt.navtab.refreshCurrentTable();
+                parent.layer.msg(result.msg, {icon: result.success?1:2});
+            },'JSON');
+        });
+    }
+    
+    //撤回审批流
+    function dele(el){
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        bt.loading.show();
+        $.post(basePath + "/preposeCredential/bpm/task/batchRevoke", {ids: data.lmId}, function (result) {//先撤回审批流
+            //bt.datatable.refreshCurrentPage();
+            var msg = result.msg ;
+            var obj = result.obj;
+            var length = obj.length;
+            if(length){
+                //对报错信息进行转化，显示每个报错信息有多少条
+                for(var a = 0;a<length;a++){
+                    if(obj[a].corpName){
+                        obj[a].errorMsg = [];
+                        var messageList = obj[a].messageList.sort();
+                        for (var i = 0; i < messageList.length;) {
+                            var count = 0;
+                            for (var j = i; j < messageList.length; j++) {
+                                if (messageList[i] == messageList[j]) {
+                                    count++;
+                                }
+                            }
+                            obj[a].errorMsg.push([messageList[i].replace(/_/g,'.').toLowerCase(), count]);
+                            i += count;
+                        }
+                    }
+                }
+                //拼装报错信息
+                for(var i = 0; i< length;i++){
+                    if(obj[i].corpName){
+                        msg += bt.lang('international.Mortgage.cancelFailed') + ':';
+                        for( var k = 0;k < obj[i].errorMsg.length;k++){
+                            msg += obj[i].errorMsg[k][1] + bt.lang('sys.config.appPageSize.unit') + bt.lang(obj[i].errorMsg[k][0]);
+                        }
+                    }
+                }
+            }
+            if(!result.success){
+                parent.layer.confirm(bt.lang('table.internation.mortgage.cancel.isok'),function(){
+                    bt.loading.show();
+                    $.post(basePath + "/international/credit/mortgageletter/delete/" + data.lmId, function(result){
+                        bt.loading.hide();
+                        bt.navtab.refreshCurrentTable();
+                        parent.layer.msg(result.msg, {icon: result.success?1:2});
+                    },'JSON');
+                });
+            }else{
+                bt.loading.hide();
+                parent.layer.alert(msg, {icon: result.success ? 1 : 2});
+            }
+            
+        }, 'JSON');
+    }
+    
+    
+    //日志列表
+    function listMsg(el) {
+        var data = layui.jquery("#appTable").DataTable().row(layui.jquery(el).data("row")).data();
+        if (data) {
+            if (bt.navtab) {
+                bt.navtab.addNavtab(bt.lang('common.button.logInfo'), basePath + "/international/credit/lcprocessmsg/list?billCode=" + data.mortgageNo);
+                return;
+            }
+        }
+    }
+	
+	</script>
+</html>
